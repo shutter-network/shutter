@@ -49,10 +49,6 @@ jobs:
             - ~/shutter/.nox
 
   test:
-    parameters:
-      pytest-args:
-        type: string
-
     executor: py37
     working_directory: ~/shutter
     steps:
