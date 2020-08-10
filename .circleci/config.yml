@@ -48,7 +48,7 @@ jobs:
           paths:
             - ~/shutter/.nox
 
-  test:
+  test-contracts:
     executor: py37
     working_directory: ~/shutter
     steps:
@@ -60,7 +60,7 @@ jobs:
       - run:
           name: "Run tests"
           command: |
-            nox -s test
+            nox -s test_contracts
       - save_cache:
           key: test-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
@@ -72,4 +72,4 @@ workflows:
   main:
     jobs:
       - lint
-      - test
+      - test-contracts
