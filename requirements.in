@@ -1,0 +1,7 @@
+nox
+pre-commit
+mypy
+black
+flake8
+zimports!=0.2.1
+eth-brownie
