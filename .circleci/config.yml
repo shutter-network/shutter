@@ -1,0 +1,79 @@
+version: 2.1
+
+
+commands:
+  install-nox:
+    steps:
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - run:
+          name: Disable pip version check
+          command: |
+            echo >> ${BASH_ENV} export PIP_DISABLE_PIP_VERSION_CHECK=1
+      - restore_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+      - run:
+          name: Install nox
+          command: |
+            pip install --user nox
+      - save_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+          paths:
+            - ~/.local
+
+
+executors:
+  py37:
+    docker:
+      - image: cimg/python:3.7
+
+
+jobs:
+  lint:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: lint-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run black, flake8 with nox"
+          command: |
+            nox -s black flake8
+      - save_cache:
+          key: lint-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+  test:
+    parameters:
+      pytest-args:
+        type: string
+
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          keys:
+            - test-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run tests"
+          command: |
+            nox -s test
+      - save_cache:
+          key: test-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - lint
+      - test
