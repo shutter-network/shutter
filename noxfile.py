@@ -1,3 +1,7 @@
+import os
+import pathlib
+import shutil
+
 import nox
 
 
@@ -27,6 +31,25 @@ def update_requirements(session):
 def upgrade_requirements(session):
     session.install("pip-tools")
     session.run("pip-compile", "-U", "requirements.in")
+
+
+@nox.session()
+def install_ganache(session):
+    """install ganache-cli"""
+    session.install("nodeenv")
+    nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
+    ganache_cli = nodeenv_dir.joinpath("bin/ganache-cli")
+    if not ganache_cli.exists():
+
+        if nodeenv_dir.exists():
+            shutil.rmtree(nodeenv_dir)
+
+        session.run("nodeenv", "--node", "12.18.0", str(nodeenv_dir))
+
+        os.environ["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + os.environ["PATH"]
+        session.env["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + session.env["PATH"]
+
+        session.run("npm", "install", "-g", "ganache-cli@6.9.1", silent=True, external=True)
 
 
 @nox.session
