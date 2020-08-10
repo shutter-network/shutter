@@ -3,6 +3,7 @@ import pathlib
 import shutil
 
 import nox
+from nox.sessions import Session
 
 
 if __name__ == "__main__":
@@ -70,7 +71,13 @@ def zimports(session):
 
 
 @nox.session
-def test_contracts(session):
+def mypy(session: Session) -> None:
+    session.install("mypy", *requirements_as_constraints)
+    session.run("mypy", *python_paths)
+
+
+@nox.session
+def test_contracts(session: Session) -> None:
     session.install("-r", "requirements.txt")
     install_ganache(session)
     session.chdir("contracts")

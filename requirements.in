@@ -3,5 +3,6 @@ pre-commit
 mypy
 black
 flake8
+mypy
 zimports!=0.2.1
 eth-brownie
