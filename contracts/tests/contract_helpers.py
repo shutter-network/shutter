@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from typing import Any
 from typing import List
 from typing import Sequence
 from typing import Tuple
 
 import attr
+from brownie.network.transaction import TransactionReceipt
 from eth_typing import Address
 from eth_utils import decode_hex
 from eth_utils import to_canonical_address
@@ -29,14 +31,14 @@ class BatchConfig:
     execution_timeout: int
 
     @classmethod
-    def from_tuple(cls, t: Tuple, keypers: Sequence[Address]) -> BatchConfig:
+    def from_tuple(cls, t: Tuple[Any, ...], keypers: Sequence[Address]) -> BatchConfig:
         assert len(t) == 12
 
         return cls(
             start_batch_index=t[0],
             start_block_number=t[1],
             active=t[2],
-            keypers=keypers,
+            keypers=list(keypers),
             threshold=t[3],
             batch_span=t[4],
             batch_size_limit=t[5],
@@ -66,7 +68,7 @@ ZERO_CONFIG = BatchConfig(
 )
 
 
-def fetch_config(config_contract, config_index):
+def fetch_config(config_contract: Any, config_index: int) -> BatchConfig:
     config_tuple = config_contract.configs(config_index)
     config_num_keypers = config_contract.configNumKeypers(config_index)
     config_keypers = []
@@ -77,7 +79,7 @@ def fetch_config(config_contract, config_index):
     return BatchConfig.from_tuple(config_tuple, config_keypers)
 
 
-def fetch_next_config(config_contract):
+def fetch_next_config(config_contract: Any) -> BatchConfig:
     next_config_tuple = config_contract.nextConfig()
     next_config_num_keypers = config_contract.nextConfigNumKeypers()
     next_config_keypers = []
@@ -88,7 +90,7 @@ def fetch_next_config(config_contract):
     return BatchConfig.from_tuple(next_config_tuple, next_config_keypers)
 
 
-def set_next_config(config_contract, config, owner):
+def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -> None:
     for field in attr.fields(BatchConfig):
         name_snake_case = field.name
         name_camel_case = snake_to_camel_case(name_snake_case, capitalize=True)
@@ -105,7 +107,9 @@ def set_next_config(config_contract, config, owner):
     config_contract.nextConfigAddKeypers(config.keypers, {"from": owner})
 
 
-def schedule_config(config_contract, config, owner):
+def schedule_config(
+    config_contract: Any, config: BatchConfig, owner: Address
+) -> TransactionReceipt:
     set_next_config(config_contract, config, owner=owner)
     tx = config_contract.scheduleNextConfig({"from": owner})
     return tx

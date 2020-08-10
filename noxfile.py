@@ -22,9 +22,10 @@ nox.options.error_on_external_run = True
 nox.options.reuse_existing_virtualenvs = True
 
 
-def install_ganache(session):
+def install_ganache(session: Session) -> None:
     """install ganache-cli"""
     session.install("nodeenv")
+    assert session.bin is not None
     nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
     ganache_cli = nodeenv_dir.joinpath("bin/ganache-cli")
     if not ganache_cli.exists():
@@ -41,31 +42,31 @@ def install_ganache(session):
 
 
 @nox.session
-def update_requirements(session):
+def update_requirements(session: Session) -> None:
     session.install("pip-tools")
     session.run("pip-compile", "requirements.in")
 
 
 @nox.session
-def upgrade_requirements(session):
+def upgrade_requirements(session: Session) -> None:
     session.install("pip-tools")
     session.run("pip-compile", "-U", "requirements.in")
 
 
 @nox.session
-def black(session):
+def black(session: Session) -> None:
     session.install("black", *requirements_as_constraints)
     session.run("black", "--check", "--diff", *python_paths)
 
 
 @nox.session
-def flake8(session):
+def flake8(session: Session) -> None:
     session.install("flake8", *requirements_as_constraints)
     session.run("flake8", *python_paths)
 
 
 @nox.session
-def zimports(session):
+def zimports(session: Session) -> None:
     session.install("zimports", *requirements_as_constraints)
     session.run("zimports", *python_paths)
 
