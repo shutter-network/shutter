@@ -15,6 +15,7 @@ def owner(accounts):
 def non_owner(accounts, owner):
     non_owner = accounts[1]
     assert non_owner != owner
+    return non_owner
 
 
 @pytest.fixture
