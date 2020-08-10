@@ -1,7 +1,7 @@
 from typing import Any
 from typing import Sequence
 
-from brownie import ContractContainer
+from brownie.network.contract import ContractContainer
 from eth_typing import Address
 import pytest
 
