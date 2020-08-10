@@ -23,6 +23,12 @@ commands:
           paths:
             - ~/.local
 
+  install-ganache:
+    steps:
+      - run:
+          name: "Install ganache"
+          command: |
+            nox -s install_ganache
 
 executors:
   py37:
@@ -57,6 +63,7 @@ jobs:
       - restore_cache:
           keys:
             - test-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - install-ganache
       - run:
           name: "Run tests"
           command: |
