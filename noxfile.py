@@ -21,19 +21,6 @@ nox.options.error_on_external_run = True
 nox.options.reuse_existing_virtualenvs = True
 
 
-@nox.session
-def update_requirements(session):
-    session.install("pip-tools")
-    session.run("pip-compile", "requirements.in")
-
-
-@nox.session
-def upgrade_requirements(session):
-    session.install("pip-tools")
-    session.run("pip-compile", "-U", "requirements.in")
-
-
-@nox.session()
 def install_ganache(session):
     """install ganache-cli"""
     session.install("nodeenv")
@@ -50,6 +37,18 @@ def install_ganache(session):
         session.env["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + session.env["PATH"]
 
         session.run("npm", "install", "-g", "ganache-cli@6.9.1", silent=True, external=True)
+
+
+@nox.session
+def update_requirements(session):
+    session.install("pip-tools")
+    session.run("pip-compile", "requirements.in")
+
+
+@nox.session
+def upgrade_requirements(session):
+    session.install("pip-tools")
+    session.run("pip-compile", "-U", "requirements.in")
 
 
 @nox.session
@@ -73,5 +72,7 @@ def zimports(session):
 @nox.session
 def test_contracts(session):
     session.install("-r", "requirements.txt")
+    install_ganache(session)
     session.chdir("contracts")
+
     session.run("brownie", "test")
