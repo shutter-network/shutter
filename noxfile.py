@@ -11,7 +11,7 @@ import nox
 from nox.sessions import Session
 
 
-
+nox.options.sessions = ["black", "flake8", "zimports", "mypy", "test_contracts"]
 
 python_paths = [
     "contracts/tests/",
