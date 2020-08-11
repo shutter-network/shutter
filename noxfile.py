@@ -1,3 +1,8 @@
+if __name__ == "__main__":
+    __import__("sys").exit(
+        "Do not execute this file directly. Use nox instead, it will know how to handle this file"
+    )
+
 import os
 import pathlib
 import shutil
@@ -6,10 +11,6 @@ import nox
 from nox.sessions import Session
 
 
-if __name__ == "__main__":
-    __import__("sys").exit(
-        "Do not execute this file directly. Use nox instead, it will know how to handle this file"
-    )
 
 
 python_paths = [
