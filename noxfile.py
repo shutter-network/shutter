@@ -28,7 +28,11 @@ def install_ganache(session: Session) -> None:
     session.install("nodeenv")
     assert session.bin is not None
     nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
-    ganache_cli = nodeenv_dir.joinpath("bin/ganache-cli")
+    bindir = nodeenv_dir.joinpath("bin").absolute()
+    ganache_cli = bindir.joinpath("ganache-cli")
+    os.environ["PATH"] = str(bindir) + os.pathsep + os.environ["PATH"]
+    session.env["PATH"] = str(bindir) + os.pathsep + session.env["PATH"]
+
     if not ganache_cli.exists():
 
         if nodeenv_dir.exists():
@@ -36,10 +40,14 @@ def install_ganache(session: Session) -> None:
 
         session.run("nodeenv", "--node", "12.18.0", str(nodeenv_dir))
 
-        session.run("npm", "install", "-g", "ganache-cli@6.9.1", silent=True, external=True)
-
-    os.environ["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + os.environ["PATH"]
-    session.env["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + session.env["PATH"]
+        session.run(
+            str(bindir.joinpath("npm")),
+            "install",
+            "-g",
+            "ganache-cli@6.9.1",
+            silent=True,
+            external=True,
+        )
 
 
 @nox.session
