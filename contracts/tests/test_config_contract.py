@@ -3,6 +3,7 @@ from typing import Any
 import brownie
 from eth_typing import Address
 from tests.contract_helpers import fetch_config
+from tests.contract_helpers import fetch_config_by_index
 from tests.contract_helpers import fetch_next_config
 from tests.contract_helpers import schedule_config
 from tests.contract_helpers import set_next_config
@@ -14,7 +15,7 @@ from web3 import Web3
 
 def test_constructor_adds_guard_config(config_contract: Any) -> None:
     assert config_contract.numConfigs() == 1
-    guard_config = fetch_config(config_contract, 0)
+    guard_config = fetch_config_by_index(config_contract, 0)
     assert guard_config == ZERO_CONFIG
 
 
@@ -54,7 +55,7 @@ def test_scheduling_adds_new_config(config_contract: Any, owner: Address) -> Non
     assert config_contract.numConfigs() == 1
     config_contract.scheduleNextConfig({"from": owner})
     assert config_contract.numConfigs() == 2
-    assert fetch_config(config_contract, 1) == batch_config
+    assert fetch_config_by_index(config_contract, 1) == batch_config
 
 
 def test_scheduling_checks_seamlessness_after_active_config(
@@ -79,7 +80,7 @@ def test_scheduling_checks_seamlessness_after_active_config(
     config_contract.scheduleNextConfig({"from": owner})
 
     assert config_contract.numConfigs() == 3
-    assert fetch_config(config_contract, 2) == next_batch_config
+    assert fetch_config_by_index(config_contract, 2) == next_batch_config
 
 
 def test_scheduling_checks_seamlessness_after_inactive_config(
@@ -99,7 +100,7 @@ def test_scheduling_checks_seamlessness_after_inactive_config(
     config_contract.scheduleNextConfig({"from": owner})
 
     assert config_contract.numConfigs() == 2
-    assert fetch_config(config_contract, 1) == config
+    assert fetch_config_by_index(config_contract, 1) == config
 
 
 def test_scheduling_checks_batch_span(config_contract: Any, owner: Address) -> None:
@@ -246,3 +247,50 @@ def test_unscheduling_emits_event(config_contract: Any, owner: Address) -> None:
     tx = config_contract.unscheduleConfigs(100, {"from": owner})
     assert len(tx.events) == 1
     assert tx.events["ConfigUnscheduled"] == {"numConfigs": 1}
+
+
+def test_get_guard_config(config_contract: Any) -> None:
+    config = fetch_config(config_contract, 0)
+    assert config == ZERO_CONFIG
+    assert fetch_config(config_contract, 123) == config
+
+
+def test_get_active_config(config_contract: Any, owner: Address) -> None:
+    config1 = make_batch_config(start_batch_index=0, start_block_number=100, batch_span=2)
+    config2 = make_batch_config(start_batch_index=5, start_block_number=110)
+    schedule_config(config_contract, config1, owner=owner)
+    schedule_config(config_contract, config2, owner=owner)
+
+    for batch_index in range(5):
+        assert fetch_config(config_contract, batch_index) == config1
+
+    for batch_index in range(5, 10):
+        assert fetch_config(config_contract, batch_index) == config2
+
+
+def test_get_inactive_config(config_contract: Any, owner: Address) -> None:
+    config1 = make_batch_config(start_batch_index=0, start_block_number=100, batch_span=2)
+    config2 = make_batch_config(start_batch_index=5, start_block_number=110, active=False)
+    schedule_config(config_contract, config1, owner=owner)
+    schedule_config(config_contract, config2, owner=owner)
+
+    for batch_index in range(5):
+        assert fetch_config(config_contract, batch_index) == config1
+
+    for batch_index in range(5, 10):
+        assert fetch_config(config_contract, batch_index) == config2
+
+
+def test_get_active_after_inactive_config(config_contract: Any, owner: Address) -> None:
+    config1 = make_batch_config(start_batch_index=0, start_block_number=100, batch_span=2)
+    config2 = make_batch_config(start_batch_index=5, start_block_number=110, active=False)
+    config3 = make_batch_config(start_batch_index=5, start_block_number=120, active=True)
+    schedule_config(config_contract, config1, owner=owner)
+    schedule_config(config_contract, config2, owner=owner)
+    schedule_config(config_contract, config3, owner=owner)
+
+    for batch_index in range(5):
+        assert fetch_config(config_contract, batch_index) == config1
+
+    for batch_index in range(5, 10):
+        assert fetch_config(config_contract, batch_index) == config3

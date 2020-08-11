@@ -31,6 +31,14 @@ def config_contract(
     return config_contract
 
 
+@pytest.fixture
+def batcher_contract(
+    BatcherContract: ContractContainer, config_contract: Any, owner: Address
+) -> Any:
+    config_contract = owner.deploy(BatcherContract, config_contract)
+    return config_contract
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation: Any) -> None:
     pass

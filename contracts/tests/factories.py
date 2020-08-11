@@ -46,6 +46,9 @@ def make_batch_config(
         num_keypers = threshold // 2 * 3
         keypers = [make_address() for _ in range(num_keypers)]
 
+    if not active and batch_span is None:
+        batch_span = 0
+
     return BatchConfig(
         start_batch_index=start_batch_index if start_batch_index is not None else make_int(),
         start_block_number=start_block_number if start_block_number is not None else make_int(),

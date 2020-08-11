@@ -6,6 +6,7 @@ from typing import Sequence
 from typing import Tuple
 
 import attr
+from brownie.network.state import Chain
 from brownie.network.transaction import TransactionReceipt
 from eth_typing import Address
 from eth_utils import decode_hex
@@ -31,23 +32,29 @@ class BatchConfig:
     execution_timeout: int
 
     @classmethod
-    def from_tuple(cls, t: Tuple[Any, ...], keypers: Sequence[Address]) -> BatchConfig:
-        assert len(t) == 12
+    def from_tuple_without_keypers(
+        cls, t: Tuple[Any, ...], keypers: Sequence[Address]
+    ) -> BatchConfig:
+        tuple_with_keypers = t[:3] + (list(keypers),) + t[3:]
+        return cls.from_tuple(tuple_with_keypers)
 
+    @classmethod
+    def from_tuple(cls, t: Tuple[Any, ...]) -> BatchConfig:
+        assert len(t) == 13
         return cls(
             start_batch_index=t[0],
             start_block_number=t[1],
             active=t[2],
-            keypers=list(keypers),
-            threshold=t[3],
-            batch_span=t[4],
-            batch_size_limit=t[5],
-            transaction_size_limit=t[6],
-            transaction_gas_limit=t[7],
-            fee_receiver=to_canonical_address(t[8]),
-            target_address=to_canonical_address(t[9]),
-            target_function=decode_hex(str(t[10])),
-            execution_timeout=t[11],
+            keypers=[to_canonical_address(keyper) for keyper in t[3]],
+            threshold=t[4],
+            batch_span=t[5],
+            batch_size_limit=t[6],
+            transaction_size_limit=t[7],
+            transaction_gas_limit=t[8],
+            fee_receiver=to_canonical_address(t[9]),
+            target_address=to_canonical_address(t[10]),
+            target_function=decode_hex(str(t[11])),
+            execution_timeout=t[12],
         )
 
 
@@ -68,7 +75,7 @@ ZERO_CONFIG = BatchConfig(
 )
 
 
-def fetch_config(config_contract: Any, config_index: int) -> BatchConfig:
+def fetch_config_by_index(config_contract: Any, config_index: int) -> BatchConfig:
     config_tuple = config_contract.configs(config_index)
     config_num_keypers = config_contract.configNumKeypers(config_index)
     config_keypers = []
@@ -76,7 +83,7 @@ def fetch_config(config_contract: Any, config_index: int) -> BatchConfig:
         keyper = config_contract.configKeypers(config_index, keyper_index)
         config_keypers.append(to_canonical_address(keyper))
 
-    return BatchConfig.from_tuple(config_tuple, config_keypers)
+    return BatchConfig.from_tuple_without_keypers(config_tuple, config_keypers)
 
 
 def fetch_next_config(config_contract: Any) -> BatchConfig:
@@ -87,7 +94,12 @@ def fetch_next_config(config_contract: Any) -> BatchConfig:
         keyper = config_contract.nextConfigKeypers(keyper_index)
         next_config_keypers.append(to_canonical_address(keyper))
 
-    return BatchConfig.from_tuple(next_config_tuple, next_config_keypers)
+    return BatchConfig.from_tuple_without_keypers(next_config_tuple, next_config_keypers)
+
+
+def fetch_config(config_contract: Any, batch_index: int) -> BatchConfig:
+    full_config_tuple = config_contract.getConfig(batch_index)
+    return BatchConfig.from_tuple(full_config_tuple)
 
 
 def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -> None:
@@ -113,6 +125,13 @@ def schedule_config(
     set_next_config(config_contract, config, owner=owner)
     tx = config_contract.scheduleNextConfig({"from": owner})
     return tx
+
+
+def mine_until(block_number: int, chain: Chain) -> None:
+    current_block_number = chain.height
+    assert current_block_number <= block_number
+    blocks_to_mine = block_number - current_block_number
+    chain.mine(blocks_to_mine)
 
 
 def snake_to_camel_case(snake_case_string: str, capitalize: bool) -> str:

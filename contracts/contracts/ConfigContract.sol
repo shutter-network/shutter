@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.7.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "./Ownable.sol";
 
-contract ConfigContract is Ownable {
+struct BatchConfig {
+    uint256 startBatchIndex;
+    uint256 startBlockNumber;
+    bool active;
+    address[] keypers;
+    uint256 threshold;
+    uint256 batchSpan;
+    uint256 batchSizeLimit;
+    uint256 transactionSizeLimit;
+    uint256 transactionGasLimit;
+    address feeReceiver;
+    address targetAddress;
+    bytes targetFunction;
+    uint256 executionTimeout;
+}
 
-    struct BatchConfig {
-        uint256 startBatchIndex;
-        uint256 startBlockNumber;
-        bool active;
-        address[] keypers;
-        uint256 threshold;
-        uint256 batchSpan;
-        uint256 batchSizeLimit;
-        uint256 transactionSizeLimit;
-        uint256 transactionGasLimit;
-        address feeReceiver;
-        address targetAddress;
-        bytes targetFunction;
-        uint256 executionTimeout;
-    }
+contract ConfigContract is Ownable {
 
     event ConfigScheduled(
         uint256 numConfigs
@@ -60,6 +61,16 @@ contract ConfigContract is Ownable {
 
     function numConfigs() external view returns (uint256) {
         return configs.length;
+    }
+
+    function getConfig(uint256 _batchIndex) external view returns (BatchConfig memory) {
+        for (uint256 i = configs.length - 1; i >= 0; i--) {
+            BatchConfig storage config = configs[i];
+            if (config.startBatchIndex <= _batchIndex) {
+                return config;
+            }
+        }
+        assert(false);
     }
 
     //
