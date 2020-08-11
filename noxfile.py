@@ -35,10 +35,10 @@ def install_ganache(session: Session) -> None:
 
         session.run("nodeenv", "--node", "12.18.0", str(nodeenv_dir))
 
-        os.environ["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + os.environ["PATH"]
-        session.env["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + session.env["PATH"]
-
         session.run("npm", "install", "-g", "ganache-cli@6.9.1", silent=True, external=True)
+
+    os.environ["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + os.environ["PATH"]
+    session.env["PATH"] = f"{nodeenv_dir}/bin" + os.pathsep + session.env["PATH"]
 
 
 @nox.session
