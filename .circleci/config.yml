@@ -37,13 +37,13 @@ jobs:
       - checkout
       - install-nox
       - restore_cache:
-          key: lint-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
       - run:
           name: "Run black, flake8 with nox"
           command: |
             nox -s black flake8
       - save_cache:
-          key: lint-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
 

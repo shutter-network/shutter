@@ -11,7 +11,7 @@ import nox
 from nox.sessions import Session
 
 
-nox.options.sessions = ["black", "flake8", "zimports", "mypy", "test_contracts"]
+nox.options.sessions = ["black", "flake8", "mypy", "test_contracts"]
 
 python_paths = [
     "contracts/tests/",
@@ -70,14 +70,8 @@ def black(session: Session) -> None:
 
 @nox.session
 def flake8(session: Session) -> None:
-    session.install("flake8", *requirements_as_constraints)
+    session.install("flake8", "flake8-import-order", *requirements_as_constraints)
     session.run("flake8", *python_paths)
-
-
-@nox.session
-def zimports(session: Session) -> None:
-    session.install("zimports", *requirements_as_constraints)
-    session.run("zimports", *python_paths)
 
 
 @nox.session
