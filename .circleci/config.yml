@@ -21,11 +21,25 @@ commands:
           key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
           paths:
             - ~/.local
+  install-go:
+    steps:
+      - run:
+          name: Install go
+          command: |
+            curl -sSL "https://golang.org/dl/go1.15.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+      - run:
+          name: Configure go
+          command: |
+            mkdir -p ~/go/bin
+            echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
 
 executors:
   py37:
     docker:
       - image: cimg/python:3.7
+  go:
+    docker:
+      - image: cimg/go:1.15
 
 jobs:
   lint:
@@ -66,6 +80,7 @@ jobs:
     working_directory: ~/shutter
     steps:
       - checkout
+      - install-go
       - run:
           name: Fingerprint the python installation
           command: |
@@ -125,6 +140,22 @@ jobs:
             - ~/shutter/.nox
             - ~/shutter/.mypy_cache
 
+  mint-build:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - shuttermint-go-v1-{{ checksum "go.sum" }}
+      - run: go build
+      - save_cache:
+          key: shuttermint-go-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build/"
+
 workflows:
   version: 2
   main:
@@ -134,3 +165,7 @@ workflows:
       - mypy
       - prettier
       - test-contracts
+
+  shuttermint:
+    jobs:
+      - mint-build

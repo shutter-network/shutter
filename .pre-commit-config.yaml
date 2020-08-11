@@ -25,6 +25,12 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
+  - repo: git://github.com/dnephin/pre-commit-golang
+    rev: master
+    hooks:
+      - id: go-fmt
+      - id: go-mod-tidy
+
   # CircleCI stop here
 
   - repo: https://github.com/psf/black

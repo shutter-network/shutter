@@ -1,0 +1,10 @@
+syntax = "proto3";
+package shmsg;
+
+option go_package = ".;shmsg";
+
+message PublicKeyCommitment {
+        string batch_id = 1;
+        bytes commitment = 2;
+        bytes signature = 3;
+}
