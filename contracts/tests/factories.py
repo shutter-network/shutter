@@ -33,7 +33,7 @@ def make_batch_config(
     transaction_gas_limit: Optional[int] = None,
     fee_receiver: Optional[Address] = None,
     target_address: Optional[Address] = None,
-    target_function: Optional[bytes] = None,
+    target_function_selector: Optional[bytes] = None,
     execution_timeout: Optional[int] = None,
 ) -> BatchConfig:
     if threshold is None:
@@ -65,6 +65,8 @@ def make_batch_config(
         else make_int(),
         fee_receiver=fee_receiver if fee_receiver else make_address(),
         target_address=target_address if target_address else make_address(),
-        target_function=target_function if target_function is not None else make_bytes(),
+        target_function_selector=target_function_selector
+        if target_function_selector is not None
+        else make_bytes(4),
         execution_timeout=execution_timeout if execution_timeout is not None else make_int(),
     )

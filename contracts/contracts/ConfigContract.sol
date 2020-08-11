@@ -17,7 +17,7 @@ struct BatchConfig {
     uint256 transactionGasLimit;
     address feeReceiver;
     address targetAddress;
-    bytes targetFunction;
+    bytes4 targetFunctionSelector;
     uint256 executionTimeout;
 }
 
@@ -54,7 +54,7 @@ contract ConfigContract is Ownable {
             transactionGasLimit: 0,
             feeReceiver: address(0),
             targetAddress: address(0),
-            targetFunction: "",
+            targetFunctionSelector: bytes4(0),
             executionTimeout: 0
         });
     }
@@ -127,8 +127,8 @@ contract ConfigContract is Ownable {
         nextConfig.targetAddress = _targetAddress;
     }
 
-    function nextConfigSetTargetFunction(bytes calldata _targetFunction) external onlyOwner {
-        nextConfig.targetFunction = _targetFunction;
+    function nextConfigSetTargetFunctionSelector(bytes4 _targetFunctionSelector) external onlyOwner {
+        nextConfig.targetFunctionSelector = _targetFunctionSelector;
     }
 
     function nextConfigSetExecutionTimeout(uint256 _executionTimeout) external onlyOwner {

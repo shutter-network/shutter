@@ -28,7 +28,7 @@ class BatchConfig:
     transaction_gas_limit: int
     fee_receiver: Address
     target_address: Address
-    target_function: bytes
+    target_function_selector: bytes
     execution_timeout: int
 
     @classmethod
@@ -53,7 +53,7 @@ class BatchConfig:
             transaction_gas_limit=t[8],
             fee_receiver=to_canonical_address(t[9]),
             target_address=to_canonical_address(t[10]),
-            target_function=decode_hex(str(t[11])),
+            target_function_selector=decode_hex(str(t[11])),
             execution_timeout=t[12],
         )
 
@@ -70,7 +70,7 @@ ZERO_CONFIG = BatchConfig(
     transaction_gas_limit=0,
     fee_receiver=ZERO_ADDRESS,
     target_address=ZERO_ADDRESS,
-    target_function=b"",
+    target_function_selector=b"\x00\x00\x00\x00",
     execution_timeout=0,
 )
 
