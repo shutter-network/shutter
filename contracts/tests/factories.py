@@ -7,8 +7,8 @@ from eth_typing import Address
 from tests.contract_helpers import BatchConfig
 
 
-def make_int() -> int:
-    return random.randint(0, 2 ** 256)
+def make_int(min_value: int = 0, max_value: int = 2 ** 256) -> int:
+    return random.randint(min_value, max_value)
 
 
 def make_bytes(length: Optional[int] = None) -> bytes:
@@ -71,3 +71,10 @@ def make_batch_config(
         else make_bytes(4),
         execution_timeout=execution_timeout if execution_timeout is not None else make_int(),
     )
+
+
+def make_batch(length: Optional[int] = None) -> List[bytes]:
+    if length is None:
+        length = make_int(max_value=3)
+
+    return [make_bytes() for _ in range(length)]

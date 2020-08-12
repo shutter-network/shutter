@@ -10,9 +10,11 @@ from brownie.network.state import Chain
 from brownie.network.transaction import TransactionReceipt
 from eth_typing import Address
 from eth_utils import decode_hex
+from eth_utils import keccak
 from eth_utils import to_canonical_address
 
 ZERO_ADDRESS = Address(b"\x00" * 20)
+ZERO_HASH32 = b"\x00" * 32
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -147,3 +149,10 @@ def snake_to_camel_case(snake_case_string: str, capitalize: bool) -> str:
     rest_parts = [part.capitalize() for part in parts[1:]]
 
     return "".join([first_part] + rest_parts)
+
+
+def compute_batch_hash(batch: Sequence[bytes]) -> bytes:
+    result = ZERO_HASH32
+    for tx in batch:
+        result = keccak(tx + result)
+    return result

@@ -6,9 +6,9 @@ pragma experimental ABIEncoderV2;
 import "./ConfigContract.sol";
 import "./Ownable.sol";
 
-contract BatcherContract is Ownable {
-    enum TransactionType {Cipher, Plain}
+enum TransactionType {Cipher, Plain}
 
+contract BatcherContract is Ownable {
     event TransactionAdded(
         uint256 batchIndex,
         TransactionType transactionType,

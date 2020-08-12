@@ -4,6 +4,7 @@ from typing import Sequence
 import pytest
 from brownie.network.account import Account
 from brownie.network.contract import ContractContainer
+from eth_utils import decode_hex
 
 
 @pytest.fixture
@@ -37,6 +38,38 @@ def batcher_contract(
 ) -> Any:
     config_contract = owner.deploy(BatcherContract, config_contract)
     return config_contract
+
+
+@pytest.fixture
+def executor_contract(
+    ExecutorContract: ContractContainer,
+    config_contract: Any,
+    mock_batcher_contract: Any,
+    owner: Account,
+) -> Any:
+    executor_contract = owner.deploy(ExecutorContract, config_contract, mock_batcher_contract)
+    return executor_contract
+
+
+@pytest.fixture
+def mock_target_contract(MockTargetContract: ContractContainer, owner: Account) -> Any:
+    mock_target_contract = owner.deploy(MockTargetContract)
+    return mock_target_contract
+
+
+@pytest.fixture
+def mock_batcher_contract(MockBatcherContract: ContractContainer, owner: Account) -> Any:
+    mock_batcher_contract = owner.deploy(MockBatcherContract)
+    return mock_batcher_contract
+
+
+@pytest.fixture
+def mock_target_function_selector(MockTargetContract: ContractContainer) -> bytes:
+    function_name = "call"
+    for selector, name in MockTargetContract.selectors.items():
+        if name == function_name:
+            return bytes(decode_hex(selector))
+    raise AssertionError
 
 
 @pytest.fixture(autouse=True)
