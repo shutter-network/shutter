@@ -64,6 +64,23 @@ jobs:
           paths:
             - ~/shutter/.nox
 
+  prettier:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: prettier-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run prettier with nox"
+          command: |
+            nox -s prettier
+      - save_cache:
+          key: prettier-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
   test-contracts:
     executor: py37
     working_directory: ~/shutter
@@ -90,4 +107,5 @@ workflows:
     jobs:
       - lint
       - mypy
+      - prettier
       - test-contracts

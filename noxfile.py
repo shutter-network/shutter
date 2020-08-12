@@ -11,6 +11,9 @@ import nox
 from nox.sessions import Session
 
 
+NODE_VERSION = "12.18.0"
+
+
 nox.options.sessions = ["black", "flake8", "mypy", "test_contracts"]
 
 python_paths = [
@@ -29,6 +32,7 @@ def install_ganache(session: Session) -> None:
     assert session.bin is not None
     nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
     bindir = nodeenv_dir.joinpath("bin").absolute()
+
     ganache_cli = bindir.joinpath("ganache-cli")
     os.environ["PATH"] = str(bindir) + os.pathsep + os.environ["PATH"]
     session.env["PATH"] = str(bindir) + os.pathsep + session.env["PATH"]
@@ -38,7 +42,7 @@ def install_ganache(session: Session) -> None:
         if nodeenv_dir.exists():
             shutil.rmtree(nodeenv_dir)
 
-        session.run("nodeenv", "--node", "12.18.0", str(nodeenv_dir))
+        session.run("nodeenv", "--node", NODE_VERSION, str(nodeenv_dir))
 
         session.run(
             str(bindir.joinpath("npm")),
@@ -48,6 +52,29 @@ def install_ganache(session: Session) -> None:
             silent=True,
             external=True,
         )
+
+
+def install_prettier(session: Session) -> None:
+    """install prettier"""
+    session.install("nodeenv")
+    assert session.bin is not None
+    nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
+    bindir = nodeenv_dir.joinpath("bin").absolute()
+
+    prettier_cli = bindir.joinpath("prettier")
+    os.environ["PATH"] = str(bindir) + os.pathsep + os.environ["PATH"]
+    session.env["PATH"] = str(bindir) + os.pathsep + session.env["PATH"]
+
+    if not prettier_cli.exists():
+        if nodeenv_dir.exists():
+            shutil.rmtree(nodeenv_dir)
+
+        session.run("nodeenv", "--node", NODE_VERSION, str(nodeenv_dir))
+
+        for pkg in ["prettier@2.0.5", "prettier-plugin-solidity@1.0.0-alpha.54"]:
+            session.run(
+                str(bindir.joinpath("npm")), "install", "-g", pkg, silent=True, external=True,
+            )
 
 
 @nox.session
@@ -78,6 +105,12 @@ def flake8(session: Session) -> None:
 def mypy(session: Session) -> None:
     session.install("mypy", *requirements_as_constraints)
     session.run("mypy", *python_paths)
+
+
+@nox.session
+def prettier(session: Session) -> None:
+    install_prettier(session)
+    session.run("prettier", "--check", "contracts/contracts", external=True)
 
 
 @nox.session
