@@ -1,0 +1,53 @@
+default_language_version:
+  python: python3
+
+repos:
+  - repo: https://github.com/prettier/prettier
+    rev: 2.0.5
+    hooks:
+      - id: prettier
+        additional_dependencies: ["prettier-plugin-solidity@1.0.0-alpha.55"]
+        args: ["--plugin=prettier-plugin-solidity"]
+        files: \.(sol|yml|yaml)$
+
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # CircleCI stop here
+
+  - repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+      - id: black
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/sqlalchemyorg/zimports
+    rev: cfdf326902fe8e4478d11a7cb2e837bab1cde1d0
+    hooks:
+      - id: zimports
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
+        args: ["contracts/tests/", "noxfile.py"]
+        pass_filenames: False

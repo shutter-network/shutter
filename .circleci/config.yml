@@ -1,6 +1,5 @@
 version: 2.1
 
-
 commands:
   install-nox:
     steps:
@@ -27,7 +26,6 @@ executors:
   py37:
     docker:
       - image: cimg/python:3.7
-
 
 jobs:
   lint:
@@ -63,6 +61,33 @@ jobs:
           key: mypy-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
+  pre-commit:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - run:
+          name: Prepare config
+          command: |
+            sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
+
+      - restore_cache:
+          key: pre-commit-cache-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+      - run:
+          name: Install pre-commit
+          command: |
+            pip install --user -c requirements.txt pre-commit
+            pre-commit install-hooks -c pre-commit-config
+      - save_cache:
+          key: pre-commit-cache-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          paths:
+            - ~/.cache/pre-commit
+            - ~/.local
+      - run: pre-commit run  -c pre-commit-config --show-diff-on-failure -a
 
   prettier:
     executor: py37
@@ -100,12 +125,12 @@ jobs:
             - ~/shutter/.nox
             - ~/shutter/.mypy_cache
 
-
 workflows:
   version: 2
   main:
     jobs:
       - lint
+      - pre-commit
       - mypy
       - prettier
       - test-contracts
