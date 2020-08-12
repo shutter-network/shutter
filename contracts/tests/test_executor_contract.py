@@ -107,18 +107,33 @@ def test_call_target_function(
         batch_span=100,
         target_address=to_canonical_address(mock_target_contract.address),
         target_function_selector=mock_target_function_selector,
+        transaction_gas_limit=5000,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span, chain)
 
     batch = make_batch(3)
     tx = executor_contract.executeCipherBatch(ZERO_HASH32, batch, ZERO_HASH32, ZERO_HASH32)
-    assert tx.events["Called"] == [{"transaction": encode_hex(tx)} for tx in batch]
+    assert len(tx.events["Called"]) == len(batch)
+    for i, transaction in enumerate(batch):
+        assert tx.events["Called"][i]["transaction"] == encode_hex(transaction)
+        assert (
+            config.transaction_gas_limit - 500
+            < tx.events["Called"][0]["gas"]
+            <= config.transaction_gas_limit
+        )
 
     batch = make_batch(3)
     mock_batcher_contract.setBatchHash(0, 1, compute_batch_hash(batch))
     tx = executor_contract.executePlainBatch(batch)
-    assert tx.events["Called"] == [{"transaction": encode_hex(tx)} for tx in batch]
+    assert len(tx.events["Called"]) == len(batch)
+    for i, transaction in enumerate(batch):
+        assert tx.events["Called"][i]["transaction"] == encode_hex(transaction)
+        assert (
+            config.transaction_gas_limit - 500
+            < tx.events["Called"][0]["gas"]
+            <= config.transaction_gas_limit
+        )
 
 
 def test_emit_event(

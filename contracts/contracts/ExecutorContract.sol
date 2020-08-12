@@ -47,6 +47,7 @@ contract ExecutorContract {
         bytes32 _batchHash = executeTransactions(
             _config.targetAddress,
             _config.targetFunctionSelector,
+            _config.transactionGasLimit,
             _transactions
         );
 
@@ -73,6 +74,7 @@ contract ExecutorContract {
         bytes32 _batchHash = executeTransactions(
             _config.targetAddress,
             _config.targetFunctionSelector,
+            _config.transactionGasLimit,
             _transactions
         );
 
@@ -89,6 +91,7 @@ contract ExecutorContract {
     function executeTransactions(
         address _targetAddress,
         bytes4 _targetFunctionSelector,
+        uint256 _gasLimit,
         bytes[] calldata _transactions
     ) private returns (bytes32) {
         bytes32 _batchHash;
@@ -97,7 +100,7 @@ contract ExecutorContract {
                 _targetFunctionSelector,
                 _transactions[i]
             );
-            _targetAddress.call(_calldata);
+            _targetAddress.call{gas: _gasLimit}(_calldata);
 
             _batchHash = keccak256(
                 abi.encodePacked(_transactions[i], _batchHash)
