@@ -8,6 +8,7 @@ apipkg==1.5               # via execnet
 appdirs==1.4.4            # via black, virtualenv
 argcomplete==1.12.0       # via nox
 asttokens==2.0.3          # via vyper
+attr==0.3.1               # via -r requirements.in
 attrs==19.3.0             # via black, hypothesis, jsonschema, pytest
 base58==2.0.1             # via multiaddr
 bitarray==1.2.2           # via eth-account
@@ -27,8 +28,8 @@ eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
 eth-keys==0.3.3           # via eth-account, eth-keyfile
 eth-rlp==0.1.2            # via eth-account
-eth-typing==2.2.1         # via eth-abi, eth-keys, eth-utils, web3
-eth-utils==1.9.0          # via eth-abi, eth-account, eth-brownie, eth-event, eth-keyfile, eth-keys, eth-rlp, rlp, web3
+eth-typing==2.2.1         # via -r requirements.in, eth-abi, eth-keys, eth-utils, web3
+eth-utils==1.9.0          # via -r requirements.in, eth-abi, eth-account, eth-brownie, eth-event, eth-keyfile, eth-keys, eth-rlp, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 filelock==3.0.12          # via virtualenv
 flake8-import-order==0.18.1  # via zimports
@@ -71,7 +72,7 @@ pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.3.0      # via pytest-xdist
 pytest-xdist==1.34.0      # via eth-brownie
-pytest==5.4.3             # via eth-brownie, pytest-forked, pytest-xdist
+pytest==5.4.3             # via -r requirements.in, eth-brownie, pytest-forked, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.6.1              # via eth-brownie
 pyyaml==5.3.1             # via eth-brownie, pre-commit
@@ -91,7 +92,7 @@ varint==1.0.2             # via multiaddr
 virtualenv==20.0.30       # via nox, pre-commit
 vyper==0.2.4              # via eth-brownie
 wcwidth==0.2.5            # via prompt-toolkit, pytest
-web3==5.11.1              # via eth-brownie
+web3==5.11.1              # via -r requirements.in, eth-brownie
 websockets==8.1           # via web3
 zimports==0.2.2           # via -r requirements.in
 
