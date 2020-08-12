@@ -2,6 +2,8 @@ from typing import Any
 
 import brownie
 from brownie.network.account import Account
+from web3 import Web3
+
 from tests.contract_helpers import fetch_config
 from tests.contract_helpers import fetch_config_by_index
 from tests.contract_helpers import fetch_next_config
@@ -10,7 +12,6 @@ from tests.contract_helpers import set_next_config
 from tests.contract_helpers import ZERO_CONFIG
 from tests.factories import make_address
 from tests.factories import make_batch_config
-from web3 import Web3
 
 
 def test_constructor_adds_guard_config(config_contract: Any) -> None:

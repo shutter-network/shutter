@@ -3,6 +3,7 @@ from typing import List
 from typing import Optional
 
 from eth_typing import Address
+
 from tests.contract_helpers import BatchConfig
 
 

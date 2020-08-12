@@ -7,6 +7,7 @@ from brownie.network.state import Chain
 from eth_utils import encode_hex
 from eth_utils import keccak
 from eth_utils import to_canonical_address
+
 from tests.contract_helpers import mine_until
 from tests.contract_helpers import schedule_config
 from tests.factories import make_batch_config
