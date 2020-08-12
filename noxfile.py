@@ -104,6 +104,7 @@ def flake8(session: Session) -> None:
 @nox.session
 def mypy(session: Session) -> None:
     session.install("mypy", *requirements_as_constraints)
+    session.install("-r", "requirements.txt")
     session.run("mypy", *python_paths)
 
 
