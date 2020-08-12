@@ -232,5 +232,113 @@ def test_check_cipher_batch_hash(
     executor_contract.executeCipherBatch(batch_hash, [], ZERO_HASH32, ZERO_HASH32)
 
 
+def test_skip_cipher_execution(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=100,
+        execution_timeout=300,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    for batch_index in range(3):
+        mine_until(
+            config.start_block_number
+            + batch_index * config.batch_span
+            + config.execution_timeout
+            - 1,
+            chain,
+        )
+        tx = executor_contract.skipCipherExecution()
+        assert executor_contract.numExecutionHalfSteps() == batch_index * 2 + 1
+        assert len(tx.events) == 1
+        assert tx.events["CipherExecutionSkipped"][0] == {
+            "numExecutionHalfSteps": batch_index * 2 + 1
+        }
+        executor_contract.executePlainBatch([])
+
+
+def test_skip_cipher_execution_checks_half_step(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=100,
+        execution_timeout=300,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    for batch_index in range(3):
+        mine_until(
+            config.start_block_number
+            + batch_index * config.batch_span
+            + config.execution_timeout
+            - 1,
+            chain,
+        )
+        executor_contract.executeCipherBatch(ZERO_HASH32, [], ZERO_HASH32, ZERO_HASH32)
+        with brownie.reverts():
+            executor_contract.skipCipherExecution()
+        executor_contract.executePlainBatch([])
+
+
+def test_skip_cipher_execution_checks_timeout(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=100,
+        execution_timeout=300,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    for batch_index in range(3):
+        mine_until(
+            config.start_block_number
+            + batch_index * config.batch_span
+            + config.execution_timeout
+            - 2,
+            chain,
+        )
+        with brownie.reverts():
+            executor_contract.skipCipherExecution()
+        executor_contract.skipCipherExecution()
+        executor_contract.executePlainBatch([])
+
+
+def test_skip_cipher_execution_checks_active(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        execution_timeout=300,
+        active=False,
+    )
+    schedule_config(config_contract, config, owner=owner)
+    with brownie.reverts():
+        executor_contract.skipCipherExecution()
+
+
 def test_executing_cipher_batch_checks_signature() -> None:
     pass

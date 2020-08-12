@@ -8,6 +8,7 @@ import "./BatcherContract.sol";
 
 contract ExecutorContract {
     event BatchExecuted(uint256 numExecutionHalfSteps, bytes32 batchHash);
+    event CipherExecutionSkipped(uint256 numExecutionHalfSteps);
 
     ConfigContract public configContract;
     BatcherContract public batcherContract;
@@ -54,6 +55,26 @@ contract ExecutorContract {
         numExecutionHalfSteps++;
 
         emit BatchExecuted(numExecutionHalfSteps, _batchHash);
+    }
+
+    function skipCipherExecution() external {
+        require(numExecutionHalfSteps % 2 == 0);
+
+        uint256 _batchIndex = numExecutionHalfSteps / 2;
+        BatchConfig memory _config = configContract.getConfig(_batchIndex);
+
+        require(_config.active);
+        require(
+            block.number >=
+                _config.startBlockNumber +
+                    _config.batchSpan *
+                    _batchIndex +
+                    _config.executionTimeout
+        );
+
+        numExecutionHalfSteps++;
+
+        emit CipherExecutionSkipped(numExecutionHalfSteps);
     }
 
     function executePlainBatch(bytes[] calldata _transactions) external {
