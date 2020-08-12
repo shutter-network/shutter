@@ -7,13 +7,9 @@ import "./ConfigContract.sol";
 import "./Ownable.sol";
 
 contract BatcherContract is Ownable {
+    enum TransactionType {Cipher, Plain}
 
-    enum TransactionType {
-        Cipher,
-        Plain
-    }
-
-    event TransactionAdded (
+    event TransactionAdded(
         uint256 batchIndex,
         TransactionType transactionType,
         bytes transaction,
@@ -26,11 +22,15 @@ contract BatcherContract is Ownable {
 
     uint256 public minFee;
 
-    constructor(address _configContractAddress) {
+    constructor(address _configContractAddress) public {
         configContract = ConfigContract(_configContractAddress);
     }
 
-    function addTransaction(uint256 _batchIndex, TransactionType _type, bytes calldata _transaction) external payable {
+    function addTransaction(
+        uint256 _batchIndex,
+        TransactionType _type,
+        bytes calldata _transaction
+    ) external payable {
         BatchConfig memory config = configContract.getConfig(_batchIndex);
         assert(block.number >= config.startBlockNumber);
 
@@ -38,24 +38,33 @@ contract BatcherContract is Ownable {
 
         // TODO: over/underflows?
         uint256 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
-        require(block.number < config.startBlockNumber + config.batchSpan * (_relativeBatchIndex + 1));
+        require(
+            block.number <
+                config.startBlockNumber +
+                    config.batchSpan *
+                    (_relativeBatchIndex + 1)
+        );
 
         require(_transaction.length > 0);
         require(_transaction.length <= config.transactionSizeLimit);
 
-        require(batchSizes[_batchIndex] + _transaction.length <= config.batchSizeLimit);
+        require(
+            batchSizes[_batchIndex] + _transaction.length <=
+                config.batchSizeLimit
+        );
 
         require(msg.value >= minFee);
 
-        bytes memory _batchHashPreimage = abi.encodePacked(batchHashes[_batchIndex][_type], _transaction);
+        bytes memory _batchHashPreimage = abi.encodePacked(
+            batchHashes[_batchIndex][_type],
+            _transaction
+        );
         bytes32 _newBatchHash = keccak256(_batchHashPreimage);
         batchHashes[_batchIndex][_type] = _newBatchHash;
         batchSizes[_batchIndex] += _transaction.length;
 
-        emit TransactionAdded(
-            _batchIndex, _type, _transaction, _newBatchHash
-        );
-        (bool success,) = config.feeReceiver.call{value: msg.value}("");  // TODO: check if reentrancy could be an issue
+        emit TransactionAdded(_batchIndex, _type, _transaction, _newBatchHash);
+        (bool success, ) = config.feeReceiver.call{value: msg.value}(""); // TODO: check if reentrancy could be an issue
         require(success);
     }
 
