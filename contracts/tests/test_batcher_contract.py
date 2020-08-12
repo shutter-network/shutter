@@ -2,8 +2,8 @@ from typing import Any
 from typing import Sequence
 
 import brownie
+from brownie.network.account import Account
 from brownie.network.state import Chain
-from eth_typing import Address
 from eth_utils import encode_hex
 from eth_utils import keccak
 from eth_utils import to_canonical_address
@@ -17,7 +17,7 @@ def test_add_tx_fails_if_not_active(
     config_contract: Any,
     chain: Chain,
     config_change_heads_up_blocks: int,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -36,7 +36,7 @@ def test_add_tx_checks_batching_period_end(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -58,7 +58,7 @@ def test_add_tx_checks_tx_size(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -82,7 +82,7 @@ def test_add_tx_checks_batch_size(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -105,7 +105,7 @@ def test_add_tx_checks_fee(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -126,7 +126,7 @@ def test_add_tx_updates_hash_chain(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -151,7 +151,7 @@ def test_add_tx_updates_batch_size(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -173,7 +173,7 @@ def test_add_tx_emits_event(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
+    owner: Account,
 ) -> None:
     config = make_batch_config(
         start_batch_index=0,
@@ -207,8 +207,8 @@ def test_add_tx_pays_fee(
     config_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
-    owner: Address,
-    accounts: Sequence[Address],
+    owner: Account,
+    accounts: Sequence[Account],
 ) -> None:
     fee_receiver = accounts[1]
     config = make_batch_config(
@@ -225,12 +225,12 @@ def test_add_tx_pays_fee(
     assert fee_receiver.balance() == initial_balance + 150
 
 
-def test_set_fee(batcher_contract: Any, owner: Address) -> None:
+def test_set_fee(batcher_contract: Any, owner: Account) -> None:
     assert batcher_contract.minFee() == 0
     batcher_contract.setMinFee(100, {"from": owner})
     assert batcher_contract.minFee() == 100
 
 
-def test_non_owner_cannot_set_fee(batcher_contract: Any, non_owner: Address) -> None:
+def test_non_owner_cannot_set_fee(batcher_contract: Any, non_owner: Account) -> None:
     with brownie.reverts():
         batcher_contract.setMinFee(100, {"from": non_owner})
