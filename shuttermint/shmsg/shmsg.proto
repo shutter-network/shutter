@@ -8,3 +8,15 @@ message PublicKeyCommitment {
         bytes commitment = 2;
         bytes signature = 3;
 }
+
+message PublicKeyShare {
+        string batch_id = 1;
+        bytes key=2;
+}
+
+message Message {
+        oneof payload {
+              PublicKeyCommitment public_key_commitment = 1;
+              PublicKeyShare public_key_share = 2;
+        }
+}

@@ -149,12 +149,13 @@ jobs:
       - restore_cache:
           keys:
             - shuttermint-go-v1-{{ checksum "go.sum" }}
-      - run: go build
+      - run: go build -v
       - save_cache:
           key: shuttermint-go-v1-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
+      - run: go test -v ./...
 
 workflows:
   version: 2

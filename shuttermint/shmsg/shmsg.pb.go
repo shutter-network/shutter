@@ -88,6 +88,141 @@ func (x *PublicKeyCommitment) GetSignature() []byte {
 	return nil
 }
 
+type PublicKeyShare struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	BatchId string `protobuf:"bytes,1,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	Key     []byte `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+}
+
+func (x *PublicKeyShare) Reset() {
+	*x = PublicKeyShare{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_shmsg_shmsg_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PublicKeyShare) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublicKeyShare) ProtoMessage() {}
+
+func (x *PublicKeyShare) ProtoReflect() protoreflect.Message {
+	mi := &file_shmsg_shmsg_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublicKeyShare.ProtoReflect.Descriptor instead.
+func (*PublicKeyShare) Descriptor() ([]byte, []int) {
+	return file_shmsg_shmsg_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PublicKeyShare) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
+}
+
+func (x *PublicKeyShare) GetKey() []byte {
+	if x != nil {
+		return x.Key
+	}
+	return nil
+}
+
+type Message struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Payload:
+	//	*Message_PublicKeyCommitment
+	//	*Message_PublicKeyShare
+	Payload isMessage_Payload `protobuf_oneof:"payload"`
+}
+
+func (x *Message) Reset() {
+	*x = Message{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_shmsg_shmsg_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Message) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Message) ProtoMessage() {}
+
+func (x *Message) ProtoReflect() protoreflect.Message {
+	mi := &file_shmsg_shmsg_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
+	return file_shmsg_shmsg_proto_rawDescGZIP(), []int{2}
+}
+
+func (m *Message) GetPayload() isMessage_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (x *Message) GetPublicKeyCommitment() *PublicKeyCommitment {
+	if x, ok := x.GetPayload().(*Message_PublicKeyCommitment); ok {
+		return x.PublicKeyCommitment
+	}
+	return nil
+}
+
+func (x *Message) GetPublicKeyShare() *PublicKeyShare {
+	if x, ok := x.GetPayload().(*Message_PublicKeyShare); ok {
+		return x.PublicKeyShare
+	}
+	return nil
+}
+
+type isMessage_Payload interface {
+	isMessage_Payload()
+}
+
+type Message_PublicKeyCommitment struct {
+	PublicKeyCommitment *PublicKeyCommitment `protobuf:"bytes,1,opt,name=public_key_commitment,json=publicKeyCommitment,proto3,oneof"`
+}
+
+type Message_PublicKeyShare struct {
+	PublicKeyShare *PublicKeyShare `protobuf:"bytes,2,opt,name=public_key_share,json=publicKeyShare,proto3,oneof"`
+}
+
+func (*Message_PublicKeyCommitment) isMessage_Payload() {}
+
+func (*Message_PublicKeyShare) isMessage_Payload() {}
+
 var File_shmsg_shmsg_proto protoreflect.FileDescriptor
 
 var file_shmsg_shmsg_proto_rawDesc = []byte{
@@ -99,8 +234,23 @@ var file_shmsg_shmsg_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c,
 	0x52, 0x0a, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x1c, 0x0a, 0x09,
 	0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0c, 0x52,
-	0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b,
-	0x73, 0x68, 0x6d, 0x73, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22, 0x3d, 0x0a, 0x0e, 0x50, 0x75,
+	0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x53, 0x68, 0x61, 0x72, 0x65, 0x12, 0x19, 0x0a, 0x08,
+	0x62, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x62, 0x61, 0x74, 0x63, 0x68, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x22, 0xa9, 0x01, 0x0a, 0x07, 0x4d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x50, 0x0a, 0x15, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x5f,
+	0x6b, 0x65, 0x79, 0x5f, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x73, 0x68, 0x6d, 0x73, 0x67, 0x2e, 0x50, 0x75, 0x62,
+	0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x6d, 0x65, 0x6e, 0x74,
+	0x48, 0x00, 0x52, 0x13, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d,
+	0x6d, 0x69, 0x74, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x41, 0x0a, 0x10, 0x70, 0x75, 0x62, 0x6c, 0x69,
+	0x63, 0x5f, 0x6b, 0x65, 0x79, 0x5f, 0x73, 0x68, 0x61, 0x72, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x15, 0x2e, 0x73, 0x68, 0x6d, 0x73, 0x67, 0x2e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x63,
+	0x4b, 0x65, 0x79, 0x53, 0x68, 0x61, 0x72, 0x65, 0x48, 0x00, 0x52, 0x0e, 0x70, 0x75, 0x62, 0x6c,
+	0x69, 0x63, 0x4b, 0x65, 0x79, 0x53, 0x68, 0x61, 0x72, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b, 0x73, 0x68, 0x6d, 0x73, 0x67,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -115,16 +265,20 @@ func file_shmsg_shmsg_proto_rawDescGZIP() []byte {
 	return file_shmsg_shmsg_proto_rawDescData
 }
 
-var file_shmsg_shmsg_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_shmsg_shmsg_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_shmsg_shmsg_proto_goTypes = []interface{}{
 	(*PublicKeyCommitment)(nil), // 0: shmsg.PublicKeyCommitment
+	(*PublicKeyShare)(nil),      // 1: shmsg.PublicKeyShare
+	(*Message)(nil),             // 2: shmsg.Message
 }
 var file_shmsg_shmsg_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: shmsg.Message.public_key_commitment:type_name -> shmsg.PublicKeyCommitment
+	1, // 1: shmsg.Message.public_key_share:type_name -> shmsg.PublicKeyShare
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_shmsg_shmsg_proto_init() }
@@ -145,6 +299,34 @@ func file_shmsg_shmsg_proto_init() {
 				return nil
 			}
 		}
+		file_shmsg_shmsg_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PublicKeyShare); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_shmsg_shmsg_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Message); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_shmsg_shmsg_proto_msgTypes[2].OneofWrappers = []interface{}{
+		(*Message_PublicKeyCommitment)(nil),
+		(*Message_PublicKeyShare)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -152,7 +334,7 @@ func file_shmsg_shmsg_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_shmsg_shmsg_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
