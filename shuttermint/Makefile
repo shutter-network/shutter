@@ -14,7 +14,10 @@ init: tmhome
 run: build init
 	./shuttermint --config ${TMHOME}/config/config.toml
 
+test:
+	go test -v ./...
+
 clean:
 	rm -rf ./shuttermint ./tmhome
 
-.PHONY: build run init clean
+.PHONY: build run init clean test
