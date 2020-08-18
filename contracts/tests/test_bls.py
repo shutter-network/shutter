@@ -4,6 +4,8 @@ from eth_utils import decode_hex
 from py_ecc.fields import bn128_FQ
 from py_ecc.fields import bn128_FQ2
 
+from tests.bls import aggregate_public_keys
+from tests.bls import aggregate_signatures
 from tests.bls import BLSPublicKey
 from tests.bls import BLSSignature
 from tests.bls import make_private_key
@@ -73,3 +75,33 @@ def test_bls_contract(test_bls_contract: Any) -> None:
     sig = sign(sk, msg)
 
     test_bls_contract.verify(public_key_to_contract_format(pk), msg, sig)
+
+
+def test_aggregate_single_public_key() -> None:
+    single_public_key = private_to_public_key(make_private_key())
+    assert aggregate_public_keys([single_public_key]) == single_public_key
+
+
+def test_aggregate_two_public_keys() -> None:
+    two_private_keys = [make_private_key() for _ in range(2)]
+    two_public_keys = [private_to_public_key(sk) for sk in two_private_keys]
+    aggregated_public_key = aggregate_public_keys(two_public_keys)
+    assert aggregate_public_keys(list(reversed(two_public_keys))) == aggregated_public_key
+
+
+def test_aggregate_single_signature() -> None:
+    sk = make_private_key()
+    sig = sign(sk, b"msg")
+    aggregated_signature = aggregate_signatures([sig])
+    assert aggregated_signature == sig
+
+
+def test_aggregate_two_signatures() -> None:
+    two_private_keys = [make_private_key() for _ in range(2)]
+    two_public_keys = [private_to_public_key(sk) for sk in two_private_keys]
+    msg = b"msg"
+    individual_signatures = [sign(sk, msg) for sk in two_private_keys]
+
+    aggregated_signature = aggregate_signatures(individual_signatures)
+    aggregated_public_key = aggregate_public_keys(two_public_keys)
+    assert verify(aggregated_public_key, msg, aggregated_signature)

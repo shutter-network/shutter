@@ -1,5 +1,7 @@
 import secrets
 from typing import NewType
+from typing import Optional
+from typing import Sequence
 from typing import Tuple
 
 from eth_utils import keccak
@@ -44,3 +46,21 @@ def verify(public_key: BLSPublicKey, message: bytes, signature: BLSSignature) ->
     p1 = bn128.pairing(public_key, message_g1)
     p2 = bn128.pairing(bn128.G2, signature)
     return p1 == p2
+
+
+def aggregate_public_keys(public_keys: Sequence[BLSPublicKey]) -> BLSPublicKey:
+    assert len(public_keys) >= 1
+    result: Optional[Tuple[bn128_FQ2, bn128_FQ2]] = None  # point at infinity
+    for public_key in public_keys:
+        result = bn128.add(result, public_key)
+    assert result is not None
+    return BLSPublicKey(result)
+
+
+def aggregate_signatures(signatures: Sequence[BLSSignature]) -> BLSSignature:
+    assert len(signatures) >= 1
+    result: Optional[Tuple[bn128_FQ, bn128_FQ]] = None
+    for signature in signatures:
+        result = bn128.add(result, signature)
+    assert result is not None
+    return BLSSignature(result)
