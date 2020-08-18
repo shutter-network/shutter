@@ -70,6 +70,14 @@ def test_bls_contract(TestBLS: ContractContainer, accounts: Sequence[Account]) -
 
 
 @pytest.fixture
+def bls_registration_contract(
+    BLSRegistrationContract: ContractContainer, accounts: Sequence[Account]
+) -> Any:
+    bls_registration_contract = accounts[0].deploy(BLSRegistrationContract)
+    return bls_registration_contract
+
+
+@pytest.fixture
 def mock_target_function_selector(MockTargetContract: ContractContainer) -> bytes:
     function_name = "call"
     for selector, name in MockTargetContract.selectors.items():
