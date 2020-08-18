@@ -20,4 +20,7 @@ test:
 clean:
 	rm -rf ./shuttermint ./tmhome
 
-.PHONY: build run init clean test
+install-abigen:
+	go get github.com/ethereum/go-ethereum/cmd/abigen
+
+.PHONY: build run init clean test install-abigen
