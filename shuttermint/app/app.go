@@ -40,7 +40,7 @@ func (bc *BatchConfig) isKeyper(candidate common.Address) bool {
 // PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
 // this already holds the public key
 type PublicKeyCommitment struct {
-	Keyper common.Address
+	Sender common.Address
 	pubkey []byte
 }
 
@@ -50,13 +50,15 @@ type BatchKeys struct {
 	Commitments []PublicKeyCommitment
 }
 
+// AddPublicKeyCommitment adds a PublicKeyCommitment to the batch. The PublicKeyCommitment must be
+// sent from configured Keyper
 func (bk *BatchKeys) AddPublicKeyCommitment(commitment PublicKeyCommitment) error {
-	if !bk.Config.isKeyper(commitment.Keyper) {
+	if !bk.Config.isKeyper(commitment.Sender) {
 		return errors.New("Not a keyper")
 	}
 
 	for _, comm := range bk.Commitments {
-		if comm.Keyper == commitment.Keyper {
+		if comm.Sender == commitment.Sender {
 			return errors.New("Already have commitment")
 		}
 	}
