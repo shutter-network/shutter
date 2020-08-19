@@ -1,6 +1,11 @@
 package app
 
 import (
+	"encoding/base64"
+	"fmt"
+
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
@@ -59,7 +64,47 @@ func (ShutterApp) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Response
 	return abcitypes.ResponseBeginBlock{}
 }
 
+// decodeTx decodes the given transaction.  It's kind of strange that we have do URL decode the
+// message outselves instead of tendermint doing it for us.
+func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Address, msg *shmsg.Message, err error) {
+	var signedMsg []byte
+	signedMsg, err = base64.RawURLEncoding.DecodeString(string(req.Tx))
+	if err != nil {
+		return
+	}
+	signer, err = shmsg.GetSigner(signedMsg)
+	if err != nil {
+		return
+	}
+
+	// XXX we need to check that the signer is allowed
+	fmt.Println("Signer:", signer.Hex())
+
+	msg, err = shmsg.GetMessage(signedMsg)
+
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+	// signedTransaction := make([]byte,  base64.RawURLEncoding.DecodedLen(len(req.Tx)))
+
+	signer, msg, err := app.decodeTx(req)
+
+	if err != nil {
+		fmt.Println("Error while decoding transaction:", err)
+		return abcitypes.ResponseDeliverTx{
+			Code:   1,
+			Events: []types.Event{}}
+	}
+	return app.deliverMessage(msg, signer)
+}
+
+func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
+	fmt.Println("MSG:", msg)
+
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []types.Event{}}
