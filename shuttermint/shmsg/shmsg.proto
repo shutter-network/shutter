@@ -4,9 +4,8 @@ package shmsg;
 option go_package = ".;shmsg";
 
 message PublicKeyCommitment {
-        string batch_id = 1;
+        uint64 batchIndex = 1;
         bytes commitment = 2;
-        bytes signature = 3;
 }
 
 message PublicKeyShare {

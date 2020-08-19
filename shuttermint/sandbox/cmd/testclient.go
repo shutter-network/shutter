@@ -12,9 +12,8 @@ func makeMessage() *shmsg.Message {
 	return &shmsg.Message{
 		Payload: &shmsg.Message_PublicKeyCommitment{
 			PublicKeyCommitment: &shmsg.PublicKeyCommitment{
-				BatchId:    "foo-1",
+				BatchIndex: 1,
 				Commitment: []byte("foobar"),
-				Signature:  []byte("signature"),
 			},
 		},
 	}

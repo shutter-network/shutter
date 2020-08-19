@@ -10,9 +10,8 @@ func makeMessage() *Message {
 	return &Message{
 		Payload: &Message_PublicKeyCommitment{
 			PublicKeyCommitment: &PublicKeyCommitment{
-				BatchId:    "foo-1",
+				BatchIndex: 1,
 				Commitment: []byte("foobar"),
-				Signature:  []byte("signature"),
 			},
 		},
 	}
