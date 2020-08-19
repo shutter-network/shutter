@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -18,7 +19,56 @@ type KeyGenerationRound struct {
 	votes []string
 }
 
+// BatchConfig is the configuration we use for a consecutive sequence of batches.
+// This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
+// deployed on the main chain.
+
+type BatchConfig struct {
+	Keypers []common.Address
+}
+
+// isKeyper checks if the given candidate Address is from a keyper
+func (bc *BatchConfig) isKeyper(candidate common.Address) bool {
+	for _, k := range bc.Keypers {
+		if k == candidate {
+			return true
+		}
+	}
+	return false
+}
+
+// PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
+// this already holds the public key
+type PublicKeyCommitment struct {
+	Keyper common.Address
+	pubkey []byte
+}
+
+// The BatchKeys structure is used to manage the key generation process for a certain batch
+type BatchKeys struct {
+	Config      *BatchConfig
+	Commitments []PublicKeyCommitment
+}
+
+func (bk *BatchKeys) AddPublicKeyCommitment(commitment PublicKeyCommitment) error {
+	if !bk.Config.isKeyper(commitment.Keyper) {
+		return errors.New("Not a keyper")
+	}
+
+	for _, comm := range bk.Commitments {
+		if comm.Keyper == commitment.Keyper {
+			return errors.New("Already have commitment")
+		}
+	}
+	bk.Commitments = append(bk.Commitments, commitment)
+	return nil
+}
+
+// ShutterApp holds our data structures used for the tendermint app.  At the moment we don't
+// persist anything on disk. When starting tendermint, it will 'feed' us with all of the messages
+// received via deliverMessage
 type ShutterApp struct {
+	batches map[uint64]BatchKeys
 }
 
 var _ abcitypes.Application = (*ShutterApp)(nil)
