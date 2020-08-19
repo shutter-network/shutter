@@ -23,4 +23,7 @@ clean:
 install-abigen:
 	go get github.com/ethereum/go-ethereum/cmd/abigen
 
+install-protoc-gen-go:
+	go get google.golang.org/protobuf/cmd/protoc-gen-go
+
 .PHONY: build run init clean test install-abigen
