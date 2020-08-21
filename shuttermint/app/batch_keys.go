@@ -1,9 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // AddPublicKeyCommitment adds a PublicKeyCommitment to the batch. The PublicKeyCommitment must be
@@ -47,7 +49,15 @@ func (bk *BatchKeys) AddSecretShare(share SecretShare) error {
 		}
 	}
 
-	_ = pkc // XXX check that the secret key matches the public key
+	// check that the secret key matches the public key
+	privkey, err := crypto.ToECDSA(share.Privkey)
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(crypto.FromECDSAPub(&privkey.PublicKey), pkc.Pubkey) {
+		return errors.New("pubkeys do not match")
+	}
 	bk.SecretShares = append(bk.SecretShares, share)
 	return nil
 }
