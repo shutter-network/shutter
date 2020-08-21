@@ -39,9 +39,15 @@ func main() {
 		os.Exit(2)
 	}
 
-	node.Start()
+	err = node.Start()
+	if err != nil {
+		panic(err)
+	}
 	defer func() {
-		node.Stop()
+		err = node.Stop()
+		if err != nil {
+			panic(err)
+		}
 		node.Wait()
 	}()
 

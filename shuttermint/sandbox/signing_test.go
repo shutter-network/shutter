@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -20,7 +21,8 @@ func TestSigning(t *testing.T) {
 	msg := []byte("message to be signed")
 
 	hash := sha3.New256()
-	hash.Write(msg)
+	_, err = hash.Write(msg)
+	require.Nil(t, err)
 	h := hash.Sum(nil)
 
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
