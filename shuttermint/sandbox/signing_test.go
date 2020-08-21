@@ -38,9 +38,9 @@ func TestSigning(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error %s", err)
 	}
-	signer_address := crypto.PubkeyToAddress(*pubkey)
-	t.Logf("signer %s", signer_address.Hex())
-	if signer_address != address {
+	signerAddress := crypto.PubkeyToAddress(*pubkey)
+	t.Logf("signer %s", signerAddress.Hex())
+	if signerAddress != address {
 		t.Fatalf("addresses to not match")
 	}
 }

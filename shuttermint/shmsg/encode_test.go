@@ -18,13 +18,13 @@ func makeMessage() *Message {
 }
 
 func TestEncodeDecode(t *testing.T) {
-	encoded, err := UrlEncodeMessage(makeMessage())
+	encoded, err := URLEncodeMessage(makeMessage())
 	if err != nil {
 		t.Fatalf("Got error while encoding: %s", err)
 
 	}
 	t.Logf("Encoded: %s", encoded)
-	msg, err := UrlDecodeMessage(encoded)
+	msg, err := URLDecodeMessage(encoded)
 	if err != nil {
 		t.Fatalf("Got error while decoding: %s", err)
 	}
