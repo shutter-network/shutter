@@ -155,7 +155,10 @@ jobs:
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
-      - run: go test -v ./...
+      - run: mkdir report
+      - run: gotestsum -f testname --junitfile report/unit-tests.xml
+      - store_test_results:
+          path: report
 
 workflows:
   version: 2
