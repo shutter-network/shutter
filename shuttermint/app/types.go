@@ -1,6 +1,10 @@
 package app
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"crypto/ecdsa"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // BatchConfig is the configuration we use for a consecutive sequence of batches.
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
@@ -28,6 +32,8 @@ type BatchKeys struct {
 	Config       *BatchConfig
 	Commitments  []PublicKeyCommitment
 	SecretShares []SecretShare
+	PublicKey    *ecdsa.PublicKey
+	PrivateKey   *ecdsa.PrivateKey
 }
 
 // ShutterApp holds our data structures used for the tendermint app.  At the moment we don't

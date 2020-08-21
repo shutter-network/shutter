@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 	"testing"
 
@@ -19,9 +20,12 @@ func init() {
 
 // TestAddpublickeycommitment tests the basic functionality of AddPublicKeyCommitment
 func TestAddPublicKeyCommitment(t *testing.T) {
+	privkey, err := crypto.GenerateKey()
+	require.Nil(t, err, "key generation failed")
+	pubkey := crypto.FromECDSAPub(&privkey.PublicKey)
 	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5]}}
 	t.Logf("batch: %+v", batchKeys)
-	err := batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0]})
+	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
 	if err != nil {
 		t.Fatalf("could not add public key commitment: %s", err)
 	}
@@ -30,7 +34,7 @@ func TestAddPublicKeyCommitment(t *testing.T) {
 		t.Fatalf("wrong number of commitments: %s", batchKeys.Commitments)
 	}
 
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0]})
+	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
 	if err == nil {
 		t.Fatalf("no error")
 	}
@@ -39,7 +43,7 @@ func TestAddPublicKeyCommitment(t *testing.T) {
 		t.Fatalf("wrong number of commitments: %s", batchKeys.Commitments)
 	}
 
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[6]})
+	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[6], Pubkey: pubkey})
 	if err == nil {
 		t.Fatalf("no error")
 	}
@@ -80,4 +84,40 @@ func TestAddSecretShare(t *testing.T) {
 
 	err = batchKeys.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key1)})
 	require.NotNil(t, err, "providing a secret key a second time should fail")
+}
+
+func TestAddSecretShareSetsKeys(t *testing.T) {
+	var keys [5]*ecdsa.PrivateKey
+	for i := 0; i < len(keys); i++ {
+		k, err := crypto.GenerateKey()
+		require.Nil(t, err)
+		keys[i] = k
+	}
+	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
+	for i, k := range keys {
+		err := batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{
+			Sender: addresses[i],
+			Pubkey: crypto.FromECDSAPub(&k.PublicKey)})
+		require.Nil(t, err)
+		if i+1 < 3 {
+			require.Nil(t, batchKeys.PublicKey, "should not have public key yet", i)
+		} else {
+			require.NotNil(t, batchKeys.PublicKey)
+			require.Equal(t, batchKeys.PublicKey, &keys[2].PublicKey)
+		}
+	}
+
+	for i, j := range []int{2, 1, 0, 3, 4} {
+		k := keys[j]
+		err := batchKeys.AddSecretShare(SecretShare{
+			Sender:  addresses[j],
+			Privkey: crypto.FromECDSA(k)})
+		require.Nil(t, err)
+		if i+1 < 3 {
+			require.Nil(t, batchKeys.PrivateKey, "should not have public key yet", i)
+		} else {
+			require.NotNil(t, batchKeys.PrivateKey)
+			require.Equal(t, batchKeys.PrivateKey, keys[2])
+		}
+	}
 }
