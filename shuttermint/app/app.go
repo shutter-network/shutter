@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/ecdsa"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -17,19 +18,46 @@ import (
 // the application interface we're implementing here.
 // https://docs.tendermint.com/master/spec/abci/apps.html also provides some useful information
 
-var _ abcitypes.Application = (*ShutterApp)(nil)
-
 // CheckTx checks if a transaction is valid. If return Code != 0, it will be rejected from the
 // mempool and hence not broadcasted to other peers and not included in a proposal block.
-
 func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-
 	return abcitypes.ResponseCheckTx{Code: 0, GasWanted: 1}
 }
 
+// NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
-	app := ShutterApp{}
+	app := ShutterApp{Configs: []*BatchConfig{{}}}
+
 	return &app
+}
+
+// getConfig returns the BatchConfig for the given batchIndex
+func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
+	for i := len(app.Configs) - 1; i >= 0; i-- {
+		if app.Configs[i].StartBatchIndex <= batchIndex {
+			return app.Configs[i]
+		}
+	}
+	panic("guard element missing")
+}
+
+func (app *ShutterApp) addConfig(cfg BatchConfig) error {
+	lastConfig := app.Configs[len(app.Configs)-1]
+	if lastConfig.StartBatchIndex >= cfg.StartBatchIndex {
+		return errors.New("StartBatchIndex must be greater than previous StartBatchIndex")
+	}
+	app.Configs = append(app.Configs, &cfg)
+	return nil
+}
+
+// getBatch returns the BatchKeys for the given batchIndex
+func (app *ShutterApp) getBatch(batchIndex uint64) BatchKeys {
+	bk, ok := app.Batches[batchIndex]
+	if !ok {
+		bk.Config = app.getConfig(batchIndex)
+	}
+
+	return bk
 }
 
 func (ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
@@ -105,10 +133,7 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 }
 
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
-	bk, ok := app.Batches[pkc.BatchIndex]
-	if !ok {
-		bk.Config = &BatchConfig{Keypers: []common.Address{}, Threshhold: 2}
-	}
+	bk := app.getBatch(pkc.BatchIndex)
 	publicKeyBefore := bk.PublicKey
 	err := bk.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
 	if err != nil {

@@ -10,8 +10,9 @@ import (
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
 // deployed on the main chain.
 type BatchConfig struct {
-	Keypers    []common.Address
-	Threshhold int32
+	StartBatchIndex uint64
+	Keypers         []common.Address
+	Threshhold      uint32
 }
 
 // PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
@@ -40,5 +41,6 @@ type BatchKeys struct {
 // persist anything on disk. When starting tendermint, it will 'feed' us with all of the messages
 // received via deliverMessage
 type ShutterApp struct {
+	Configs []*BatchConfig
 	Batches map[uint64]BatchKeys
 }
