@@ -101,9 +101,6 @@ func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Addres
 		return
 	}
 
-	// XXX we need to check that the signer is allowed
-	fmt.Println("Signer:", signer.Hex())
-
 	msg, err = shmsg.GetMessage(signedMsg)
 
 	if err != nil {
