@@ -148,15 +148,15 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v1-{{ checksum "go.sum" }}
-      - run: go build -v
+            - shuttermint-go-v2-{{ checksum "go.sum" }}
+      - run: go get -t -v ./...
       - save_cache:
-          key: shuttermint-go-v1-{{ checksum "go.sum" }}
+          key: shuttermint-go-v2-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
       - run: mkdir report
-      - run: gotestsum -f testname --junitfile report/unit-tests.xml
+      - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
       - store_test_results:
           path: report
 
