@@ -130,6 +130,14 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
 }
 
+func decodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
+	data, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.UnmarshalPubkey(data)
+}
+
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
 	bk := app.getBatch(pkc.BatchIndex)
 	publicKeyBefore := bk.PublicKey

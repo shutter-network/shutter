@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/ecdsa"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -59,7 +60,7 @@ func TestKeyGeneration(t *testing.T) {
 	for i := 0; i < len(keys); i++ {
 		k, err := crypto.GenerateKey()
 		if err != nil {
-			t.Fatalf("Could no generate key: %s", err)
+			t.Fatalf("Could not generate key: %s", err)
 		}
 		keys[i] = k
 	}
@@ -111,4 +112,17 @@ func TestKeyGeneration(t *testing.T) {
 		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
 		res3)
 
+}
+
+func TestEncodePubkeyForEvent(t *testing.T) {
+	key, err := crypto.GenerateKey()
+	require.Nil(t, err, "Could not generate key")
+	encoded := encodePubkeyForEvent(&key.PublicKey)
+	t.Logf("Encoded: %s", encoded)
+	require.True(t, utf8.ValidString(encoded))
+
+	decoded, err := decodePubkeyFromEvent(encoded)
+	require.Nil(t, err, "could not decode pubkey")
+	t.Logf("Decoded: %+v", decoded)
+	require.Equal(t, key.PublicKey, *decoded)
 }
