@@ -13,9 +13,15 @@ message PublicKeyShare {
         bytes key=2;
 }
 
+message SecretShare {
+        uint64 batchIndex = 1;
+        bytes privkey = 2;
+}
+
 message Message {
         oneof payload {
               PublicKeyCommitment public_key_commitment = 1;
               PublicKeyShare public_key_share = 2;
+              SecretShare secret_share = 3;
         }
 }
