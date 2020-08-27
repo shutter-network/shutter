@@ -112,6 +112,43 @@ func TestKeyGeneration(t *testing.T) {
 		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
 		res3)
 
+	// --- Now let's deliver the SecretShare's
+	ss1 := app.deliverSecretShare(
+		&shmsg.SecretShare{
+			BatchIndex: 200,
+			Privkey:    crypto.FromECDSA(keys[0])},
+		keypers[0])
+	require.Equal(t, types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)}, ss1)
+	ss2 := app.deliverSecretShare(
+		&shmsg.SecretShare{
+			BatchIndex: 200,
+			Privkey:    crypto.FromECDSA(keys[1])},
+		keypers[1])
+	require.Equal(
+		t,
+		types.ResponseDeliverTx{
+			Code: 0,
+			Events: []types.Event{
+				{
+					Type: "shutter.privkey-generated",
+					Attributes: []kv.Pair{
+						{
+							Key:   []byte("BatchIndex"),
+							Value: []byte("200"),
+						},
+						{
+							Key:   []byte("Privkey"),
+							Value: []byte(encodePrivkeyForEvent(keys[1])),
+						},
+					},
+				}}},
+		ss2)
+	ss3 := app.deliverSecretShare(
+		&shmsg.SecretShare{
+			BatchIndex: 200,
+			Privkey:    crypto.FromECDSA(keys[2])},
+		keypers[2])
+	require.Equal(t, types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)}, ss3)
 }
 
 func TestEncodePubkeyForEvent(t *testing.T) {

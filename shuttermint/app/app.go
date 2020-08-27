@@ -185,7 +185,7 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 	if privateKeyBefore == nil && bk.PrivateKey != nil {
 		// we have generated a public key with this PublicKeyCommitment
 		events = append(events, types.Event{
-			Type: "shutter.pubkey-generated",
+			Type: "shutter.privkey-generated",
 			Attributes: []kv.Pair{
 				{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", ss.BatchIndex))},
 				{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(bk.PrivateKey))}},
