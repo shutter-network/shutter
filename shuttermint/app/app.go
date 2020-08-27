@@ -26,9 +26,10 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 
 // NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
-	app := ShutterApp{Configs: []*BatchConfig{{}}}
-
-	return &app
+	return &ShutterApp{
+		Configs: []*BatchConfig{{}},
+		Batches: make(map[uint64]BatchKeys),
+	}
 }
 
 // getConfig returns the BatchConfig for the given batchIndex

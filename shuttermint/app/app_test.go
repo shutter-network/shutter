@@ -1,9 +1,14 @@
 package app
 
 import (
+	"crypto/ecdsa"
 	"testing"
 
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/kv"
 )
 
 func TestNewShutterApp(t *testing.T) {
@@ -44,4 +49,66 @@ func TestAddConfig(t *testing.T) {
 
 	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 1})
 	require.NotNil(t, err, "Expected error, StartBatchIndex must increase")
+}
+
+func TestKeyGeneration(t *testing.T) {
+	app := NewShutterApp()
+	keypers := addresses[:3]
+
+	var keys [3]*ecdsa.PrivateKey
+	for i := 0; i < len(keys); i++ {
+		k, err := crypto.GenerateKey()
+		if err != nil {
+			t.Fatalf("Could no generate key: %s", err)
+		}
+		keys[i] = k
+	}
+
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 2, Keypers: keypers})
+	require.Nil(t, err)
+	res1 := app.deliverPublicKeyCommitment(
+		&shmsg.PublicKeyCommitment{
+			BatchIndex: 200,
+			Commitment: crypto.FromECDSAPub(&keys[0].PublicKey)},
+		keypers[0])
+	require.Equal(
+		t,
+		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
+		res1)
+
+	res2 := app.deliverPublicKeyCommitment(
+		&shmsg.PublicKeyCommitment{
+			BatchIndex: 200,
+			Commitment: crypto.FromECDSAPub(&keys[1].PublicKey)},
+		keypers[1])
+	// We've reached the threshold, there should be an event of Type "shutter.pubkey-generated"
+	require.Equal(
+		t,
+		types.ResponseDeliverTx{
+			Code: 0,
+			Events: []types.Event{
+				{
+					Type: "shutter.pubkey-generated",
+					Attributes: []kv.Pair{
+						{
+							Key:   []byte("BatchIndex"),
+							Value: []byte("200"),
+						},
+						{
+							Key:   []byte("Pubkey"),
+							Value: []byte(encodePubkeyForEvent(&keys[1].PublicKey)),
+						},
+					},
+				}}},
+		res2)
+	res3 := app.deliverPublicKeyCommitment(
+		&shmsg.PublicKeyCommitment{
+			BatchIndex: 200,
+			Commitment: crypto.FromECDSAPub(&keys[2].PublicKey)},
+		keypers[2])
+	require.Equal(
+		t,
+		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
+		res3)
+
 }
