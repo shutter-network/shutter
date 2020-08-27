@@ -138,6 +138,10 @@ func decodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	return crypto.UnmarshalPubkey(data)
 }
 
+func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
+	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
+}
+
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
 	bk := app.getBatch(pkc.BatchIndex)
 	publicKeyBefore := bk.PublicKey
@@ -166,11 +170,42 @@ func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment
 		Events: events}
 }
 
+func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.Address) abcitypes.ResponseDeliverTx {
+	bk := app.getBatch(ss.BatchIndex)
+	privateKeyBefore := bk.PrivateKey
+	err := bk.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
+	if err != nil {
+		fmt.Println("GOT ERROR", err)
+		return abcitypes.ResponseDeliverTx{
+			Code:   1,
+			Events: []types.Event{}}
+	}
+	app.Batches[ss.BatchIndex] = bk
+	var events []types.Event
+	if privateKeyBefore == nil && bk.PrivateKey != nil {
+		// we have generated a public key with this PublicKeyCommitment
+		events = append(events, types.Event{
+			Type: "shutter.pubkey-generated",
+			Attributes: []kv.Pair{
+				{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", ss.BatchIndex))},
+				{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(bk.PrivateKey))}},
+		})
+	}
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: events}
+
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	fmt.Println("MSG:", msg)
 	if msg.GetPublicKeyCommitment() != nil {
 		return app.deliverPublicKeyCommitment(msg.GetPublicKeyCommitment(), sender)
 	}
+	if msg.GetSecretShare() != nil {
+		return app.deliverSecretShare(msg.GetSecretShare(), sender)
+	}
+
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []types.Event{}}
