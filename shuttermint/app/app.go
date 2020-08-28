@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/common"
@@ -197,6 +198,47 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 
 }
 
+func encodeAddressesForEvent(addr []common.Address) string {
+	var hex []string
+	for _, a := range addr {
+		hex = append(hex, a.Hex())
+	}
+	return strings.Join(hex, ",")
+}
+
+func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
+	// XXX everyone can call this at the moment
+	var keypers []common.Address
+	for _, k := range msg.Keypers {
+		keypers = append(keypers, common.BytesToAddress(k))
+	}
+
+	bc := BatchConfig{
+		StartBatchIndex: msg.StartBatchIndex,
+		Keypers:         keypers,
+		Threshhold:      msg.Threshold,
+	}
+	err := app.addConfig(bc)
+	if err != nil {
+		return abcitypes.ResponseDeliverTx{
+			Code:   1,
+			Events: []types.Event{}}
+	}
+
+	var events []types.Event
+	events = append(events, types.Event{
+		Type: "shutter.batch-config",
+		Attributes: []kv.Pair{
+			{Key: []byte("StartBatchIndex"), Value: []byte(fmt.Sprintf("%d", bc.StartBatchIndex))},
+			{Key: []byte("Threshhold"), Value: []byte(fmt.Sprintf("%d", bc.Threshhold))},
+			{Key: []byte("Keypers"), Value: []byte(encodeAddressesForEvent(keypers))},
+		},
+	})
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: events}
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	fmt.Println("MSG:", msg)
 	if msg.GetPublicKeyCommitment() != nil {
@@ -205,7 +247,9 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	if msg.GetSecretShare() != nil {
 		return app.deliverSecretShare(msg.GetSecretShare(), sender)
 	}
-
+	if msg.GetBatchConfig() != nil {
+		return app.deliverBatchConfig(msg.GetBatchConfig(), sender)
+	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []types.Event{}}

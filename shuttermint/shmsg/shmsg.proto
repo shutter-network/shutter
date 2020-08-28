@@ -18,10 +18,17 @@ message SecretShare {
         bytes privkey = 2;
 }
 
+message BatchConfig {
+        uint64 start_batch_index = 1;
+        repeated bytes keypers = 2;
+        uint32 threshold = 3 ;
+}
+
 message Message {
         oneof payload {
               PublicKeyCommitment public_key_commitment = 1;
               PublicKeyShare public_key_share = 2;
               SecretShare secret_share = 3;
+              BatchConfig batch_config = 4;
         }
 }
