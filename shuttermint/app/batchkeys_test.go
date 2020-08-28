@@ -2,7 +2,6 @@ package app
 
 import (
 	"crypto/ecdsa"
-	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,11 +9,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var keys [10]*ecdsa.PrivateKey
 var addresses [10]common.Address
 
 func init() {
 	for i := 0; i < 10; i++ {
-		addresses[i] = common.BigToAddress(big.NewInt(int64(i)))
+		var d [32]byte
+		d[31] = byte(i + 1)
+		k, err := crypto.ToECDSA(d[:])
+		if err != nil {
+			panic(err)
+		}
+		keys[i] = k
+		addresses[i] = crypto.PubkeyToAddress(k.PublicKey)
 	}
 }
 
