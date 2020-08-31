@@ -25,6 +25,11 @@ type BatchParams struct {
 	PrivateKeyGenerationStartTime time.Time
 }
 
+type Keyper struct {
+	SigningKey     *ecdsa.PrivateKey
+	ShuttermintURL string
+}
+
 func NewBatchParams(BatchIndex uint64) BatchParams {
 	ts := int64(BatchIndex) * int64(RoundInterval)
 
