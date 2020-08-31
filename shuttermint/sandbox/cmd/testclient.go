@@ -6,6 +6,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
 )
@@ -22,6 +23,7 @@ func makeMessage() *shmsg.Message {
 }
 
 func main() {
+	var cl client.Client
 	cl, err := http.New("http://localhost:26657", "/websocket")
 	if err != nil {
 		panic(err)
