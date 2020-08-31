@@ -2,23 +2,61 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"log"
+	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
+	shuttermintURL := "http://localhost:26657"
 	privateKey, err := crypto.HexToECDSA("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19")
 	if err != nil {
 		panic(err)
 	}
-	err = keyper.Keyper{
-		SigningKey:     privateKey,
-		ShuttermintURL: "http://localhost:26657",
-	}.Run()
+
+	var keys [3]*ecdsa.PrivateKey
+	var keypers [3]common.Address
+	for i := 0; i < 3; i++ {
+		k, err := crypto.GenerateKey()
+		if err != nil {
+			panic(err)
+		}
+		keys[i] = k
+		keypers[i] = crypto.PubkeyToAddress(k.PublicKey)
+	}
+
+	var cl client.Client
+	cl, err = http.New(shuttermintURL, "/websocket")
 	if err != nil {
 		panic(err)
 	}
+
+	ms := keyper.NewMessageSender(cl, privateKey)
+	bc := keyper.NewBatchConfig(keyper.NextBatchIndex(time.Now()),
+		keypers[:],
+		2)
+	err = ms.SendMessage(bc)
+	if err != nil {
+		panic(err)
+	}
+	log.Print("Send new BatchConfig")
+	for i := 0; i < 3; i++ {
+		go func(key *ecdsa.PrivateKey) {
+			err = keyper.Keyper{
+				SigningKey:     key,
+				ShuttermintURL: shuttermintURL,
+			}.Run()
+			if err != nil {
+				panic(err)
+			}
+		}(keys[i])
+	}
+	time.Sleep(time.Hour)
 }

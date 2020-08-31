@@ -6,12 +6,30 @@ import (
 	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func SleepUntil(t time.Time) {
 	now := time.Now()
 	time.Sleep(t.Sub(now))
+}
+
+func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold uint32) *shmsg.Message {
+
+	var addresses [][]byte
+	for _, k := range keypers {
+		addresses = append(addresses, k.Bytes())
+	}
+	return &shmsg.Message{
+		Payload: &shmsg.Message_BatchConfig{
+			BatchConfig: &shmsg.BatchConfig{
+				StartBatchIndex: startBatchIndex,
+				Keypers:         addresses,
+				Threshold:       threshold,
+			},
+		},
+	}
 }
 
 func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
