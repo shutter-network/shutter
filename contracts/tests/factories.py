@@ -17,6 +17,10 @@ def make_bytes(length: Optional[int] = None) -> bytes:
     return bytes(random.randint(0, 255) for _ in range(length))
 
 
+def make_ecdsa_private_key() -> bytes:
+    return make_bytes(32)
+
+
 def make_address() -> Address:
     return Address(make_bytes(20))
 

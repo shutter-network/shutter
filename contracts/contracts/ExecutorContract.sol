@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "./ConfigContract.sol";
 import "./BatcherContract.sol";
+import "./ECDSA.sol";
 
 contract ExecutorContract {
     event BatchExecuted(uint256 numExecutionHalfSteps, bytes32 batchHash);
@@ -27,7 +28,8 @@ contract ExecutorContract {
         bytes32 _cipherBatchHash,
         bytes[] calldata _transactions,
         bytes32 _decryptionKey,
-        bytes32 _aggregatedSignature
+        uint256 _signerBitfield,
+        bytes[] calldata _signatures
     ) external {
         require(numExecutionHalfSteps % 2 == 0);
 
@@ -51,6 +53,32 @@ contract ExecutorContract {
             _config.transactionGasLimit,
             _transactions
         );
+        bytes32 _decryptionSignaturePreimage = keccak256(
+            abi.encodePacked(
+                address(batcherContract),
+                _cipherBatchHash,
+                _decryptionKey,
+                _batchHash
+            )
+        );
+
+        require(_signatures.length >= _config.threshold);
+        require(_config.keypers.length >= _signatures.length);
+        uint256 _signatureIndex = 0;
+        for (uint256 _i = 0; _i < _signatures.length; _i++) {
+            bool _keyperBitSet = _signerBitfield & (1 << _i) != 0;
+            if (_keyperBitSet) {
+                bytes _signature = _signatures[_signatureIndex];
+                _signatureIndex += 1;
+
+                address _signer = ECDSA.recover(
+                    _decryptionSignaturePreimage,
+                    _signature
+                );
+                require(_signer == _config.keypers[_i]);
+            }
+        }
+        require(_signerBitfield >> _config.keypers.length == 0);
 
         numExecutionHalfSteps++;
 

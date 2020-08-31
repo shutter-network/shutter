@@ -10,6 +10,7 @@ import attr
 from brownie.network.state import Chain
 from brownie.network.transaction import TransactionReceipt
 from eth_typing import Address
+from eth_typing import Hash32
 from eth_utils import decode_hex
 from eth_utils import keccak
 from eth_utils import to_canonical_address
@@ -20,7 +21,7 @@ from py_ecc.typing import Point2D
 from tests.bls import BLSPublicKey
 
 ZERO_ADDRESS = Address(b"\x00" * 20)
-ZERO_HASH32 = b"\x00" * 32
+ZERO_HASH32 = Hash32(b"\x00" * 32)
 
 
 @attr.s(auto_attribs=True, frozen=True)
@@ -158,7 +159,7 @@ def snake_to_camel_case(snake_case_string: str, capitalize: bool) -> str:
 
 
 def compute_batch_hash(batch: Sequence[bytes]) -> bytes:
-    result = ZERO_HASH32
+    result = bytes(ZERO_HASH32)
     for tx in batch:
         result = keccak(tx + result)
     return result
@@ -179,3 +180,24 @@ def public_key_to_contract_format(
         (cast(int, public_key[0].coeffs[1]), cast(int, public_key[0].coeffs[0])),
         (cast(int, public_key[1].coeffs[1]), cast(int, public_key[1].coeffs[0])),
     )
+
+
+def compute_decrypted_transaction_hash(transactions: Sequence[bytes]) -> Hash32:
+    decrypted_transaction_hash = bytes(ZERO_HASH32)
+    for transaction in transactions:
+        decrypted_transaction_hash = keccak(transaction + decrypted_transaction_hash)
+    return Hash32(decrypted_transaction_hash)
+
+
+def compute_decryption_signature_preimage(
+    *,
+    batcher_contract_address: Address,
+    cipher_batch_hash: Hash32,
+    decryption_key: bytes,
+    decrypted_transactions: Sequence[bytes],
+) -> bytes:
+    decrypted_transaction_hash = compute_decrypted_transaction_hash(decrypted_transactions)
+    preimage = b"".join(
+        [batcher_contract_address, cipher_batch_hash, decryption_key, decrypted_transaction_hash]
+    )
+    return preimage
