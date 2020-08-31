@@ -1,9 +1,14 @@
 package keyper
 
 import (
+	"crypto/ecdsa"
+	"encoding/base64"
+	"fmt"
 	"time"
 
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/tendermint/tendermint/rpc/client"
+	"github.com/tendermint/tendermint/types"
 )
 
 // RoundInterval is the duration between the start of two consecutive rounds
@@ -39,4 +44,30 @@ func NextBatchIndex(t time.Time) uint64 {
 type BatchRunner struct {
 	rpcclient client.Client
 	params    BatchParams
+}
+
+type MessageSender struct {
+	rpcclient  client.Client
+	signingKey *ecdsa.PrivateKey
+}
+
+func NewMessageSender(client client.Client, signingKey *ecdsa.PrivateKey) MessageSender {
+	return MessageSender{client, signingKey}
+}
+
+func (ms MessageSender) SendMessage(msg *shmsg.Message) error {
+	signedMessage, err := shmsg.SignMessage(msg, ms.signingKey)
+	if err != nil {
+		return err
+	}
+	var tx types.Tx = types.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
+	res, err := ms.rpcclient.BroadcastTxCommit(tx)
+	if err != nil {
+		return err
+	}
+	// fmt.Println("broadcast tx", res)
+	if res.DeliverTx.Code != 0 {
+		return fmt.Errorf("Error in SendMessage: %s", res.DeliverTx.Log)
+	}
+	return nil
 }

@@ -36,7 +36,7 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 	}
 }
 
-func Run(params BatchParams) {
+func Run(params BatchParams, ms MessageSender) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return
@@ -47,12 +47,18 @@ func Run(params BatchParams) {
 	fmt.Println("Starting key generation process", params)
 	msg := NewPublicKeyCommitment(params.BatchIndex, key)
 	fmt.Println("Generated pubkey", params)
-	// XXX Send message
-	_ = msg
+	err = ms.SendMessage(msg)
+	if err != nil {
+		fmt.Println("Error while trying to send message:", err)
+		return
+	}
 
 	SleepUntil(params.PrivateKeyGenerationStartTime)
 	msg = NewSecretShare(params.BatchIndex, key)
 	fmt.Println("Generated privkey", params)
-	// XXX Send message
-	_ = msg
+	err = ms.SendMessage(msg)
+	if err != nil {
+		fmt.Println("Error while trying to send message:", err)
+		return
+	}
 }
