@@ -68,7 +68,7 @@ contract ExecutorContract {
         for (uint256 _i = 0; _i < _signatures.length; _i++) {
             bool _keyperBitSet = _signerBitfield & (1 << _i) != 0;
             if (_keyperBitSet) {
-                bytes _signature = _signatures[_signatureIndex];
+                bytes calldata _signature = _signatures[_signatureIndex];
                 _signatureIndex += 1;
 
                 address _signer = ECDSA.recover(
