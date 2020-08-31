@@ -2,7 +2,7 @@ package keyper
 
 import (
 	"crypto/ecdsa"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -44,21 +44,21 @@ func Run(params BatchParams, ms MessageSender) {
 
 	// Wait for the start time
 	SleepUntil(params.PublicKeyGenerationStartTime)
-	fmt.Println("Starting key generation process", params)
+	log.Print("Starting key generation process", params)
 	msg := NewPublicKeyCommitment(params.BatchIndex, key)
-	fmt.Println("Generated pubkey", params)
+	log.Print("Generated pubkey", params)
 	err = ms.SendMessage(msg)
 	if err != nil {
-		fmt.Println("Error while trying to send message:", err)
+		log.Print("Error while trying to send message:", err)
 		return
 	}
 
 	SleepUntil(params.PrivateKeyGenerationStartTime)
 	msg = NewSecretShare(params.BatchIndex, key)
-	fmt.Println("Generated privkey", params)
+	log.Print("Generated privkey", params)
 	err = ms.SendMessage(msg)
 	if err != nil {
-		fmt.Println("Error while trying to send message:", err)
+		log.Println("Error while trying to send message:", err)
 		return
 	}
 }
