@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -28,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// if !cl.IsRunning() {
+	// if !cl.IsRunningot() {
 	//	panic("tendermint not running")
 	// }
 
@@ -38,12 +41,37 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Status: %+v\n", st)
-
 	// st, err := cl.GetStatus(context.Background())
 	// if err != nil {
 	//	panic(err)
 	// }
 	// fmt.Println(string(st))
+	err = cl.Start()
+	if err != nil {
+		panic(err)
+	}
+	defer cl.Stop()
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	query := "tx.height > 3"
+
+	txs, err := cl.Subscribe(ctx, "test-client", query)
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		for e := range txs {
+			d := e.Data.(types.EventDataTx)
+			events := d.TxResult.Result.Events
+			for _, e := range events {
+				log.Printf("Event: %+v", e)
+			}
+
+			//log.Printf("got %+v", events)
+		}
+	}()
+	time.Sleep(time.Hour)
 
 	privateKey, err := crypto.HexToECDSA("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19")
 	if err != nil {
