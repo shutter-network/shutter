@@ -10,11 +10,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+// SleepUntil pauses the current goroutine until the given time is reached
 func SleepUntil(t time.Time) {
 	now := time.Now()
 	time.Sleep(t.Sub(now))
 }
 
+// NewBatchConfig creates a new BatchConfig with the given values wrapped in a shmsg.Message
 func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold uint32) *shmsg.Message {
 
 	var addresses [][]byte
@@ -32,6 +34,7 @@ func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold 
 	}
 }
 
+// NewPublicKeyCommitment creates a new PublicKeyCommitment with the given values wrapped in a shmsg.Message
 func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
 	return &shmsg.Message{
 		Payload: &shmsg.Message_PublicKeyCommitment{
@@ -43,6 +46,7 @@ func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg
 	}
 }
 
+// NewSecretShare creates a new SecretShare with the given values wrapped in a shmsg.Message
 func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
 	return &shmsg.Message{
 		Payload: &shmsg.Message_SecretShare{
@@ -54,6 +58,7 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 	}
 }
 
+// Run runs the key generation for the given batch
 func Run(params BatchParams, ms MessageSender) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
