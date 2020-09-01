@@ -28,7 +28,7 @@ contract ExecutorContract {
         bytes32 _cipherBatchHash,
         bytes[] calldata _transactions,
         bytes32 _decryptionKey,
-        uint256 _signerBitfield,
+        uint256[] calldata _signerIndices,
         bytes[] calldata _signatures
     ) external {
         require(numExecutionHalfSteps % 2 == 0);
@@ -63,22 +63,19 @@ contract ExecutorContract {
         );
 
         require(_signatures.length >= _config.threshold);
-        require(_config.keypers.length >= _signatures.length);
-        uint256 _signatureIndex = 0;
+        require(_signatures.length == _signerIndices.length);
         for (uint256 _i = 0; _i < _signatures.length; _i++) {
-            bool _keyperBitSet = _signerBitfield & (1 << _i) != 0;
-            if (_keyperBitSet) {
-                bytes calldata _signature = _signatures[_signatureIndex];
-                _signatureIndex += 1;
+            bytes calldata _signature = _signatures[_i];
+            uint256 _signerIndex = _signerIndices[_i];
 
-                address _signer = ECDSA.recover(
-                    _decryptionSignaturePreimage,
-                    _signature
-                );
-                require(_signer == _config.keypers[_i]);
-            }
+            require(_i == 0 || _signerIndex > _signerIndices[_i - 1]);
+
+            address _signer = ECDSA.recover(
+                _decryptionSignaturePreimage,
+                _signature
+            );
+            require(_signer == _config.keypers[_signerIndex]);
         }
-        require(_signerBitfield >> _config.keypers.length == 0);
 
         numExecutionHalfSteps++;
 
