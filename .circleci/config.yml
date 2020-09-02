@@ -151,6 +151,7 @@ jobs:
           keys:
             - shuttermint-go-v4-{{ checksum "go.sum" }}
       - run: go get -t -v ./...
+      - run: make build
       - save_cache:
           key: shuttermint-go-v4-{{ checksum "go.sum" }}
           paths:

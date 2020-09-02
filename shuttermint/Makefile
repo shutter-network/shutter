@@ -1,7 +1,9 @@
 export TMHOME=$(CURDIR)/tmhome
 
+VERSION=$(shell git describe --tags --always)
+
 build:
-	go build
+	go build -o bin -ldflags "-X main.version=${VERSION}" . ./cmd/multik ./cmd/keyper ./cmd/testclient
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
@@ -12,13 +14,14 @@ tmhome:
 init: tmhome
 
 run: build init
-	./shuttermint --config ${TMHOME}/config/config.toml
+	./bin/shuttermint --config ${TMHOME}/config/config.toml
 
 test:
 	go test -v ./...
 
 clean:
-	rm -rf ./shuttermint ./tmhome
+	rm -rf ./tmhome ./data
+	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper
 
 install-abigen:
 	go get github.com/ethereum/go-ethereum/cmd/abigen
