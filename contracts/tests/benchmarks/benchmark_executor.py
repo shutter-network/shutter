@@ -105,7 +105,7 @@ def benchmark_execute_cipher_batch(
                 tx_size=100,
             )
             print(
-                f"Batch size: {batch_size:>3d}"
+                f"Batch size: {batch_size:>3d}  "
                 f"Threshold: {threshold:>3d}  "
                 f"Gas: {tx.gas_used / 1000:.1f}k"
             )
