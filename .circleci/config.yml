@@ -40,7 +40,8 @@ executors:
   go:
     docker:
       - image: cimg/go:1.15
-
+        environment:
+          GO111MODULE: "on"
 jobs:
   lint:
     executor: py37
@@ -148,10 +149,10 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v2-{{ checksum "go.sum" }}
+            - shuttermint-go-v4-{{ checksum "go.sum" }}
       - run: go get -t -v ./...
       - save_cache:
-          key: shuttermint-go-v2-{{ checksum "go.sum" }}
+          key: shuttermint-go-v4-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
