@@ -1,5 +1,11 @@
 package app
 
+/*
+ This file contains code to generate tendermint events. The abcitypes.Event type allows us to send
+ information about an event with a list of key value pairs. The keys and values have to be encoded
+ as a utf-8 sequence of bytes.
+*/
+
 import (
 	"crypto/ecdsa"
 	"encoding/base64"
@@ -18,6 +24,8 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
 }
 
+// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
+// operation of encodePubkeyForEvent )
 func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	data, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
@@ -25,10 +33,15 @@ func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	}
 	return crypto.UnmarshalPubkey(data)
 }
+
+// encodePrivkeyForEvent encodes the given PrivateKey as a string suitable for putting it into a
+// tendermint event
 func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
 }
 
+// DecodePrivkeyFromEvent decodes a private key from a tendermint event (this is the reverse
+// operation of encodePrivkeyForEvent)
 func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
 	data, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
@@ -37,6 +50,8 @@ func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
 	return crypto.ToECDSA(data)
 }
 
+// MakePubkeyGeneratedEvent creates a 'shutter.pubkey-generated' tendermint event.  The given
+// BatchIndex and PublicKey are encoded as attributes of the event.
 func MakePubkeyGeneratedEvent(batchIndex uint64, pubkey *ecdsa.PublicKey) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.pubkey-generated",
@@ -46,6 +61,8 @@ func MakePubkeyGeneratedEvent(batchIndex uint64, pubkey *ecdsa.PublicKey) abcity
 	}
 }
 
+// MakePrivkeyGeneratedEvent creates a 'shutter.privkey-generated' tendermint event. The given
+// BatchIndex and PrivateKey are encoded as attributes of the event
 func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.privkey-generated",
@@ -55,6 +72,8 @@ func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abc
 	}
 }
 
+// MakeBatchConfigEvent creates a 'shutter.batch-config' tendermint event. The given
+// startBatchIndex, threshhold and list of keyper addresses are encoded as attributes of the event.
 func MakeBatchConfigEvent(startBatchIndex uint64, threshhold uint32, keypers []common.Address) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.batch-config",
@@ -65,6 +84,8 @@ func MakeBatchConfigEvent(startBatchIndex uint64, threshhold uint32, keypers []c
 		},
 	}
 }
+
+// encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
 	var hex []string
 	for _, a := range addr {
@@ -73,6 +94,8 @@ func encodeAddressesForEvent(addr []common.Address) string {
 	return strings.Join(hex, ",")
 }
 
+// DecodeAddressesFromEvent reverses the encodeAddressesForEvent operation, i.e. it parses a list
+// of addresses from a comma-separated string.
 func DecodeAddressesFromEvent(s string) []common.Address {
 	var res []common.Address
 	for _, a := range strings.Split(s, ",") {
