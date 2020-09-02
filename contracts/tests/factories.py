@@ -82,3 +82,10 @@ def make_batch(length: Optional[int] = None) -> List[bytes]:
         length = make_int(max_value=3)
 
     return [make_bytes() for _ in range(length)]
+
+
+def make_signer_indices(num_keypers: int, num_signers: int) -> List[int]:
+    assert num_signers <= num_keypers
+    keyper_indices = list(range(num_keypers))
+    random.shuffle(keyper_indices)
+    return sorted(keyper_indices[:num_signers])
