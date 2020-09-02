@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kr/pretty"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
+
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -22,6 +25,17 @@ func makeMessage() *shmsg.Message {
 				Commitment: []byte("foobar"),
 			},
 		},
+	}
+}
+
+func printEvents(events []abcitypes.Event) {
+	for _, ev := range events {
+		x, err := keyper.MakeEvent(ev)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			pretty.Println(x)
+		}
 	}
 }
 
@@ -58,7 +72,7 @@ func main() {
 		for e := range txs {
 			d := e.Data.(types.EventDataTx)
 			events := d.TxResult.Result.Events
-			pretty.Println(events)
+			printEvents(events)
 		}
 	}()
 	time.Sleep(time.Hour)

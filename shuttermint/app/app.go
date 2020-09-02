@@ -10,7 +10,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/tendermint/tendermint/abci/types"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 )
@@ -121,7 +120,7 @@ func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.Respo
 		return abcitypes.ResponseDeliverTx{
 			Code:   1,
 			Log:    fmt.Sprintf("Error while decoding transaction: %s", err),
-			Events: []types.Event{}}
+			Events: []abcitypes.Event{}}
 	}
 	return app.deliverMessage(msg, signer)
 }
@@ -132,7 +131,7 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
 }
 
-func decodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
+func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	data, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
@@ -144,29 +143,63 @@ func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
 }
 
+func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
+	data, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.ToECDSA(data)
+}
+
+func MakePubkeyGeneratedEvent(batchIndex uint64, pubkey *ecdsa.PublicKey) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.pubkey-generated",
+		Attributes: []kv.Pair{
+			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
+			{Key: []byte("Pubkey"), Value: []byte(encodePubkeyForEvent(pubkey))}},
+	}
+}
+
+func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.privkey-generated",
+		Attributes: []kv.Pair{
+			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
+			{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(privkey))}},
+	}
+}
+
+func MakeBatchConfigEvent(startBatchIndex uint64, threshhold uint32, keypers []common.Address) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.batch-config",
+		Attributes: []kv.Pair{
+			{Key: []byte("StartBatchIndex"), Value: []byte(fmt.Sprintf("%d", startBatchIndex))},
+			{Key: []byte("Threshhold"), Value: []byte(fmt.Sprintf("%d", threshhold))},
+			{Key: []byte("Keypers"), Value: []byte(encodeAddressesForEvent(keypers))},
+		},
+	}
+}
+func makeErrorResponse(msg string) abcitypes.ResponseDeliverTx {
+	return abcitypes.ResponseDeliverTx{
+		Code:   1,
+		Log:    msg,
+		Events: []abcitypes.Event{}}
+}
+
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
 	bk := app.getBatch(pkc.BatchIndex)
 	publicKeyBefore := bk.PublicKey
 	err := bk.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
 	if err != nil {
 		fmt.Println("GOT ERROR", err)
-		return abcitypes.ResponseDeliverTx{
-			Code:   1,
-			Log:    fmt.Sprintf("Error in AddPublicKeyCommitment: %s", err),
-			Events: []types.Event{}}
-
+		return makeErrorResponse(fmt.Sprintf("Error in AddPublicKeyCommitment: %s", err))
 	}
 	app.Batches[pkc.BatchIndex] = bk
 
-	var events []types.Event
+	var events []abcitypes.Event
 	if publicKeyBefore == nil && bk.PublicKey != nil {
 		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, types.Event{
-			Type: "shutter.pubkey-generated",
-			Attributes: []kv.Pair{
-				{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", pkc.BatchIndex))},
-				{Key: []byte("Pubkey"), Value: []byte(encodePubkeyForEvent(bk.PublicKey))}},
-		})
+		events = append(events, MakePubkeyGeneratedEvent(pkc.BatchIndex, bk.PublicKey))
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
@@ -179,21 +212,13 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 	err := bk.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
 	if err != nil {
 		fmt.Println("GOT ERROR", err)
-		return abcitypes.ResponseDeliverTx{
-			Code:   1,
-			Log:    fmt.Sprintf("Error in AddSecretShare: %s", err),
-			Events: []types.Event{}}
+		return makeErrorResponse(fmt.Sprintf("Error in AddSecretShare: %s", err))
 	}
 	app.Batches[ss.BatchIndex] = bk
-	var events []types.Event
+	var events []abcitypes.Event
 	if privateKeyBefore == nil && bk.PrivateKey != nil {
 		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, types.Event{
-			Type: "shutter.privkey-generated",
-			Attributes: []kv.Pair{
-				{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", ss.BatchIndex))},
-				{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(bk.PrivateKey))}},
-		})
+		events = append(events, MakePrivkeyGeneratedEvent(ss.BatchIndex, bk.PrivateKey))
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
@@ -207,6 +232,14 @@ func encodeAddressesForEvent(addr []common.Address) string {
 		hex = append(hex, a.Hex())
 	}
 	return strings.Join(hex, ",")
+}
+
+func DecodeAddressesFromEvent(s string) []common.Address {
+	var res []common.Address
+	for _, a := range strings.Split(s, ",") {
+		res = append(res, common.HexToAddress(a))
+	}
+	return res
 }
 
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
@@ -226,18 +259,11 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		return abcitypes.ResponseDeliverTx{
 			Log:    fmt.Sprintf("Error in addConfig: %s", err),
 			Code:   1,
-			Events: []types.Event{}}
+			Events: []abcitypes.Event{}}
 	}
 
-	var events []types.Event
-	events = append(events, types.Event{
-		Type: "shutter.batch-config",
-		Attributes: []kv.Pair{
-			{Key: []byte("StartBatchIndex"), Value: []byte(fmt.Sprintf("%d", bc.StartBatchIndex))},
-			{Key: []byte("Threshhold"), Value: []byte(fmt.Sprintf("%d", bc.Threshhold))},
-			{Key: []byte("Keypers"), Value: []byte(encodeAddressesForEvent(keypers))},
-		},
-	})
+	var events []abcitypes.Event
+	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshhold, keypers))
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: events}
@@ -256,7 +282,7 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: []types.Event{}}
+		Events: []abcitypes.Event{}}
 }
 
 func (ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
