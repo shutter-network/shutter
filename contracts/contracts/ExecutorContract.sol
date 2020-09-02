@@ -141,15 +141,15 @@ contract ExecutorContract {
         bytes[] calldata _transactions
     ) private returns (bytes32) {
         bytes32 _batchHash;
-        for (uint256 i = 0; i < _transactions.length; i++) {
+        for (uint256 _i = 0; _i < _transactions.length; _i++) {
             bytes memory _calldata = abi.encodeWithSelector(
                 _targetFunctionSelector,
-                _transactions[i]
+                _transactions[_i]
             );
             _targetAddress.call{gas: _gasLimit}(_calldata);
 
             _batchHash = keccak256(
-                abi.encodePacked(_transactions[i], _batchHash)
+                abi.encodePacked(_transactions[_i], _batchHash)
             );
         }
         return _batchHash;

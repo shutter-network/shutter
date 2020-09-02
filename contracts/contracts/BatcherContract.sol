@@ -56,8 +56,8 @@ contract BatcherContract is Ownable {
         require(msg.value >= minFee);
 
         bytes memory _batchHashPreimage = abi.encodePacked(
-            batchHashes[_batchIndex][_type],
-            _transaction
+            _transaction,
+            batchHashes[_batchIndex][_type]
         );
         bytes32 _newBatchHash = keccak256(_batchHashPreimage);
         batchHashes[_batchIndex][_type] = _newBatchHash;

@@ -140,10 +140,10 @@ def test_add_tx_updates_hash_chain(
     for tx_type in [0, 1]:
         assert bytes(batcher_contract.batchHashes(0, tx_type)) == b"\x00" * 32
         batcher_contract.addTransaction(0, tx_type, b"\x11")
-        assert bytes(batcher_contract.batchHashes(0, tx_type)) == keccak(b"\x00" * 32 + b"\x11")
+        assert bytes(batcher_contract.batchHashes(0, tx_type)) == keccak(b"\x11" + b"\x00" * 32)
         batcher_contract.addTransaction(0, tx_type, b"\x22")
         assert bytes(batcher_contract.batchHashes(0, tx_type)) == keccak(
-            keccak(b"\x00" * 32 + b"\x11") + b"\x22"
+            b"\x22" + keccak(b"\x11" + b"\x00" * 32)
         )
 
 
@@ -190,7 +190,7 @@ def test_add_tx_emits_event(
         "batchIndex": 0,
         "transactionType": 0,
         "transaction": "0x11",
-        "batchHash": encode_hex(keccak(b"\x00" * 32 + b"\x11")),
+        "batchHash": encode_hex(keccak(b"\x11" + b"\x00" * 32)),
     }
 
     tx = batcher_contract.addTransaction(2, 1, b"\x22")
@@ -199,7 +199,7 @@ def test_add_tx_emits_event(
         "batchIndex": 2,
         "transactionType": 1,
         "transaction": "0x22",
-        "batchHash": encode_hex(keccak(b"\x00" * 32 + b"\x22")),
+        "batchHash": encode_hex(keccak(b"\x22" + b"\x00" * 32)),
     }
 
 
