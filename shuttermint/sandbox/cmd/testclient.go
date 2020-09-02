@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/kr/pretty"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
@@ -31,25 +31,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// if !cl.IsRunningot() {
-	//	panic("tendermint not running")
-	// }
 
 	fmt.Println("got a client:", cl)
+	err = cl.Start()
+
+	if err != nil {
+		panic(err)
+	}
+
 	st, err := cl.Status()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Status: %+v\n", st)
-	// st, err := cl.GetStatus(context.Background())
-	// if err != nil {
-	//	panic(err)
-	// }
-	// fmt.Println(string(st))
-	err = cl.Start()
-	if err != nil {
-		panic(err)
-	}
+	pretty.Print("Status:", st)
 	defer cl.Stop()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -64,11 +58,7 @@ func main() {
 		for e := range txs {
 			d := e.Data.(types.EventDataTx)
 			events := d.TxResult.Result.Events
-			for _, e := range events {
-				log.Printf("Event: %+v", e)
-			}
-
-			//log.Printf("got %+v", events)
+			pretty.Println(events)
 		}
 	}()
 	time.Sleep(time.Hour)
@@ -93,5 +83,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Res: %+v\n", res)
+	pretty.Println("Res", res)
 }
