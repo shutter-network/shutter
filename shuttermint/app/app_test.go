@@ -8,7 +8,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/abci/types"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 )
 
@@ -74,7 +74,7 @@ func TestKeyGeneration(t *testing.T) {
 		keypers[0])
 	require.Equal(
 		t,
-		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
+		abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)},
 		res1)
 
 	res2 := app.deliverPublicKeyCommitment(
@@ -85,9 +85,9 @@ func TestKeyGeneration(t *testing.T) {
 	// We've reached the threshold, there should be an event of Type "shutter.pubkey-generated"
 	require.Equal(
 		t,
-		types.ResponseDeliverTx{
+		abcitypes.ResponseDeliverTx{
 			Code: 0,
-			Events: []types.Event{
+			Events: []abcitypes.Event{
 				{
 					Type: "shutter.pubkey-generated",
 					Attributes: []kv.Pair{
@@ -109,7 +109,7 @@ func TestKeyGeneration(t *testing.T) {
 		keypers[2])
 	require.Equal(
 		t,
-		types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)},
+		abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)},
 		res3)
 
 	// --- Now let's deliver the SecretShare's
@@ -118,7 +118,7 @@ func TestKeyGeneration(t *testing.T) {
 			BatchIndex: 200,
 			Privkey:    crypto.FromECDSA(keys[0])},
 		keypers[0])
-	require.Equal(t, types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)}, ss1)
+	require.Equal(t, abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)}, ss1)
 	ss2 := app.deliverSecretShare(
 		&shmsg.SecretShare{
 			BatchIndex: 200,
@@ -126,9 +126,9 @@ func TestKeyGeneration(t *testing.T) {
 		keypers[1])
 	require.Equal(
 		t,
-		types.ResponseDeliverTx{
+		abcitypes.ResponseDeliverTx{
 			Code: 0,
-			Events: []types.Event{
+			Events: []abcitypes.Event{
 				{
 					Type: "shutter.privkey-generated",
 					Attributes: []kv.Pair{
@@ -148,7 +148,7 @@ func TestKeyGeneration(t *testing.T) {
 			BatchIndex: 200,
 			Privkey:    crypto.FromECDSA(keys[2])},
 		keypers[2])
-	require.Equal(t, types.ResponseDeliverTx{Code: 0, Events: []types.Event(nil)}, ss3)
+	require.Equal(t, abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)}, ss3)
 }
 
 func TestEncodePubkeyForEvent(t *testing.T) {

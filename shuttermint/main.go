@@ -10,10 +10,8 @@ import (
 	"syscall"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
-
 	"github.com/spf13/viper"
-
-	abci "github.com/tendermint/tendermint/abci/types"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 	cfg "github.com/tendermint/tendermint/config"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/log"
@@ -63,7 +61,7 @@ func main() {
 	os.Exit(0)
 }
 
-func newTendermint(app abci.Application, configFile string) (*nm.Node, error) {
+func newTendermint(app abcitypes.Application, configFile string) (*nm.Node, error) {
 	// read config
 	config := cfg.DefaultConfig()
 	config.RootDir = filepath.Dir(filepath.Dir(configFile))
