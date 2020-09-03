@@ -113,10 +113,7 @@ func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.Respo
 
 	if err != nil {
 		fmt.Println("Error while decoding transaction:", err)
-		return abcitypes.ResponseDeliverTx{
-			Code:   1,
-			Log:    fmt.Sprintf("Error while decoding transaction: %s", err),
-			Events: []abcitypes.Event{}}
+		return makeErrorResponse(fmt.Sprintf("Error while decoding transaction: %s", err))
 	}
 	return app.deliverMessage(msg, signer)
 }
@@ -182,10 +179,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	}
 	err := app.addConfig(bc)
 	if err != nil {
-		return abcitypes.ResponseDeliverTx{
-			Log:    fmt.Sprintf("Error in addConfig: %s", err),
-			Code:   1,
-			Events: []abcitypes.Event{}}
+		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 	}
 
 	var events []abcitypes.Event
