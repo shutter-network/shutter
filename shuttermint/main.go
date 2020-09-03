@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	stdlog "log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -23,12 +24,16 @@ import (
 )
 
 var configFile string
+var version string = "(unknown)"
 
 func init() {
 	flag.StringVar(&configFile, "config", "$HOME/.tendermint/config/config.toml", "Path to config.toml")
 }
 
 func main() {
+	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile | stdlog.Lmicroseconds)
+	stdlog.Printf("Starting shuttermint version %s", version)
+
 	app := app.NewShutterApp()
 
 	flag.Parse()

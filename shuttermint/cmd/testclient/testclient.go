@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/tendermint/tendermint/types"
 )
+
+var version string = "(unknown)"
 
 func makeMessage() *shmsg.Message {
 	return &shmsg.Message{
@@ -40,6 +43,9 @@ func printEvents(events []abcitypes.Event) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
+	log.Printf("Starting testclient version %s", version)
+
 	var cl client.Client
 	cl, err := http.New("http://localhost:26657", "/websocket")
 	if err != nil {
