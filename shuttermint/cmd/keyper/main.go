@@ -17,10 +17,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = keyper.Keyper{
-		SigningKey:     privateKey,
-		ShuttermintURL: "http://localhost:26657",
-	}.Run()
+	k := keyper.NewKeyper(privateKey, "http://localhost:26657")
+	err = k.Run()
 	if err != nil {
 		panic(err)
 	}

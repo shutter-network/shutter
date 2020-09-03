@@ -16,6 +16,7 @@ require (
 	github.com/tendermint/tendermint v0.33.8
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.1 // indirect

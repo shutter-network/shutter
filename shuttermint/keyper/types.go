@@ -4,11 +4,13 @@ import (
 	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/rpc/client"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -28,8 +30,12 @@ type BatchParams struct {
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
-	SigningKey     *ecdsa.PrivateKey
-	ShuttermintURL string
+	SigningKey          *ecdsa.PrivateKey
+	ShuttermintURL      string
+	events              chan IEvent
+	mux                 sync.Mutex
+	batchIndexToChannel map[uint64]chan IEvent
+	txs                 <-chan coretypes.ResultEvent
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex

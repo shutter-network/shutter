@@ -12,8 +12,7 @@ import (
 
 // SleepUntil pauses the current goroutine until the given time is reached
 func SleepUntil(t time.Time) {
-	now := time.Now()
-	time.Sleep(t.Sub(now))
+	time.Sleep(time.Until(t))
 }
 
 // NewBatchConfig creates a new BatchConfig with the given values wrapped in a shmsg.Message
@@ -59,7 +58,7 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 }
 
 // Run runs the key generation for the given batch
-func Run(params BatchParams, ms MessageSender) {
+func Run(params BatchParams, ms MessageSender, events <-chan IEvent) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return
@@ -76,6 +75,13 @@ func Run(params BatchParams, ms MessageSender) {
 		return
 	}
 
+	select {
+	case ev := <-events:
+		log.Printf("Got event %+v", ev)
+	case <-time.After(time.Until(params.PrivateKeyGenerationStartTime)):
+		log.Print("Timeout while waiting for public key generation to finish", params)
+		return
+	}
 	SleepUntil(params.PrivateKeyGenerationStartTime)
 	msg = NewSecretShare(params.BatchIndex, key)
 	log.Print("Generated privkey", params)

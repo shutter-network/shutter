@@ -52,10 +52,8 @@ func main() {
 	log.Print("Send new BatchConfig")
 	for i := 0; i < 3; i++ {
 		go func(key *ecdsa.PrivateKey) {
-			err = keyper.Keyper{
-				SigningKey:     key,
-				ShuttermintURL: shuttermintURL,
-			}.Run()
+			k := keyper.NewKeyper(key, shuttermintURL)
+			err = k.Run()
 			if err != nil {
 				panic(err)
 			}
