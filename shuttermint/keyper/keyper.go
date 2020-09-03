@@ -17,7 +17,6 @@ func NewKeyper(SigningKey *ecdsa.PrivateKey, ShuttermintURL string) Keyper {
 	return Keyper{
 		SigningKey:          SigningKey,
 		ShuttermintURL:      ShuttermintURL,
-		events:              make(chan IEvent),
 		batchIndexToChannel: make(map[uint64]chan IEvent)}
 }
 
@@ -49,7 +48,6 @@ func (k *Keyper) Run() error {
 
 	group.Go(k.dispatchTxs)
 	group.Go(k.startNewBatches)
-	group.Go(k.dispatchEvents)
 
 	err = group.Wait()
 	return err
@@ -85,31 +83,43 @@ func (k *Keyper) startNewBatches() error {
 	}
 }
 
+func (k *Keyper) removeBatch(batchIndex uint64) {
+	log.Printf("Batch %d finished", batchIndex)
+	k.mux.Lock()
+	close(k.batchIndexToChannel[batchIndex])
+	delete(k.batchIndexToChannel, batchIndex)
+	k.mux.Unlock()
+}
+
 func (k *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	bp := NewBatchParams(batchIndex)
 	ch := make(chan IEvent, 2)
 	k.mux.Lock()
 	k.batchIndexToChannel[batchIndex] = ch
 	k.mux.Unlock()
-	go Run(bp, NewMessageSender(cl, k.SigningKey), ch)
-	return bp
-}
 
-func (k *Keyper) dispatchEvents() error {
-	for ev := range k.events {
-		k.dispatchEvent(ev)
-	}
-	return nil
+	go func() {
+		defer k.removeBatch(batchIndex)
+		Run(bp, NewMessageSender(cl, k.SigningKey), ch)
+	}()
+
+	return bp
 }
 
 func (k *Keyper) dispatchEventToBatch(BatchIndex uint64, ev IEvent) {
 	k.mux.Lock()
 	ch, ok := k.batchIndexToChannel[BatchIndex]
-	k.mux.Unlock()
 
 	if ok {
+		// We do have the mutex locked at this point and write to the channel.  This could
+		// end up in a deadlock if we block here. This is why we need a buffered
+		// channel. We only
+		// Since we only ever close the channel, when the mutex is locked, at
+		// least we can be sure that we do not write to a closed channel here.
 		ch <- ev
 	}
+
+	k.mux.Unlock()
 }
 
 func (k *Keyper) dispatchEvent(ev IEvent) {
