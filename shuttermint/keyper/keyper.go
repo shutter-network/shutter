@@ -7,6 +7,8 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
+// Run runs the keyper process. It determines the next BatchIndex and runs the key generation
+// process for this BatchIndex and all following batches.
 func (k Keyper) Run() error {
 	var cl client.Client
 	cl, err := http.New(k.ShuttermintURL, "/websocket")
