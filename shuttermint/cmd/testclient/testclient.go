@@ -87,8 +87,7 @@ func main() {
 		panic(err)
 	}
 
-	var tx types.Tx
-	tx = types.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
+	var tx types.Tx = types.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
 	res, err := cl.BroadcastTxCommit(tx)
 
 	fmt.Println("Msg:", base64.RawURLEncoding.EncodeToString(signedMessage))
