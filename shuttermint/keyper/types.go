@@ -97,3 +97,13 @@ type BatchConfigEvent struct {
 	Threshhold      uint32
 	Keypers         []common.Address
 }
+
+// IEvent is an interface for the event types declared above (PubkeyGeneratedEvent,
+// PrivkeyGeneratedEvent, BatchConfigEvent)
+type IEvent interface {
+	IEvent()
+}
+
+func (PubkeyGeneratedEvent) IEvent()  {}
+func (PrivkeyGeneratedEvent) IEvent() {}
+func (BatchConfigEvent) IEvent()      {}

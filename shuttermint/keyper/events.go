@@ -81,7 +81,7 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
-func MakeEvent(ev abcitypes.Event) (interface{}, error) {
+func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	if ev.Type == "shutter.privkey-generated" {
 		res, err := MakePrivkeyGeneratedEvent(ev)
 		if err != nil {
