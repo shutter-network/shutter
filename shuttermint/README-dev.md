@@ -21,4 +21,3 @@ Run `make lint` to run `golangci-lint`.
 
 ## Running
 Run `make run` to start shuttermint.
-
