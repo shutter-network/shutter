@@ -193,6 +193,7 @@ def test_add_tx_emits_event(
         "batchHash": encode_hex(keccak(b"\x11" + b"\x00" * 32)),
     }
 
+    mine_until(config.start_block_number + 2 * config.batch_span + 1, chain)
     tx = batcher_contract.addTransaction(2, 1, b"\x22")
     assert len(tx.events) == 1
     assert tx.events[0] == {

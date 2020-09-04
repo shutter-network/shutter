@@ -6,34 +6,46 @@ pragma experimental ABIEncoderV2;
 import "./Ownable.sol";
 
 struct BatchConfig {
-    uint256 startBatchIndex;
-    uint256 startBlockNumber;
-    bool active;
-    address[] keypers;
-    uint256 threshold;
-    uint256 batchSpan;
-    uint256 batchSizeLimit;
-    uint256 transactionSizeLimit;
-    uint256 transactionGasLimit;
-    address feeReceiver;
-    address targetAddress;
-    bytes4 targetFunctionSelector;
-    uint256 executionTimeout;
+    uint256 startBatchIndex; // the index of the first batch using this config
+    uint256 startBlockNumber; // the block number from which on this config is applicable
+    bool active; // flag to turn batching on and off
+    address[] keypers; // the keyper addresses
+    uint256 threshold; // the threshold parameter
+    uint256 batchSpan; // the duration of one batch in blocks
+    uint256 batchSizeLimit; // the maximum size of a batch in bytes
+    uint256 transactionSizeLimit; // the maximum size of each transaction in the batch in bytes
+    uint256 transactionGasLimit; // the maximum amount of gas each transaction may use
+    address feeReceiver; // the address receiving the collected fees
+    address targetAddress; // the address of the contract responsible of executing transactions
+    bytes4 targetFunctionSelector; // function of the target contract that executes transactions
+    uint256 executionTimeout; // the number of blocks after which execution can be skipped
 }
 
+/// @title A contract that manages `BatchConfig` objects.
+/// @dev The config objects are stored in sequence, with configs applicable to later batches being
+///     lined up behind configs applicable to earlier batches (according to
+///     `config.startBlockNumber`). The contract owner is entitled to add or remove configs at the
+///     end at will as long as a notice of at least `configChangeHeadsUpBlocks` is given.
+/// @dev To add a new config, first populate the `nextConfig` object accordingly and then schedule
+///     it with `scheduleNextConfig`.
 contract ConfigContract is Ownable {
+    /// @notice The event emitted after a new config object has been scheduled.
+    /// @param numConfigs The new number of configs stored.
     event ConfigScheduled(uint256 numConfigs);
+
+    /// @notice The event emitted after the owner has unscheduled one or more config objects.
+    /// @param numConfigs The new number of configs stored.
     event ConfigUnscheduled(uint256 numConfigs);
 
     BatchConfig[] public configs;
     BatchConfig public nextConfig;
 
-    uint256 public immutable config_change_heads_up_blocks;
+    uint256 public immutable configChangeHeadsUpBlocks;
 
-    constructor(uint256 _config_change_heads_up_blocks) public {
+    constructor(uint256 _configChangeHeadsUpBlocks) public {
         configs.push(zeroConfig());
 
-        config_change_heads_up_blocks = _config_change_heads_up_blocks;
+        configChangeHeadsUpBlocks = _configChangeHeadsUpBlocks;
     }
 
     function zeroConfig() internal pure returns (BatchConfig memory) {
@@ -59,6 +71,8 @@ contract ConfigContract is Ownable {
         return configs.length;
     }
 
+    /// @notice Get the config for a certain batch.
+    /// @param _batchIndex The index of the batch.
     function getConfig(uint256 _batchIndex)
         external
         view
@@ -118,6 +132,8 @@ contract ConfigContract is Ownable {
     }
 
     function nextConfigSetBatchSpan(uint256 _batchSpan) external onlyOwner {
+        // make sure the heads up is at least one batch
+        require(_batchSpan < configChangeHeadsUpBlocks);
         nextConfig.batchSpan = _batchSpan;
     }
 
@@ -201,24 +217,31 @@ contract ConfigContract is Ownable {
     //
     // Scheduling
     //
+
+    /// @notice Finalize the `nextConfig` object and add it to the end of the config sequence.
+    /// @notice `startBlockNumber` of the next config must be `configChangeHeadsUpBlocks`
+    ///     blocks in the future. Note that the batch spans are smaller than or equal to
+    ///     `configChangeHeadsUpBlocks`, so the heads up corresponds to at least one batch.
+    /// @notice The transition between the next config and the config currently at the end of the
+    ///     config sequence must be seamless, i.e., there batches must not be cut short.
     function scheduleNextConfig() external onlyOwner {
-        BatchConfig memory config = configs[configs.length - 1];
+        BatchConfig memory _config = configs[configs.length - 1];
 
         require(
             nextConfig.startBlockNumber >
-                block.number + config_change_heads_up_blocks
+                block.number + configChangeHeadsUpBlocks
         );
 
-        if (config.active) {
-            uint256 batchDelta = nextConfig.startBatchIndex -
-                config.startBatchIndex;
-            require(batchDelta > 0);
+        if (_config.active) {
+            require(nextConfig.startBatchIndex > _config.startBatchIndex);
+            uint256 _batchDelta = nextConfig.startBatchIndex -
+                _config.startBatchIndex;
             require(
-                config.startBlockNumber + config.batchSpan * batchDelta ==
+                _config.startBlockNumber + _config.batchSpan * _batchDelta ==
                     nextConfig.startBlockNumber
             );
         } else {
-            require(nextConfig.startBatchIndex == config.startBatchIndex);
+            require(nextConfig.startBatchIndex == _config.startBatchIndex);
         }
 
         if (nextConfig.active) {
@@ -233,13 +256,21 @@ contract ConfigContract is Ownable {
         emit ConfigScheduled(configs.length);
     }
 
+    /// @notice Remove configs from the end.
+    /// @param _fromStartBlockNumber All configs with a start block number greater than or equal
+    ///     to this will be removed.
+    /// @notice `_fromStartBlockNumber` must be `configChangeHeadsUpBlocks` blocks in the future.
+    /// @notice This method can remove one or more configs. If no config would be removed, an error
+    ///     is thrown.
     function unscheduleConfigs(uint256 _fromStartBlockNumber)
         external
         onlyOwner
     {
         require(
-            _fromStartBlockNumber > block.number + config_change_heads_up_blocks
+            _fromStartBlockNumber > block.number + configChangeHeadsUpBlocks
         );
+
+        uint256 _lengthBefore = configs.length;
 
         for (uint256 i = configs.length - 1; i > 0; i--) {
             BatchConfig storage config = configs[i];
@@ -250,6 +281,7 @@ contract ConfigContract is Ownable {
             }
         }
 
+        require(configs.length < _lengthBefore);
         emit ConfigUnscheduled(configs.length);
     }
 }

@@ -9,7 +9,7 @@ from eth_utils import decode_hex
 
 @pytest.fixture
 def config_change_heads_up_blocks() -> int:
-    return 5
+    return 200
 
 
 @pytest.fixture

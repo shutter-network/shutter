@@ -260,7 +260,7 @@ def test_skip_cipher_execution(
     for batch_index in range(3):
         mine_until(
             config.start_block_number
-            + batch_index * config.batch_span
+            + (batch_index + 1) * config.batch_span
             + config.execution_timeout
             - 1,
             chain,
@@ -322,7 +322,7 @@ def test_skip_cipher_execution_checks_timeout(
     for batch_index in range(3):
         mine_until(
             config.start_block_number
-            + batch_index * config.batch_span
+            + (batch_index + 1) * config.batch_span
             + config.execution_timeout
             - 2,
             chain,
