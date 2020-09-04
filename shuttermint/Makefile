@@ -40,4 +40,7 @@ install-tendermint:
 lint:
 	golangci-lint run --tests
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-tendermint install-tools lint
+abigen:
+	abigen --pkg contract --out contract/config.go --sol ../contracts/contracts/ConfigContract.sol
+
+.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-tendermint install-tools lint abigen
