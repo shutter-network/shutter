@@ -8,5 +8,6 @@ package tools
 import (
 	_ "github.com/ethereum/go-ethereum/cmd/abigen"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	_ "github.com/tendermint/tendermint/cmd/tendermint"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 )
