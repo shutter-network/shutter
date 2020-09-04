@@ -86,17 +86,18 @@ func (k *Keyper) startNewBatches() error {
 func (k *Keyper) removeBatch(batchIndex uint64) {
 	log.Printf("Batch %d finished", batchIndex)
 	k.mux.Lock()
+	defer k.mux.Unlock()
 	close(k.batchIndexToChannel[batchIndex])
 	delete(k.batchIndexToChannel, batchIndex)
-	k.mux.Unlock()
 }
 
 func (k *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	bp := NewBatchParams(batchIndex)
 	ch := make(chan IEvent, 2)
 	k.mux.Lock()
+	defer k.mux.Unlock()
+
 	k.batchIndexToChannel[batchIndex] = ch
-	k.mux.Unlock()
 
 	go func() {
 		defer k.removeBatch(batchIndex)
@@ -108,6 +109,8 @@ func (k *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 
 func (k *Keyper) dispatchEventToBatch(BatchIndex uint64, ev IEvent) {
 	k.mux.Lock()
+	defer k.mux.Unlock()
+
 	ch, ok := k.batchIndexToChannel[BatchIndex]
 
 	if ok {
@@ -119,7 +122,6 @@ func (k *Keyper) dispatchEventToBatch(BatchIndex uint64, ev IEvent) {
 		ch <- ev
 	}
 
-	k.mux.Unlock()
 }
 
 func (k *Keyper) dispatchEvent(ev IEvent) {
