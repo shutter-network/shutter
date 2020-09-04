@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import cast
 from typing import List
 from typing import Sequence
 from typing import Tuple
@@ -14,11 +13,6 @@ from eth_typing import Hash32
 from eth_utils import decode_hex
 from eth_utils import keccak
 from eth_utils import to_canonical_address
-from py_ecc import bn128
-from py_ecc.fields import bn128_FQ
-from py_ecc.typing import Point2D
-
-from tests.bls import BLSPublicKey
 
 ZERO_ADDRESS = Address(b"\x00" * 20)
 ZERO_HASH32 = Hash32(b"\x00" * 32)
@@ -163,23 +157,6 @@ def compute_batch_hash(batch: Sequence[bytes]) -> bytes:
     for tx in batch:
         result = keccak(tx + result)
     return result
-
-
-def hash_to_g1(message: bytes) -> Point2D[bn128_FQ]:
-    message_hash_bytes = keccak(message)
-    message_hash_int = int.from_bytes(message_hash_bytes, "big")
-    message_hash_point = bn128.multiply(bn128.G1, message_hash_int)
-    return message_hash_point
-
-
-def public_key_to_contract_format(
-    public_key: BLSPublicKey,
-) -> Tuple[Tuple[int, int], Tuple[int, int]]:
-    """Convert a BLSPublicKey to the format expected by the contracts."""
-    return (
-        (cast(int, public_key[0].coeffs[1]), cast(int, public_key[0].coeffs[0])),
-        (cast(int, public_key[1].coeffs[1]), cast(int, public_key[1].coeffs[0])),
-    )
 
 
 def compute_decrypted_transaction_hash(transactions: Sequence[bytes]) -> Hash32:
