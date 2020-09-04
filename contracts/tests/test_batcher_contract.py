@@ -228,6 +228,7 @@ def test_add_tx_emits_event(
 def test_add_tx_pays_fee(
     batcher_contract: Any,
     config_contract: Any,
+    fee_bank_contract: Any,
     config_change_heads_up_blocks: int,
     chain: Chain,
     owner: Account,
@@ -243,9 +244,10 @@ def test_add_tx_pays_fee(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number - 1, chain)
 
-    initial_balance = fee_receiver.balance()
+    initial_balance = fee_bank_contract.deposits(config.fee_receiver)
     batcher_contract.addTransaction(0, 0, b"\x00", {"value": 150})
-    assert fee_receiver.balance() == initial_balance + 150
+
+    assert fee_bank_contract.deposits(config.fee_receiver) == initial_balance + 150
 
 
 def test_set_fee(batcher_contract: Any, owner: Account) -> None:

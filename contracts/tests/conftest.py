@@ -34,9 +34,12 @@ def config_contract(
 
 @pytest.fixture
 def batcher_contract(
-    BatcherContract: ContractContainer, config_contract: Any, owner: Account
+    BatcherContract: ContractContainer,
+    config_contract: Any,
+    fee_bank_contract: Any,
+    owner: Account,
 ) -> Any:
-    config_contract = owner.deploy(BatcherContract, config_contract)
+    config_contract = owner.deploy(BatcherContract, config_contract, fee_bank_contract)
     return config_contract
 
 

@@ -4,6 +4,7 @@ pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./ConfigContract.sol";
+import "./FeeBankContract.sol";
 import "./Ownable.sol";
 
 enum TransactionType {Cipher, Plain}
@@ -24,6 +25,8 @@ contract BatcherContract is Ownable {
 
     // The contract from which batch configs are fetched.
     ConfigContract public configContract;
+    // The contract to which fees are sent.
+    FeeBankContract public feeBankContract;
 
     // Stores the current size of the batches by batch index. Note that cipher and plain batches
     // are not tracked separately but in sum.
@@ -34,8 +37,11 @@ contract BatcherContract is Ownable {
     // The minimum fee required to add a transaction to a batch.
     uint256 public minFee;
 
-    constructor(address _configContractAddress) public {
+    constructor(address _configContractAddress, address _feeBankAddress)
+        public
+    {
         configContract = ConfigContract(_configContractAddress);
+        feeBankContract = FeeBankContract(_feeBankAddress);
     }
 
     /// @notice Add a transaction to a batch.
@@ -83,11 +89,11 @@ contract BatcherContract is Ownable {
         batchHashes[_batchIndex][_type] = _newBatchHash;
         batchSizes[_batchIndex] += _transaction.length;
 
-        // emit event and pay fee to fee bank
+        // pay fee to fee bank and emit event
+        if (msg.value > 0 && config.feeReceiver != address(0)) {
+            feeBankContract.deposit{value: msg.value}(config.feeReceiver);
+        }
         emit TransactionAdded(_batchIndex, _type, _transaction, _newBatchHash);
-        // TODO: replace with withdrawal model to sidestep any potential reentrancy issues
-        (bool success, ) = config.feeReceiver.call{value: msg.value}("");
-        require(success);
     }
 
     /// @notice Set the minimum fee required to add a transaction to the batch.
