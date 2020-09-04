@@ -34,4 +34,7 @@ install-protoc-gen-go:
 install-golangci-lint:
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-tools
+lint:
+	golangci-lint run --tests
+
+.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-tools lint
