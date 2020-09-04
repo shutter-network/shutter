@@ -86,6 +86,12 @@ def mock_target_function_selector(MockTargetContract: ContractContainer) -> byte
     raise AssertionError
 
 
+@pytest.fixture
+def fee_bank_contract(FeeBankContract: ContractContainer, accounts: Sequence[Account]) -> Any:
+    fee_bank_contract = accounts[0].deploy(FeeBankContract)
+    return fee_bank_contract
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation: Any) -> None:
     pass

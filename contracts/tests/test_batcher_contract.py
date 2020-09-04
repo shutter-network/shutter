@@ -54,6 +54,27 @@ def test_add_tx_checks_batching_period_end(
     batcher_contract.addTransaction(1, 0, b"\x00")
 
 
+def test_add_tx_checks_current_batch(
+    batcher_contract: Any,
+    config_contract: Any,
+    config_change_heads_up_blocks: int,
+    chain: Chain,
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=100,
+    )
+    schedule_config(config_contract, config, owner=owner)
+    mine_until(config.start_block_number, chain)
+
+    with brownie.reverts():
+        batcher_contract.addTransaction(1, 0, b"\x00")
+    mine_until(config.start_block_number + config.batch_span, chain)
+    batcher_contract.addTransaction(1, 0, b"\x00")
+
+
 def test_add_tx_checks_tx_size(
     batcher_contract: Any,
     config_contract: Any,
