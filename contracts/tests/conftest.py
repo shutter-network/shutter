@@ -81,6 +81,14 @@ def fee_bank_contract(FeeBankContract: ContractContainer, accounts: Sequence[Acc
     return fee_bank_contract
 
 
+@pytest.fixture
+def key_broadcast_contract(
+    KeyBroadcastContract: ContractContainer, config_contract: Any, accounts: Sequence[Account]
+) -> Any:
+    key_broadcast_contract = accounts[0].deploy(KeyBroadcastContract, config_contract.address)
+    return key_broadcast_contract
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation: Any) -> None:
     pass
