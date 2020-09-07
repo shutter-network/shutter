@@ -21,6 +21,7 @@ require (
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/shirou/gopsutil v2.20.8+incompatible // indirect
 	github.com/spf13/cast v1.3.1 // indirect
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	github.com/ssgreg/nlreturn/v2 v2.0.2 // indirect
 	github.com/stretchr/testify v1.6.1

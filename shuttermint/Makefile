@@ -3,7 +3,7 @@ export TMHOME=$(CURDIR)/tmhome
 VERSION=$(shell git describe --tags --always)
 
 build:
-	go build -o bin -ldflags "-X main.version=${VERSION}" . ./cmd/multik ./cmd/keyper ./cmd/testclient
+	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./cmd/multik ./cmd/testclient
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
@@ -14,7 +14,7 @@ tmhome:
 init: tmhome
 
 run: build init
-	./bin/shuttermint --config ${TMHOME}/config/config.toml
+	./bin/shuttermint run --config ${TMHOME}/config/config.toml
 
 test:
 	go test -v ./...
