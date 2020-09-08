@@ -83,6 +83,7 @@ func newTendermint(app abcitypes.Application, configFile string) (*nm.Node, erro
 	// read config
 	config := cfg.DefaultConfig()
 	config.RootDir = filepath.Dir(filepath.Dir(configFile))
+	config.SetRoot(config.RootDir)
 	viper.SetConfigFile(configFile)
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("viper failed to read config file: %w", err)
