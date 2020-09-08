@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -36,32 +35,27 @@ func readKeyperConfig() (KeyperConfig, error) {
 	viper.BindEnv("ShuttermintURL")
 	viper.BindEnv("SigningKey")
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
-
+	defer func() {
+		if viper.ConfigFileUsed() != "" {
+			log.Printf("Read config from %s", viper.ConfigFileUsed())
+		}
+	}()
 	var err error
 	kc := KeyperConfig{}
 
 	viper.AddConfigPath("$HOME/.config/shutter")
 	viper.SetConfigName("keyper")
 	viper.SetConfigType("toml")
+	viper.SetConfigFile(cfgFile)
 
-	if cfgFile == "" {
-		err = viper.ReadInConfig()
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found
-		} else {
-			return kc, err // Config file was found but another error was produced
-		}
-	} else {
-		f, err := os.Open(cfgFile)
-		if err != nil {
+	err = viper.ReadInConfig()
+	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		// Config file not found
+		if cfgFile != "" {
 			return kc, err
 		}
-		defer f.Close()
-
-		err = viper.ReadConfig(f)
-		if err != nil {
-			return kc, err
-		}
+	} else if err != nil {
+		return kc, err // Config file was found but another error was produced
 	}
 
 	err = viper.Unmarshal(&kc)
@@ -69,16 +63,16 @@ func readKeyperConfig() (KeyperConfig, error) {
 }
 
 func keyperMain() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
+
 	kc, err := readKeyperConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-
 	privateKey, err := crypto.HexToECDSA(kc.SigningKey)
 	if err != nil {
-		panic(fmt.Errorf("Bad signing key: %s", err))
+		panic(fmt.Errorf("Bad signing key: %s '%s'", err, kc.SigningKey))
 	}
 
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
