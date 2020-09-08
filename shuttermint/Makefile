@@ -23,16 +23,19 @@ clean:
 	rm -rf ${TESTROOT}
 	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper
 
-install-tools: install-abigen install-protoc-gen-go install-golangci-lint
+install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra
 
 install-abigen:
-	go get github.com/ethereum/go-ethereum/cmd/abigen
+	go install github.com/ethereum/go-ethereum/cmd/abigen
 
 install-protoc-gen-go:
-	go get google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/protobuf/cmd/protoc-gen-go
 
 install-golangci-lint:
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint
+
+install-cobra:
+	go install github.com/spf13/cobra/cobra
 
 lint:
 	golangci-lint run --tests
@@ -40,4 +43,4 @@ lint:
 abigen:
 	abigen --pkg contract --out contract/config.go --sol ../contracts/contracts/ConfigContract.sol
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-tendermint install-tools lint abigen
+.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-tools lint abigen
