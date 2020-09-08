@@ -27,8 +27,6 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 )
 
-var cfgFile string
-
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
@@ -47,7 +45,7 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (required)")
+	runCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (required)")
 }
 
 func runMain() {
