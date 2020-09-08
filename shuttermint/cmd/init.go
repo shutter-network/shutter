@@ -5,6 +5,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -45,11 +46,16 @@ func init() {
 
 func initFiles(cmd *cobra.Command, args []string) error {
 	config := cfg.DefaultConfig()
+	config.TxIndex.IndexAllKeys = true
 	config.SetRoot(rootDir)
 	if err := config.ValidateBasic(); err != nil {
 		return fmt.Errorf("error in config file: %v", err)
 	}
 	cfg.EnsureRoot(config.RootDir)
+
+	// EnsureRoot also write the config file but with the default config. We want our own, so
+	// let's overwrite it.
+	cfg.WriteConfigFile(filepath.Join(rootDir, "config", "config.toml"), config)
 
 	return initFilesWithConfig(config)
 }
