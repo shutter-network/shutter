@@ -9,9 +9,7 @@ Run `make` or `make build` to build the executables. The executables
 are build in the `bin` directory.
 
 Run `make install-tools` to install additional tools for linting and
-compiling the protocol buffer files. The `install-tools` target will
-also install the tendermint executable itself. It's currently needed
-for generating an initial config file.
+compiling the protocol buffer files.
 
 ## Tests
 Run `make test` to run the tests

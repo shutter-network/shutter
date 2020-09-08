@@ -1,4 +1,4 @@
-export TMHOME=$(CURDIR)/tmhome
+TESTROOT=$(CURDIR)/testchain
 
 VERSION=$(shell git describe --tags --always)
 
@@ -8,22 +8,22 @@ build:
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
 
-tmhome:
-	tendermint init
+${TESTROOT}:
+	bin/shuttermint init --root ${TESTROOT}
 
-init: tmhome
+init: ${TESTROOT}
 
 run: build init
-	./bin/shuttermint run --config ${TMHOME}/config/config.toml
+	./bin/shuttermint run --config ${TESTROOT}/config/config.toml
 
 test:
 	go test -v ./...
 
 clean:
-	rm -rf ./tmhome ./data
+	rm -rf ${TESTROOT}
 	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper
 
-install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-tendermint
+install-tools: install-abigen install-protoc-gen-go install-golangci-lint
 
 install-abigen:
 	go get github.com/ethereum/go-ethereum/cmd/abigen
@@ -33,9 +33,6 @@ install-protoc-gen-go:
 
 install-golangci-lint:
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint
-
-install-tendermint:
-	go get github.com/tendermint/tendermint/cmd/tendermint
 
 lint:
 	golangci-lint run --tests

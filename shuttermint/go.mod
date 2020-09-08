@@ -17,6 +17,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/shirou/gopsutil v2.20.8+incompatible // indirect
