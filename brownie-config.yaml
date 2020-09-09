@@ -1,5 +1,9 @@
 # This is a configuration file for brownie, which makes brownie bail
 # out when started in the top level directory.
 
-networks:
-  default: "Please run brownie inside the contracts directory!"
+compiler:
+  evm_version: |
+
+    =====================================================
+    = Please run brownie inside the contracts directory!
+    =====================================================
