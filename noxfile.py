@@ -73,7 +73,7 @@ def install_prettier(session: Session) -> None:
 
         for pkg in ["prettier@2.0.5", "prettier-plugin-solidity@1.0.0-alpha.54"]:
             session.run(
-                str(bindir.joinpath("npm")), "install", "-g", pkg, silent=True, external=True,
+                str(bindir.joinpath("npm")), "install", "-g", pkg, silent=True, external=True
             )
 
 

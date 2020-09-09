@@ -56,7 +56,7 @@ def test_emit_event(
     signatures = [make_bytes() for _ in signer_indices]
 
     tx = key_broadcast_contract.broadcastEncryptionKey(
-        keyper_index, batch_index, encryption_key, signer_indices, signatures, {"from": sender},
+        keyper_index, batch_index, encryption_key, signer_indices, signatures, {"from": sender}
     )
 
     assert len(tx.events) == 1

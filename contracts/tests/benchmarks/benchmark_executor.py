@@ -76,7 +76,7 @@ def execute_cipher_batch(
     ]
 
     return executor_contract.executeCipherBatch(
-        cipher_batch_hash, decrypted_transactions, decryption_key, signer_indices, signatures,
+        cipher_batch_hash, decrypted_transactions, decryption_key, signer_indices, signatures
     )
 
 

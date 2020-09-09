@@ -43,7 +43,7 @@ def test_num_configs_returns_number_of_configs(config_contract: Any, owner: Acco
     assert config_contract.numConfigs() == 2
     schedule_config(
         config_contract,
-        make_batch_config(start_batch_index=100, start_block_number=600, batch_span=1,),
+        make_batch_config(start_batch_index=100, start_block_number=600, batch_span=1),
         owner=owner,
     )
     assert config_contract.numConfigs() == 3
