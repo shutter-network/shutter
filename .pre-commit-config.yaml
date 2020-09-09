@@ -3,10 +3,10 @@ default_language_version:
 
 repos:
   - repo: https://github.com/prettier/prettier
-    rev: 2.0.5
+    rev: 2.1.1
     hooks:
       - id: prettier
-        additional_dependencies: ["prettier-plugin-solidity@1.0.0-alpha.55"]
+        additional_dependencies: ["prettier-plugin-solidity@1.0.0-alpha.57"]
         args: ["--plugin=prettier-plugin-solidity"]
         files: \.(sol|yml|yaml)$
 
