@@ -7,9 +7,8 @@
 apipkg==1.5               # via execnet
 appdirs==1.4.4            # via black, virtualenv
 argcomplete==1.12.0       # via nox
-asttokens==2.0.3          # via vyper
 attr==0.3.1               # via -r requirements.in
-attrs==19.3.0             # via black, hypothesis, jsonschema, pytest
+attrs==20.2.0             # via black, hypothesis, jsonschema, pytest
 base58==2.0.1             # via multiaddr
 bitarray==1.2.2           # via eth-account
 black==19.10b0            # via -r requirements.in, eth-brownie
@@ -21,50 +20,51 @@ colorlog==4.2.1           # via nox
 cytoolz==0.10.1           # via eth-keyfile, eth-utils
 distlib==0.3.1            # via virtualenv
 eth-abi==2.1.1            # via eth-account, eth-brownie, eth-event, web3
-eth-account==0.5.2        # via eth-brownie, web3
-eth-brownie==1.10.5       # via -r requirements.in
+eth-account==0.5.3        # via eth-brownie, web3
+eth-brownie==1.11.2       # via -r requirements.in
 eth-event==1.2.0          # via eth-brownie
 eth-hash[pycryptodome]==0.2.0  # via eth-brownie, eth-event, eth-utils, web3
 eth-keyfile==0.5.1        # via eth-account
 eth-keys==0.3.3           # via eth-account, eth-keyfile
-eth-rlp==0.1.2            # via eth-account
-eth-typing==2.2.1         # via -r requirements.in, eth-abi, eth-keys, eth-utils, web3
-eth-utils==1.9.0          # via -r requirements.in, eth-abi, eth-account, eth-brownie, eth-event, eth-keyfile, eth-keys, eth-rlp, rlp, web3
+eth-rlp==0.2.0            # via eth-account
+eth-typing==2.2.2         # via -r requirements.in, eth-abi, eth-keys, eth-utils, web3
+eth-utils==1.9.5          # via -r requirements.in, eth-abi, eth-account, eth-brownie, eth-event, eth-keyfile, eth-keys, eth-rlp, rlp, web3
 execnet==1.7.1            # via pytest-xdist
 filelock==3.0.12          # via virtualenv
 flake8-import-order==0.18.1  # via zimports
 flake8==3.8.3             # via -r requirements.in
 hexbytes==0.2.1           # via eth-account, eth-brownie, eth-event, eth-rlp, web3
-hypothesis==5.23.11       # via eth-brownie
-identify==1.4.25          # via pre-commit
+hypothesis==5.33.1        # via eth-brownie
+identify==1.5.0           # via pre-commit
 idna==2.10                # via requests
 importlib-metadata==1.7.0  # via argcomplete, flake8, jsonschema, nox, pluggy, pre-commit, pytest, virtualenv
 inflection==0.5.0         # via mythx-models, pythx
-ipfshttpclient==0.6.0.post1  # via web3
+iniconfig==1.0.1          # via pytest
+ipfshttpclient==0.6.1     # via web3
 jsonschema==3.2.0         # via mythx-models, web3
 lru-dict==1.1.6           # via web3
 mccabe==0.6.1             # via flake8
-more-itertools==8.4.0     # via pytest
+more-itertools==8.5.0     # via pytest
 multiaddr==0.0.9          # via ipfshttpclient
 mypy-extensions==0.4.3    # via mypy
 mypy==0.782               # via -r requirements.in
 mythx-models==1.9.1       # via pythx
 netaddr==0.8.0            # via multiaddr
-nodeenv==1.4.0            # via pre-commit
-nox==2020.5.24            # via -r requirements.in
+nodeenv==1.5.0            # via pre-commit
+nox==2020.8.22            # via -r requirements.in
 packaging==20.4           # via pytest
 parsimonious==0.8.1       # via eth-abi
 pathspec==0.8.0           # via black
 pluggy==0.13.1            # via pytest
-pre-commit==2.6.0         # via -r requirements.in
-prompt-toolkit==3.0.5     # via eth-brownie
-protobuf==3.12.4          # via web3
+pre-commit==2.7.1         # via -r requirements.in
+prompt-toolkit==3.0.7     # via eth-brownie
+protobuf==3.13.0          # via web3
 psutil==5.7.2             # via eth-brownie
 py-solc-ast==1.2.5        # via eth-brownie
-py-solc-x==0.10.1         # via eth-brownie
+py-solc-x==1.0.0          # via eth-brownie
 py==1.9.0                 # via eth-brownie, nox, pytest, pytest-forked
 pycodestyle==2.6.0        # via flake8, flake8-import-order
-pycryptodome==3.9.8       # via eth-hash, eth-keyfile, vyper
+pycryptodome==3.9.8       # via eth-hash, eth-keyfile
 pyflakes==2.2.0           # via flake8, zimports
 pygments-lexer-solidity==0.5.1  # via eth-brownie
 pygments==2.6.1           # via eth-brownie, pygments-lexer-solidity
@@ -73,26 +73,26 @@ pyparsing==2.4.7          # via packaging
 pyrsistent==0.16.0        # via jsonschema
 pytest-forked==1.3.0      # via pytest-xdist
 pytest-xdist==1.34.0      # via eth-brownie
-pytest==5.4.3             # via -r requirements.in, eth-brownie, pytest-forked, pytest-xdist
+pytest==6.0.1             # via -r requirements.in, eth-brownie, pytest-forked, pytest-xdist
 python-dateutil==2.8.1    # via mythx-models, pythx
 pythx==1.6.1              # via eth-brownie
 pyyaml==5.3.1             # via eth-brownie, pre-commit
 regex==2020.7.14          # via black
-requests==2.24.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, web3
+requests==2.24.0          # via eth-brownie, ipfshttpclient, py-solc-x, pythx, vvm, web3
 rlp==1.2.0                # via eth-account, eth-rlp
-semantic-version==2.8.5   # via eth-brownie, py-solc-x, vyper
-six==1.15.0               # via asttokens, jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, virtualenv
+semantic-version==2.8.5   # via eth-brownie, py-solc-x, vvm
+six==1.15.0               # via jsonschema, multiaddr, packaging, parsimonious, protobuf, pyrsistent, pytest-xdist, python-dateutil, virtualenv
 sortedcontainers==2.2.2   # via hypothesis
-toml==0.10.1              # via black, pre-commit
+toml==0.10.1              # via black, pre-commit, pytest
 toolz==0.10.0             # via cytoolz
-tqdm==4.48.0              # via eth-brownie
+tqdm==4.48.2              # via eth-brownie
 typed-ast==1.4.1          # via black, mypy
-typing-extensions==3.7.4.2  # via mypy, web3
+typing-extensions==3.7.4.3  # via mypy, web3
 urllib3==1.25.10          # via requests
 varint==1.0.2             # via multiaddr
-virtualenv==20.0.30       # via nox, pre-commit
-vyper==0.2.4              # via eth-brownie
-wcwidth==0.2.5            # via prompt-toolkit, pytest
+virtualenv==20.0.31       # via nox, pre-commit
+vvm==0.0.2                # via eth-brownie
+wcwidth==0.2.5            # via prompt-toolkit
 web3==5.11.1              # via -r requirements.in, eth-brownie
 websockets==8.1           # via web3
 zimports==0.2.2           # via -r requirements.in
