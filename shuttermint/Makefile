@@ -3,7 +3,7 @@ TESTROOT=$(CURDIR)/testchain
 VERSION=$(shell git describe --tags --always --abbrev=4 --dirty)
 
 build:
-	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./cmd/multik ./cmd/testclient
+	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./cmd/testclient
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/

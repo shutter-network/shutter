@@ -1,5 +1,4 @@
-// Run multiple keypers in a single process for testing purposes
-package main
+package cmd
 
 import (
 	"crypto/ecdsa"
@@ -11,11 +10,24 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
+
+	"github.com/spf13/cobra"
 )
 
-var version string = "(unknown)"
+// multikCmd represents the multik command
+var multikCmd = &cobra.Command{
+	Use:   "multik",
+	Short: "Run multiple keypers in a single process for testing purposes",
+	Run: func(cmd *cobra.Command, args []string) {
+		multikMain()
+	},
+}
 
-func main() {
+func init() {
+	rootCmd.AddCommand(multikCmd)
+}
+
+func multikMain() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	log.Printf("Starting multik version %s", version)
 	shuttermintURL := "http://localhost:26657"
