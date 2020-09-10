@@ -29,13 +29,13 @@ func TestGetBatch(t *testing.T) {
 	err = app.addConfig(BatchConfig{StartBatchIndex: 300, Threshhold: 3})
 	require.Nil(t, err)
 
-	require.Equal(t, app.getBatch(0).Config.Threshhold, uint32(0))
-	require.Equal(t, app.getBatch(99).Config.Threshhold, uint32(0))
-	require.Equal(t, app.getBatch(100).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(101).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(199).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(200).Config.Threshhold, uint32(2))
-	require.Equal(t, app.getBatch(1000).Config.Threshhold, uint32(3))
+	require.Equal(t, app.getBatchState(0).Config.Threshhold, uint32(0))
+	require.Equal(t, app.getBatchState(99).Config.Threshhold, uint32(0))
+	require.Equal(t, app.getBatchState(100).Config.Threshhold, uint32(1))
+	require.Equal(t, app.getBatchState(101).Config.Threshhold, uint32(1))
+	require.Equal(t, app.getBatchState(199).Config.Threshhold, uint32(1))
+	require.Equal(t, app.getBatchState(200).Config.Threshhold, uint32(2))
+	require.Equal(t, app.getBatchState(1000).Config.Threshhold, uint32(3))
 }
 
 func TestAddConfig(t *testing.T) {

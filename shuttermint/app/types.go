@@ -36,8 +36,8 @@ type EncryptionKeyAttestation struct {
 	Signature     []byte
 }
 
-// The BatchKeys structure is used to manage the key generation process for a certain batch
-type BatchKeys struct {
+// The BatchState structure is used to manage the key generation process for a certain batch
+type BatchState struct {
 	Config                    *BatchConfig
 	Commitments               []PublicKeyCommitment
 	SecretShares              []SecretShare
@@ -50,6 +50,6 @@ type BatchKeys struct {
 // persist anything on disk. When starting tendermint, it will 'feed' us with all of the messages
 // received via deliverMessage
 type ShutterApp struct {
-	Configs []*BatchConfig
-	Batches map[uint64]BatchKeys
+	Configs     []*BatchConfig
+	BatchStates map[uint64]BatchState
 }

@@ -23,8 +23,8 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 // NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
-		Configs: []*BatchConfig{{}},
-		Batches: make(map[uint64]BatchKeys),
+		Configs:     []*BatchConfig{{}},
+		BatchStates: make(map[uint64]BatchState),
 	}
 }
 
@@ -47,14 +47,14 @@ func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 	return nil
 }
 
-// getBatch returns the BatchKeys for the given batchIndex
-func (app *ShutterApp) getBatch(batchIndex uint64) BatchKeys {
-	bk, ok := app.Batches[batchIndex]
+// getBatchState returns the BatchState for the given batchIndex
+func (app *ShutterApp) getBatchState(batchIndex uint64) BatchState {
+	bs, ok := app.BatchStates[batchIndex]
 	if !ok {
-		bk.Config = app.getConfig(batchIndex)
+		bs.Config = app.getConfig(batchIndex)
 	}
 
-	return bk
+	return bs
 }
 
 func (ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
@@ -126,19 +126,19 @@ func makeErrorResponse(msg string) abcitypes.ResponseDeliverTx {
 }
 
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
-	bk := app.getBatch(pkc.BatchIndex)
-	publicKeyBefore := bk.PublicKey
-	err := bk.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
+	bs := app.getBatchState(pkc.BatchIndex)
+	publicKeyBefore := bs.PublicKey
+	err := bs.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
 	if err != nil {
 		fmt.Println("GOT ERROR", err)
 		return makeErrorResponse(fmt.Sprintf("Error in AddPublicKeyCommitment: %s", err))
 	}
-	app.Batches[pkc.BatchIndex] = bk
+	app.BatchStates[pkc.BatchIndex] = bs
 
 	var events []abcitypes.Event
-	if publicKeyBefore == nil && bk.PublicKey != nil {
+	if publicKeyBefore == nil && bs.PublicKey != nil {
 		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, MakePubkeyGeneratedEvent(pkc.BatchIndex, bk.PublicKey))
+		events = append(events, MakePubkeyGeneratedEvent(pkc.BatchIndex, bs.PublicKey))
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
@@ -146,18 +146,18 @@ func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment
 }
 
 func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.Address) abcitypes.ResponseDeliverTx {
-	bk := app.getBatch(ss.BatchIndex)
-	privateKeyBefore := bk.PrivateKey
-	err := bk.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
+	bs := app.getBatchState(ss.BatchIndex)
+	privateKeyBefore := bs.PrivateKey
+	err := bs.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
 	if err != nil {
 		fmt.Println("GOT ERROR", err)
 		return makeErrorResponse(fmt.Sprintf("Error in AddSecretShare: %s", err))
 	}
-	app.Batches[ss.BatchIndex] = bk
+	app.BatchStates[ss.BatchIndex] = bs
 	var events []abcitypes.Event
-	if privateKeyBefore == nil && bk.PrivateKey != nil {
+	if privateKeyBefore == nil && bs.PrivateKey != nil {
 		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, MakePrivkeyGeneratedEvent(ss.BatchIndex, bk.PrivateKey))
+		events = append(events, MakePrivkeyGeneratedEvent(ss.BatchIndex, bs.PrivateKey))
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
@@ -190,13 +190,13 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 }
 
 func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyAttestation, sender common.Address) abcitypes.ResponseDeliverTx {
-	bk := app.getBatch(msg.BatchIndex)
+	bs := app.getBatchState(msg.BatchIndex)
 	att := EncryptionKeyAttestation{Sender: sender, EncryptionKey: msg.Key, BatchIndex: msg.BatchIndex, Signature: msg.Signature}
-	err := bk.AddEncryptionKeyAttestation(att)
+	err := bs.AddEncryptionKeyAttestation(att)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Error in AddEncryptionKeyAttestation: %s", err))
 	}
-	app.Batches[msg.BatchIndex] = bk
+	app.BatchStates[msg.BatchIndex] = bs
 
 	var events []abcitypes.Event
 	events = append(events, MakeEncryptionKeySignatureAddedEvent(msg.BatchIndex, msg.Key, msg.Signature))

@@ -30,34 +30,34 @@ func TestAddPublicKeyCommitment(t *testing.T) {
 	privkey, err := crypto.GenerateKey()
 	require.Nil(t, err, "key generation failed")
 	pubkey := crypto.FromECDSAPub(&privkey.PublicKey)
-	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5]}}
-	t.Logf("batch: %+v", batchKeys)
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
+	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5]}}
+	t.Logf("batch: %+v", batchState)
+	err = batchState.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
 	if err != nil {
 		t.Fatalf("could not add public key commitment: %s", err)
 	}
 
-	if len(batchKeys.Commitments) != 1 {
-		t.Fatalf("wrong number of commitments: %s", batchKeys.Commitments)
+	if len(batchState.Commitments) != 1 {
+		t.Fatalf("wrong number of commitments: %s", batchState.Commitments)
 	}
 
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
+	err = batchState.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[0], Pubkey: pubkey})
 	if err == nil {
 		t.Fatalf("no error")
 	}
 	t.Logf("received expected error: %s", err)
-	if len(batchKeys.Commitments) != 1 {
-		t.Fatalf("wrong number of commitments: %s", batchKeys.Commitments)
+	if len(batchState.Commitments) != 1 {
+		t.Fatalf("wrong number of commitments: %s", batchState.Commitments)
 	}
 
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[6], Pubkey: pubkey})
+	err = batchState.AddPublicKeyCommitment(PublicKeyCommitment{Sender: addresses[6], Pubkey: pubkey})
 	if err == nil {
 		t.Fatalf("no error")
 	}
 
 	t.Logf("received expected error: %s", err)
-	if len(batchKeys.Commitments) != 1 {
-		t.Fatalf("wrong number of commitments: %s", batchKeys.Commitments)
+	if len(batchState.Commitments) != 1 {
+		t.Fatalf("wrong number of commitments: %s", batchState.Commitments)
 	}
 }
 
@@ -68,28 +68,28 @@ func TestAddSecretShare(t *testing.T) {
 	key2, err := crypto.GenerateKey()
 	require.Nil(t, err, "could not generate key")
 
-	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5]}}
-	t.Logf("batch: %+v", batchKeys)
-	err = batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{
+	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5]}}
+	t.Logf("batch: %+v", batchState)
+	err = batchState.AddPublicKeyCommitment(PublicKeyCommitment{
 		Sender: addresses[0],
 		Pubkey: crypto.FromECDSAPub(&key1.PublicKey)})
 	require.Nil(t, err)
 
 	// this should fail because we didn't provide a public key
-	err = batchKeys.AddSecretShare(SecretShare{Sender: addresses[1], Privkey: crypto.FromECDSA(key1)})
+	err = batchState.AddSecretShare(SecretShare{Sender: addresses[1], Privkey: crypto.FromECDSA(key1)})
 	require.NotNil(t, err, "added secret share without providing public key first")
 	t.Logf("received expected error: %s", err)
 
 	// this should fail because we use a non-matching private key
-	err = batchKeys.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key2)})
+	err = batchState.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key2)})
 	require.NotNil(t, err, "added secret share with non-matching key")
 	t.Logf("received expected error: %s", err)
 
 	// this should succeed
-	err = batchKeys.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key1)})
+	err = batchState.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key1)})
 	require.Nil(t, err, "could not add secret share: %s", err)
 
-	err = batchKeys.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key1)})
+	err = batchState.AddSecretShare(SecretShare{Sender: addresses[0], Privkey: crypto.FromECDSA(key1)})
 	require.NotNil(t, err, "providing a secret key a second time should fail")
 }
 
@@ -100,41 +100,41 @@ func TestAddSecretShareSetsKeys(t *testing.T) {
 		require.Nil(t, err)
 		keys[i] = k
 	}
-	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
+	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
 	for i, k := range keys {
-		err := batchKeys.AddPublicKeyCommitment(PublicKeyCommitment{
+		err := batchState.AddPublicKeyCommitment(PublicKeyCommitment{
 			Sender: addresses[i],
 			Pubkey: crypto.FromECDSAPub(&k.PublicKey)})
 		require.Nil(t, err)
 		if i+1 < 3 {
-			require.Nil(t, batchKeys.PublicKey, "should not have public key yet", i)
+			require.Nil(t, batchState.PublicKey, "should not have public key yet", i)
 		} else {
-			require.NotNil(t, batchKeys.PublicKey)
-			require.Equal(t, batchKeys.PublicKey, &keys[2].PublicKey)
+			require.NotNil(t, batchState.PublicKey)
+			require.Equal(t, batchState.PublicKey, &keys[2].PublicKey)
 		}
 	}
 
 	for i, j := range []int{2, 1, 0, 3, 4} {
 		k := keys[j]
-		err := batchKeys.AddSecretShare(SecretShare{
+		err := batchState.AddSecretShare(SecretShare{
 			Sender:  addresses[j],
 			Privkey: crypto.FromECDSA(k)})
 		require.Nil(t, err)
 		if i+1 < 3 {
-			require.Nil(t, batchKeys.PrivateKey, "should not have public key yet", i)
+			require.Nil(t, batchState.PrivateKey, "should not have public key yet", i)
 		} else {
-			require.NotNil(t, batchKeys.PrivateKey)
-			require.Equal(t, batchKeys.PrivateKey, keys[2])
+			require.NotNil(t, batchState.PrivateKey)
+			require.Equal(t, batchState.PrivateKey, keys[2])
 		}
 	}
 }
 
 func TestAddEncryptionKeyAttestation(t *testing.T) {
-	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
+	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5], Threshold: 3}}
 
 	// don't accept messages from non-keypers
 	nonKeyper := addresses[6]
-	err := batchKeys.AddEncryptionKeyAttestation(EncryptionKeyAttestation{
+	err := batchState.AddEncryptionKeyAttestation(EncryptionKeyAttestation{
 		Sender: nonKeyper,
 	})
 	require.Error(t, err)
@@ -154,12 +154,12 @@ func TestAddEncryptionKeyAttestation(t *testing.T) {
 	}
 	require.True(t, att.VerifySignature())
 
-	err = batchKeys.AddEncryptionKeyAttestation(att)
+	err = batchState.AddEncryptionKeyAttestation(att)
 	require.Nil(t, err)
 
 	// find attestation by sender
-	require.True(t, len(batchKeys.EncryptionKeyAttestations) == 1)
-	foundAtt, err := batchKeys.FindEncryptionKeyAttestation(addresses[0])
+	require.True(t, len(batchState.EncryptionKeyAttestations) == 1)
+	foundAtt, err := batchState.FindEncryptionKeyAttestation(addresses[0])
 	require.Nil(t, err)
 	require.Equal(t, foundAtt, att)
 
@@ -175,6 +175,6 @@ func TestAddEncryptionKeyAttestation(t *testing.T) {
 		BatchIndex:    batchIndex,
 		Signature:     sig2,
 	}
-	err = batchKeys.AddEncryptionKeyAttestation(att2)
+	err = batchState.AddEncryptionKeyAttestation(att2)
 	require.Error(t, err)
 }
