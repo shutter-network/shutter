@@ -23,10 +23,10 @@ func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string) Keyper {
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
 
-func (k *Keyper) Run() error {
+func (kpr *Keyper) Run() error {
 	group, ctx := errgroup.WithContext(context.Background())
 	var cl client.Client
-	cl, err := http.New(k.ShuttermintURL, "/websocket")
+	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
 		return err
 	}
@@ -41,41 +41,41 @@ func (k *Keyper) Run() error {
 	query := "tx.height > 3"
 
 	txs, err := cl.Subscribe(ctx, "test-client", query)
-	k.txs = txs
+	kpr.txs = txs
 	if err != nil {
 		return err
 	}
 
-	group.Go(k.dispatchTxs)
-	group.Go(k.startNewBatches)
+	group.Go(kpr.dispatchTxs)
+	group.Go(kpr.startNewBatches)
 
 	err = group.Wait()
 	return err
 }
 
-func (k *Keyper) dispatchTxs() error {
-	for tx := range k.txs {
+func (kpr *Keyper) dispatchTxs() error {
+	for tx := range kpr.txs {
 		d := tx.Data.(types.EventDataTx)
 		for _, ev := range d.TxResult.Result.Events {
 			x, err := MakeEvent(ev)
 			if err != nil {
 				return err
 			}
-			k.dispatchEvent(x)
+			kpr.dispatchEvent(x)
 		}
 	}
 	return nil
 }
 
-func (k *Keyper) startNewBatches() error {
+func (kpr *Keyper) startNewBatches() error {
 	var cl client.Client
-	cl, err := http.New(k.ShuttermintURL, "/websocket")
+	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
 		return err
 	}
 
 	for batchIndex := NextBatchIndex(time.Now()); ; batchIndex++ {
-		bp := k.startBatch(batchIndex, cl)
+		bp := kpr.startBatch(batchIndex, cl)
 		// The following waits for the start of the previous round. This is done on
 		// purpose, because we generate keys in keyper.Run as a first step and then wait
 		// for the start time
@@ -83,54 +83,53 @@ func (k *Keyper) startNewBatches() error {
 	}
 }
 
-func (k *Keyper) removeBatch(batchIndex uint64) {
+func (kpr *Keyper) removeBatch(batchIndex uint64) {
 	log.Printf("Batch %d finished", batchIndex)
-	k.mux.Lock()
-	defer k.mux.Unlock()
-	close(k.batchIndexToChannel[batchIndex])
-	delete(k.batchIndexToChannel, batchIndex)
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
+	close(kpr.batchIndexToChannel[batchIndex])
+	delete(kpr.batchIndexToChannel, batchIndex)
 }
 
-func (k *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
+func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	bp := NewBatchParams(batchIndex)
 	ch := make(chan IEvent, 2)
-	k.mux.Lock()
-	defer k.mux.Unlock()
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
 
-	k.batchIndexToChannel[batchIndex] = ch
+	kpr.batchIndexToChannel[batchIndex] = ch
 
 	go func() {
-		defer k.removeBatch(batchIndex)
-		Run(bp, NewMessageSender(cl, k.SigningKey), ch)
+		defer kpr.removeBatch(batchIndex)
+		Run(bp, NewMessageSender(cl, kpr.SigningKey), ch)
 	}()
 
 	return bp
 }
 
-func (k *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
-	k.mux.Lock()
-	defer k.mux.Unlock()
+func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
 
-	ch, ok := k.batchIndexToChannel[batchIndex]
+	ch, ok := kpr.batchIndexToChannel[batchIndex]
 
 	if ok {
 		// We do have the mutex locked at this point and write to the channel.  This could
 		// end up in a deadlock if we block here. This is why we need a buffered
-		// channel. We only
+		// channel.
 		// Since we only ever close the channel, when the mutex is locked, at
 		// least we can be sure that we do not write to a closed channel here.
 		ch <- ev
 	}
-
 }
 
-func (k *Keyper) dispatchEvent(ev IEvent) {
+func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	log.Printf("Dispatching event: %+v", ev)
 	switch e := ev.(type) {
 	case PubkeyGeneratedEvent:
-		k.dispatchEventToBatch(e.BatchIndex, e)
+		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case PrivkeyGeneratedEvent:
-		k.dispatchEventToBatch(e.BatchIndex, e)
+		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case BatchConfigEvent:
 		_ = e
 	default:
