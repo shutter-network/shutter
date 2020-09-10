@@ -1,7 +1,6 @@
 package app
 
 import (
-	"crypto/ecdsa"
 	"testing"
 	"unicode/utf8"
 
@@ -55,15 +54,6 @@ func TestAddConfig(t *testing.T) {
 func TestKeyGeneration(t *testing.T) {
 	app := NewShutterApp()
 	keypers := addresses[:3]
-
-	var keys [3]*ecdsa.PrivateKey
-	for i := 0; i < len(keys); i++ {
-		k, err := crypto.GenerateKey()
-		if err != nil {
-			t.Fatalf("Could not generate key: %s", err)
-		}
-		keys[i] = k
-	}
 
 	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 2, Keypers: keypers})
 	require.Nil(t, err)
@@ -149,6 +139,25 @@ func TestKeyGeneration(t *testing.T) {
 			Privkey:    crypto.FromECDSA(keys[2])},
 		keypers[2])
 	require.Equal(t, abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)}, ss3)
+
+	// encryption key signature collection
+	key := crypto.FromECDSAPub(&keys[1].PublicKey)
+	preimage := EncryptionKeyPreimage(key, 200)
+	hash := crypto.Keccak256Hash(preimage)
+	t.Log(hash.Hex())
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	require.Nil(t, err)
+	attMsg := shmsg.EncryptionKeyAttestation{
+		BatchIndex: 200,
+		Key:        key,
+		Signature:  sig,
+	}
+	res4 := app.deliverEncryptionKeyAttestation(&attMsg, keypers[0])
+	expectedEvent := MakeEncryptionKeySignatureAddedEvent(200, key, sig)
+	require.Equal(t, abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{expectedEvent},
+	}, res4)
 }
 
 func TestEncodePubkeyForEvent(t *testing.T) {

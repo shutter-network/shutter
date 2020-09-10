@@ -189,6 +189,23 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		Events: events}
 }
 
+func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyAttestation, sender common.Address) abcitypes.ResponseDeliverTx {
+	bk := app.getBatch(msg.BatchIndex)
+	att := EncryptionKeyAttestation{Sender: sender, EncryptionKey: msg.Key, BatchIndex: msg.BatchIndex, Signature: msg.Signature}
+	err := bk.AddEncryptionKeyAttestation(att)
+	if err != nil {
+		return makeErrorResponse(fmt.Sprintf("Error in AddEncryptionKeyAttestation: %s", err))
+	}
+	app.Batches[msg.BatchIndex] = bk
+
+	var events []abcitypes.Event
+	events = append(events, MakeEncryptionKeySignatureAddedEvent(msg.BatchIndex, msg.Key, msg.Signature))
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: events,
+	}
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	fmt.Println("MSG:", msg)
 	if msg.GetPublicKeyCommitment() != nil {
@@ -199,6 +216,9 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetBatchConfig() != nil {
 		return app.deliverBatchConfig(msg.GetBatchConfig(), sender)
+	}
+	if msg.GetEncryptionKeyAttestation() != nil {
+		return app.deliverEncryptionKeyAttestation(msg.GetEncryptionKeyAttestation(), sender)
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
