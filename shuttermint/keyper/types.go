@@ -38,13 +38,13 @@ type Keyper struct {
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex
-func NewBatchParams(BatchIndex uint64) BatchParams {
-	ts := int64(BatchIndex) * int64(RoundInterval)
+func NewBatchParams(batchIndex uint64) BatchParams {
+	ts := int64(batchIndex) * int64(RoundInterval)
 
 	pubstart := time.Unix(ts/int64(time.Second), ts%int64(time.Second))
 	privstart := pubstart.Add(PrivateKeyDelay)
 	return BatchParams{
-		BatchIndex:                    BatchIndex,
+		BatchIndex:                    batchIndex,
 		PublicKeyGenerationStartTime:  pubstart,
 		PrivateKeyGenerationStartTime: privstart,
 	}

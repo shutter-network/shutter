@@ -13,10 +13,10 @@ import (
 )
 
 // NewKeyper creates a new Keyper
-func NewKeyper(SigningKey *ecdsa.PrivateKey, ShuttermintURL string) Keyper {
+func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string) Keyper {
 	return Keyper{
-		SigningKey:          SigningKey,
-		ShuttermintURL:      ShuttermintURL,
+		SigningKey:          signingKey,
+		ShuttermintURL:      shuttermintURL,
 		batchIndexToChannel: make(map[uint64]chan IEvent)}
 }
 
@@ -107,11 +107,11 @@ func (k *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	return bp
 }
 
-func (k *Keyper) dispatchEventToBatch(BatchIndex uint64, ev IEvent) {
+func (k *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 	k.mux.Lock()
 	defer k.mux.Unlock()
 
-	ch, ok := k.batchIndexToChannel[BatchIndex]
+	ch, ok := k.batchIndexToChannel[batchIndex]
 
 	if ok {
 		// We do have the mutex locked at this point and write to the channel.  This could
