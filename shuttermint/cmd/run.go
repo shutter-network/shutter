@@ -76,7 +76,8 @@ func runMain() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	fmt.Println("Got signal. Exiting.")
-	os.Exit(0)
+	// Previously we had an os.Exit(0) call here, but now we do wait until the defer function
+	// above is done
 }
 
 func newTendermint(app abcitypes.Application, configFile string) (*nm.Node, error) {
