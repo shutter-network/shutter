@@ -28,13 +28,22 @@ type SecretShare struct {
 	Privkey []byte
 }
 
+// EncryptionKeyAttestation stores an attestation to an encryption key signed by one of the keypers.
+type EncryptionKeyAttestation struct {
+	Sender        common.Address
+	EncryptionKey []byte
+	BatchIndex    uint64
+	Signature     []byte
+}
+
 // The BatchKeys structure is used to manage the key generation process for a certain batch
 type BatchKeys struct {
-	Config       *BatchConfig
-	Commitments  []PublicKeyCommitment
-	SecretShares []SecretShare
-	PublicKey    *ecdsa.PublicKey
-	PrivateKey   *ecdsa.PrivateKey
+	Config                    *BatchConfig
+	Commitments               []PublicKeyCommitment
+	SecretShares              []SecretShare
+	PublicKey                 *ecdsa.PublicKey
+	PrivateKey                *ecdsa.PrivateKey
+	EncryptionKeyAttestations []EncryptionKeyAttestation
 }
 
 // ShutterApp holds our data structures used for the tendermint app.  At the moment we don't

@@ -128,3 +128,53 @@ func TestAddSecretShareSetsKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestAddEncryptionKeyAttestation(t *testing.T) {
+	batchKeys := BatchKeys{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
+
+	// don't accept messages from non-keypers
+	nonKeyper := addresses[6]
+	err := batchKeys.AddEncryptionKeyAttestation(EncryptionKeyAttestation{
+		Sender: nonKeyper,
+	})
+	require.Error(t, err)
+
+	// add attestation from keyper
+	key := []byte("key")
+	const batchIndex uint64 = 5
+	preimage := EncryptionKeyPreimage(key, batchIndex)
+	hash := crypto.Keccak256Hash(preimage)
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	require.Nil(t, err)
+	att := EncryptionKeyAttestation{
+		Sender:        addresses[0],
+		EncryptionKey: key,
+		BatchIndex:    batchIndex,
+		Signature:     sig,
+	}
+	require.True(t, att.VerifySignature())
+
+	err = batchKeys.AddEncryptionKeyAttestation(att)
+	require.Nil(t, err)
+
+	// find attestation by sender
+	require.True(t, len(batchKeys.EncryptionKeyAttestations) == 1)
+	foundAtt, err := batchKeys.FindEncryptionKeyAttestation(addresses[0])
+	require.Nil(t, err)
+	require.Equal(t, foundAtt, att)
+
+	// don't accept another attestation by keyper
+	key2 := []byte("key2")
+	preimage2 := EncryptionKeyPreimage(key2, batchIndex)
+	hash2 := crypto.Keccak256Hash(preimage2)
+	sig2, err := crypto.Sign(hash2.Bytes(), keys[0])
+	require.Nil(t, err)
+	att2 := EncryptionKeyAttestation{
+		Sender:        addresses[0],
+		EncryptionKey: key2,
+		BatchIndex:    batchIndex,
+		Signature:     sig2,
+	}
+	err = batchKeys.AddEncryptionKeyAttestation(att2)
+	require.Error(t, err)
+}

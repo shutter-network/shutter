@@ -24,11 +24,18 @@ message BatchConfig {
         uint32 threshold = 3 ;
 }
 
+message EncryptionKeyAttestation {
+        uint64 batchIndex = 1;
+        bytes key = 2;
+        bytes signature = 3;
+}
+
 message Message {
         oneof payload {
               PublicKeyCommitment public_key_commitment = 1;
               PublicKeyShare public_key_share = 2;
               SecretShare secret_share = 3;
               BatchConfig batch_config = 4;
+              EncryptionKeyAttestation encryption_key_attestation = 5;
         }
 }

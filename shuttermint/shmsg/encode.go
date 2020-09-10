@@ -36,9 +36,9 @@ func URLDecodeMessage(encoded string) (*Message, error) {
 
 // Instead of relying on protocol buffers we simply send a signature, followed by the marshalled message
 
-// eip191prefix is used to make sure we do not sign a valid ethereum transaction, see
-// https://eips.ethereum.org/EIPS/eip-191
-var eip191prefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
+// Add a prefix to avoid accidentally signing data with special meaning in different context, in
+// particular Ethereum transactions (c.f. EIP191 https://eips.ethereum.org/EIPS/eip-191).
+var hashPrefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
 
 // SignMessage signs the given Message with the given private key
 func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
@@ -47,7 +47,7 @@ func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 		return nil, err
 	}
 	hash := sha3.New256()
-	_, err = hash.Write(eip191prefix)
+	_, err = hash.Write(hashPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func GetSigner(signedMessage []byte) (common.Address, error) {
 		return signer, errors.New("message too short")
 	}
 	hash := sha3.New256()
-	_, err := hash.Write(eip191prefix)
+	_, err := hash.Write(hashPrefix)
 	if err != nil {
 		return common.Address{}, err
 	}
