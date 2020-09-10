@@ -38,6 +38,7 @@ type EncryptionKeyAttestation struct {
 
 // The BatchState structure is used to manage the key generation process for a certain batch
 type BatchState struct {
+	BatchIndex                uint64
 	Config                    *BatchConfig
 	Commitments               []PublicKeyCommitment
 	SecretShares              []SecretShare

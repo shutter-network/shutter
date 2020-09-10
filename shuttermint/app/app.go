@@ -51,6 +51,7 @@ func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 func (app *ShutterApp) getBatchState(batchIndex uint64) BatchState {
 	bs, ok := app.BatchStates[batchIndex]
 	if !ok {
+		bs.BatchIndex = batchIndex
 		bs.Config = app.getConfig(batchIndex)
 	}
 
