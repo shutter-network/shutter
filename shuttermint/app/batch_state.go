@@ -114,6 +114,10 @@ func (bs *BatchState) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) er
 		return errors.New("Not a keyper")
 	}
 
+	if !bytes.Equal(crypto.FromECDSAPub(bs.PublicKey), a.EncryptionKey) {
+		return errors.New("Encryption key does not match")
+	}
+
 	if !a.VerifySignature() {
 		return errors.New("Invalid signature")
 	}
