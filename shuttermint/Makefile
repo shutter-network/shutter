@@ -3,7 +3,7 @@ TESTROOT=$(CURDIR)/testchain
 VERSION=$(shell git describe --tags --always --abbrev=4 --dirty)
 
 build:
-	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./cmd/testclient
+	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./sandbox/testclient ./sandbox/deploy
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
@@ -21,7 +21,7 @@ test:
 
 clean:
 	rm -rf ${TESTROOT}
-	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper
+	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper bin/deploy
 
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra
 
