@@ -97,3 +97,34 @@ func (bk *BatchKeys) AddSecretShare(share SecretShare) error {
 	}
 	return nil
 }
+
+// FindEncryptionKeyAttestation returns the EncryptionKeyAttestation provided by the given address
+func (bk *BatchKeys) FindEncryptionKeyAttestation(addr common.Address) (EncryptionKeyAttestation, error) {
+	for _, a := range bk.EncryptionKeyAttestations {
+		if a.Sender == addr {
+			return a, nil
+		}
+	}
+	return EncryptionKeyAttestation{}, errors.New("Keyper did not provide an encryption key attestation")
+}
+
+// AddEncryptionKeyAttestation adds an EncryptionKeyAttestation to the batch.
+func (bk *BatchKeys) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) error {
+	if !bk.Config.IsKeyper(a.Sender) {
+		return errors.New("Not a keyper")
+	}
+
+	if !a.VerifySignature() {
+		return errors.New("Invalid signature")
+	}
+
+	for _, att := range bk.EncryptionKeyAttestations {
+		if att.Sender == a.Sender {
+			return errors.New("Already have encyption key attestation")
+		}
+	}
+
+	bk.EncryptionKeyAttestations = append(bk.EncryptionKeyAttestations, a)
+
+	return nil
+}
