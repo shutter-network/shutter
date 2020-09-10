@@ -20,34 +20,34 @@ func TestNewShutterApp(t *testing.T) {
 func TestGetBatch(t *testing.T) {
 	app := NewShutterApp()
 
-	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 1})
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 200, Threshhold: 2})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 200, Threshold: 2})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 300, Threshhold: 3})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 300, Threshold: 3})
 	require.Nil(t, err)
 
-	require.Equal(t, app.getBatch(0).Config.Threshhold, uint32(0))
-	require.Equal(t, app.getBatch(99).Config.Threshhold, uint32(0))
-	require.Equal(t, app.getBatch(100).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(101).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(199).Config.Threshhold, uint32(1))
-	require.Equal(t, app.getBatch(200).Config.Threshhold, uint32(2))
-	require.Equal(t, app.getBatch(1000).Config.Threshhold, uint32(3))
+	require.Equal(t, app.getBatchState(0).Config.Threshold, uint32(0))
+	require.Equal(t, app.getBatchState(99).Config.Threshold, uint32(0))
+	require.Equal(t, app.getBatchState(100).Config.Threshold, uint32(1))
+	require.Equal(t, app.getBatchState(101).Config.Threshold, uint32(1))
+	require.Equal(t, app.getBatchState(199).Config.Threshold, uint32(1))
+	require.Equal(t, app.getBatchState(200).Config.Threshold, uint32(2))
+	require.Equal(t, app.getBatchState(1000).Config.Threshold, uint32(3))
 }
 
 func TestAddConfig(t *testing.T) {
 	app := NewShutterApp()
 
-	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 1})
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 50, Threshhold: 1})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 50, Threshold: 1})
 	require.NotNil(t, err, "Expected error, StartBatchIndex must increase")
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 1})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
 	require.NotNil(t, err, "Expected error, StartBatchIndex must increase")
 }
 
@@ -55,7 +55,7 @@ func TestKeyGeneration(t *testing.T) {
 	app := NewShutterApp()
 	keypers := addresses[:3]
 
-	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshhold: 2, Keypers: keypers})
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 2, Keypers: keypers})
 	require.Nil(t, err)
 	res1 := app.deliverPublicKeyCommitment(
 		&shmsg.PublicKeyCommitment{

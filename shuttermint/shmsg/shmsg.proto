@@ -9,7 +9,7 @@ message PublicKeyCommitment {
 }
 
 message PublicKeyShare {
-        string batch_id = 1;
+        uint64 batchIndex = 1;
         bytes key=2;
 }
 

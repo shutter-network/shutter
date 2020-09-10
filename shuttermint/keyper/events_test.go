@@ -37,7 +37,7 @@ func TestMakeEventBatchConfig(t *testing.T) {
 	require.Equal(t,
 		BatchConfigEvent{
 			StartBatchIndex: 111,
-			Threshhold:      2,
+			Threshold:       2,
 			Keypers:         addresses},
 		ev)
 }
