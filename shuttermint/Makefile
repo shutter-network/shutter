@@ -41,6 +41,6 @@ lint:
 	golangci-lint run --tests
 
 abigen:
-	abigen --pkg contract --out contract/config.go --sol ../contracts/contracts/ConfigContract.sol
+	abigen --pkg contract --out contract/binding.go --sol ../contracts/contracts/ConfigContract.sol --sol ../contracts/contracts/KeyBroadcastContract.sol
 
 .PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-tools lint abigen
