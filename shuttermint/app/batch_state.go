@@ -27,7 +27,7 @@ func (bs *BatchState) AddPublicKeyCommitment(commitment PublicKeyCommitment) err
 	}
 
 	bs.Commitments = append(bs.Commitments, commitment)
-	if len(bs.Commitments) == int(bs.Config.Threshhold) {
+	if len(bs.Commitments) == int(bs.Config.Threshold) {
 		bs.PublicKey = pubkey
 	}
 
@@ -82,8 +82,8 @@ func (bs *BatchState) AddSecretShare(share SecretShare) error {
 
 	if bs.PrivateKey == nil &&
 		bs.PublicKey != nil &&
-		len(bs.SecretShares) >= int(bs.Config.Threshhold) {
-		ss, err := bs.FindSecretShare(bs.Commitments[bs.Config.Threshhold-1].Sender)
+		len(bs.SecretShares) >= int(bs.Config.Threshold) {
+		ss, err := bs.FindSecretShare(bs.Commitments[bs.Config.Threshold-1].Sender)
 		if err == nil {
 			privkey, err := crypto.ToECDSA(ss.Privkey)
 			if err != nil {

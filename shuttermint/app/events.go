@@ -73,13 +73,13 @@ func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abc
 }
 
 // MakeBatchConfigEvent creates a 'shutter.batch-config' tendermint event. The given
-// startBatchIndex, threshhold and list of keyper addresses are encoded as attributes of the event.
-func MakeBatchConfigEvent(startBatchIndex uint64, threshhold uint32, keypers []common.Address) abcitypes.Event {
+// startBatchIndex, threshold and list of keyper addresses are encoded as attributes of the event.
+func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint32, keypers []common.Address) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.batch-config",
 		Attributes: []kv.Pair{
 			{Key: []byte("StartBatchIndex"), Value: []byte(fmt.Sprintf("%d", startBatchIndex))},
-			{Key: []byte("Threshhold"), Value: []byte(fmt.Sprintf("%d", threshhold))},
+			{Key: []byte("Threshold"), Value: []byte(fmt.Sprintf("%d", threshold))},
 			{Key: []byte("Keypers"), Value: []byte(encodeAddressesForEvent(keypers))},
 		},
 	}

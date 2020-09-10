@@ -61,7 +61,7 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 		return BatchConfigEvent{}, fmt.Errorf("Event contains not enough attributes: %+v", ev)
 	}
 	if !bytes.Equal(ev.Attributes[0].Key, []byte("StartBatchIndex")) ||
-		!bytes.Equal(ev.Attributes[1].Key, []byte("Threshhold")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("Threshold")) ||
 		!bytes.Equal(ev.Attributes[2].Key, []byte("Keypers")) {
 		return BatchConfigEvent{}, fmt.Errorf("Bad event attributes: %+v", ev)
 	}
@@ -71,12 +71,12 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 		return BatchConfigEvent{}, err
 	}
 
-	threshhold, err := strconv.Atoi(string(ev.Attributes[1].Value))
+	threshold, err := strconv.Atoi(string(ev.Attributes[1].Value))
 	if err != nil {
 		return BatchConfigEvent{}, err
 	}
 	keypers := app.DecodeAddressesFromEvent(string(ev.Attributes[2].Value))
-	return BatchConfigEvent{uint64(b), uint32(threshhold), keypers}, nil
+	return BatchConfigEvent{uint64(b), uint32(threshold), keypers}, nil
 }
 
 // MakeEvent creates an Event from the given tendermint event. It will return a

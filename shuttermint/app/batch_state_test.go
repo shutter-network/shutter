@@ -100,7 +100,7 @@ func TestAddSecretShareSetsKeys(t *testing.T) {
 		require.Nil(t, err)
 		keys[i] = k
 	}
-	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5], Threshhold: 3}}
+	batchState := BatchState{Config: &BatchConfig{Keypers: addresses[:5], Threshold: 3}}
 	for i, k := range keys {
 		err := batchState.AddPublicKeyCommitment(PublicKeyCommitment{
 			Sender: addresses[i],

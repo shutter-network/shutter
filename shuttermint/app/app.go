@@ -176,7 +176,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	bc := BatchConfig{
 		StartBatchIndex: msg.StartBatchIndex,
 		Keypers:         keypers,
-		Threshhold:      msg.Threshold,
+		Threshold:       msg.Threshold,
 	}
 	err := app.addConfig(bc)
 	if err != nil {
@@ -184,7 +184,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	}
 
 	var events []abcitypes.Event
-	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshhold, keypers))
+	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, keypers))
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: events}

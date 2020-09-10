@@ -12,7 +12,7 @@ import (
 type BatchConfig struct {
 	StartBatchIndex uint64
 	Keypers         []common.Address
-	Threshhold      uint32
+	Threshold       uint32
 }
 
 // PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
