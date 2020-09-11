@@ -57,7 +57,8 @@ func MakePubkeyGeneratedEvent(batchIndex uint64, pubkey *ecdsa.PublicKey) abcity
 		Type: "shutter.pubkey-generated",
 		Attributes: []kv.Pair{
 			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
-			{Key: []byte("Pubkey"), Value: []byte(encodePubkeyForEvent(pubkey))}},
+			{Key: []byte("Pubkey"), Value: []byte(encodePubkeyForEvent(pubkey))},
+		},
 	}
 }
 
@@ -68,7 +69,8 @@ func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abc
 		Type: "shutter.privkey-generated",
 		Attributes: []kv.Pair{
 			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
-			{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(privkey))}},
+			{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(privkey))},
+		},
 	}
 }
 

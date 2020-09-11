@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var keys [10]*ecdsa.PrivateKey
-var addresses [10]common.Address
+var (
+	keys      [10]*ecdsa.PrivateKey
+	addresses [10]common.Address
+)
 
 func init() {
 	for i := 0; i < 10; i++ {
@@ -72,7 +74,8 @@ func TestAddSecretShare(t *testing.T) {
 	t.Logf("batch: %+v", batchState)
 	err = batchState.AddPublicKeyCommitment(PublicKeyCommitment{
 		Sender: addresses[0],
-		Pubkey: crypto.FromECDSAPub(&key1.PublicKey)})
+		Pubkey: crypto.FromECDSAPub(&key1.PublicKey),
+	})
 	require.Nil(t, err)
 
 	// this should fail because we didn't provide a public key
@@ -104,7 +107,8 @@ func TestAddSecretShareSetsKeys(t *testing.T) {
 	for i, k := range keys {
 		err := batchState.AddPublicKeyCommitment(PublicKeyCommitment{
 			Sender: addresses[i],
-			Pubkey: crypto.FromECDSAPub(&k.PublicKey)})
+			Pubkey: crypto.FromECDSAPub(&k.PublicKey),
+		})
 		require.Nil(t, err)
 		if i+1 < 3 {
 			require.Nil(t, batchState.PublicKey, "should not have public key yet", i)
@@ -118,7 +122,8 @@ func TestAddSecretShareSetsKeys(t *testing.T) {
 		k := keys[j]
 		err := batchState.AddSecretShare(SecretShare{
 			Sender:  addresses[j],
-			Privkey: crypto.FromECDSA(k)})
+			Privkey: crypto.FromECDSA(k),
+		})
 		require.Nil(t, err)
 		if i+1 < 3 {
 			require.Nil(t, batchState.PrivateKey, "should not have public key yet", i)

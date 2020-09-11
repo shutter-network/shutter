@@ -1,8 +1,11 @@
 package app
 
-import "math/big"
-import "github.com/ethereum/go-ethereum/crypto"
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+)
 
 // Add a prefix to avoid accidentally signing data with special meaning in different context, in
 // particular Ethereum transactions (c.f. EIP191 https://eips.ethereum.org/EIPS/eip-191).

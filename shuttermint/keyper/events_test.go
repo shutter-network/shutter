@@ -38,6 +38,7 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		BatchConfigEvent{
 			StartBatchIndex: 111,
 			Threshold:       2,
-			Keypers:         addresses},
+			Keypers:         addresses,
+		},
 		ev)
 }

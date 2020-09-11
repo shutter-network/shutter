@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/spf13/cobra"
-
-	stdlog "log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+
+	"github.com/spf13/cobra"
+
+	stdlog "log"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/spf13/viper"

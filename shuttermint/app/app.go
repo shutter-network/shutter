@@ -108,7 +108,6 @@ func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Addres
 
 func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	signer, msg, err := app.decodeTx(req)
-
 	if err != nil {
 		fmt.Println("Error while decoding transaction:", err)
 		return makeErrorResponse(fmt.Sprintf("Error while decoding transaction: %s", err))
@@ -120,7 +119,8 @@ func makeErrorResponse(msg string) abcitypes.ResponseDeliverTx {
 	return abcitypes.ResponseDeliverTx{
 		Code:   1,
 		Log:    msg,
-		Events: []abcitypes.Event{}}
+		Events: []abcitypes.Event{},
+	}
 }
 
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
@@ -140,7 +140,8 @@ func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: events}
+		Events: events,
+	}
 }
 
 func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.Address) abcitypes.ResponseDeliverTx {
@@ -159,8 +160,8 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: events}
-
+		Events: events,
+	}
 }
 
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
@@ -184,7 +185,8 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, keypers))
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: events}
+		Events: events,
+	}
 }
 
 func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyAttestation, sender common.Address) abcitypes.ResponseDeliverTx {
@@ -220,7 +222,8 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: []abcitypes.Event{}}
+		Events: []abcitypes.Event{},
+	}
 }
 
 func (ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {

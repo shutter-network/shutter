@@ -7,8 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version string = "(unknown)"
-var cfgFile string
+var (
+	version string = "(unknown)"
+	cfgFile string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

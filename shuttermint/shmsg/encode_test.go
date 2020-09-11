@@ -22,7 +22,6 @@ func TestEncodeDecode(t *testing.T) {
 	encoded, err := URLEncodeMessage(makeMessage())
 	if err != nil {
 		t.Fatalf("Got error while encoding: %s", err)
-
 	}
 	t.Logf("Encoded: %s", encoded)
 	msg, err := URLDecodeMessage(encoded)
@@ -34,7 +33,6 @@ func TestEncodeDecode(t *testing.T) {
 
 	if msg.GetPublicKeyCommitment() == nil {
 		t.Fatal("got no public key commitment")
-
 	}
 }
 
@@ -61,6 +59,5 @@ func TestSignMessage(t *testing.T) {
 	}
 	if msg.GetPublicKeyCommitment() == nil {
 		t.Fatal("got no public key commitment")
-
 	}
 }

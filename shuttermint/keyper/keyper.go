@@ -17,7 +17,8 @@ func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string) Keyper {
 	return Keyper{
 		SigningKey:          signingKey,
 		ShuttermintURL:      shuttermintURL,
-		batchIndexToChannel: make(map[uint64]chan IEvent)}
+		batchIndexToChannel: make(map[uint64]chan IEvent),
+	}
 }
 
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation

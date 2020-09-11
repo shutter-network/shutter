@@ -60,7 +60,8 @@ func TestKeyGeneration(t *testing.T) {
 	res1 := app.deliverPublicKeyCommitment(
 		&shmsg.PublicKeyCommitment{
 			BatchIndex: 200,
-			Commitment: crypto.FromECDSAPub(&keys[0].PublicKey)},
+			Commitment: crypto.FromECDSAPub(&keys[0].PublicKey),
+		},
 		keypers[0])
 	require.Equal(
 		t,
@@ -70,7 +71,8 @@ func TestKeyGeneration(t *testing.T) {
 	res2 := app.deliverPublicKeyCommitment(
 		&shmsg.PublicKeyCommitment{
 			BatchIndex: 200,
-			Commitment: crypto.FromECDSAPub(&keys[1].PublicKey)},
+			Commitment: crypto.FromECDSAPub(&keys[1].PublicKey),
+		},
 		keypers[1])
 	// We've reached the threshold, there should be an event of Type "shutter.pubkey-generated"
 	require.Equal(
@@ -90,12 +92,15 @@ func TestKeyGeneration(t *testing.T) {
 							Value: []byte(encodePubkeyForEvent(&keys[1].PublicKey)),
 						},
 					},
-				}}},
+				},
+			},
+		},
 		res2)
 	res3 := app.deliverPublicKeyCommitment(
 		&shmsg.PublicKeyCommitment{
 			BatchIndex: 200,
-			Commitment: crypto.FromECDSAPub(&keys[2].PublicKey)},
+			Commitment: crypto.FromECDSAPub(&keys[2].PublicKey),
+		},
 		keypers[2])
 	require.Equal(
 		t,
@@ -106,13 +111,15 @@ func TestKeyGeneration(t *testing.T) {
 	ss1 := app.deliverSecretShare(
 		&shmsg.SecretShare{
 			BatchIndex: 200,
-			Privkey:    crypto.FromECDSA(keys[0])},
+			Privkey:    crypto.FromECDSA(keys[0]),
+		},
 		keypers[0])
 	require.Equal(t, abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)}, ss1)
 	ss2 := app.deliverSecretShare(
 		&shmsg.SecretShare{
 			BatchIndex: 200,
-			Privkey:    crypto.FromECDSA(keys[1])},
+			Privkey:    crypto.FromECDSA(keys[1]),
+		},
 		keypers[1])
 	require.Equal(
 		t,
@@ -131,12 +138,15 @@ func TestKeyGeneration(t *testing.T) {
 							Value: []byte(encodePrivkeyForEvent(keys[1])),
 						},
 					},
-				}}},
+				},
+			},
+		},
 		ss2)
 	ss3 := app.deliverSecretShare(
 		&shmsg.SecretShare{
 			BatchIndex: 200,
-			Privkey:    crypto.FromECDSA(keys[2])},
+			Privkey:    crypto.FromECDSA(keys[2]),
+		},
 		keypers[2])
 	require.Equal(t, abcitypes.ResponseDeliverTx{Code: 0, Events: []abcitypes.Event(nil)}, ss3)
 
