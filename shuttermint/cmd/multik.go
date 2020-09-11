@@ -5,13 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/spf13/cobra"
+	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
 // multikCmd represents the multik command

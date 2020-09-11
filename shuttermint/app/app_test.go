@@ -4,11 +4,12 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
+
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 func TestNewShutterApp(t *testing.T) {

@@ -2,29 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	stdlog "log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
 	"github.com/spf13/cobra"
-
-	stdlog "log"
-
-	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/spf13/viper"
-
 	abcitypes "github.com/tendermint/tendermint/abci/types"
-
 	cfg "github.com/tendermint/tendermint/config"
-
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/log"
-
 	nm "github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
+
+	"github.com/brainbot-com/shutter/shuttermint/app"
 )
 
 // runCmd represents the run command

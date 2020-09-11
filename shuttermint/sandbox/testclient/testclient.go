@@ -7,15 +7,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/kr/pretty"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
-
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 var version string = "(unknown)"

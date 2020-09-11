@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/rpc/client"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
+
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 // RoundInterval is the duration between the start of two consecutive rounds

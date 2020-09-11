@@ -5,9 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 // SleepUntil pauses the current goroutine until the given time is reached

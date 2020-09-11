@@ -9,10 +9,11 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 )
 
 const (

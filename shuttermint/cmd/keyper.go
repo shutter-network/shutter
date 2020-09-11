@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
 type KeyperConfig struct {

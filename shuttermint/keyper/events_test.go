@@ -4,10 +4,11 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+
+	"github.com/brainbot-com/shutter/shuttermint/app"
 )
 
 func TestMakeEventPrivkeyGenerated(t *testing.T) {
