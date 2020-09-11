@@ -2,6 +2,7 @@ package keyper
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 
@@ -79,6 +80,40 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 	return BatchConfigEvent{uint64(b), uint32(threshold), keypers}, nil
 }
 
+// MakeEncryptionKeySignatureAddedEvent creates a EncryptionKeySignatureAddedEvent from the given
+// tendermint event of type "shutter.encryption-key-signature-added"
+func MakeEncryptionKeySignatureAddedEvent(ev abcitypes.Event) (EncryptionKeySignatureAddedEvent, error) {
+	if len(ev.Attributes) < 3 {
+		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
+	}
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("EncryptionKey")) ||
+		!bytes.Equal(ev.Attributes[2].Key, []byte("Signature")) {
+		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
+	}
+
+	batchIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	if err != nil {
+		return EncryptionKeySignatureAddedEvent{}, err
+	}
+
+	key, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[1].Value))
+	if err != nil {
+		return EncryptionKeySignatureAddedEvent{}, err
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	if err != nil {
+		return EncryptionKeySignatureAddedEvent{}, err
+	}
+
+	return EncryptionKeySignatureAddedEvent{
+		BatchIndex:    uint64(batchIndex),
+		EncryptionKey: key,
+		Signature:     signature,
+	}, nil
+}
+
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
@@ -98,6 +133,13 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	}
 	if ev.Type == "shutter.batch-config" {
 		res, err := MakeBatchConfigEvent(ev)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+	if ev.Type == "shutter.encryption-key-signature-added" {
+		res, err := MakeEncryptionKeySignatureAddedEvent(ev)
 		if err != nil {
 			return nil, err
 		}

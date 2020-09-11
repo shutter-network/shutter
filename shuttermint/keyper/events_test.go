@@ -43,3 +43,13 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		},
 		ev)
 }
+
+func TestMakeEventEncryptionSignatureAddedEvent(t *testing.T) {
+	var batchIndex uint64 = 111
+	key := []byte("key")
+	sig := []byte("sig")
+	appEvent := app.MakeEncryptionKeySignatureAddedEvent(batchIndex, key, sig)
+	ev, err := MakeEvent(appEvent)
+	require.Nil(t, err)
+	require.Equal(t, EncryptionKeySignatureAddedEvent{BatchIndex: batchIndex, EncryptionKey: key, Signature: sig}, ev)
+}
