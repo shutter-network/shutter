@@ -15,11 +15,11 @@ import (
 )
 
 // RoundInterval is the duration between the start of two consecutive rounds
-var RoundInterval time.Duration = time.Duration(5 * time.Second)
+var RoundInterval time.Duration = 5 * time.Second
 
 // PrivateKeyDelay is the duration between the start of the public key generation and the the start
 // of the private key generation for a single round
-var PrivateKeyDelay time.Duration = time.Duration(45 * time.Second)
+var PrivateKeyDelay time.Duration = 45 * time.Second
 
 // BatchParams describes the parameters for single Batch identified by the BatchIndex
 type BatchParams struct {
