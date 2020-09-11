@@ -34,7 +34,7 @@ func URLDecodeMessage(encoded string) (*Message, error) {
 	return &msg, nil
 }
 
-// Instead of relying on protocol buffers we simply send a signature, followed by the marshalled message
+// Instead of relying on protocol buffers we simply send a signature, followed by the marshaled message
 
 // Add a prefix to avoid accidentally signing data with special meaning in different context, in
 // particular Ethereum transactions (c.f. EIP191 https://eips.ethereum.org/EIPS/eip-191).
@@ -42,7 +42,7 @@ var hashPrefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
 
 // SignMessage signs the given Message with the given private key
 func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
-	marshalled, err := proto.Marshal(msg)
+	marshaled, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = hash.Write(marshalled)
+	_, err = hash.Write(marshaled)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 		return nil, err
 	}
 
-	return append(signature, marshalled...), nil
+	return append(signature, marshaled...), nil
 }
 
 // GetSigner returns the signer address of a signed message
