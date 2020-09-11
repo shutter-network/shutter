@@ -15,6 +15,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+const (
+	defaultGasLimit                  = 5000000
+	defaultConfigChangeHeadsUpBlocks = 5
+)
+
 func main() {
 	client, err := ethclient.Dial("http://localhost:8545")
 	if err != nil {
@@ -41,13 +46,16 @@ func main() {
 		}
 		auth := bind.NewKeyedTransactor(privateKey)
 		auth.Nonce = big.NewInt(int64(nonce))
-		auth.Value = big.NewInt(0)      // in wei
-		auth.GasLimit = uint64(5000000) // in units
+		auth.Value = big.NewInt(0) // in wei
+		auth.GasLimit = defaultGasLimit
 		auth.GasPrice = gasPrice
 		return auth
 	}
 
-	configAddress, tx, _, err := contract.DeployConfigContract(newAuth(), client, big.NewInt(5))
+	configAddress, tx, _, err := contract.DeployConfigContract(
+		newAuth(),
+		client,
+		big.NewInt(defaultConfigChangeHeadsUpBlocks))
 	if err != nil {
 		log.Fatal(err)
 	}
