@@ -15,7 +15,7 @@ linters-settings:
     lines: 100
     statements: 50
   gci:
-    local-prefixes: github.com/golangci/golangci-lint
+    local-prefixes: github.com/brainbot-com/shutter/shuttermint
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -77,6 +77,7 @@ linters:
     - errcheck
     - exhaustive
     - funlen
+    - gci
     - goconst
     - gocritic
     - gocyclo
