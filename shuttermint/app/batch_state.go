@@ -12,12 +12,12 @@ import (
 // sent from configured Keyper
 func (bs *BatchState) AddPublicKeyCommitment(commitment PublicKeyCommitment) error {
 	if !bs.Config.IsKeyper(commitment.Sender) {
-		return errors.New("Not a keyper")
+		return errors.New("not a keyper")
 	}
 
 	for _, comm := range bs.Commitments {
 		if comm.Sender == commitment.Sender {
-			return errors.New("Already have commitment")
+			return errors.New("already have commitment")
 		}
 	}
 
@@ -41,7 +41,7 @@ func (bs *BatchState) FindPublicKeyCommitment(addr common.Address) (PublicKeyCom
 			return comm, nil
 		}
 	}
-	return PublicKeyCommitment{}, errors.New("Keyper did not provide a public key")
+	return PublicKeyCommitment{}, errors.New("keyper did not provide a public key")
 }
 
 // FindSecretShare returns the SecretShare provided by the given address
@@ -51,13 +51,13 @@ func (bs *BatchState) FindSecretShare(addr common.Address) (SecretShare, error) 
 			return s, nil
 		}
 	}
-	return SecretShare{}, errors.New("Keyper did not provide a secret share")
+	return SecretShare{}, errors.New("keyper did not provide a secret share")
 }
 
 // AddSecretShare adds a SecretShare to the batch.
 func (bs *BatchState) AddSecretShare(share SecretShare) error {
 	if !bs.Config.IsKeyper(share.Sender) {
-		return errors.New("Not a keyper")
+		return errors.New("not a keyper")
 	}
 	pkc, err := bs.FindPublicKeyCommitment(share.Sender)
 	if err != nil {
@@ -65,7 +65,7 @@ func (bs *BatchState) AddSecretShare(share SecretShare) error {
 	}
 
 	if _, err = bs.FindSecretShare(share.Sender); err == nil {
-		return errors.New("SecretShare already sent for this batch")
+		return errors.New("secret share already sent for this batch")
 	}
 
 	// Check that the secret key matches the public key. As a side effect this also makes sure
@@ -76,7 +76,7 @@ func (bs *BatchState) AddSecretShare(share SecretShare) error {
 	}
 
 	if !bytes.Equal(crypto.FromECDSAPub(&privkey.PublicKey), pkc.Pubkey) {
-		return errors.New("Keys do not match")
+		return errors.New("keys do not match")
 	}
 	bs.SecretShares = append(bs.SecretShares, share)
 
@@ -105,26 +105,26 @@ func (bs *BatchState) FindEncryptionKeyAttestation(addr common.Address) (Encrypt
 			return a, nil
 		}
 	}
-	return EncryptionKeyAttestation{}, errors.New("Keyper did not provide an encryption key attestation")
+	return EncryptionKeyAttestation{}, errors.New("keyper did not provide an encryption key attestation")
 }
 
 // AddEncryptionKeyAttestation adds an EncryptionKeyAttestation to the batch.
 func (bs *BatchState) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) error {
 	if !bs.Config.IsKeyper(a.Sender) {
-		return errors.New("Not a keyper")
+		return errors.New("not a keyper")
 	}
 
 	if !bytes.Equal(crypto.FromECDSAPub(bs.PublicKey), a.EncryptionKey) {
-		return errors.New("Encryption key does not match")
+		return errors.New("encryption key does not match")
 	}
 
 	if !a.VerifySignature() {
-		return errors.New("Invalid signature")
+		return errors.New("invalid signature")
 	}
 
 	for _, att := range bs.EncryptionKeyAttestations {
 		if att.Sender == a.Sender {
-			return errors.New("Already have encyption key attestation")
+			return errors.New("already have encyption key attestation")
 		}
 	}
 

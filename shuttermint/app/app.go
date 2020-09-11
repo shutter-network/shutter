@@ -41,7 +41,7 @@ func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
 func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 	lastConfig := app.Configs[len(app.Configs)-1]
 	if lastConfig.StartBatchIndex >= cfg.StartBatchIndex {
-		return errors.New("StartBatchIndex must be greater than previous StartBatchIndex")
+		return errors.New("start batch index too low")
 	}
 	app.Configs = append(app.Configs, &cfg)
 	return nil

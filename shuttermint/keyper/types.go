@@ -17,7 +17,7 @@ import (
 // RoundInterval is the duration between the start of two consecutive rounds
 var RoundInterval time.Duration = time.Duration(5 * time.Second)
 
-// PrivateKeyDeley is the duration between the start of the public key generation and the the start
+// PrivateKeyDelay is the duration between the start of the public key generation and the the start
 // of the private key generation for a single round
 var PrivateKeyDelay time.Duration = time.Duration(45 * time.Second)
 
@@ -78,7 +78,7 @@ func (ms MessageSender) SendMessage(msg *shmsg.Message) error {
 		return err
 	}
 	if res.DeliverTx.Code != 0 {
-		return fmt.Errorf("Error in SendMessage: %s", res.DeliverTx.Log)
+		return fmt.Errorf("send message: %s", res.DeliverTx.Log)
 	}
 	return nil
 }

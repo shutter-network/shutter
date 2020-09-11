@@ -72,7 +72,7 @@ func keyperMain() {
 
 	privateKey, err := crypto.HexToECDSA(kc.SigningKey)
 	if err != nil {
-		panic(fmt.Errorf("Bad signing key: %s '%s'", err, kc.SigningKey))
+		panic(fmt.Errorf("bad signing key: %s '%s'", err, kc.SigningKey))
 	}
 
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()

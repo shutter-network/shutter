@@ -14,10 +14,10 @@ import (
 // type "shutter.privkey-generated"
 func MakePrivkeyGeneratedEvent(ev abcitypes.Event) (PrivkeyGeneratedEvent, error) {
 	if len(ev.Attributes) < 2 {
-		return PrivkeyGeneratedEvent{}, fmt.Errorf("Event contains not enough attributes: %+v", ev)
+		return PrivkeyGeneratedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
 	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) || !bytes.Equal(ev.Attributes[1].Key, []byte("Privkey")) {
-		return PrivkeyGeneratedEvent{}, fmt.Errorf("Bad event attributes: %+v", ev)
+		return PrivkeyGeneratedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
 	}
 
 	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
@@ -36,10 +36,10 @@ func MakePrivkeyGeneratedEvent(ev abcitypes.Event) (PrivkeyGeneratedEvent, error
 // type "shutter.pubkey-generated"
 func MakePubkeyGeneratedEvent(ev abcitypes.Event) (PubkeyGeneratedEvent, error) {
 	if len(ev.Attributes) < 2 {
-		return PubkeyGeneratedEvent{}, fmt.Errorf("Event contains not enough attributes: %+v", ev)
+		return PubkeyGeneratedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
 	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) || !bytes.Equal(ev.Attributes[1].Key, []byte("Pubkey")) {
-		return PubkeyGeneratedEvent{}, fmt.Errorf("Bad event attributes: %+v", ev)
+		return PubkeyGeneratedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
 	}
 
 	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
@@ -58,12 +58,12 @@ func MakePubkeyGeneratedEvent(ev abcitypes.Event) (PubkeyGeneratedEvent, error) 
 // "shutter.batch-config"
 func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 	if len(ev.Attributes) < 3 {
-		return BatchConfigEvent{}, fmt.Errorf("Event contains not enough attributes: %+v", ev)
+		return BatchConfigEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
 	if !bytes.Equal(ev.Attributes[0].Key, []byte("StartBatchIndex")) ||
 		!bytes.Equal(ev.Attributes[1].Key, []byte("Threshold")) ||
 		!bytes.Equal(ev.Attributes[2].Key, []byte("Keypers")) {
-		return BatchConfigEvent{}, fmt.Errorf("Bad event attributes: %+v", ev)
+		return BatchConfigEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
 	}
 
 	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
@@ -102,7 +102,6 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 			return nil, err
 		}
 		return res, nil
-
 	}
-	return nil, fmt.Errorf("Cannot make event from %+v", ev)
+	return nil, fmt.Errorf("cannot make event from %+v", ev)
 }
