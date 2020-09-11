@@ -10,4 +10,5 @@ import (
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/spf13/cobra/cobra"
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
+	_ "mvdan.cc/gofumpt/gofumports"
 )

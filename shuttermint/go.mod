@@ -29,4 +29,5 @@ require (
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
+	mvdan.cc/gofumpt v0.0.0-20200802201014-ab5a8192947d
 )

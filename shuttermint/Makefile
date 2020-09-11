@@ -23,7 +23,7 @@ clean:
 	rm -rf ${TESTROOT}
 	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper bin/deploy
 
-install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra
+install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports
 
 install-abigen:
 	go install github.com/ethereum/go-ethereum/cmd/abigen
@@ -37,6 +37,9 @@ install-golangci-lint:
 install-cobra:
 	go install github.com/spf13/cobra/cobra
 
+install-gofumports:
+	go install mvdan.cc/gofumpt/gofumports
+
 lint:
 	golangci-lint run --tests
 
@@ -46,4 +49,4 @@ abigen:
 deploy-ganache:
 	go run ./sandbox/deploy
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-tools lint abigen
+.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint abigen
