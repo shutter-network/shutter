@@ -62,8 +62,8 @@ type MessageSender struct {
 }
 
 // NewMessageSender creates a new MessageSender
-func NewMessageSender(client client.Client, signingKey *ecdsa.PrivateKey) MessageSender {
-	return MessageSender{client, signingKey}
+func NewMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) MessageSender {
+	return MessageSender{cl, signingKey}
 }
 
 // SendMessage signs the given shmsg.Message and sends the message to shuttermint
@@ -77,7 +77,6 @@ func (ms MessageSender) SendMessage(msg *shmsg.Message) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println("broadcast tx", res)
 	if res.DeliverTx.Code != 0 {
 		return fmt.Errorf("Error in SendMessage: %s", res.DeliverTx.Log)
 	}

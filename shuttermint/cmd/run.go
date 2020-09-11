@@ -52,9 +52,9 @@ func runMain() {
 	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile | stdlog.Lmicroseconds)
 	stdlog.Printf("Starting shuttermint version %s", version)
 
-	app := app.NewShutterApp()
+	shapp := app.NewShutterApp()
 
-	node, err := newTendermint(app, cfgFile)
+	node, err := newTendermint(shapp, cfgFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
@@ -80,7 +80,7 @@ func runMain() {
 	// above is done
 }
 
-func newTendermint(app abcitypes.Application, configFile string) (*nm.Node, error) {
+func newTendermint(shapp abcitypes.Application, configFile string) (*nm.Node, error) {
 	// read config
 	config := cfg.DefaultConfig()
 	config.RootDir = filepath.Dir(filepath.Dir(configFile))
@@ -121,7 +121,7 @@ func newTendermint(app abcitypes.Application, configFile string) (*nm.Node, erro
 		config,
 		pv,
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		proxy.NewLocalClientCreator(shapp),
 		nm.DefaultGenesisDocProviderFunc(config),
 		nm.DefaultDBProvider,
 		nm.DefaultMetricsProvider(config.Instrumentation),

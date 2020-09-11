@@ -98,7 +98,6 @@ func main() {
 
 	fmt.Println("Msg:", base64.RawURLEncoding.EncodeToString(signedMessage))
 
-	// res, err := cl.BroadcastTXCommit(context.Background(), signedMessage)
 	if err != nil {
 		panic(err)
 	}
