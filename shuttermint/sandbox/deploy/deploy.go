@@ -8,8 +8,12 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -20,6 +24,17 @@ const (
 	defaultGasLimit                  = 5000000
 	defaultConfigChangeHeadsUpBlocks = 5
 )
+
+func waitForTransactionReceipt(cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
+	for {
+		receipt, err := cl.TransactionReceipt(context.Background(), txHash)
+		if err == ethereum.NotFound {
+			time.Sleep(time.Second)
+			continue
+		}
+		return receipt, err
+	}
+}
 
 func main() {
 	client, err := ethclient.Dial("http://localhost:8545")
@@ -60,6 +75,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = waitForTransactionReceipt(client, tx.Hash())
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("ConfigContract address:", configAddress.Hex())
 	fmt.Println(tx.Hash().Hex())
@@ -68,7 +87,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println("\nDeployKeyBroadcastContract address:", address.Hex())
 	fmt.Println(tx.Hash().Hex())
+	_, err = waitForTransactionReceipt(client, tx.Hash())
+	if err != nil {
+		log.Fatal(err)
+	}
 }
