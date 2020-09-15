@@ -58,7 +58,7 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 }
 
 // Run runs the key generation for the given batch
-func Run(params BatchParams, ms MessageSender, events <-chan IEvent) {
+func Run(params BatchParams, ms MessageSender, cc ContractCaller, events <-chan IEvent) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return
@@ -82,6 +82,14 @@ func Run(params BatchParams, ms MessageSender, events <-chan IEvent) {
 		log.Print("Timeout while waiting for public key generation to finish", params)
 		return
 	}
+
+	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
+	err = cc.BroadcastEncryptionKey(0, params.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+	if err != nil {
+		log.Print("Error while trying to broadcast encryption key:", err)
+		return
+	}
+
 	SleepUntil(params.PrivateKeyGenerationStartTime)
 	msg = NewSecretShare(params.BatchIndex, key)
 	log.Print("Generated privkey", params)

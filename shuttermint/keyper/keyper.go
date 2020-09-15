@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
@@ -102,7 +103,13 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 
 	go func() {
 		defer kpr.removeBatch(batchIndex)
-		Run(bp, NewMessageSender(cl, kpr.SigningKey), ch)
+		ms := NewMessageSender(cl, kpr.SigningKey)
+		cc := NewContractCaller(
+			kpr.EthereumURL,
+			kpr.SigningKey,
+			common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
+		)
+		Run(bp, ms, cc, ch)
 	}()
 
 	return bp
