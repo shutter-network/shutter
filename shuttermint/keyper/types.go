@@ -122,3 +122,19 @@ func (PubkeyGeneratedEvent) IEvent()             {}
 func (PrivkeyGeneratedEvent) IEvent()            {}
 func (BatchConfigEvent) IEvent()                 {}
 func (EncryptionKeySignatureAddedEvent) IEvent() {}
+
+// ContractCaller interacts with the contracts on Ethereum.
+type ContractCaller struct {
+	ethereumURL                 string
+	signingKey                  *ecdsa.PrivateKey
+	keyBroadcastContractAddress common.Address
+}
+
+// NewContractCaller creates a new ContractCaller.
+func NewContractCaller(ethereumURL string, signingKey *ecdsa.PrivateKey, keyBroadcastContractAddress common.Address) ContractCaller {
+	return ContractCaller{
+		ethereumURL:                 ethereumURL,
+		signingKey:                  signingKey,
+		keyBroadcastContractAddress: keyBroadcastContractAddress,
+	}
+}
