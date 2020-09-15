@@ -43,10 +43,13 @@ install-gofumports:
 lint:
 	golangci-lint run --tests
 
+lint-changes:
+	golangci-lint run --new-from-rev origin/master
+
 abigen:
 	abigen --pkg contract --out contract/binding.go --sol ../contracts/contracts/ConfigContract.sol --sol ../contracts/contracts/KeyBroadcastContract.sol
 
 deploy-ganache:
 	go run ./sandbox/deploy
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint abigen
+.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen
