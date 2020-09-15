@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
@@ -26,6 +27,8 @@ func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL 
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
 func (kpr *Keyper) Run() error {
+	log.Printf("Running keyper with address %s", kpr.Address().Hex())
+
 	group, ctx := errgroup.WithContext(context.Background())
 	var cl client.Client
 	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
@@ -143,4 +146,15 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	default:
 		panic("unknown type")
 	}
+}
+
+// Address returns the keyper's Ethereum address.
+func (kpr *Keyper) Address() common.Address {
+	publicKey := kpr.SigningKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+	address := crypto.PubkeyToAddress(*publicKeyECDSA)
+	return address
 }
