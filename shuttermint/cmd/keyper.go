@@ -13,6 +13,7 @@ import (
 
 type KeyperConfig struct {
 	ShuttermintURL string
+	EthereumURL    string
 	SigningKey     string
 }
 
@@ -33,8 +34,10 @@ func init() {
 func readKeyperConfig() (KeyperConfig, error) {
 	viper.SetEnvPrefix("KEYPER")
 	viper.BindEnv("ShuttermintURL")
+	viper.BindEnv("EthereumURL")
 	viper.BindEnv("SigningKey")
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
+	viper.SetDefault("EthereumURL", "http://localhost:8545")
 	defer func() {
 		if viper.ConfigFileUsed() != "" {
 			log.Printf("Read config from %s", viper.ConfigFileUsed())
@@ -76,8 +79,14 @@ func keyperMain() {
 	}
 
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
-	log.Printf("Starting keyper version %s with signing key %s, using %s", version, addr, kc.ShuttermintURL)
-	k := keyper.NewKeyper(privateKey, kc.ShuttermintURL)
+	log.Printf(
+		"Starting keyper version %s with signing key %s, using %s for Shuttermint and %s for Ethereum",
+		version,
+		addr,
+		kc.ShuttermintURL,
+		kc.EthereumURL,
+	)
+	k := keyper.NewKeyper(privateKey, kc.ShuttermintURL, kc.EthereumURL)
 	err = k.Run()
 	if err != nil {
 		panic(err)

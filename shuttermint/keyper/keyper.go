@@ -13,17 +13,17 @@ import (
 )
 
 // NewKeyper creates a new Keyper
-func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string) Keyper {
+func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL string) Keyper {
 	return Keyper{
 		SigningKey:          signingKey,
 		ShuttermintURL:      shuttermintURL,
+		EthereumURL:         ethereumURL,
 		batchIndexToChannel: make(map[uint64]chan IEvent),
 	}
 }
 
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
-
 func (kpr *Keyper) Run() error {
 	group, ctx := errgroup.WithContext(context.Background())
 	var cl client.Client

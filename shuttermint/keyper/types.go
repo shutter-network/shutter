@@ -33,6 +33,7 @@ type BatchParams struct {
 type Keyper struct {
 	SigningKey          *ecdsa.PrivateKey
 	ShuttermintURL      string
+	EthereumURL         string
 	mux                 sync.Mutex
 	batchIndexToChannel map[uint64]chan IEvent
 	txs                 <-chan coretypes.ResultEvent
