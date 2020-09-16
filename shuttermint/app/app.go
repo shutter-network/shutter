@@ -234,7 +234,3 @@ func (ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndB
 func (app *ShutterApp) Commit() abcitypes.ResponseCommit {
 	return abcitypes.ResponseCommit{}
 }
-
-func (ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery {
-	return abcitypes.ResponseQuery{Code: 0}
-}
