@@ -1,14 +1,17 @@
 package keyper
 
-import "log"
-import "context"
-import "crypto/ecdsa"
-import "math/big"
-import "github.com/ethereum/go-ethereum/accounts/abi/bind"
-import "github.com/ethereum/go-ethereum/ethclient"
-import "github.com/ethereum/go-ethereum/common"
-import "github.com/ethereum/go-ethereum/crypto"
-import "github.com/brainbot-com/shutter/shuttermint/contract"
+import (
+	"context"
+	"log"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/brainbot-com/shutter/shuttermint/contract"
+)
 
 // Address returns the address of the account that is used to send transactions.
 func (cc *ContractCaller) Address() common.Address {
