@@ -65,28 +65,19 @@ func (cc *ContractCaller) BroadcastEncryptionKey(keyperIndex uint64, batchIndex 
 	if err != nil {
 		return err
 	}
+	auth.GasLimit = 100000
 
 	c, err := cc.KeyBroadcastContract()
 	if err != nil {
 		return err
 	}
 
-	encryptionKeySized := [32]byte{}
-	copy(encryptionKeySized[:], encryptionKey[:32])
-
-	signerIndicesBig := []*big.Int{}
-	for _, signerIndex := range signerIndices {
-		signerIndexBig := big.NewInt(int64(signerIndex))
-		signerIndicesBig = append(signerIndicesBig, signerIndexBig)
-	}
-
-	auth.GasLimit = 100000
-	tx, err := c.BroadcastEncryptionKey(
+	tx, err := c.BroadcastEncryptionKey2(
 		auth,
-		big.NewInt(int64(keyperIndex)),
-		big.NewInt(int64(batchIndex)),
-		encryptionKeySized,
-		signerIndicesBig,
+		keyperIndex,
+		batchIndex,
+		encryptionKey,
+		signerIndices,
 		signatures,
 	)
 	if err != nil {
