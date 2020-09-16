@@ -178,11 +178,5 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 
 // Address returns the keyper's Ethereum address.
 func (kpr *Keyper) Address() common.Address {
-	publicKey := kpr.SigningKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
-	address := crypto.PubkeyToAddress(*publicKeyECDSA)
-	return address
+	return crypto.PubkeyToAddress(kpr.SigningKey.PublicKey)
 }

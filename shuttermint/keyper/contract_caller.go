@@ -12,13 +12,7 @@ import "github.com/brainbot-com/shutter/shuttermint/contract"
 
 // Address returns the address of the account that is used to send transactions.
 func (cc *ContractCaller) Address() common.Address {
-	publicKey := cc.signingKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		panic("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
-	}
-	address := crypto.PubkeyToAddress(*publicKeyECDSA)
-	return address
+	return crypto.PubkeyToAddress(cc.signingKey.PublicKey)
 }
 
 // Client creates a new ethclient.
