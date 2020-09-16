@@ -3,14 +3,18 @@ package keyper
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
-	"github.com/tendermint/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -33,13 +37,13 @@ func (kpr *Keyper) Run() error {
 	var cl client.Client
 	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "create shuttermint client at %s", kpr.ShuttermintURL)
 	}
 
 	err = cl.Start()
 
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "start shuttermint client at %s", kpr.ShuttermintURL)
 	}
 
 	defer cl.Stop()
@@ -53,14 +57,38 @@ func (kpr *Keyper) Run() error {
 
 	group.Go(kpr.dispatchTxs)
 	group.Go(kpr.startNewBatches)
-
+	group.Go(kpr.watchMainChainHeadBlock)
 	err = group.Wait()
 	return err
 }
 
+func (kpr *Keyper) watchMainChainHeadBlock() error {
+	const waitDuration = 2 * time.Second
+	cl, err := ethclient.Dial(kpr.EthereumURL)
+	if err != nil {
+		return err
+	}
+	headers := make(chan *types.Header)
+
+	ctx := context.Background()
+	subscription, err := cl.SubscribeNewHead(ctx, headers)
+	if err != nil {
+		return err
+	}
+	for {
+		select {
+		case err := <-subscription.Err():
+			panic(err) // XXX
+		case header := <-headers:
+			fmt.Printf("Block header %+v\n", header)
+		}
+		time.Sleep(waitDuration)
+	}
+}
+
 func (kpr *Keyper) dispatchTxs() error {
 	for tx := range kpr.txs {
-		d := tx.Data.(types.EventDataTx)
+		d := tx.Data.(tmtypes.EventDataTx)
 		for _, ev := range d.TxResult.Result.Events {
 			x, err := MakeEvent(ev)
 			if err != nil {

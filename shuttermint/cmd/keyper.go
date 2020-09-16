@@ -15,6 +15,7 @@ type KeyperConfig struct {
 	ShuttermintURL string
 	EthereumURL    string
 	SigningKey     string
+	ConfigContract string
 }
 
 // keyperCmd represents the keyper command
