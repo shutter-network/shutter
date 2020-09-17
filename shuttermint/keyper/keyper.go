@@ -125,7 +125,7 @@ func (kpr *Keyper) removeBatch(batchIndex uint64) {
 }
 
 func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
-	bp := NewBatchParams(batchIndex)
+	bp := NewBatchParams(batchIndex, kpr.Address())
 	ch := make(chan IEvent, 2)
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
@@ -147,6 +147,14 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 
 	go func() {
 		defer kpr.removeBatch(batchIndex)
+
+		bc, err := queryBatchConfig(cl, batchIndex)
+		if err != nil {
+			log.Print("Error while trying to query batch config:", err)
+			return
+		}
+		batch.BatchParams.BatchConfig = bc
+
 		batch.Run()
 	}()
 

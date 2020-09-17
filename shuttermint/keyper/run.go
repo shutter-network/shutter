@@ -84,7 +84,12 @@ func (batch *BatchState) Run() {
 	}
 
 	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
-	err = batch.ContractCaller.BroadcastEncryptionKey(0, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+	bp := batch.BatchParams
+	keyperIndex, ok := bp.BatchConfig.KeyperIndex(bp.KeyperAddress)
+	if !ok {
+		log.Print("Error: Not a keyper")
+	}
+	err = batch.ContractCaller.BroadcastEncryptionKey(keyperIndex, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
 	if err != nil {
 		log.Print("Error while trying to broadcast encryption key:", err)
 		return

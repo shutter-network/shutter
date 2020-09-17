@@ -55,14 +55,13 @@ func multikMain() {
 	}
 
 	ms := keyper.NewMessageSender(cl, privateKey)
-	bc := keyper.NewBatchConfig(keyper.NextBatchIndex(time.Now()),
-		keypers[:],
-		2)
+	startBatchIndex := keyper.NextBatchIndex(time.Now())
+	bc := keyper.NewBatchConfig(startBatchIndex, keypers[:], 2)
 	err = ms.SendMessage(bc)
 	if err != nil {
 		panic(err)
 	}
-	log.Print("Send new BatchConfig")
+	log.Printf("Send new BatchConfig (start batch index %d)", startBatchIndex)
 	for i := 0; i < 3; i++ {
 		go func(key *ecdsa.PrivateKey) {
 			k := keyper.NewKeyper(key, shuttermintURL, ethereumURL)
