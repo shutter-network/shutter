@@ -8,14 +8,20 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// IsKeyper checks if the given address is a keyper
-func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
-	for _, k := range bc.Keypers {
-		if k == candidate {
-			return true
+// KeyperIndex returns the index of the keyper identified by the given address
+func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
+	for i, k := range bc.Keypers {
+		if k == address {
+			return uint64(i), true
 		}
 	}
-	return false
+	return 0, false
+}
+
+// IsKeyper checks if the given address is a keyper
+func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
+	_, ok := bc.KeyperIndex(candidate)
+	return ok
 }
 
 // Message converts the batch config to a shmsg.Message
