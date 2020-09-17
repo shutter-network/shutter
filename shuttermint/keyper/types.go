@@ -12,6 +12,7 @@ import (
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"github.com/tendermint/tendermint/types"
 
+	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -25,6 +26,7 @@ var PrivateKeyDelay time.Duration = 45 * time.Second
 // BatchParams describes the parameters for single Batch identified by the BatchIndex
 type BatchParams struct {
 	BatchIndex                    uint64
+	BatchConfig                   app.BatchConfig
 	PublicKeyGenerationStartTime  time.Time
 	PrivateKeyGenerationStartTime time.Time
 }
