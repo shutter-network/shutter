@@ -17,7 +17,7 @@ run: build init
 	./bin/shuttermint run --config ${TESTROOT}/config/config.toml
 
 test:
-	go test -v ./...
+	go test ./...
 
 clean:
 	rm -rf ${TESTROOT}
