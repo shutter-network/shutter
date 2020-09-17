@@ -57,7 +57,7 @@ contract BatcherContract is Ownable {
         BatchConfig memory config = configContract.getConfig(_batchIndex);
 
         // check batching is active
-        require(config.active);
+        require(config.batchSpan > 0);
 
         // check given batch is current
         assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig

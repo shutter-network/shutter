@@ -29,10 +29,9 @@ def make_batch_config(
     *,
     start_batch_index: Optional[int] = None,
     start_block_number: Optional[int] = None,
-    active: bool = True,
     keypers: Optional[List[Address]] = None,
     threshold: Optional[int] = None,
-    batch_span: Optional[int] = None,
+    batch_span: int = 0,
     batch_size_limit: Optional[int] = None,
     transaction_size_limit: Optional[int] = None,
     transaction_gas_limit: Optional[int] = None,
@@ -51,16 +50,12 @@ def make_batch_config(
         num_keypers = threshold // 2 * 3
         keypers = [make_address() for _ in range(num_keypers)]
 
-    if not active and batch_span is None:
-        batch_span = 0
-
     return BatchConfig(
         start_batch_index=start_batch_index if start_batch_index is not None else make_int(),
         start_block_number=start_block_number if start_block_number is not None else make_int(),
-        active=active,
         keypers=keypers,
         threshold=threshold,
-        batch_span=batch_span if batch_span is not None else make_int(),
+        batch_span=batch_span,
         batch_size_limit=batch_size_limit if batch_size_limit is not None else make_int(),
         transaction_size_limit=transaction_size_limit
         if transaction_size_limit is not None

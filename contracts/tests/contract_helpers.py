@@ -22,7 +22,6 @@ ZERO_HASH32 = Hash32(b"\x00" * 32)
 class BatchConfig:
     start_batch_index: int
     start_block_number: int
-    active: bool
     keypers: List[Address]
     threshold: int
     batch_span: int
@@ -38,33 +37,31 @@ class BatchConfig:
     def from_tuple_without_keypers(
         cls, t: Tuple[Any, ...], keypers: Sequence[Address]
     ) -> BatchConfig:
-        tuple_with_keypers = t[:3] + (list(keypers),) + t[3:]
+        tuple_with_keypers = t[:2] + (list(keypers),) + t[2:]
         return cls.from_tuple(tuple_with_keypers)
 
     @classmethod
     def from_tuple(cls, t: Tuple[Any, ...]) -> BatchConfig:
-        assert len(t) == 13
+        assert len(t) == 12
         return cls(
             start_batch_index=t[0],
             start_block_number=t[1],
-            active=t[2],
-            keypers=[to_canonical_address(keyper) for keyper in t[3]],
-            threshold=t[4],
-            batch_span=t[5],
-            batch_size_limit=t[6],
-            transaction_size_limit=t[7],
-            transaction_gas_limit=t[8],
-            fee_receiver=to_canonical_address(t[9]),
-            target_address=to_canonical_address(t[10]),
-            target_function_selector=decode_hex(str(t[11])),
-            execution_timeout=t[12],
+            keypers=[to_canonical_address(keyper) for keyper in t[2]],
+            threshold=t[3],
+            batch_span=t[4],
+            batch_size_limit=t[5],
+            transaction_size_limit=t[6],
+            transaction_gas_limit=t[7],
+            fee_receiver=to_canonical_address(t[8]),
+            target_address=to_canonical_address(t[9]),
+            target_function_selector=decode_hex(str(t[10])),
+            execution_timeout=t[11],
         )
 
 
 ZERO_CONFIG = BatchConfig(
     start_batch_index=0,
     start_block_number=0,
-    active=False,
     keypers=[],
     threshold=0,
     batch_span=0,
@@ -106,6 +103,7 @@ def fetch_config(config_contract: Any, batch_index: int) -> BatchConfig:
 
 
 def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -> None:
+    print("set_next_config:", config)
     for field in attr.fields(BatchConfig):
         name_snake_case = field.name
         name_camel_case = snake_to_camel_case(name_snake_case, capitalize=True)
@@ -115,6 +113,8 @@ def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -
         setter_function_name = "nextConfigSet" + name_camel_case
         setter_function = getattr(config_contract, setter_function_name)
         value = getattr(config, name_snake_case)
+        print("SET:", setter_function_name, value)
+
         setter_function(value, {"from": owner})
 
     num_existing_keypers = config_contract.nextConfigNumKeypers()

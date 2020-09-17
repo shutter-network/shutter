@@ -63,7 +63,7 @@ def test_check_batching_is_active(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
         threshold=0,
-        active=False,
+        batch_span=0,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span, chain)
@@ -344,7 +344,7 @@ def test_skip_cipher_execution_checks_active(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
         execution_timeout=300,
-        active=False,
+        batch_span=0,
     )
     schedule_config(config_contract, config, owner=owner)
     with brownie.reverts():

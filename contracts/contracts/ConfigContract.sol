@@ -8,7 +8,6 @@ import "./Ownable.sol";
 struct BatchConfig {
     uint256 startBatchIndex; // the index of the first batch using this config
     uint256 startBlockNumber; // the block number from which on this config is applicable
-    bool active; // flag to turn batching on and off
     address[] keypers; // the keyper addresses
     uint256 threshold; // the threshold parameter
     uint256 batchSpan; // the duration of one batch in blocks
@@ -53,7 +52,6 @@ contract ConfigContract is Ownable {
             BatchConfig({
                 startBatchIndex: 0,
                 startBlockNumber: 0,
-                active: false,
                 keypers: new address[](0),
                 threshold: 0,
                 batchSpan: 0,
@@ -121,10 +119,6 @@ contract ConfigContract is Ownable {
         onlyOwner
     {
         nextConfig.startBlockNumber = _startBlockNumber;
-    }
-
-    function nextConfigSetActive(bool _active) external onlyOwner {
-        nextConfig.active = _active;
     }
 
     function nextConfigSetThreshold(uint256 _threshold) external onlyOwner {
@@ -232,7 +226,7 @@ contract ConfigContract is Ownable {
                 block.number + configChangeHeadsUpBlocks
         );
 
-        if (_config.active) {
+        if (_config.batchSpan > 0) {
             require(nextConfig.startBatchIndex > _config.startBatchIndex);
             uint256 _batchDelta = nextConfig.startBatchIndex -
                 _config.startBatchIndex;
@@ -242,12 +236,6 @@ contract ConfigContract is Ownable {
             );
         } else {
             require(nextConfig.startBatchIndex == _config.startBatchIndex);
-        }
-
-        if (nextConfig.active) {
-            require(nextConfig.batchSpan > 0);
-        } else {
-            require(nextConfig.batchSpan == 0);
         }
 
         configs.push(nextConfig);

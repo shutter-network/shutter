@@ -60,7 +60,7 @@ contract ExecutorContract {
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Check that batching is active and the batch is closed
-        require(_config.active);
+        require(_config.batchSpan > 0);
         require(
             block.number >=
                 _config.startBlockNumber + _config.batchSpan * (_batchIndex + 1)
@@ -119,7 +119,7 @@ contract ExecutorContract {
         uint256 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
-        require(_config.active);
+        require(_config.batchSpan > 0);
         require(
             block.number >=
                 _config.startBlockNumber +
@@ -146,7 +146,7 @@ contract ExecutorContract {
         // Since the cipher part of the batch has already been executed or skipped and the
         // config cannot be changed anymore (since the batching period is over), the following
         // checks remain true.
-        assert(_config.active);
+        assert(_config.batchSpan > 0);
         assert(
             block.number >=
                 _config.startBlockNumber + _config.batchSpan * (_batchIndex + 1)

@@ -128,9 +128,6 @@ func main() {
 	tx, err = cc.NextConfigSetBatchSpan(auth, big.NewInt(defaultBatchSpan))
 	addTx()
 
-	tx, err = cc.NextConfigSetActive(auth, true)
-	addTx()
-
 	tx, err = cc.NextConfigSetStartBatchIndex(auth, big.NewInt(0))
 	addTx()
 

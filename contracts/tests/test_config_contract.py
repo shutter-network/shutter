@@ -87,37 +87,17 @@ def test_scheduling_checks_seamlessness_after_active_config(
 def test_scheduling_checks_seamlessness_after_inactive_config(
     config_contract: Any, owner: Account
 ) -> None:
-    config = make_batch_config(
-        start_batch_index=1, start_block_number=500, active=True, batch_span=10
-    )
+    config = make_batch_config(start_batch_index=1, start_block_number=500, batch_span=10)
     set_next_config(config_contract, config, owner=owner)
     with brownie.reverts():
         config_contract.scheduleNextConfig({"from": owner})
 
-    config = make_batch_config(
-        start_batch_index=0, start_block_number=500, active=True, batch_span=10
-    )
+    config = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=10)
     set_next_config(config_contract, config, owner=owner)
     config_contract.scheduleNextConfig({"from": owner})
 
     assert config_contract.numConfigs() == 2
     assert fetch_config_by_index(config_contract, 1) == config
-
-
-def test_scheduling_checks_batch_span(config_contract: Any, owner: Account) -> None:
-    config = make_batch_config(
-        start_batch_index=0, start_block_number=500, active=True, batch_span=0
-    )
-    set_next_config(config_contract, config, owner=owner)
-    with brownie.reverts():
-        config_contract.scheduleNextConfig({"from": owner})
-
-    config = make_batch_config(
-        start_batch_index=0, start_block_number=500, active=False, batch_span=1
-    )
-    set_next_config(config_contract, config, owner=owner)
-    with brownie.reverts():
-        config_contract.scheduleNextConfig({"from": owner})
 
 
 def test_scheduling_resets_new_config(config_contract: Any, owner: Account) -> None:
@@ -283,7 +263,7 @@ def test_get_active_config(config_contract: Any, owner: Account) -> None:
 
 def test_get_inactive_config(config_contract: Any, owner: Account) -> None:
     config1 = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=2)
-    config2 = make_batch_config(start_batch_index=5, start_block_number=510, active=False)
+    config2 = make_batch_config(start_batch_index=5, start_block_number=510, batch_span=0)
     schedule_config(config_contract, config1, owner=owner)
     schedule_config(config_contract, config2, owner=owner)
 
@@ -296,10 +276,8 @@ def test_get_inactive_config(config_contract: Any, owner: Account) -> None:
 
 def test_get_active_after_inactive_config(config_contract: Any, owner: Account) -> None:
     config1 = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=2)
-    config2 = make_batch_config(start_batch_index=5, start_block_number=510, active=False)
-    config3 = make_batch_config(
-        start_batch_index=5, start_block_number=520, active=True, batch_span=10
-    )
+    config2 = make_batch_config(start_batch_index=5, start_block_number=510, batch_span=0)
+    config3 = make_batch_config(start_batch_index=5, start_block_number=520, batch_span=10)
     schedule_config(config_contract, config1, owner=owner)
     schedule_config(config_contract, config2, owner=owner)
     schedule_config(config_contract, config3, owner=owner)

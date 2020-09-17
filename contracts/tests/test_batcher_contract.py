@@ -21,9 +21,7 @@ def test_add_tx_fails_if_not_active(
     owner: Account,
 ) -> None:
     config = make_batch_config(
-        start_batch_index=0,
-        start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        active=False,
+        start_batch_index=0, start_block_number=chain.height + config_change_heads_up_blocks + 20,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number, chain)
