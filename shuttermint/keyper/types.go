@@ -29,6 +29,14 @@ type BatchParams struct {
 	PrivateKeyGenerationStartTime time.Time
 }
 
+// BatchState is used to manage the key generation process for a single batch inside the keyper
+type BatchState struct {
+	BatchParams    BatchParams
+	MessageSender  *MessageSender
+	ContractCaller *ContractCaller
+	Events         <-chan IEvent
+}
+
 // Keyper is used to run the keyper key generation
 type Keyper struct {
 	SigningKey          *ecdsa.PrivateKey

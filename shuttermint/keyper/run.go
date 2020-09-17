@@ -58,42 +58,42 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 }
 
 // Run runs the key generation for the given batch
-func Run(params BatchParams, ms MessageSender, cc ContractCaller, events <-chan IEvent) {
+func (batch *BatchState) Run() {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return
 	}
 
 	// Wait for the start time
-	SleepUntil(params.PublicKeyGenerationStartTime)
-	log.Print("Starting key generation process", params)
-	msg := NewPublicKeyCommitment(params.BatchIndex, key)
-	log.Print("Generated pubkey", params)
-	err = ms.SendMessage(msg)
+	SleepUntil(batch.BatchParams.PublicKeyGenerationStartTime)
+	log.Print("Starting key generation process", batch.BatchParams)
+	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
+	log.Print("Generated pubkey", batch.BatchParams)
+	err = batch.MessageSender.SendMessage(msg)
 	if err != nil {
 		log.Print("Error while trying to send message:", err)
 		return
 	}
 
 	select {
-	case ev := <-events:
+	case ev := <-batch.Events:
 		log.Printf("Got event %+v", ev)
-	case <-time.After(time.Until(params.PrivateKeyGenerationStartTime)):
-		log.Print("Timeout while waiting for public key generation to finish", params)
+	case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
+		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
 		return
 	}
 
 	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
-	err = cc.BroadcastEncryptionKey(0, params.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+	err = batch.ContractCaller.BroadcastEncryptionKey(0, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
 	if err != nil {
 		log.Print("Error while trying to broadcast encryption key:", err)
 		return
 	}
 
-	SleepUntil(params.PrivateKeyGenerationStartTime)
-	msg = NewSecretShare(params.BatchIndex, key)
-	log.Print("Generated privkey", params)
-	err = ms.SendMessage(msg)
+	SleepUntil(batch.BatchParams.PrivateKeyGenerationStartTime)
+	msg = NewSecretShare(batch.BatchParams.BatchIndex, key)
+	log.Print("Generated privkey", batch.BatchParams)
+	err = batch.MessageSender.SendMessage(msg)
 	if err != nil {
 		log.Println("Error while trying to send message:", err)
 		return

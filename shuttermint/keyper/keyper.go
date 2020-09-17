@@ -132,15 +132,22 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 
 	kpr.batchIndexToChannel[batchIndex] = ch
 
+	ms := NewMessageSender(cl, kpr.SigningKey)
+	cc := NewContractCaller(
+		kpr.EthereumURL,
+		kpr.SigningKey,
+		common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
+	)
+	batch := BatchState{
+		BatchParams:    bp,
+		MessageSender:  &ms,
+		ContractCaller: &cc,
+		Events:         ch,
+	}
+
 	go func() {
 		defer kpr.removeBatch(batchIndex)
-		ms := NewMessageSender(cl, kpr.SigningKey)
-		cc := NewContractCaller(
-			kpr.EthereumURL,
-			kpr.SigningKey,
-			common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
-		)
-		Run(bp, ms, cc, ch)
+		batch.Run()
 	}()
 
 	return bp
