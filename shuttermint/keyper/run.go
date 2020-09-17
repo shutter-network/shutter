@@ -2,6 +2,7 @@ package keyper
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"time"
 
@@ -57,50 +58,109 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 	}
 }
 
+// NewBatchState created a new BatchState object with the given parameters.
+func NewBatchState(bp BatchParams, ms *MessageSender, cc *ContractCaller) BatchState {
+	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
+	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
+	return BatchState{
+		BatchParams:      bp,
+		MessageSender:    ms,
+		ContractCaller:   cc,
+		pubkeyGenerated:  pubkeyGenerated,
+		privkeyGenerated: privkeyGenerated,
+	}
+}
+
+func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
+	switch e := ev.(type) {
+	case PubkeyGeneratedEvent:
+		select {
+		case batch.pubkeyGenerated <- e:
+		default:
+			// this should not happen
+		}
+	case PrivkeyGeneratedEvent:
+		select {
+		case batch.privkeyGenerated <- e:
+		default:
+			// this should not happen
+		}
+	default:
+		panic("unknown type")
+	}
+}
+
+// waitPubkeyGenerated waits for a PubkeyGeneratedEvent to be put into the pubkeyGenerated channel.
+// We do expect exactly one instance to be put there via a call to dispatchShuttermintEvent by the
+// keyper from a different goroutine.
+func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
+	select {
+	case ev := <-batch.pubkeyGenerated:
+		log.Printf("Got event %+v", ev)
+		return ev, nil
+	case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
+		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
+		return PubkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for public key generation to finish")
+	}
+}
+
+func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
+	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
+	log.Print("Generated pubkey", batch.BatchParams)
+	return batch.MessageSender.SendMessage(msg)
+}
+
+func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
+	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
+	bp := batch.BatchParams
+	keyperIndex, ok := bp.BatchConfig.KeyperIndex(bp.KeyperAddress)
+	if !ok {
+		return fmt.Errorf("not a keyper") // XXX we really should lookup our address earlier!
+	}
+	return batch.ContractCaller.BroadcastEncryptionKey(keyperIndex, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+}
+
+func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
+	msg := NewSecretShare(batch.BatchParams.BatchIndex, key)
+	log.Print("Generated privkey", batch.BatchParams)
+	return batch.MessageSender.SendMessage(msg)
+}
+
 // Run runs the key generation for the given batch
 func (batch *BatchState) Run() {
 	key, err := crypto.GenerateKey()
 	if err != nil {
+		log.Printf("Error while generating key: %s", err)
 		return
 	}
 
 	// Wait for the start time
 	SleepUntil(batch.BatchParams.PublicKeyGenerationStartTime)
 	log.Print("Starting key generation process", batch.BatchParams)
-	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
-	log.Print("Generated pubkey", batch.BatchParams)
-	err = batch.MessageSender.SendMessage(msg)
+
+	err = batch.sendPublicKeyCommitment(key)
 	if err != nil {
-		log.Print("Error while trying to send message:", err)
+		log.Printf("Error while trying to send message: %s", err)
 		return
 	}
 
-	select {
-	case ev := <-batch.Events:
-		log.Printf("Got event %+v", ev)
-	case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
-		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
+	_, err = batch.waitPubkeyGenerated()
+	if err != nil {
+		log.Printf("Error while waiting for public key generation: %s", err)
 		return
 	}
 
-	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
-	bp := batch.BatchParams
-	keyperIndex, ok := bp.BatchConfig.KeyperIndex(bp.KeyperAddress)
-	if !ok {
-		log.Print("Error: Not a keyper")
-	}
-	err = batch.ContractCaller.BroadcastEncryptionKey(keyperIndex, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+	err = batch.broadcastEncryptionKey(key)
 	if err != nil {
-		log.Print("Error while trying to broadcast encryption key:", err)
+		log.Printf("Error while trying to broadcast encryption key: %s", err)
 		return
 	}
 
 	SleepUntil(batch.BatchParams.PrivateKeyGenerationStartTime)
-	msg = NewSecretShare(batch.BatchParams.BatchIndex, key)
-	log.Print("Generated privkey", batch.BatchParams)
-	err = batch.MessageSender.SendMessage(msg)
+
+	err = batch.sendSecretShare(key)
 	if err != nil {
-		log.Println("Error while trying to send message:", err)
+		log.Printf("Error while trying to send secret share: %s", err)
 		return
 	}
 }

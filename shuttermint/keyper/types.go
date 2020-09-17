@@ -34,20 +34,21 @@ type BatchParams struct {
 
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
-	BatchParams    BatchParams
-	MessageSender  *MessageSender
-	ContractCaller *ContractCaller
-	Events         <-chan IEvent
+	BatchParams      BatchParams
+	MessageSender    *MessageSender
+	ContractCaller   *ContractCaller
+	pubkeyGenerated  chan PubkeyGeneratedEvent
+	privkeyGenerated chan PrivkeyGeneratedEvent
 }
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
-	SigningKey          *ecdsa.PrivateKey
-	ShuttermintURL      string
-	EthereumURL         string
-	mux                 sync.Mutex
-	batchIndexToChannel map[uint64]chan IEvent
-	txs                 <-chan coretypes.ResultEvent
+	SigningKey     *ecdsa.PrivateKey
+	ShuttermintURL string
+	EthereumURL    string
+	mux            sync.Mutex
+	batches        map[uint64]*BatchState
+	txs            <-chan coretypes.ResultEvent
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex

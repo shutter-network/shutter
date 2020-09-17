@@ -21,10 +21,10 @@ import (
 // NewKeyper creates a new Keyper
 func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL string) Keyper {
 	return Keyper{
-		SigningKey:          signingKey,
-		ShuttermintURL:      shuttermintURL,
-		EthereumURL:         ethereumURL,
-		batchIndexToChannel: make(map[uint64]chan IEvent),
+		SigningKey:     signingKey,
+		ShuttermintURL: shuttermintURL,
+		EthereumURL:    ethereumURL,
+		batches:        make(map[uint64]*BatchState),
 	}
 }
 
@@ -120,17 +120,14 @@ func (kpr *Keyper) removeBatch(batchIndex uint64) {
 	log.Printf("Batch %d finished", batchIndex)
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
-	close(kpr.batchIndexToChannel[batchIndex])
-	delete(kpr.batchIndexToChannel, batchIndex)
+	delete(kpr.batches, batchIndex)
 }
 
 func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	bp := NewBatchParams(batchIndex, kpr.Address())
-	ch := make(chan IEvent, 2)
+
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
-
-	kpr.batchIndexToChannel[batchIndex] = ch
 
 	ms := NewMessageSender(cl, kpr.SigningKey)
 	cc := NewContractCaller(
@@ -138,12 +135,9 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 		kpr.SigningKey,
 		common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
 	)
-	batch := BatchState{
-		BatchParams:    bp,
-		MessageSender:  &ms,
-		ContractCaller: &cc,
-		Events:         ch,
-	}
+	batch := NewBatchState(bp, &ms, &cc)
+
+	kpr.batches[batchIndex] = &batch
 
 	go func() {
 		defer kpr.removeBatch(batchIndex)
@@ -165,15 +159,10 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
 
-	ch, ok := kpr.batchIndexToChannel[batchIndex]
+	batch, ok := kpr.batches[batchIndex]
 
 	if ok {
-		// We do have the mutex locked at this point and write to the channel.  This could
-		// end up in a deadlock if we block here. This is why we need a buffered
-		// channel.
-		// Since we only ever close the channel, when the mutex is locked, at
-		// least we can be sure that we do not write to a closed channel here.
-		ch <- ev
+		batch.dispatchShuttermintEvent(ev)
 	}
 }
 
