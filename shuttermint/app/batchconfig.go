@@ -1,7 +1,12 @@
 package app
 
-import "github.com/ethereum/go-ethereum/common"
-import "github.com/brainbot-com/shutter/shuttermint/shmsg"
+import (
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+)
 
 // IsKeyper checks if the given address is a keyper
 func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
@@ -28,4 +33,22 @@ func (bc *BatchConfig) Message() shmsg.Message {
 		},
 	}
 	return shmsg.Message{Payload: &msg}
+}
+
+// BatchConfigFromMessage extracts the batch config received in a message
+func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
+	var keypers []common.Address
+	for _, b := range m.Keypers {
+		if len(b) != 20 {
+			return BatchConfig{}, fmt.Errorf("Keyper address has invalid length")
+		}
+		keypers = append(keypers, common.BytesToAddress(b))
+	}
+
+	bc := BatchConfig{
+		StartBatchIndex: m.StartBatchIndex,
+		Keypers:         keypers,
+		Threshold:       m.Threshold,
+	}
+	return bc, nil
 }
