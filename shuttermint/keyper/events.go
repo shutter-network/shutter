@@ -83,31 +83,38 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 // MakeEncryptionKeySignatureAddedEvent creates a EncryptionKeySignatureAddedEvent from the given
 // tendermint event of type "shutter.encryption-key-signature-added"
 func MakeEncryptionKeySignatureAddedEvent(ev abcitypes.Event) (EncryptionKeySignatureAddedEvent, error) {
-	if len(ev.Attributes) < 3 {
+	if len(ev.Attributes) < 4 {
 		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) ||
-		!bytes.Equal(ev.Attributes[1].Key, []byte("EncryptionKey")) ||
-		!bytes.Equal(ev.Attributes[2].Key, []byte("Signature")) {
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("KeyperIndex")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("BatchIndex")) ||
+		!bytes.Equal(ev.Attributes[2].Key, []byte("EncryptionKey")) ||
+		!bytes.Equal(ev.Attributes[3].Key, []byte("Signature")) {
 		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
 	}
 
-	batchIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	keyperIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
 	if err != nil {
 		return EncryptionKeySignatureAddedEvent{}, err
 	}
 
-	key, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[1].Value))
+	batchIndex, err := strconv.Atoi(string(ev.Attributes[1].Value))
 	if err != nil {
 		return EncryptionKeySignatureAddedEvent{}, err
 	}
 
-	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	key, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	if err != nil {
+		return EncryptionKeySignatureAddedEvent{}, err
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[3].Value))
 	if err != nil {
 		return EncryptionKeySignatureAddedEvent{}, err
 	}
 
 	return EncryptionKeySignatureAddedEvent{
+		KeyperIndex:   uint64(keyperIndex),
 		BatchIndex:    uint64(batchIndex),
 		EncryptionKey: key,
 		Signature:     signature,

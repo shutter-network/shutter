@@ -199,11 +199,16 @@ func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyA
 	}
 	app.BatchStates[msg.BatchIndex] = bs
 
-	var events []abcitypes.Event
-	events = append(events, MakeEncryptionKeySignatureAddedEvent(msg.BatchIndex, msg.Key, msg.Signature))
+	keyperIndex, ok := bs.Config.KeyperIndex(sender)
+	if !ok {
+		// this is already checked in AddEncryptionKeyAttestation, but no harm in handling it twice
+		return makeErrorResponse(fmt.Sprintf("not a keyper"))
+	}
+
+	event := MakeEncryptionKeySignatureAddedEvent(keyperIndex, msg.BatchIndex, msg.Key, msg.Signature)
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
-		Events: events,
+		Events: []abcitypes.Event{event},
 	}
 }
 

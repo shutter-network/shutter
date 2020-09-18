@@ -45,11 +45,18 @@ func TestMakeEventBatchConfig(t *testing.T) {
 }
 
 func TestMakeEventEncryptionSignatureAddedEvent(t *testing.T) {
+	var keyperIndex uint64 = 3
 	var batchIndex uint64 = 111
 	key := []byte("key")
 	sig := []byte("sig")
-	appEvent := app.MakeEncryptionKeySignatureAddedEvent(batchIndex, key, sig)
+	appEvent := app.MakeEncryptionKeySignatureAddedEvent(keyperIndex, batchIndex, key, sig)
 	ev, err := MakeEvent(appEvent)
+	expectedEvent := EncryptionKeySignatureAddedEvent{
+		KeyperIndex:   keyperIndex,
+		BatchIndex:    batchIndex,
+		EncryptionKey: key,
+		Signature:     sig,
+	}
 	require.Nil(t, err)
-	require.Equal(t, EncryptionKeySignatureAddedEvent{BatchIndex: batchIndex, EncryptionKey: key, Signature: sig}, ev)
+	require.Equal(t, ev, expectedEvent)
 }

@@ -163,7 +163,7 @@ func TestKeyGeneration(t *testing.T) {
 		Signature:  sig,
 	}
 	res4 := app.deliverEncryptionKeyAttestation(&attMsg, keypers[0])
-	expectedEvent := MakeEncryptionKeySignatureAddedEvent(200, key, sig)
+	expectedEvent := MakeEncryptionKeySignatureAddedEvent(0, 200, key, sig)
 	require.Equal(t, abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{expectedEvent},

@@ -108,13 +108,16 @@ func DecodeAddressesFromEvent(s string) []common.Address {
 
 // MakeEncryptionKeySignatureAddedEvent creates a 'shutter.encryption-key-signature-added'
 // Tendermint event.
-func MakeEncryptionKeySignatureAddedEvent(batchIndex uint64, encryptionKey []byte, signature []byte) abcitypes.Event {
+func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64, encryptionKey []byte, signature []byte) abcitypes.Event {
+	encodedKeyperIndex := []byte(fmt.Sprintf("%d", keyperIndex))
+	encodedBatchIndex := []byte(fmt.Sprintf("%d", batchIndex))
 	encodedKey := []byte(base64.RawURLEncoding.EncodeToString(encryptionKey))
 	encodedSignature := []byte(base64.RawURLEncoding.EncodeToString(signature))
 	return abcitypes.Event{
 		Type: "shutter.encryption-key-signature-added",
 		Attributes: []kv.Pair{
-			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
+			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex},
+			{Key: []byte("BatchIndex"), Value: encodedBatchIndex},
 			{Key: []byte("EncryptionKey"), Value: encodedKey},
 			{Key: []byte("Signature"), Value: encodedSignature},
 		},

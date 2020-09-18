@@ -179,7 +179,7 @@ func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 	sigs := [][]byte{}
 	for _, ev := range events {
 		sigs = append(sigs, ev.Signature)
-		indices = append(indices, 0) // TODO: add index to event and use it here
+		indices = append(indices, ev.KeyperIndex)
 	}
 
 	return batch.ContractCaller.BroadcastEncryptionKey(
