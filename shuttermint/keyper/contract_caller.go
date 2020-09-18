@@ -55,8 +55,7 @@ func (cc *ContractCaller) KeyBroadcastContract() (*contract.KeyBroadcastContract
 		return nil, err
 	}
 
-	address := common.HexToAddress("0xD3e50BC9d970c3c07396842FCF9430C9Bd9ba2b9")
-	return contract.NewKeyBroadcastContract(address, cl)
+	return contract.NewKeyBroadcastContract(cc.keyBroadcastContractAddress, cl)
 }
 
 // BroadcastEncryptionKey makes sure that the encryption key is sent to the broadcasting contract.
