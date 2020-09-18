@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -38,7 +37,7 @@ func readKeyperConfig() (KeyperConfig, error) {
 	viper.BindEnv("EthereumURL")
 	viper.BindEnv("SigningKey")
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
-	viper.SetDefault("EthereumURL", "http://localhost:8545")
+	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
 	defer func() {
 		if viper.ConfigFileUsed() != "" {
 			log.Printf("Read config from %s", viper.ConfigFileUsed())
@@ -68,15 +67,14 @@ func readKeyperConfig() (KeyperConfig, error) {
 
 func keyperMain() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-
 	kc, err := readKeyperConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error reading the configuration file: %s\nPlease check your configuration.", err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(kc.SigningKey)
 	if err != nil {
-		panic(fmt.Errorf("bad signing key: %s '%s'", err, kc.SigningKey))
+		log.Fatalf("Error: bad signing key: %s\nPlease check your configuration.", err)
 	}
 
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
