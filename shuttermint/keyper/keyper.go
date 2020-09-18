@@ -65,9 +65,15 @@ func (kpr *Keyper) Run() error {
 	return err
 }
 
+// IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
+// or wss://. This is needed for the watchMainChainHeadBlock method.
+func IsWebsocketURL(url string) bool {
+	return strings.HasPrefix(url, "ws://") || strings.HasPrefix(url, "wss://")
+}
+
 func (kpr *Keyper) watchMainChainHeadBlock() error {
 	const waitDuration = 2 * time.Second
-	if !(strings.HasPrefix(kpr.EthereumURL, "ws://") || strings.HasPrefix(kpr.EthereumURL, "wss://")) {
+	if !IsWebsocketURL(kpr.EthereumURL) {
 		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.EthereumURL)
 		log.Printf("Error: %s", err)
 		return err

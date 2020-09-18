@@ -76,7 +76,9 @@ func keyperMain() {
 	if err != nil {
 		log.Fatalf("Error: bad signing key: %s\nPlease check your configuration.", err)
 	}
-
+	if !keyper.IsWebsocketURL(kc.EthereumURL) {
+		log.Fatalf("Error: EthereumURL must start with ws:// or wss://\nPlease check your configuration.")
+	}
 	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
 	log.Printf(
 		"Starting keyper version %s with signing key %s, using %s for Shuttermint and %s for Ethereum",
