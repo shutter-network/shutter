@@ -60,11 +60,12 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 }
 
 // NewBatchState created a new BatchState object with the given parameters.
-func NewBatchState(bp BatchParams, ms *MessageSender, cc *ContractCaller) BatchState {
+func NewBatchState(bp BatchParams, key *ecdsa.PrivateKey, ms *MessageSender, cc *ContractCaller) BatchState {
 	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
 	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
 	return BatchState{
 		BatchParams:      bp,
+		SigningKey:       key,
 		MessageSender:    ms,
 		ContractCaller:   cc,
 		pubkeyGenerated:  pubkeyGenerated,
@@ -114,7 +115,7 @@ func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
 	bp := batch.BatchParams
-	keyperIndex, ok := bp.BatchConfig.KeyperIndex(bp.KeyperAddress)
+	keyperIndex, ok := bp.BatchConfig.KeyperIndex(batch.KeyperAddress())
 	if !ok {
 		return fmt.Errorf("not a keyper") // XXX we really should lookup our address earlier!
 	}
@@ -167,4 +168,9 @@ func (batch *BatchState) Run() {
 		log.Printf("Error while trying to send secret share: %s", err)
 		return
 	}
+}
+
+// KeyperAddress returns the keyper's Ethereum address.
+func (batch *BatchState) KeyperAddress() common.Address {
+	return crypto.PubkeyToAddress(batch.SigningKey.PublicKey)
 }

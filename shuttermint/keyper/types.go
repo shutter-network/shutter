@@ -28,7 +28,6 @@ var PrivateKeyDelay time.Duration = 45 * time.Second
 type BatchParams struct {
 	BatchIndex                    uint64
 	BatchConfig                   app.BatchConfig
-	KeyperAddress                 common.Address
 	PublicKeyGenerationStartTime  time.Time
 	PrivateKeyGenerationStartTime time.Time
 }
@@ -36,6 +35,7 @@ type BatchParams struct {
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
 	BatchParams      BatchParams
+	SigningKey       *ecdsa.PrivateKey
 	MessageSender    *MessageSender
 	ContractCaller   *ContractCaller
 	pubkeyGenerated  chan PubkeyGeneratedEvent
@@ -54,14 +54,13 @@ type Keyper struct {
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex
-func NewBatchParams(batchIndex uint64, keyperAddress common.Address) BatchParams {
+func NewBatchParams(batchIndex uint64) BatchParams {
 	ts := int64(batchIndex) * int64(RoundInterval)
 
 	pubstart := time.Unix(ts/int64(time.Second), ts%int64(time.Second))
 	privstart := pubstart.Add(PrivateKeyDelay)
 	return BatchParams{
 		BatchIndex:                    batchIndex,
-		KeyperAddress:                 keyperAddress,
 		PublicKeyGenerationStartTime:  pubstart,
 		PrivateKeyGenerationStartTime: privstart,
 	}

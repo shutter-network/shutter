@@ -151,7 +151,7 @@ func (kpr *Keyper) removeBatch(batchIndex uint64) {
 }
 
 func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
-	bp := NewBatchParams(batchIndex, kpr.Address())
+	bp := NewBatchParams(batchIndex)
 
 	ms := NewMessageSender(cl, kpr.SigningKey)
 	cc := NewContractCaller(
@@ -159,7 +159,7 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 		kpr.SigningKey,
 		common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
 	)
-	batch := NewBatchState(bp, &ms, &cc)
+	batch := NewBatchState(bp, kpr.SigningKey, &ms, &cc)
 
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
