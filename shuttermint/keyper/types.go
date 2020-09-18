@@ -1,6 +1,7 @@
 package keyper
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
@@ -49,6 +50,7 @@ type Keyper struct {
 	mux            sync.Mutex
 	batches        map[uint64]*BatchState
 	txs            <-chan coretypes.ResultEvent
+	ctx            context.Context
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex

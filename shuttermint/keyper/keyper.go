@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,6 +35,8 @@ func (kpr *Keyper) Run() error {
 	log.Printf("Running keyper with address %s", kpr.Address().Hex())
 
 	group, ctx := errgroup.WithContext(context.Background())
+	kpr.ctx = ctx
+
 	var cl client.Client
 	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
@@ -64,14 +67,19 @@ func (kpr *Keyper) Run() error {
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
 	const waitDuration = 2 * time.Second
+	if !(strings.HasPrefix(kpr.EthereumURL, "ws://") || strings.HasPrefix(kpr.EthereumURL, "wss://")) {
+		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.EthereumURL)
+		log.Printf("Error: %s", err)
+		return err
+	}
+
 	cl, err := ethclient.Dial(kpr.EthereumURL)
 	if err != nil {
 		return err
 	}
 	headers := make(chan *types.Header)
 
-	ctx := context.Background()
-	subscription, err := cl.SubscribeNewHead(ctx, headers)
+	subscription, err := cl.SubscribeNewHead(kpr.ctx, headers)
 	if err != nil {
 		return err
 	}
@@ -80,24 +88,29 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 		case err := <-subscription.Err():
 			panic(err) // XXX
 		case header := <-headers:
-			fmt.Printf("Block header %+v\n", header)
+			log.Printf("Block header %+v\n", header)
 		}
-		time.Sleep(waitDuration)
 	}
 }
 
 func (kpr *Keyper) dispatchTxs() error {
-	for tx := range kpr.txs {
-		d := tx.Data.(tmtypes.EventDataTx)
-		for _, ev := range d.TxResult.Result.Events {
-			x, err := MakeEvent(ev)
-			if err != nil {
-				return err
+	// Unfortunately the channel isn't being closed for us, so we manually check if we should
+	// cancel
+	for {
+		select {
+		case tx := <-kpr.txs:
+			d := tx.Data.(tmtypes.EventDataTx)
+			for _, ev := range d.TxResult.Result.Events {
+				x, err := MakeEvent(ev)
+				if err != nil {
+					return err
+				}
+				kpr.dispatchEvent(x)
 			}
-			kpr.dispatchEvent(x)
+		case <-kpr.ctx.Done():
+			return nil
 		}
 	}
-	return nil
 }
 
 func (kpr *Keyper) startNewBatches() error {
@@ -112,7 +125,11 @@ func (kpr *Keyper) startNewBatches() error {
 		// The following waits for the start of the previous round. This is done on
 		// purpose, because we generate keys in keyper.Run as a first step and then wait
 		// for the start time
-		SleepUntil(bp.PublicKeyGenerationStartTime)
+		select {
+		case <-kpr.ctx.Done():
+			return nil
+		case <-time.After(time.Until(bp.PublicKeyGenerationStartTime)):
+		}
 	}
 }
 
