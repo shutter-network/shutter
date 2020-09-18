@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -42,6 +43,21 @@ func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg
 			PublicKeyCommitment: &shmsg.PublicKeyCommitment{
 				BatchIndex: batchIndex,
 				Commitment: crypto.FromECDSAPub(&privkey.PublicKey),
+			},
+		},
+	}
+}
+
+// NewEncryptionKeyAttestation creates a new EncryptionKeyAttestation with the given values wrapped
+// in a shmsg.Message
+func NewEncryptionKeyAttestation(batchIndex uint64, encryptionKey *ecdsa.PublicKey, signature []byte) *shmsg.Message {
+	return &shmsg.Message{
+		Payload: &shmsg.Message_EncryptionKeyAttestation{
+			EncryptionKeyAttestation: &shmsg.EncryptionKeyAttestation{
+
+				BatchIndex: batchIndex,
+				Key:        crypto.FromECDSAPub(encryptionKey),
+				Signature:  signature,
 			},
 		},
 	}
@@ -112,6 +128,17 @@ func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 	return batch.MessageSender.SendMessage(msg)
 }
 
+func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicKey) error {
+	preimage := app.EncryptionKeyPreimage(crypto.FromECDSAPub(encryptionKey), batch.BatchParams.BatchIndex)
+	hash := crypto.Keccak256Hash(preimage)
+	sig, err := crypto.Sign(hash.Bytes(), batch.SigningKey)
+	if err != nil {
+		return err
+	}
+	msg := NewEncryptionKeyAttestation(batch.BatchParams.BatchIndex, encryptionKey, sig)
+	return batch.MessageSender.SendMessage(msg)
+}
+
 func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
 	bp := batch.BatchParams
@@ -149,10 +176,15 @@ func (batch *BatchState) Run() {
 		return
 	}
 
-	_, err = batch.waitPubkeyGenerated()
+	ev, err := batch.waitPubkeyGenerated()
 	if err != nil {
 		log.Printf("Error while waiting for public key generation: %s", err)
 		return
+	}
+
+	err = batch.sendEncryptionKeySignature(ev.Pubkey)
+	if err != nil {
+		log.Printf("Error while trying to send encryption key signature: %s", err)
 	}
 
 	err = batch.broadcastEncryptionKey(key)
