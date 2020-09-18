@@ -155,7 +155,6 @@ func TestKeyGeneration(t *testing.T) {
 	key := crypto.FromECDSAPub(&keys[1].PublicKey)
 	preimage := EncryptionKeyPreimage(key, 200)
 	hash := crypto.Keccak256Hash(preimage)
-	t.Log(hash.Hex())
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
 	require.Nil(t, err)
 	attMsg := shmsg.EncryptionKeyAttestation{

@@ -202,6 +202,8 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case BatchConfigEvent:
 		_ = e
+	case EncryptionKeySignatureAddedEvent:
+		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	default:
 		panic("unknown type")
 	}

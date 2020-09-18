@@ -77,15 +77,18 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 
 // NewBatchState created a new BatchState object with the given parameters.
 func NewBatchState(bp BatchParams, key *ecdsa.PrivateKey, ms *MessageSender, cc *ContractCaller) BatchState {
+	numKeypers := len(bp.BatchConfig.Keypers)
 	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
 	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
+	encryptionKeySignatureAdded := make(chan EncryptionKeySignatureAddedEvent, numKeypers)
 	return BatchState{
-		BatchParams:      bp,
-		SigningKey:       key,
-		MessageSender:    ms,
-		ContractCaller:   cc,
-		pubkeyGenerated:  pubkeyGenerated,
-		privkeyGenerated: privkeyGenerated,
+		BatchParams:                 bp,
+		SigningKey:                  key,
+		MessageSender:               ms,
+		ContractCaller:              cc,
+		pubkeyGenerated:             pubkeyGenerated,
+		privkeyGenerated:            privkeyGenerated,
+		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
 	}
 }
 
@@ -100,6 +103,12 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 	case PrivkeyGeneratedEvent:
 		select {
 		case batch.privkeyGenerated <- e:
+		default:
+			// this should not happen
+		}
+	case EncryptionKeySignatureAddedEvent:
+		select {
+		case batch.encryptionKeySignatureAdded <- e:
 		default:
 			// this should not happen
 		}
@@ -139,6 +148,21 @@ func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicK
 	return batch.MessageSender.SendMessage(msg)
 }
 
+func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]EncryptionKeySignatureAddedEvent, error) {
+	events := []EncryptionKeySignatureAddedEvent{}
+	for {
+		select {
+		case ev := <-batch.encryptionKeySignatureAdded:
+			events = append(events, ev)
+			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold) {
+				return events, nil
+			}
+		case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
+			return events, fmt.Errorf("timeout while waiting for encryption key signatures")
+		}
+	}
+}
+
 func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
 	bp := batch.BatchParams
@@ -146,7 +170,25 @@ func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 	if !ok {
 		return fmt.Errorf("not a keyper") // XXX we really should lookup our address earlier!
 	}
-	return batch.ContractCaller.BroadcastEncryptionKey(keyperIndex, batch.BatchParams.BatchIndex, encryptionKey, []uint64{}, [][]byte{})
+
+	events, err := batch.collectEncryptionKeySignatureAddedEvents()
+	if err != nil {
+		return err
+	}
+	indices := []uint64{}
+	sigs := [][]byte{}
+	for _, ev := range events {
+		sigs = append(sigs, ev.Signature)
+		indices = append(indices, 0) // TODO: add index to event and use it here
+	}
+
+	return batch.ContractCaller.BroadcastEncryptionKey(
+		keyperIndex,
+		batch.BatchParams.BatchIndex,
+		encryptionKey,
+		indices,
+		sigs,
+	)
 }
 
 func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
