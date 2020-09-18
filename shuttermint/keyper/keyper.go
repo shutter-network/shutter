@@ -86,10 +86,20 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 	for {
 		select {
 		case err := <-subscription.Err():
-			panic(err) // XXX
+			return err
 		case header := <-headers:
-			log.Printf("Block header %+v\n", header)
+			kpr.dispatchNewBlockHeader(header)
 		}
+	}
+}
+
+func (kpr *Keyper) dispatchNewBlockHeader(header *types.Header) {
+	log.Printf("Dispatching new block #%d to %d batches\n", header.Number, len(kpr.batches))
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
+
+	for _, batch := range kpr.batches {
+		batch.NewBlockHeader(header)
 	}
 }
 

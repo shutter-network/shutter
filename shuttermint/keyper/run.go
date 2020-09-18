@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -124,6 +125,9 @@ func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
 	msg := NewSecretShare(batch.BatchParams.BatchIndex, key)
 	log.Print("Generated privkey", batch.BatchParams)
 	return batch.MessageSender.SendMessage(msg)
+}
+
+func (batch *BatchState) NewBlockHeader(header *types.Header) {
 }
 
 // Run runs the key generation for the given batch
