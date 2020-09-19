@@ -72,7 +72,6 @@ func IsWebsocketURL(url string) bool {
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
-	const waitDuration = 2 * time.Second
 	if !IsWebsocketURL(kpr.EthereumURL) {
 		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.EthereumURL)
 		log.Printf("Error: %s", err)
@@ -91,6 +90,8 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 	}
 	for {
 		select {
+		case <-kpr.ctx.Done():
+			return nil
 		case err := <-subscription.Err():
 			return err
 		case header := <-headers:
