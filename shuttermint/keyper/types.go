@@ -6,31 +6,35 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/tendermint/tendermint/rpc/client"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/tendermint/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 // RoundInterval is the duration between the start of two consecutive rounds
-var RoundInterval time.Duration = 5 * time.Second
+// var RoundInterval time.Duration = 5 * time.Second
 
 // PrivateKeyDelay is the duration between the start of the public key generation and the the start
 // of the private key generation for a single round
-var PrivateKeyDelay time.Duration = 45 * time.Second
+// var PrivateKeyDelay time.Duration = 45 * time.Second
 
 // BatchParams describes the parameters for single Batch identified by the BatchIndex
-type BatchParams struct {
-	BatchIndex                    uint64
-	BatchConfig                   app.BatchConfig
-	PublicKeyGenerationStartTime  time.Time
-	PrivateKeyGenerationStartTime time.Time
-}
+type BatchParams = contract.BatchParams
+
+// type BatchParams struct {
+//	BatchIndex                    uint64
+//	BatchConfig                   app.BatchConfig
+//	PublicKeyGenerationStartTime  time.Time
+//	PrivateKeyGenerationStartTime time.Time
+// }
 
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
@@ -41,36 +45,45 @@ type BatchState struct {
 	pubkeyGenerated             chan PubkeyGeneratedEvent
 	privkeyGenerated            chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded chan EncryptionKeySignatureAddedEvent
+	startBlockSeen              chan struct{}
+	startBlockSeenOnce          sync.Once
+	endBlockSeen                chan struct{}
+	endBlockSeenOnce            sync.Once
 }
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
-	SigningKey     *ecdsa.PrivateKey
-	ShuttermintURL string
-	EthereumURL    string
-	mux            sync.Mutex
-	batches        map[uint64]*BatchState
-	txs            <-chan coretypes.ResultEvent
-	ctx            context.Context
+	SigningKey            *ecdsa.PrivateKey
+	ShuttermintURL        string
+	EthereumURL           string
+	ConfigContractAddress common.Address
+	ethcl                 *ethclient.Client
+	configContract        *contract.ConfigContract
+	mux                   sync.Mutex
+	batches               map[uint64]*BatchState
+	txs                   <-chan coretypes.ResultEvent
+	ctx                   context.Context
+	newHeaders            chan *types.Header // start new batches when new block headers arrive
+	group                 *errgroup.Group
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex
-func NewBatchParams(batchIndex uint64) BatchParams {
-	ts := int64(batchIndex) * int64(RoundInterval)
+// func NewBatchParams(batchIndex uint64) BatchParams {
+//	ts := int64(batchIndex) * int64(RoundInterval)
 
-	pubstart := time.Unix(ts/int64(time.Second), ts%int64(time.Second))
-	privstart := pubstart.Add(PrivateKeyDelay)
-	return BatchParams{
-		BatchIndex:                    batchIndex,
-		PublicKeyGenerationStartTime:  pubstart,
-		PrivateKeyGenerationStartTime: privstart,
-	}
-}
+//	pubstart := time.Unix(ts/int64(time.Second), ts%int64(time.Second))
+//	privstart := pubstart.Add(PrivateKeyDelay)
+//	return BatchParams{
+//		BatchIndex:                    batchIndex,
+//		PublicKeyGenerationStartTime:  pubstart,
+//		PrivateKeyGenerationStartTime: privstart,
+//	}
+// }
 
 // NextBatchIndex computes the BatchIndex for the next batch to be started
-func NextBatchIndex(t time.Time) uint64 {
-	return uint64((t.UnixNano() + int64(RoundInterval) - 1) / int64(RoundInterval))
-}
+// func NextBatchIndex(t time.Time) uint64 {
+//	return uint64((t.UnixNano() + int64(RoundInterval) - 1) / int64(RoundInterval))
+// }
 
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint
 type MessageSender struct {
@@ -89,7 +102,7 @@ func (ms MessageSender) SendMessage(msg *shmsg.Message) error {
 	if err != nil {
 		return err
 	}
-	var tx types.Tx = types.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
+	var tx tmtypes.Tx = tmtypes.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
 	res, err := ms.rpcclient.BroadcastTxCommit(tx)
 	if err != nil {
 		return err

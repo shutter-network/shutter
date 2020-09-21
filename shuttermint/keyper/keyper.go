@@ -17,7 +17,11 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 )
+
+const newHeadersSize = 8
 
 // NewKeyper creates a new Keyper
 func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL string) Keyper {
@@ -26,42 +30,62 @@ func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL 
 		ShuttermintURL: shuttermintURL,
 		EthereumURL:    ethereumURL,
 		batches:        make(map[uint64]*BatchState),
+		newHeaders:     make(chan *types.Header, newHeadersSize),
 	}
+}
+
+func (kpr *Keyper) init() error {
+	ethcl, err := ethclient.Dial(kpr.EthereumURL)
+	if err != nil {
+		return err
+	}
+	kpr.ethcl = ethcl
+	group, ctx := errgroup.WithContext(context.Background())
+	kpr.ctx = ctx
+	kpr.group = group
+	addr := common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962")
+	cc, err := contract.NewConfigContract(addr, kpr.ethcl)
+	if err != nil {
+		return err
+	}
+	kpr.configContract = cc
+	return nil
 }
 
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
 func (kpr *Keyper) Run() error {
 	log.Printf("Running keyper with address %s", kpr.Address().Hex())
+	err := kpr.init()
+	if err != nil {
+		return err
+	}
 
-	group, ctx := errgroup.WithContext(context.Background())
-	kpr.ctx = ctx
-
-	var cl client.Client
-	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
+	var shmcl client.Client
+	shmcl, err = http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
 		return errors.Wrapf(err, "create shuttermint client at %s", kpr.ShuttermintURL)
 	}
 
-	err = cl.Start()
+	err = shmcl.Start()
 
 	if err != nil {
 		return errors.Wrapf(err, "start shuttermint client at %s", kpr.ShuttermintURL)
 	}
 
-	defer cl.Stop()
+	defer shmcl.Stop()
 	query := "tx.height > 3"
 
-	txs, err := cl.Subscribe(ctx, "test-client", query)
+	txs, err := shmcl.Subscribe(kpr.ctx, "test-client", query)
 	kpr.txs = txs
 	if err != nil {
 		return err
 	}
 
-	group.Go(kpr.dispatchTxs)
-	group.Go(kpr.startNewBatches)
-	group.Go(kpr.watchMainChainHeadBlock)
-	err = group.Wait()
+	kpr.group.Go(kpr.dispatchTxs)
+	kpr.group.Go(kpr.startNewBatches)
+	kpr.group.Go(kpr.watchMainChainHeadBlock)
+	err = kpr.group.Wait()
 	return err
 }
 
@@ -95,6 +119,7 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 		case err := <-subscription.Err():
 			return err
 		case header := <-headers:
+			kpr.newHeaders <- header
 			kpr.dispatchNewBlockHeader(header)
 		}
 	}
@@ -130,22 +155,59 @@ func (kpr *Keyper) dispatchTxs() error {
 	}
 }
 
+// waitCurrentBlockHeaders waits for a block header that is at max 1 Minute in the past. We do want
+// to ignore block headers we may get when syncing.
+func (kpr *Keyper) waitCurrentBlockHeader() *types.Header {
+	for {
+		select {
+		case <-kpr.ctx.Done():
+			return nil
+		case header := <-kpr.newHeaders:
+			if time.Since(time.Unix(int64(header.Time), 0)) < time.Minute {
+				return header
+			}
+		}
+	}
+}
+
 func (kpr *Keyper) startNewBatches() error {
 	var cl client.Client
 	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
 	if err != nil {
 		return err
 	}
+	_ = cl
 
-	for batchIndex := NextBatchIndex(time.Now()); ; batchIndex++ {
-		bp := kpr.startBatch(batchIndex, cl)
-		// The following waits for the start of the previous round. This is done on
-		// purpose, because we generate keys in keyper.Run as a first step and then wait
-		// for the start time
+	// We wait for block header that is not too old.
+
+	header := kpr.waitCurrentBlockHeader()
+	if header == nil {
+		return nil
+	}
+
+	nextBatchIndex, err := kpr.configContract.NextBatchIndex(header.Number.Uint64())
+	if err != nil {
+		return err
+	}
+	lastBatchIndex := nextBatchIndex - 1 // we'll start only the batch for nextBatchIndex
+	for {
+		for batchIndex := lastBatchIndex + 1; batchIndex <= nextBatchIndex; batchIndex++ {
+			log.Printf("Starting batch #%d", batchIndex)
+			err = kpr.startBatch(nextBatchIndex, cl)
+			if err != nil {
+				log.Printf("Error: could not start batch #%d: %s", nextBatchIndex, err)
+			}
+		}
+		lastBatchIndex = nextBatchIndex
+
 		select {
 		case <-kpr.ctx.Done():
 			return nil
-		case <-time.After(time.Until(bp.PublicKeyGenerationStartTime)):
+		case header := <-kpr.newHeaders:
+			nextBatchIndex, err = kpr.configContract.NextBatchIndex(header.Number.Uint64())
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -157,8 +219,11 @@ func (kpr *Keyper) removeBatch(batchIndex uint64) {
 	delete(kpr.batches, batchIndex)
 }
 
-func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
-	bp := NewBatchParams(batchIndex)
+func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
+	bp, err := kpr.configContract.QueryBatchParams(nil, batchIndex)
+	if err != nil {
+		return err
+	}
 
 	ms := NewMessageSender(cl, kpr.SigningKey)
 	cc := NewContractCaller(
@@ -176,17 +241,20 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) BatchParams {
 	go func() {
 		defer kpr.removeBatch(batchIndex)
 
-		bc, err := queryBatchConfig(cl, batchIndex)
-		if err != nil {
-			log.Print("Error while trying to query batch config:", err)
-			return
-		}
-		batch.BatchParams.BatchConfig = bc
+		// XXX we should check against what is configured in shuttermint
+		// Here is the code we used to get the config from shuttermint:
+
+		// bc, err := queryBatchConfig(cl, batchIndex)
+		// if err != nil {
+		//	log.Print("Error while trying to query batch config:", err)
+		//	return
+		// }
+		// batch.BatchParams.BatchConfig = bc
 
 		batch.Run()
 	}()
 
-	return bp
+	return nil
 }
 
 func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {

@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // BatchParams desribes the parameters to be used for a single batch
@@ -15,6 +16,16 @@ type BatchParams struct {
 	StartBlock  uint64
 	EndBlock    uint64
 	BatchConfig *BatchConfig
+}
+
+// KeyperIndex returns the index of the keyper identified by the given address
+func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
+	for i, k := range bc.Keypers {
+		if k == address {
+			return uint64(i), true
+		}
+	}
+	return 0, false
 }
 
 func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {

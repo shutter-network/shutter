@@ -89,6 +89,8 @@ func NewBatchState(bp BatchParams, key *ecdsa.PrivateKey, ms *MessageSender, cc 
 		pubkeyGenerated:             pubkeyGenerated,
 		privkeyGenerated:            privkeyGenerated,
 		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
+		startBlockSeen:              make(chan struct{}),
+		endBlockSeen:                make(chan struct{}),
 	}
 }
 
@@ -125,7 +127,7 @@ func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
 	case ev := <-batch.pubkeyGenerated:
 		log.Printf("Got event %+v", ev)
 		return ev, nil
-	case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
+	case <-batch.endBlockSeen:
 		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
 		return PubkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for public key generation to finish")
 	}
@@ -154,11 +156,11 @@ func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]Encryptio
 		select {
 		case ev := <-batch.encryptionKeySignatureAdded:
 			events = append(events, ev)
-			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold) {
+			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold.Int64()) {
 				return events, nil
 			}
-		case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
-			return events, fmt.Errorf("timeout while waiting for encryption key signatures")
+			// case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
+			//	return events, fmt.Errorf("timeout while waiting for encryption key signatures")
 		}
 	}
 }
@@ -198,6 +200,21 @@ func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
 }
 
 func (batch *BatchState) NewBlockHeader(header *types.Header) {
+	blockNumber := header.Number.Uint64()
+	if blockNumber >= batch.BatchParams.StartBlock {
+		batch.startBlockSeenOnce.Do(func() { close(batch.startBlockSeen) })
+	}
+	if blockNumber >= batch.BatchParams.EndBlock {
+		batch.endBlockSeenOnce.Do(func() { close(batch.endBlockSeen) })
+	}
+}
+
+func (batch *BatchState) waitForStartBlock() {
+	<-batch.startBlockSeen
+}
+
+func (batch *BatchState) waitForEndBlock() {
+	<-batch.endBlockSeen
 }
 
 // Run runs the key generation for the given batch
@@ -207,9 +224,8 @@ func (batch *BatchState) Run() {
 		log.Printf("Error while generating key: %s", err)
 		return
 	}
-
-	// Wait for the start time
-	SleepUntil(batch.BatchParams.PublicKeyGenerationStartTime)
+	log.Printf("Waiting for start block %d for batch #%d", batch.BatchParams.StartBlock, batch.BatchParams.BatchIndex)
+	batch.waitForStartBlock()
 	log.Print("Starting key generation process", batch.BatchParams)
 
 	err = batch.sendPublicKeyCommitment(key)
@@ -235,7 +251,7 @@ func (batch *BatchState) Run() {
 		return
 	}
 
-	SleepUntil(batch.BatchParams.PrivateKeyGenerationStartTime)
+	batch.waitForEndBlock()
 
 	err = batch.sendSecretShare(key)
 	if err != nil {
