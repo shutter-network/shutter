@@ -38,12 +38,12 @@ func (cc *ContractCaller) Auth() (*bind.TransactOpts, error) {
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 
-	// gasPrice, err := cl.SuggestGasPrice(context.Background())
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// auth.GasPrice = gasPrice
-	auth.GasPrice = big.NewInt(int64(0))
+	gasPrice, err := cl.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	auth.GasPrice = gasPrice
+	// auth.GasPrice = big.NewInt(int64(0))
 
 	return auth, nil
 }

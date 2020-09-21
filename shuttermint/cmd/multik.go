@@ -12,6 +12,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 // multikCmd represents the multik command
@@ -40,10 +41,7 @@ func multikMain() {
 	var keys [3]*ecdsa.PrivateKey
 	var keypers [3]common.Address
 	for i := 0; i < 3; i++ {
-		k, err := crypto.GenerateKey()
-		if err != nil {
-			panic(err)
-		}
+		k := sandbox.GanacheKey(i)
 		keys[i] = k
 		keypers[i] = crypto.PubkeyToAddress(k.PublicKey)
 	}
