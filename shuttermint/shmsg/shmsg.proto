@@ -27,7 +27,8 @@ message BatchConfig {
 message EncryptionKeyAttestation {
         uint64 batchIndex = 1;
         bytes key = 2;
-        bytes signature = 3;
+        bytes configContractAddress = 3;
+        bytes signature = 4;
 }
 
 message Message {

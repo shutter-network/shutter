@@ -110,6 +110,8 @@ func (bs *BatchState) FindEncryptionKeyAttestation(addr common.Address) (Encrypt
 
 // AddEncryptionKeyAttestation adds an EncryptionKeyAttestation to the batch.
 func (bs *BatchState) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) error {
+	// TODO: consider verifying the config contract address here
+
 	if !bs.Config.IsKeyper(a.Sender) {
 		return errors.New("not a keyper")
 	}

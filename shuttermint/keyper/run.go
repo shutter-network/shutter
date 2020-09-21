@@ -50,14 +50,19 @@ func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg
 
 // NewEncryptionKeyAttestation creates a new EncryptionKeyAttestation with the given values wrapped
 // in a shmsg.Message
-func NewEncryptionKeyAttestation(batchIndex uint64, encryptionKey *ecdsa.PublicKey, signature []byte) *shmsg.Message {
+func NewEncryptionKeyAttestation(
+	batchIndex uint64,
+	encryptionKey *ecdsa.PublicKey,
+	configContractAddress common.Address,
+	signature []byte,
+) *shmsg.Message {
 	return &shmsg.Message{
 		Payload: &shmsg.Message_EncryptionKeyAttestation{
 			EncryptionKeyAttestation: &shmsg.EncryptionKeyAttestation{
-
-				BatchIndex: batchIndex,
-				Key:        crypto.FromECDSAPub(encryptionKey),
-				Signature:  signature,
+				BatchIndex:            batchIndex,
+				Key:                   crypto.FromECDSAPub(encryptionKey),
+				ConfigContractAddress: configContractAddress.Bytes(),
+				Signature:             signature,
 			},
 		},
 	}
@@ -140,13 +145,23 @@ func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 }
 
 func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicKey) error {
-	preimage := app.EncryptionKeyPreimage(crypto.FromECDSAPub(encryptionKey), batch.BatchParams.BatchIndex)
+	configContractAddress := common.HexToAddress("0x")
+	preimage := app.EncryptionKeyPreimage(
+		crypto.FromECDSAPub(encryptionKey),
+		batch.BatchParams.BatchIndex,
+		configContractAddress,
+	)
 	hash := crypto.Keccak256Hash(preimage)
 	sig, err := crypto.Sign(hash.Bytes(), batch.SigningKey)
 	if err != nil {
 		return err
 	}
-	msg := NewEncryptionKeyAttestation(batch.BatchParams.BatchIndex, encryptionKey, sig)
+	msg := NewEncryptionKeyAttestation(
+		batch.BatchParams.BatchIndex,
+		encryptionKey,
+		configContractAddress,
+		sig,
+	)
 	return batch.MessageSender.SendMessage(msg)
 }
 

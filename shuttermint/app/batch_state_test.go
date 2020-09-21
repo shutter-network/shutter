@@ -162,30 +162,33 @@ func TestAddEncryptionKeyAttestation(t *testing.T) {
 
 	// don't accept attestation for wrong key
 	wrongKey := []byte("key")
-	preimage := EncryptionKeyPreimage(wrongKey, batchState.BatchIndex)
+	configContractAddress := common.HexToAddress("0x")
+	preimage := EncryptionKeyPreimage(wrongKey, batchState.BatchIndex, configContractAddress)
 	hash := crypto.Keccak256Hash(preimage)
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
 	require.Nil(t, err)
 	att := EncryptionKeyAttestation{
-		Sender:        addresses[0],
-		EncryptionKey: wrongKey,
-		BatchIndex:    batchState.BatchIndex,
-		Signature:     sig,
+		Sender:                addresses[0],
+		EncryptionKey:         wrongKey,
+		BatchIndex:            batchState.BatchIndex,
+		ConfigContractAddress: configContractAddress,
+		Signature:             sig,
 	}
 	require.True(t, att.VerifySignature())
 	err = batchState.AddEncryptionKeyAttestation(att)
 	require.Error(t, err)
 
 	// add attestation from keyper
-	preimage = EncryptionKeyPreimage(publicKey, batchState.BatchIndex)
+	preimage = EncryptionKeyPreimage(publicKey, batchState.BatchIndex, configContractAddress)
 	hash = crypto.Keccak256Hash(preimage)
 	sig, err = crypto.Sign(hash.Bytes(), keys[0])
 	require.Nil(t, err)
 	att = EncryptionKeyAttestation{
-		Sender:        addresses[0],
-		EncryptionKey: publicKey,
-		BatchIndex:    batchState.BatchIndex,
-		Signature:     sig,
+		Sender:                addresses[0],
+		EncryptionKey:         publicKey,
+		BatchIndex:            batchState.BatchIndex,
+		ConfigContractAddress: configContractAddress,
+		Signature:             sig,
 	}
 	require.True(t, att.VerifySignature())
 	err = batchState.AddEncryptionKeyAttestation(att)
@@ -199,15 +202,16 @@ func TestAddEncryptionKeyAttestation(t *testing.T) {
 
 	// don't accept another attestation by keyper
 	key2 := []byte("key2")
-	preimage2 := EncryptionKeyPreimage(key2, batchState.BatchIndex)
+	preimage2 := EncryptionKeyPreimage(key2, batchState.BatchIndex, configContractAddress)
 	hash2 := crypto.Keccak256Hash(preimage2)
 	sig2, err := crypto.Sign(hash2.Bytes(), keys[0])
 	require.Nil(t, err)
 	att2 := EncryptionKeyAttestation{
-		Sender:        addresses[0],
-		EncryptionKey: key2,
-		BatchIndex:    batchState.BatchIndex,
-		Signature:     sig2,
+		Sender:                addresses[0],
+		EncryptionKey:         key2,
+		BatchIndex:            batchState.BatchIndex,
+		ConfigContractAddress: configContractAddress,
+		Signature:             sig2,
 	}
 	err = batchState.AddEncryptionKeyAttestation(att2)
 	require.Error(t, err)
