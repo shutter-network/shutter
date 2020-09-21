@@ -145,11 +145,10 @@ func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 }
 
 func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicKey) error {
-	configContractAddress := common.HexToAddress("0x")
 	preimage := app.EncryptionKeyPreimage(
 		crypto.FromECDSAPub(encryptionKey),
 		batch.BatchParams.BatchIndex,
-		configContractAddress,
+		batch.KeyperConfig.ConfigContractAddress,
 	)
 	hash := crypto.Keccak256Hash(preimage)
 	sig, err := crypto.Sign(hash.Bytes(), batch.KeyperConfig.SigningKey)
@@ -159,7 +158,7 @@ func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicK
 	msg := NewEncryptionKeyAttestation(
 		batch.BatchParams.BatchIndex,
 		encryptionKey,
-		configContractAddress,
+		batch.KeyperConfig.ConfigContractAddress,
 		sig,
 	)
 	return batch.MessageSender.SendMessage(msg)
