@@ -39,7 +39,7 @@ type BatchParams = contract.BatchParams
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
 	BatchParams                 BatchParams
-	SigningKey                  *ecdsa.PrivateKey
+	KeyperConfig                KeyperConfig
 	MessageSender               *MessageSender
 	ContractCaller              *ContractCaller
 	pubkeyGenerated             chan PubkeyGeneratedEvent

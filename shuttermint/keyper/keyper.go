@@ -227,7 +227,7 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
 		kpr.Config.SigningKey,
 		kpr.Config.KeyBroadcastingContractAddress,
 	)
-	batch := NewBatchState(bp, kpr.Config.SigningKey, &ms, &cc)
+	batch := NewBatchState(bp, kpr.Config, &ms, &cc)
 
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
