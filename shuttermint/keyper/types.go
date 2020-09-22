@@ -46,8 +46,8 @@ type BatchState struct {
 	privkeyGenerated            chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded chan EncryptionKeySignatureAddedEvent
 	startBlockSeen              chan struct{}
-	startBlockSeenOnce          sync.Once
 	endBlockSeen                chan struct{}
+	startBlockSeenOnce          sync.Once
 	endBlockSeenOnce            sync.Once
 }
 
