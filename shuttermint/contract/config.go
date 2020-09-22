@@ -78,3 +78,28 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 	}
 	return uint64(0), fmt.Errorf("contract misconfigured")
 }
+
+// GetConfigKeypers queries the list of keypers defined in the config given by its index
+func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint64) ([]common.Address, error) {
+	var keypers []common.Address
+
+	configIndexBig := big.NewInt(0).SetUint64(configIndex)
+
+	numKeypers, err := cc.ConfigNumKeypers(opts, configIndexBig)
+	if err != nil {
+		return keypers, err
+	}
+	if !numKeypers.IsUint64() {
+		return keypers, fmt.Errorf("number of keypers too big: %d", numKeypers)
+	}
+
+	for i := uint64(0); i < numKeypers.Uint64(); i++ {
+		keyper, err := cc.ConfigKeypers(opts, configIndexBig, big.NewInt(0).SetUint64(i))
+		if err != nil {
+			return keypers, err
+		}
+		keypers = append(keypers, keyper)
+	}
+
+	return keypers, nil
+}
