@@ -5,10 +5,18 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
+
+var multikAddress common.Address
+
+func init() {
+	multikAddress = crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1).PublicKey)
+}
 
 // Visit https://github.com/tendermint/spec/blob/master/spec/abci/abci.md for more information on
 // the application interface we're implementing here.
@@ -25,6 +33,7 @@ func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
 		Configs:     []*BatchConfig{{}},
 		BatchStates: make(map[uint64]BatchState),
+		Voting:      NewConfigVoting(),
 	}
 }
 
@@ -38,7 +47,8 @@ func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
 	panic("guard element missing")
 }
 
-func (app *ShutterApp) addConfig(cfg BatchConfig) error {
+// checkConfig checks if the given BatchConfig could be added.
+func (app *ShutterApp) checkConfig(cfg BatchConfig) error {
 	lastConfig := app.Configs[len(app.Configs)-1]
 	if cfg.StartBatchIndex < lastConfig.StartBatchIndex {
 		return fmt.Errorf(
@@ -46,6 +56,14 @@ func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 			cfg.StartBatchIndex,
 			lastConfig.StartBatchIndex,
 		)
+	}
+	return nil
+}
+
+func (app *ShutterApp) addConfig(cfg BatchConfig) error {
+	err := app.checkConfig(cfg)
+	if err != nil {
+		return err
 	}
 	app.Configs = append(app.Configs, &cfg)
 	return nil
@@ -168,20 +186,48 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 	}
 }
 
+func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool {
+	if sender == multikAddress && len(app.Configs) == 1 {
+		return true
+	}
+	lastConfig := app.Configs[len(app.Configs)-1]
+	_, ok := lastConfig.KeyperIndex(sender)
+	return ok
+}
+
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
 	// XXX everyone can call this at the moment
 	bc, err := BatchConfigFromMessage(msg)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
 	}
+	err = app.checkConfig(bc)
+	if err != nil {
+		return makeErrorResponse(fmt.Sprintf("checkConfig: %s", err))
+	}
 
-	err = app.addConfig(bc)
+	if !app.allowedToVoteOnConfigChanges(sender) {
+		return makeErrorResponse("not allowed to vote on config changes")
+	}
+
+	var events []abcitypes.Event
+
+	err = app.Voting.AddVote(sender, bc)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 	}
 
-	var events []abcitypes.Event
-	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
+	_, ok := app.Voting.Outcome(int(app.Configs[len(app.Configs)-1].Threshold))
+	if ok {
+		app.Voting = NewConfigVoting()
+		err = app.addConfig(bc)
+		if err != nil {
+			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
+		}
+
+		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
+	}
+
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: events,

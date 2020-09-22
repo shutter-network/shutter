@@ -15,6 +15,13 @@ type BatchConfig struct {
 	Threshold       uint32
 }
 
+// ConfigVoting is used to let the keypers vote on new BatchConfigs to be added
+// Each keyper can vote exactly once
+type ConfigVoting struct {
+	Candidates []BatchConfig
+	Votes      map[common.Address]int
+}
+
 // PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
 // this already holds the public key
 type PublicKeyCommitment struct {
@@ -54,4 +61,5 @@ type BatchState struct {
 type ShutterApp struct {
 	Configs     []*BatchConfig
 	BatchStates map[uint64]BatchState
+	Voting      ConfigVoting
 }

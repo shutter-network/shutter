@@ -40,10 +40,7 @@ func multikMain() {
 		ConfigContractAddress: common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
 	}
 
-	privateKey, err := crypto.HexToECDSA("fad9c8855b740a0b7ed4c221dbad0f33a83a49cad6b3fe8d5817ac83d38b6a19")
-	if err != nil {
-		panic(err)
-	}
+	privateKey := sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1)
 
 	var keys [3]*ecdsa.PrivateKey
 	var keypers [3]common.Address
