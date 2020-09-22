@@ -159,9 +159,8 @@ func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]Encryptio
 			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold.Int64()) {
 				return events, nil
 			}
-			// TODO the following case still needs to be implemented
-			// case <-time.After(time.Until(batch.BatchParams.PrivateKeyGenerationStartTime)):
-			//	return events, fmt.Errorf("timeout while waiting for encryption key signatures")
+		case <-batch.endBlockSeen:
+			return events, fmt.Errorf("timeout while waiting for encryption key signatures")
 		}
 	}
 }
