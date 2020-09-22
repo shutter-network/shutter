@@ -202,7 +202,7 @@ func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyA
 	keyperIndex, ok := bs.Config.KeyperIndex(sender)
 	if !ok {
 		// this is already checked in AddEncryptionKeyAttestation, but no harm in handling it twice
-		return makeErrorResponse(fmt.Sprintf("not a keyper"))
+		return makeErrorResponse("not a keyper")
 	}
 
 	event := MakeEncryptionKeySignatureAddedEvent(keyperIndex, msg.BatchIndex, msg.Key, msg.Signature)
