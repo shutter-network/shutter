@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -41,8 +40,12 @@ func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
 
 func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 	lastConfig := app.Configs[len(app.Configs)-1]
-	if lastConfig.StartBatchIndex >= cfg.StartBatchIndex {
-		return errors.New("start batch index too low")
+	if cfg.StartBatchIndex < lastConfig.StartBatchIndex {
+		return fmt.Errorf(
+			"start batch index of next config (%d) lower than current one (%d)",
+			cfg.StartBatchIndex,
+			lastConfig.StartBatchIndex,
+		)
 	}
 	app.Configs = append(app.Configs, &cfg)
 	return nil
