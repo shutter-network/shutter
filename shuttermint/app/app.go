@@ -192,7 +192,13 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 
 func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyAttestation, sender common.Address) abcitypes.ResponseDeliverTx {
 	bs := app.getBatchState(msg.BatchIndex)
-	att := EncryptionKeyAttestation{Sender: sender, EncryptionKey: msg.Key, BatchIndex: msg.BatchIndex, Signature: msg.Signature}
+	att := EncryptionKeyAttestation{
+		Sender:                sender,
+		EncryptionKey:         msg.Key,
+		BatchIndex:            msg.BatchIndex,
+		ConfigContractAddress: common.BytesToAddress(msg.ConfigContractAddress),
+		Signature:             msg.Signature,
+	}
 	err := bs.AddEncryptionKeyAttestation(att)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Error in AddEncryptionKeyAttestation: %s", err))

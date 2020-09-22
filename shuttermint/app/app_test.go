@@ -4,6 +4,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -153,14 +154,16 @@ func TestKeyGeneration(t *testing.T) {
 
 	// encryption key signature collection
 	key := crypto.FromECDSAPub(&keys[1].PublicKey)
-	preimage := EncryptionKeyPreimage(key, 200)
+	configContractAddress := common.HexToAddress("0x")
+	preimage := EncryptionKeyPreimage(key, 200, configContractAddress)
 	hash := crypto.Keccak256Hash(preimage)
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
 	require.Nil(t, err)
 	attMsg := shmsg.EncryptionKeyAttestation{
-		BatchIndex: 200,
-		Key:        key,
-		Signature:  sig,
+		BatchIndex:            200,
+		Key:                   key,
+		ConfigContractAddress: configContractAddress.Bytes(),
+		Signature:             sig,
 	}
 	res4 := app.deliverEncryptionKeyAttestation(&attMsg, keypers[0])
 	expectedEvent := MakeEncryptionKeySignatureAddedEvent(0, 200, key, sig)

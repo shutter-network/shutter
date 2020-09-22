@@ -30,10 +30,11 @@ type SecretShare struct {
 
 // EncryptionKeyAttestation stores an attestation to an encryption key signed by one of the keypers.
 type EncryptionKeyAttestation struct {
-	Sender        common.Address
-	EncryptionKey []byte
-	BatchIndex    uint64
-	Signature     []byte
+	Sender                common.Address
+	EncryptionKey         []byte
+	BatchIndex            uint64
+	ConfigContractAddress common.Address
+	Signature             []byte
 }
 
 // The BatchState structure is used to manage the key generation process for a certain batch

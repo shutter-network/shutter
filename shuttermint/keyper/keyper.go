@@ -2,7 +2,6 @@ package keyper
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"strings"
@@ -24,18 +23,16 @@ import (
 const newHeadersSize = 8
 
 // NewKeyper creates a new Keyper
-func NewKeyper(signingKey *ecdsa.PrivateKey, shuttermintURL string, ethereumURL string) Keyper {
+func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
-		SigningKey:     signingKey,
-		ShuttermintURL: shuttermintURL,
-		EthereumURL:    ethereumURL,
-		batches:        make(map[uint64]*BatchState),
-		newHeaders:     make(chan *types.Header, newHeadersSize),
+		Config:     kc,
+		batches:    make(map[uint64]*BatchState),
+		newHeaders: make(chan *types.Header, newHeadersSize),
 	}
 }
 
 func (kpr *Keyper) init() error {
-	ethcl, err := ethclient.Dial(kpr.EthereumURL)
+	ethcl, err := ethclient.Dial(kpr.Config.EthereumURL)
 	if err != nil {
 		return err
 	}
@@ -43,8 +40,7 @@ func (kpr *Keyper) init() error {
 	group, ctx := errgroup.WithContext(context.Background())
 	kpr.ctx = ctx
 	kpr.group = group
-	addr := common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962")
-	cc, err := contract.NewConfigContract(addr, kpr.ethcl)
+	cc, err := contract.NewConfigContract(kpr.Config.ConfigContractAddress, kpr.ethcl)
 	if err != nil {
 		return err
 	}
@@ -55,22 +51,22 @@ func (kpr *Keyper) init() error {
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
 func (kpr *Keyper) Run() error {
-	log.Printf("Running keyper with address %s", kpr.Address().Hex())
+	log.Printf("Running keyper with address %s", kpr.Config.Address().Hex())
 	err := kpr.init()
 	if err != nil {
 		return err
 	}
 
 	var shmcl client.Client
-	shmcl, err = http.New(kpr.ShuttermintURL, "/websocket")
+	shmcl, err = http.New(kpr.Config.ShuttermintURL, "/websocket")
 	if err != nil {
-		return errors.Wrapf(err, "create shuttermint client at %s", kpr.ShuttermintURL)
+		return errors.Wrapf(err, "create shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
 
 	err = shmcl.Start()
 
 	if err != nil {
-		return errors.Wrapf(err, "start shuttermint client at %s", kpr.ShuttermintURL)
+		return errors.Wrapf(err, "start shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
 
 	defer shmcl.Stop()
@@ -96,13 +92,13 @@ func IsWebsocketURL(url string) bool {
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
-	if !IsWebsocketURL(kpr.EthereumURL) {
-		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.EthereumURL)
+	if !IsWebsocketURL(kpr.Config.EthereumURL) {
+		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.Config.EthereumURL)
 		log.Printf("Error: %s", err)
 		return err
 	}
 
-	cl, err := ethclient.Dial(kpr.EthereumURL)
+	cl, err := ethclient.Dial(kpr.Config.EthereumURL)
 	if err != nil {
 		return err
 	}
@@ -172,7 +168,7 @@ func (kpr *Keyper) waitCurrentBlockHeader() *types.Header {
 
 func (kpr *Keyper) startNewBatches() error {
 	var cl client.Client
-	cl, err := http.New(kpr.ShuttermintURL, "/websocket")
+	cl, err := http.New(kpr.Config.ShuttermintURL, "/websocket")
 	if err != nil {
 		return err
 	}
@@ -225,13 +221,13 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
 		return err
 	}
 
-	ms := NewMessageSender(cl, kpr.SigningKey)
+	ms := NewMessageSender(cl, kpr.Config.SigningKey)
 	cc := NewContractCaller(
-		kpr.EthereumURL,
-		kpr.SigningKey,
-		common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
+		kpr.Config.EthereumURL,
+		kpr.Config.SigningKey,
+		kpr.Config.KeyBroadcastingContractAddress,
 	)
-	batch := NewBatchState(bp, kpr.SigningKey, &ms, &cc)
+	batch := NewBatchState(bp, kpr.Config, &ms, &cc)
 
 	kpr.mux.Lock()
 	defer kpr.mux.Unlock()
@@ -285,6 +281,6 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 }
 
 // Address returns the keyper's Ethereum address.
-func (kpr *Keyper) Address() common.Address {
-	return crypto.PubkeyToAddress(kpr.SigningKey.PublicKey)
+func (c *KeyperConfig) Address() common.Address {
+	return crypto.PubkeyToAddress(c.SigningKey.PublicKey)
 }

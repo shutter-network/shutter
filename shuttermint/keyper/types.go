@@ -39,7 +39,7 @@ type BatchParams = contract.BatchParams
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
 	BatchParams                 BatchParams
-	SigningKey                  *ecdsa.PrivateKey
+	KeyperConfig                KeyperConfig
 	MessageSender               *MessageSender
 	ContractCaller              *ContractCaller
 	pubkeyGenerated             chan PubkeyGeneratedEvent
@@ -51,20 +51,27 @@ type BatchState struct {
 	endBlockSeenOnce            sync.Once
 }
 
+// KeyperConfig contains validated configuration parameters for the keyper client
+type KeyperConfig struct {
+	ShuttermintURL                 string
+	EthereumURL                    string
+	SigningKey                     *ecdsa.PrivateKey
+	ConfigContractAddress          common.Address
+	BatcherContractAddress         common.Address
+	KeyBroadcastingContractAddress common.Address
+}
+
 // Keyper is used to run the keyper key generation
 type Keyper struct {
-	SigningKey            *ecdsa.PrivateKey
-	ShuttermintURL        string
-	EthereumURL           string
-	ConfigContractAddress common.Address
-	ethcl                 *ethclient.Client
-	configContract        *contract.ConfigContract
-	mux                   sync.Mutex
-	batches               map[uint64]*BatchState
-	txs                   <-chan coretypes.ResultEvent
-	ctx                   context.Context
-	newHeaders            chan *types.Header // start new batches when new block headers arrive
-	group                 *errgroup.Group
+	Config         KeyperConfig
+	ethcl          *ethclient.Client
+	configContract *contract.ConfigContract
+	mux            sync.Mutex
+	batches        map[uint64]*BatchState
+	txs            <-chan coretypes.ResultEvent
+	ctx            context.Context
+	newHeaders     chan *types.Header // start new batches when new block headers arrive
+	group          *errgroup.Group
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex

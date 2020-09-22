@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -10,11 +12,14 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
-type KeyperConfig struct {
-	ShuttermintURL string
-	EthereumURL    string
-	SigningKey     string
-	ConfigContract string
+// RawKeyperConfig contains raw, unvalidated configuration parameters
+type RawKeyperConfig struct {
+	ShuttermintURL          string
+	EthereumURL             string
+	SigningKey              string
+	ConfigContract          string
+	BatcherContract         string
+	KeyBroadcastingContract string
 }
 
 // keyperCmd represents the keyper command
@@ -31,20 +36,25 @@ func init() {
 	keyperCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 }
 
-func readKeyperConfig() (KeyperConfig, error) {
+func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.SetEnvPrefix("KEYPER")
 	viper.BindEnv("ShuttermintURL")
 	viper.BindEnv("EthereumURL")
 	viper.BindEnv("SigningKey")
+	viper.BindEnv("ConfigContract")
+	viper.BindEnv("BatcherContract")
+	viper.BindEnv("KeyBroadcastingContract")
+
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
 	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
+
 	defer func() {
 		if viper.ConfigFileUsed() != "" {
 			log.Printf("Read config from %s", viper.ConfigFileUsed())
 		}
 	}()
 	var err error
-	kc := KeyperConfig{}
+	rkc := RawKeyperConfig{}
 
 	viper.AddConfigPath("$HOME/.config/shutter")
 	viper.SetConfigName("keyper")
@@ -55,39 +65,75 @@ func readKeyperConfig() (KeyperConfig, error) {
 	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 		// Config file not found
 		if cfgFile != "" {
-			return kc, err
+			return rkc, err
 		}
 	} else if err != nil {
-		return kc, err // Config file was found but another error was produced
+		return rkc, err // Config file was found but another error was produced
 	}
 
-	err = viper.Unmarshal(&kc)
-	return kc, err
+	err = viper.Unmarshal(&rkc)
+	return rkc, err
+}
+
+func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
+	emptyConfig := keyper.KeyperConfig{}
+
+	signingKey, err := crypto.HexToECDSA(r.SigningKey)
+	if err != nil {
+		return emptyConfig, fmt.Errorf("bad signing key: %w", err)
+	}
+
+	if !keyper.IsWebsocketURL(r.EthereumURL) {
+		return emptyConfig, fmt.Errorf("EthereumURL must start with ws:// or wss://")
+	}
+
+	configContractAddress := common.HexToAddress(r.ConfigContract)
+	if r.ConfigContract != configContractAddress.Hex() {
+		return emptyConfig, fmt.Errorf("ConfigContract must be a valid checksummed address")
+	}
+
+	batcherContractAddress := common.HexToAddress(r.BatcherContract)
+	if r.BatcherContract != batcherContractAddress.Hex() {
+		return emptyConfig, fmt.Errorf("BatcherContract must be a valid checksummed address")
+	}
+
+	keyBroadcastingContractAddress := common.HexToAddress(r.KeyBroadcastingContract)
+	if r.KeyBroadcastingContract != keyBroadcastingContractAddress.Hex() {
+		return emptyConfig, fmt.Errorf(
+			"KeyBroadcastingContract must be a valid checksummed address",
+		)
+	}
+
+	return keyper.KeyperConfig{
+		ShuttermintURL:                 r.ShuttermintURL,
+		EthereumURL:                    r.EthereumURL,
+		SigningKey:                     signingKey,
+		ConfigContractAddress:          configContractAddress,
+		BatcherContractAddress:         batcherContractAddress,
+		KeyBroadcastingContractAddress: keyBroadcastingContractAddress,
+	}, nil
 }
 
 func keyperMain() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	kc, err := readKeyperConfig()
+	rkc, err := readKeyperConfig()
 	if err != nil {
 		log.Fatalf("Error reading the configuration file: %s\nPlease check your configuration.", err)
 	}
 
-	privateKey, err := crypto.HexToECDSA(kc.SigningKey)
+	kc, err := validateKeyperConfig(rkc)
 	if err != nil {
-		log.Fatalf("Error: bad signing key: %s\nPlease check your configuration.", err)
+		log.Fatalf("Error: %s\nPlease check your configuration", err)
 	}
-	if !keyper.IsWebsocketURL(kc.EthereumURL) {
-		log.Fatalf("Error: EthereumURL must start with ws:// or wss://\nPlease check your configuration.")
-	}
-	addr := crypto.PubkeyToAddress(privateKey.PublicKey).Hex()
+
 	log.Printf(
 		"Starting keyper version %s with signing key %s, using %s for Shuttermint and %s for Ethereum",
 		version,
-		addr,
+		kc.Address().Hex(),
 		kc.ShuttermintURL,
 		kc.EthereumURL,
 	)
-	kpr := keyper.NewKeyper(privateKey, kc.ShuttermintURL, kc.EthereumURL)
+	kpr := keyper.NewKeyper(kc)
 	err = kpr.Run()
 	if err != nil {
 		panic(err)
