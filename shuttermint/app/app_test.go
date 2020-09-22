@@ -46,11 +46,11 @@ func TestAddConfig(t *testing.T) {
 	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 50, Threshold: 1})
-	require.NotNil(t, err, "Expected error, StartBatchIndex must increase")
+	err = app.addConfig(BatchConfig{StartBatchIndex: 99, Threshold: 1})
+	require.NotNil(t, err, "Expected error, StartBatchIndex must not decrease")
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
-	require.NotNil(t, err, "Expected error, StartBatchIndex must increase")
+	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 2})
+	require.Nil(t, err)
 }
 
 func TestKeyGeneration(t *testing.T) {
