@@ -170,23 +170,18 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
 	// XXX everyone can call this at the moment
-	var keypers []common.Address
-	for _, k := range msg.Keypers {
-		keypers = append(keypers, common.BytesToAddress(k))
+	bc, err := BatchConfigFromMessage(msg)
+	if err != nil {
+		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
 	}
 
-	bc := BatchConfig{
-		StartBatchIndex: msg.StartBatchIndex,
-		Keypers:         keypers,
-		Threshold:       msg.Threshold,
-	}
-	err := app.addConfig(bc)
+	err = app.addConfig(bc)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 	}
 
 	var events []abcitypes.Event
-	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, keypers))
+	events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: events,
