@@ -35,9 +35,10 @@ func multikMain() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	log.Printf("Starting multik version %s", version)
 	baseConfig := keyper.KeyperConfig{
-		ShuttermintURL:        "http://localhost:26657",
-		EthereumURL:           "ws://localhost:8545",
-		ConfigContractAddress: common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
+		ShuttermintURL:                 "http://localhost:26657",
+		EthereumURL:                    "ws://localhost:8545",
+		ConfigContractAddress:          common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
+		KeyBroadcastingContractAddress: common.HexToAddress("0x9c62311E2B81AE323716b9783D08DfDBE1802DD4"),
 	}
 
 	privateKey := sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1)

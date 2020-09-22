@@ -148,6 +148,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("ConfigContract address:", configAddress.Hex())
-	fmt.Println("DeployKeyBroadcastContract address:", broadcastAddress.Hex())
+	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
 	fmt.Printf("start block of config: %s\n", startBlockNumber)
 }
