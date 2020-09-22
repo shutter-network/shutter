@@ -3,9 +3,9 @@ package keyper
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	"github.com/tendermint/tendermint/rpc/client"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"

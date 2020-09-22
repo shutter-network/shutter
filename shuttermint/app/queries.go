@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/golang/protobuf/proto"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/protobuf/proto"
 )
 
 func makeQueryErrorResponse(msg string) abcitypes.ResponseQuery {

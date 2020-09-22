@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
