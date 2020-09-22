@@ -21,6 +21,7 @@ var bootstrapFlags struct {
 	EthereumURL      string
 	BatchConfigIndex int
 	ConfigContract   string
+	SigningKey       string
 }
 
 var bootstrapCmd = &cobra.Command{
@@ -55,6 +56,7 @@ func init() {
 		1,
 		"index of the batch config to bootstrap with",
 	)
+
 	bootstrapCmd.PersistentFlags().StringVarP(
 		&bootstrapFlags.ConfigContract,
 		"config-contract",
@@ -63,6 +65,15 @@ func init() {
 		"address of the contract from which to fetch config",
 	)
 	bootstrapCmd.MarkPersistentFlagRequired("config-contract")
+
+	bootstrapCmd.PersistentFlags().StringVarP(
+		&bootstrapFlags.SigningKey,
+		"signing-key",
+		"k",
+		"",
+		"private key of the keyper to send the message with",
+	)
+	bootstrapCmd.MarkPersistentFlagRequired("signing-key")
 }
 
 func bootstrap() {
@@ -74,6 +85,11 @@ func bootstrap() {
 	shmcl, err := http.New(bootstrapFlags.ShuttermintURL, "/websocket")
 	if err != nil {
 		log.Fatalf("Error connecting to Shuttermint node: %v", err)
+	}
+
+	signingKey, err := crypto.HexToECDSA(bootstrapFlags.SigningKey)
+	if err != nil {
+		log.Fatalf("Invalid signing key: %v", err)
 	}
 
 	configContractAddress := common.HexToAddress(bootstrapFlags.ConfigContract)
@@ -92,6 +108,9 @@ func bootstrap() {
 		Context:     context.Background(),
 	}
 
+	if bootstrapFlags.BatchConfigIndex <= 0 {
+		log.Fatalf("Batch config index must be at least 1")
+	}
 	index := big.NewInt(int64(bootstrapFlags.BatchConfigIndex))
 	bc, err := configContract.Configs(opts, index)
 	if err != nil {
@@ -112,13 +131,7 @@ func bootstrap() {
 		log.Fatalf("Failed to fetch keyper set: %s", err)
 	}
 
-	// everyone is allowed to send the bootstrapping message, so use a random private key
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		log.Fatalf("Failed to generate private key for sender: %v", err)
-	}
-
-	ms := keyper.NewMessageSender(shmcl, privateKey)
+	ms := keyper.NewMessageSender(shmcl, signingKey)
 	message := keyper.NewBatchConfig(
 		startBatchIndex,
 		keypers,
