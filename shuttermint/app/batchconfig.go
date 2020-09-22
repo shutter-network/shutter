@@ -46,7 +46,7 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 	var keypers []common.Address
 	for _, b := range m.Keypers {
 		if len(b) != common.AddressLength {
-			return BatchConfig{}, fmt.Errorf("Keyper address has invalid length")
+			return BatchConfig{}, fmt.Errorf("keyper address has invalid length")
 		}
 		keypers = append(keypers, common.BytesToAddress(b))
 	}

@@ -19,7 +19,7 @@ func queryBatchConfig(cl client.Client, batchIndex uint64) (app.BatchConfig, err
 		return app.BatchConfig{}, err
 	}
 	if res.Response.Code != 0 {
-		return app.BatchConfig{}, fmt.Errorf("Query returned error %d: %s", res.Response.Code, res.Response.Log)
+		return app.BatchConfig{}, fmt.Errorf("query returned error %d: %s", res.Response.Code, res.Response.Log)
 	}
 
 	msg := shmsg.Message{}
@@ -29,7 +29,7 @@ func queryBatchConfig(cl client.Client, batchIndex uint64) (app.BatchConfig, err
 	}
 	batchConfigMsg := msg.GetBatchConfig()
 	if batchConfigMsg == nil {
-		return app.BatchConfig{}, fmt.Errorf("Received unexpected message type")
+		return app.BatchConfig{}, fmt.Errorf("received unexpected message type")
 	}
 
 	bc, err := app.BatchConfigFromMessage(batchConfigMsg)
