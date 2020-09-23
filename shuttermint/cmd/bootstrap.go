@@ -5,15 +5,15 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/spf13/cobra"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
 var bootstrapFlags struct {
@@ -97,6 +97,9 @@ func bootstrap() {
 		log.Fatalf("Invalid config contract address %s", bootstrapFlags.ConfigContract)
 	}
 	configContract, err := contract.NewConfigContract(configContractAddress, ethcl)
+	if err != nil {
+		log.Fatalf("Failed to instantiate ConfigContract: %v", err)
+	}
 
 	header, err := ethcl.HeaderByNumber(context.Background(), nil)
 	if err != nil {
