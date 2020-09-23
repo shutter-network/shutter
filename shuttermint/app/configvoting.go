@@ -16,34 +16,34 @@ func NewConfigVoting() ConfigVoting {
 
 // AddVote adds a vote from the given sender for the given batchConfig.  It returns an error if the
 // sender tries to vote twice.
-func (cb *ConfigVoting) AddVote(sender common.Address, batchConfig BatchConfig) error {
-	_, ok := cb.Votes[sender]
+func (cfgv *ConfigVoting) AddVote(sender common.Address, batchConfig BatchConfig) error {
+	_, ok := cfgv.Votes[sender]
 	if ok {
 		return fmt.Errorf("sender %s already voted", sender.Hex())
 	}
 
-	for i, bc := range cb.Candidates {
+	for i, bc := range cfgv.Candidates {
 		if reflect.DeepEqual(bc, batchConfig) {
-			cb.Votes[sender] = i
+			cfgv.Votes[sender] = i
 			return nil
 		}
 	}
 
-	cb.Candidates = append(cb.Candidates, batchConfig)
-	cb.Votes[sender] = len(cb.Candidates) - 1
+	cfgv.Candidates = append(cfgv.Candidates, batchConfig)
+	cfgv.Votes[sender] = len(cfgv.Candidates) - 1
 	return nil
 }
 
 // Outcome checks if one of the candidates has more than numRequiredVotes.
-func (cb *ConfigVoting) Outcome(numRequiredVotes int) (BatchConfig, bool) {
-	var numVotes []int = make([]int, len(cb.Candidates))
+func (cfgv *ConfigVoting) Outcome(numRequiredVotes int) (BatchConfig, bool) {
+	var numVotes []int = make([]int, len(cfgv.Candidates))
 
-	for _, vote := range cb.Votes {
+	for _, vote := range cfgv.Votes {
 		numVotes[vote]++
 	}
 	for i, v := range numVotes {
 		if v >= numRequiredVotes {
-			return cb.Candidates[i], true
+			return cfgv.Candidates[i], true
 		}
 	}
 	return BatchConfig{}, false
