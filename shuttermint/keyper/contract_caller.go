@@ -43,8 +43,6 @@ func (cc *ContractCaller) Auth() (*bind.TransactOpts, error) {
 		return nil, err
 	}
 	auth.GasPrice = gasPrice
-	// auth.GasPrice = big.NewInt(int64(0))
-
 	return auth, nil
 }
 
