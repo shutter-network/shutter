@@ -22,13 +22,13 @@ func TestNewShutterApp(t *testing.T) {
 func TestGetBatch(t *testing.T) {
 	app := NewShutterApp()
 
-	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1, Keypers: addr})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 200, Threshold: 2})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 200, Threshold: 2, Keypers: addr})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 300, Threshold: 3})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 300, Threshold: 3, Keypers: addr})
 	require.Nil(t, err)
 
 	require.Equal(t, app.getBatchState(0).Config.Threshold, uint32(0))
@@ -43,13 +43,13 @@ func TestGetBatch(t *testing.T) {
 func TestAddConfig(t *testing.T) {
 	app := NewShutterApp()
 
-	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1})
+	err := app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 1, Keypers: addr})
 	require.Nil(t, err)
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 99, Threshold: 1})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 99, Threshold: 1, Keypers: addr})
 	require.NotNil(t, err, "Expected error, StartBatchIndex must not decrease")
 
-	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 2})
+	err = app.addConfig(BatchConfig{StartBatchIndex: 100, Threshold: 2, Keypers: addr})
 	require.Nil(t, err)
 }
 

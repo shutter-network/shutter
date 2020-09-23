@@ -24,6 +24,21 @@ func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
 	return ok
 }
 
+// EnsureValid checks if the BatchConfig is valid and returns an error if it's not valid
+func (bc *BatchConfig) EnsureValid() error {
+	if len(bc.Keypers) == 0 {
+		return fmt.Errorf("no keypers in batch config")
+	}
+	if bc.Threshold == 0 {
+		return fmt.Errorf("threshold must not be zero")
+	}
+	if int(bc.Threshold) > len(bc.Keypers) {
+		return fmt.Errorf("threshold too high")
+	}
+	// XXX maybe we should check for duplicate addresses
+	return nil
+}
+
 // Message converts the batch config to a shmsg.Message
 func (bc *BatchConfig) Message() shmsg.Message {
 	var keypers [][]byte

@@ -89,6 +89,10 @@ func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
 
 // checkConfig checks if the given BatchConfig could be added.
 func (app *ShutterApp) checkConfig(cfg BatchConfig) error {
+	err := cfg.EnsureValid()
+	if err != nil {
+		return err
+	}
 	lastConfig := app.Configs[len(app.Configs)-1]
 	if cfg.StartBatchIndex < lastConfig.StartBatchIndex {
 		return fmt.Errorf(
@@ -247,6 +251,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
 	}
+
 	err = app.checkConfig(bc)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("checkConfig: %s", err))
