@@ -59,7 +59,13 @@ func (cc *ContractCaller) KeyBroadcastContract() (*contract.KeyBroadcastContract
 }
 
 // BroadcastEncryptionKey makes sure that the encryption key is sent to the broadcasting contract.
-func (cc *ContractCaller) BroadcastEncryptionKey(keyperIndex uint64, batchIndex uint64, encryptionKey []byte, signerIndices []uint64, signatures [][]byte) error {
+func (cc *ContractCaller) BroadcastEncryptionKey(
+	keyperIndex uint64,
+	batchIndex uint64,
+	encryptionKey []byte,
+	signerIndices []uint64,
+	signatures [][]byte,
+) error {
 	auth, err := cc.Auth()
 	if err != nil {
 		return err

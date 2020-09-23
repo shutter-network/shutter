@@ -15,12 +15,16 @@ func makeQueryErrorResponse(msg string) abcitypes.ResponseQuery {
 	}
 }
 
+func isValidRequestURL(u *url.URL) bool {
+	return u.Scheme == "" && u.Opaque == "" && u.User.String() == "" && u.Host == "" && u.Fragment == ""
+}
+
 func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery {
 	requestURL, err := url.Parse(req.Path)
 	if err != nil {
 		return makeQueryErrorResponse("invalid request url")
 	}
-	if requestURL.Scheme != "" || requestURL.Opaque != "" || requestURL.User.String() != "" || requestURL.Host != "" || requestURL.Fragment != "" {
+	if !isValidRequestURL(requestURL) {
 		return makeQueryErrorResponse("invalid request url")
 	}
 

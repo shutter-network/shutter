@@ -280,7 +280,10 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	}
 }
 
-func (app *ShutterApp) deliverEncryptionKeyAttestation(msg *shmsg.EncryptionKeyAttestation, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) deliverEncryptionKeyAttestation(
+	msg *shmsg.EncryptionKeyAttestation,
+	sender common.Address,
+) abcitypes.ResponseDeliverTx {
 	bs := app.getBatchState(msg.BatchIndex)
 	att := EncryptionKeyAttestation{
 		Sender:                sender,
