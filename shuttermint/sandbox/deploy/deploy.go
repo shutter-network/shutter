@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
@@ -27,9 +29,97 @@ const (
 	defaultGasLimit                  = 5000000
 	defaultConfigChangeHeadsUpBlocks = 10
 	ganacheKeyIdx                    = 9
-	defaultBatchSpan                 = 5
 	numKeypers                       = 3
 )
+
+var key *ecdsa.PrivateKey
+var client *ethclient.Client
+
+var rootCmd = &cobra.Command{
+	Use:   "contracts",
+	Short: "Helper tools to deploy and interact with the Shutter contracts",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		key = sandbox.GanacheKey(ganacheKeyIdx)
+
+		cl, err := ethclient.Dial("http://localhost:8545")
+		if err != nil {
+			log.Fatal(err)
+		}
+		client = cl
+	},
+}
+
+var deployCmd = &cobra.Command{
+	Use:   "deploy",
+	Short: "Deploy all contracts",
+	Run: func(cmd *cobra.Command, args []string) {
+		deploy()
+	},
+}
+
+var scheduleFlags struct {
+	ConfigContractAddress string
+	StartBatchIndex       int
+	BatchSpan             int
+	StartBlockNumber      int
+}
+var scheduleCmd = &cobra.Command{
+	Use:   "schedule",
+	Short: "Schedule a new config",
+	Run: func(cmd *cobra.Command, args []string) {
+		configContractAddress := common.HexToAddress(scheduleFlags.ConfigContractAddress)
+		if scheduleFlags.ConfigContractAddress != configContractAddress.Hex() {
+			log.Fatalf("Invalid config contract address %s", scheduleFlags.ConfigContractAddress)
+		}
+
+		schedule(configContractAddress, scheduleFlags.StartBatchIndex, scheduleFlags.BatchSpan, scheduleFlags.StartBlockNumber)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(scheduleCmd)
+
+	scheduleCmd.Flags().StringVarP(
+		&scheduleFlags.ConfigContractAddress,
+		"config-contract",
+		"c",
+		"",
+		"address of config contract",
+	)
+	scheduleCmd.MarkFlagRequired("config-contract")
+
+	scheduleCmd.Flags().IntVar(
+		&scheduleFlags.StartBatchIndex,
+		"start-batch-index",
+		0,
+		"the start batch index",
+	)
+	scheduleCmd.MarkFlagRequired("batch-span")
+
+	scheduleCmd.Flags().IntVar(
+		&scheduleFlags.BatchSpan,
+		"batch-span",
+		0,
+		"the batch span",
+	)
+	scheduleCmd.MarkFlagRequired("batch-span")
+
+	scheduleCmd.Flags().IntVar(
+		&scheduleFlags.StartBlockNumber,
+		"start-block-number",
+		0,
+		"the start block number",
+	)
+	scheduleCmd.MarkFlagRequired("start-block-number")
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
 
 func waitForTransactionReceipt(cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
 	for {
@@ -89,18 +179,8 @@ func makeAuth(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.Tra
 	return auth, nil
 }
 
-func main() {
-	client, err := ethclient.Dial("http://localhost:8545")
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func deploy() {
 	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
-	if err != nil {
-		panic(err)
-	}
-
-	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -116,28 +196,10 @@ func main() {
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
-	startBlockNumber := big.NewInt(startBlockNumberOffset)
-	startBlockNumber.Add(startBlockNumber, header.Number)
-
-	configAddress, tx, cc, err := contract.DeployConfigContract(
+	configAddress, tx, _, err := contract.DeployConfigContract(
 		auth,
 		client,
 		big.NewInt(defaultConfigChangeHeadsUpBlocks))
-	addTx()
-
-	tx, err = cc.NextConfigSetBatchSpan(auth, big.NewInt(defaultBatchSpan))
-	addTx()
-
-	tx, err = cc.NextConfigSetStartBatchIndex(auth, big.NewInt(0))
-	addTx()
-
-	tx, err = cc.NextConfigSetStartBlockNumber(auth, startBlockNumber)
-	addTx()
-
-	tx, err = cc.NextConfigAddKeypers(auth, makeKeypers())
-	addTx()
-
-	tx, err = cc.ScheduleNextConfig(auth)
 	addTx()
 
 	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
@@ -149,5 +211,69 @@ func main() {
 	}
 	fmt.Println("ConfigContract address:", configAddress.Hex())
 	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
-	fmt.Printf("start block of config: %s\n", startBlockNumber)
+}
+
+func schedule(configContractAddress common.Address, startBatchIndex int, batchSpan int, startBlockNumber int) {
+	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
+	if err != nil {
+		panic(err)
+	}
+
+	var txs []*types.Transaction
+	var tx *types.Transaction
+
+	addTx := func() {
+		if err != nil {
+			panic(err)
+		}
+		txs = append(txs, tx)
+		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
+	}
+
+	code, err := client.CodeAt(context.Background(), configContractAddress, nil)
+	if err != nil {
+		panic(err)
+	}
+	if len(code) == 0 {
+		log.Fatalf("No contract deployed at address %s", configContractAddress.Hex())
+	}
+	cc, err := contract.NewConfigContract(configContractAddress, client)
+	if err != nil {
+		panic(err)
+	}
+
+	tx, err = cc.NextConfigSetStartBatchIndex(auth, big.NewInt(int64(startBatchIndex)))
+	addTx()
+
+	tx, err = cc.NextConfigSetBatchSpan(auth, big.NewInt(int64(batchSpan)))
+	addTx()
+
+	tx, err = cc.NextConfigAddKeypers(auth, makeKeypers())
+	addTx()
+
+	header, err := client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		panic(err)
+	}
+	minStartBlockNumber := big.NewInt(0).Add(header.Number, big.NewInt(startBlockNumberOffset))
+	startBlockNumberBig := big.NewInt(int64(startBlockNumber))
+	if startBlockNumberBig.Cmp(minStartBlockNumber) < 1 {
+		log.Fatalf(
+			"Start block number %d is too close to current head %d (required offset %d)",
+			startBlockNumber,
+			header.Number,
+			startBlockNumberOffset,
+		)
+	}
+	tx, err = cc.NextConfigSetStartBlockNumber(auth, startBlockNumberBig)
+	addTx()
+
+	tx, err = cc.ScheduleNextConfig(auth)
+	addTx()
+
+	_, err = waitForTransactions(client, txs)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("start block of config: %d\n", startBlockNumber)
 }
