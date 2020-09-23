@@ -57,3 +57,11 @@ repos:
         types: [python]
         args: ["contracts/tests/", "noxfile.py"]
         pass_filenames: False
+      - id: gofumports
+        name: gofumports
+        entry: gofumports
+        language: system
+        types: [go]
+        args: ["-w", "-local", "github.com/brainbot-com/shutter"]
+        pass_filenames: True
+        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/shmsg\.pb\.go$

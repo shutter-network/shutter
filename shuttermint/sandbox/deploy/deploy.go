@@ -32,8 +32,10 @@ const (
 	numKeypers                       = 3
 )
 
-var key *ecdsa.PrivateKey
-var client *ethclient.Client
+var (
+	key    *ecdsa.PrivateKey
+	client *ethclient.Client
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "contracts",
@@ -63,6 +65,7 @@ var scheduleFlags struct {
 	BatchSpan             int
 	StartBlockNumber      int
 }
+
 var scheduleCmd = &cobra.Command{
 	Use:   "schedule",
 	Short: "Schedule a new config",
