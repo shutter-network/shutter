@@ -30,7 +30,11 @@ func TestMakeEventPubkeyGenerated(t *testing.T) {
 }
 
 func TestMakeEventBatchConfig(t *testing.T) {
-	var addresses []common.Address = []common.Address{common.BigToAddress(big.NewInt(1)), common.BigToAddress(big.NewInt(2)), common.BigToAddress(big.NewInt(3))}
+	var addresses []common.Address = []common.Address{
+		common.BigToAddress(big.NewInt(1)),
+		common.BigToAddress(big.NewInt(2)),
+		common.BigToAddress(big.NewInt(3)),
+	}
 
 	appEvent := app.MakeBatchConfigEvent(111, 2, addresses)
 	ev, err := MakeEvent(appEvent)
