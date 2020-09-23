@@ -2,7 +2,11 @@ package app
 
 import (
 	"encoding/base64"
+	"encoding/gob"
 	"fmt"
+	"log"
+	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,10 +16,22 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-var multikAddress common.Address
+var (
+	// PersistMinDuration is the minimum duration between two calls to persistToDisk
+	// TODO we should probably increase the default here and we should have a way to collect
+	// garbage to keep the persisted state small enough.
+	// The variable is declared here, because we do not want to persist it as part of the
+	// application. The same could be said about the Gobpath field though, which we persist as
+	// part of the application.
+	// If we set this to zero, the state will get saved on every call to Commit
+	PersistMinDuration time.Duration = 30 * time.Second
+	multikAddress      common.Address
+)
 
 func init() {
 	multikAddress = crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1).PublicKey)
+
+	gob.Register(crypto.S256()) // Allow gob to serialize ecsda.PrivateKey
 }
 
 // Visit https://github.com/tendermint/spec/blob/master/spec/abci/abci.md for more information on
@@ -35,6 +51,30 @@ func NewShutterApp() *ShutterApp {
 		BatchStates: make(map[uint64]BatchState),
 		Voting:      NewConfigVoting(),
 	}
+}
+
+// LoadShutterAppFromFile loads a shutter app from a file
+func LoadShutterAppFromFile(gobpath string) (ShutterApp, error) {
+	var shapp ShutterApp
+	gobfile, err := os.Open(gobpath)
+	if os.IsNotExist(err) {
+		shapp = *NewShutterApp()
+	} else if err != nil {
+		return shapp, err
+	} else {
+		defer gobfile.Close()
+		dec := gob.NewDecoder(gobfile)
+		err = dec.Decode(&shapp)
+		if err != nil {
+			return shapp, err
+		}
+		log.Printf("Loaded shutter app from file %s, last saved %s, block height %d",
+			gobpath, shapp.LastSaved, shapp.LastBlockHeight)
+	}
+
+	shapp.Gobpath = gobpath
+	shapp.LastSaved = time.Now() // Do not persist immediately after starting
+	return shapp, nil
 }
 
 // getConfig returns the BatchConfig for the given batchIndex
@@ -80,8 +120,14 @@ func (app *ShutterApp) getBatchState(batchIndex uint64) BatchState {
 	return bs
 }
 
-func (ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
-	return abcitypes.ResponseInfo{}
+// Info should return the latest committed state of the app. On startup, tendermint calls the Info
+// method and will replay blocks that are not yet committed.
+// See https://github.com/tendermint/spec/blob/master/spec/abci/apps.md#crash-recovery
+func (app *ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
+	return abcitypes.ResponseInfo{
+		LastBlockHeight:  app.LastBlockHeight,
+		LastBlockAppHash: []byte(""),
+	}
 }
 
 func (ShutterApp) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
@@ -282,10 +328,57 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 }
 
-func (ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+	app.LastBlockHeight = req.Height
 	return abcitypes.ResponseEndBlock{}
 }
 
+// persistToDisk stores the ShutterApp on disk. This method first writes to a temporary file and
+// renames the file later. Most probably this will not work on windows!
+func (app *ShutterApp) persistToDisk() error {
+	log.Printf("Persisting state to disk, height=%d", app.LastBlockHeight)
+	tmppath := app.Gobpath + ".tmp"
+	file, err := os.Create(tmppath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Printf("Error: close file: %s", err)
+			return
+		}
+	}()
+
+	app.LastSaved = time.Now()
+	enc := gob.NewEncoder(file)
+	err = enc.Encode(app)
+	if err != nil {
+		return err
+	}
+	err = file.Sync()
+	if err != nil {
+		return err
+	}
+	err = os.Rename(tmppath, app.Gobpath)
+	return err
+}
+
+func (app *ShutterApp) maybePersistToDisk() error {
+	if app.Gobpath == "" {
+		return nil
+	}
+	if time.Since(app.LastSaved) <= PersistMinDuration {
+		return nil
+	}
+	return app.persistToDisk()
+}
+
 func (app *ShutterApp) Commit() abcitypes.ResponseCommit {
+	err := app.maybePersistToDisk()
+	if err != nil {
+		log.Printf("Error: cannot persist state to disk: %s", err)
+	}
+
 	return abcitypes.ResponseCommit{}
 }

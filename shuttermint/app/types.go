@@ -2,6 +2,7 @@ package app
 
 import (
 	"crypto/ecdsa"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -59,7 +60,10 @@ type BatchState struct {
 // persist anything on disk. When starting tendermint, it will 'feed' us with all of the messages
 // received via deliverMessage
 type ShutterApp struct {
-	Configs     []*BatchConfig
-	BatchStates map[uint64]BatchState
-	Voting      ConfigVoting
+	Configs         []*BatchConfig
+	BatchStates     map[uint64]BatchState
+	Voting          ConfigVoting
+	Gobpath         string
+	LastSaved       time.Time
+	LastBlockHeight int64
 }

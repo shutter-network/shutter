@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
 	cfg "github.com/tendermint/tendermint/config"
 	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/log"
@@ -47,9 +46,7 @@ func runMain() {
 	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile | stdlog.Lmicroseconds)
 	stdlog.Printf("Starting shuttermint version %s", version)
 
-	shapp := app.NewShutterApp()
-
-	node, err := newTendermint(shapp, cfgFile)
+	node, err := newTendermint(cfgFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
@@ -75,7 +72,7 @@ func runMain() {
 	// above is done
 }
 
-func newTendermint(shapp abcitypes.Application, configFile string) (*nm.Node, error) {
+func newTendermint(configFile string) (*nm.Node, error) {
 	// read config
 	config := cfg.DefaultConfig()
 	config.RootDir = filepath.Dir(filepath.Dir(configFile))
@@ -99,6 +96,12 @@ func newTendermint(shapp abcitypes.Application, configFile string) (*nm.Node, er
 		return nil, fmt.Errorf("failed to parse log level: %w", err)
 	}
 
+	shapp, err := app.LoadShutterAppFromFile(
+		filepath.Join(config.BaseConfig.DBDir(), "shutter.gob"))
+	if err != nil {
+		return nil, err
+	}
+
 	// read private validator
 	pv := privval.LoadFilePV(
 		config.PrivValidatorKeyFile(),
@@ -116,7 +119,7 @@ func newTendermint(shapp abcitypes.Application, configFile string) (*nm.Node, er
 		config,
 		pv,
 		nodeKey,
-		proxy.NewLocalClientCreator(shapp),
+		proxy.NewLocalClientCreator(&shapp),
 		nm.DefaultGenesisDocProviderFunc(config),
 		nm.DefaultDBProvider,
 		nm.DefaultMetricsProvider(config.Instrumentation),
