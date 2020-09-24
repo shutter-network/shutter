@@ -38,7 +38,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "contracts",
+	Use:   "deploy",
 	Short: "Helper tools to deploy and interact with the Shutter contracts",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		key = sandbox.GanacheKey(ganacheKeyIdx)
