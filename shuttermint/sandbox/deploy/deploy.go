@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -83,6 +84,7 @@ var getconfigFlags struct {
 	ConfigContractAddress string
 	ConfigIndex           int
 }
+
 var getconfigCmd = &cobra.Command{
 	Use:   "getconfig",
 	Short: "Get the config with the given index",
@@ -181,7 +183,9 @@ func waitForTransactionReceipt(cl *ethclient.Client, txHash common.Hash) (*types
 func waitForTransactions(client *ethclient.Client, txs []*types.Transaction) ([]*types.Receipt, error) {
 	defer fmt.Print("\n")
 	var res []*types.Receipt
-	for _, tx := range txs {
+
+	failedTxs := []int{}
+	for i, tx := range txs {
 		receipt, err := waitForTransactionReceipt(client, tx.Hash())
 		if err != nil {
 			return res, err
@@ -189,9 +193,14 @@ func waitForTransactions(client *ethclient.Client, txs []*types.Transaction) ([]
 		res = append(res, receipt)
 		if receipt.Status != 1 {
 			fmt.Print("X")
+			failedTxs = append(failedTxs, i)
 		} else {
 			fmt.Print(".")
 		}
+	}
+
+	if len(failedTxs) > 0 {
+		return res, errors.New("Some txs have failed")
 	}
 
 	return res, nil
