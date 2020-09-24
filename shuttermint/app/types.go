@@ -2,6 +2,8 @@ package app
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -56,9 +58,21 @@ type BatchState struct {
 	EncryptionKeyAttestations []EncryptionKeyAttestation
 }
 
-// ShutterApp holds our data structures used for the tendermint app.  At the moment we don't
-// persist anything on disk. When starting tendermint, it will 'feed' us with all of the messages
-// received via deliverMessage
+// ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key
+type ValidatorPubkey struct {
+	Data []byte
+}
+
+// NewValidatorPubkey creates a new ValidatorPubkey from a 32 byte ed25519 raw pubkey. See
+// https://docs.tendermint.com/master/spec/abci/apps.html#validator-updates for more information
+func NewValidatorPubkey(pubkey []byte) (ValidatorPubkey, error) {
+	if len(pubkey) != ed25519.PublicKeySize {
+		return ValidatorPubkey{}, fmt.Errorf("pubkey must be 32 bytes")
+	}
+	return ValidatorPubkey{Data: pubkey}, nil
+}
+
+// ShutterApp holds our data structures used for the tendermint app.
 type ShutterApp struct {
 	Configs         []*BatchConfig
 	BatchStates     map[uint64]BatchState
@@ -66,4 +80,5 @@ type ShutterApp struct {
 	Gobpath         string
 	LastSaved       time.Time
 	LastBlockHeight int64
+	Identities      map[common.Address]ValidatorPubkey
 }

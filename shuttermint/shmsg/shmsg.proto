@@ -31,12 +31,23 @@ message EncryptionKeyAttestation {
         bytes signature = 4;
 }
 
+message BatchConfigStarted {
+        uint32 batch_config_index = 1;
+}
+
+
+message CheckIn {
+        bytes pubkey = 1;  // 32 byte ed25519 public key
+}
+
 message Message {
         oneof payload {
-              PublicKeyCommitment public_key_commitment = 1;
-              PublicKeyShare public_key_share = 2;
-              SecretShare secret_share = 3;
-              BatchConfig batch_config = 4;
-              EncryptionKeyAttestation encryption_key_attestation = 5;
+                PublicKeyCommitment public_key_commitment = 1;
+                PublicKeyShare public_key_share = 2;
+                SecretShare secret_share = 3;
+                BatchConfig batch_config = 4;
+                EncryptionKeyAttestation encryption_key_attestation = 5;
+                BatchConfigStarted batch_config_started = 6;
+                CheckIn check_in = 7;
         }
 }

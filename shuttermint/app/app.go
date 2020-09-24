@@ -316,6 +316,47 @@ func (app *ShutterApp) deliverEncryptionKeyAttestation(
 	}
 }
 
+// isKeyper checks if the given address is a keyper in any config (current and previous ones)
+func (app *ShutterApp) isKeyper(a common.Address) bool {
+	for _, cfg := range app.Configs {
+		_, ok := cfg.KeyperIndex(a)
+		if ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address) abcitypes.ResponseDeliverTx {
+	_, ok := app.Identities[sender]
+	if ok {
+		return makeErrorResponse(fmt.Sprintf(
+			"sender %s already checked in", sender.Hex()))
+	}
+	if !app.isKeyper(sender) {
+		return makeErrorResponse(fmt.Sprintf(
+			"sender %s is not a keyper", sender.Hex()))
+	}
+
+	pk, err := NewValidatorPubkey(msg.Pubkey)
+	if err != nil {
+		return makeErrorResponse(fmt.Sprintf(
+			"malformed pubkey: %s", err))
+	}
+	app.Identities[sender] = pk
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{},
+	}
+}
+
+func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, sender common.Address) abcitypes.ResponseDeliverTx {
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{},
+	}
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	fmt.Println("MSG:", msg)
 	if msg.GetPublicKeyCommitment() != nil {
@@ -329,6 +370,12 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetEncryptionKeyAttestation() != nil {
 		return app.deliverEncryptionKeyAttestation(msg.GetEncryptionKeyAttestation(), sender)
+	}
+	if msg.GetBatchConfigStarted() != nil {
+		return app.deliverBatchConfigStarted(msg.GetBatchConfigStarted(), sender)
+	}
+	if msg.GetCheckIn() != nil {
+		return app.deliverCheckIn(msg.GetCheckIn(), sender)
 	}
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
