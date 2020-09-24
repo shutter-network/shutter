@@ -60,6 +60,9 @@ func multikMain() {
 	headBlockNumber := header.Number.Uint64()
 
 	startBatchIndex, err := configContract.NextBatchIndex(headBlockNumber)
+	if err != nil {
+		panic(err)
+	}
 
 	var shmcl client.Client
 	shmcl, err = http.New(baseConfig.ShuttermintURL, "/websocket")

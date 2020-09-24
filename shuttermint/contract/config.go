@@ -69,7 +69,7 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 		startBlockNumber := cfg.StartBlockNumber.Uint64()
 		batchSpan := cfg.BatchSpan.Uint64()
 		if batchSpan == 0 {
-			return 0, fmt.Errorf("no active config for block %d", blockNumber)
+			return cfg.StartBatchIndex.Uint64(), nil
 		}
 		if startBlockNumber <= blockNumber {
 			next := cfg.StartBatchIndex.Uint64() + (blockNumber-startBlockNumber+batchSpan-1)/batchSpan

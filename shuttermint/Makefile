@@ -50,6 +50,6 @@ abigen:
 	abigen --pkg contract --out contract/binding.go --sol ../contracts/contracts/ConfigContract.sol --sol ../contracts/contracts/KeyBroadcastContract.sol
 
 deploy-ganache:
-	go run ./sandbox/deploy
+	go run ./sandbox/deploy/deploy.go deploy
 
 .PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen

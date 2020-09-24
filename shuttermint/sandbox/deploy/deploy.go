@@ -31,6 +31,7 @@ const (
 	defaultConfigChangeHeadsUpBlocks = 10
 	ganacheKeyIdx                    = 9
 	numKeypers                       = 3
+	threshold                        = 2
 )
 
 var (
@@ -310,6 +311,9 @@ func schedule(configContractAddress common.Address, startBatchIndex int, batchSp
 	tx, err = cc.NextConfigAddKeypers(auth, makeKeypers())
 	addTx()
 
+	tx, err = cc.NextConfigSetThreshold(auth, big.NewInt(int64(threshold)))
+	addTx()
+
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
@@ -365,4 +369,12 @@ func printConfig(config contract.BatchConfig) {
 	fmt.Printf("         TargetAddress: %s\n", config.TargetAddress.Hex())
 	fmt.Printf("TargetFunctionSelector: %x\n", config.TargetFunctionSelector)
 	fmt.Printf("      ExecutionTimeout: %d\n", config.ExecutionTimeout)
+	fmt.Printf("\nKeypers:\n")
+	if len(config.Keypers) == 0 {
+		fmt.Printf("  None\n")
+	} else {
+		for i, k := range config.Keypers {
+			fmt.Printf("  %d: %s\n", i, k.Hex())
+		}
+	}
 }
