@@ -103,3 +103,31 @@ func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint
 
 	return keypers, nil
 }
+
+// GetConfigByIndex queries the batch config by its index (not the batch index, but the config index)
+func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint64) (BatchConfig, error) {
+	config, err := cc.Configs(opts, big.NewInt(0).SetUint64(configIndex))
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	keypers, err := cc.GetConfigKeypers(opts, configIndex)
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	return BatchConfig{
+		StartBatchIndex:        config.StartBatchIndex,
+		StartBlockNumber:       config.StartBlockNumber,
+		Threshold:              config.Threshold,
+		BatchSpan:              config.BatchSpan,
+		BatchSizeLimit:         config.BatchSizeLimit,
+		TransactionSizeLimit:   config.TransactionSizeLimit,
+		TransactionGasLimit:    config.TransactionGasLimit,
+		FeeReceiver:            config.FeeReceiver,
+		TargetAddress:          config.TargetAddress,
+		TargetFunctionSelector: config.TargetFunctionSelector,
+		ExecutionTimeout:       config.ExecutionTimeout,
+		Keypers:                keypers,
+	}, nil
+}

@@ -79,10 +79,33 @@ var scheduleCmd = &cobra.Command{
 	},
 }
 
+var getconfigFlags struct {
+	ConfigContractAddress string
+	ConfigIndex           int
+}
+var getconfigCmd = &cobra.Command{
+	Use:   "getconfig",
+	Short: "Get the config with the given index",
+	Run: func(cmd *cobra.Command, args []string) {
+		configContractAddress := common.HexToAddress(getconfigFlags.ConfigContractAddress)
+		if getconfigFlags.ConfigContractAddress != configContractAddress.Hex() {
+			log.Fatalf("Invalid config contract address %s", getconfigFlags.ConfigContractAddress)
+		}
+
+		getconfig(configContractAddress, getconfigFlags.ConfigIndex)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(scheduleCmd)
+	rootCmd.AddCommand(getconfigCmd)
 
+	initScheduleFlags()
+	initGetconfigFlags()
+}
+
+func initScheduleFlags() {
 	scheduleCmd.Flags().StringVarP(
 		&scheduleFlags.ConfigContractAddress,
 		"config-contract",
@@ -115,6 +138,26 @@ func init() {
 		"the start block number",
 	)
 	scheduleCmd.MarkFlagRequired("start-block-number")
+}
+
+func initGetconfigFlags() {
+	getconfigCmd.Flags().StringVarP(
+		&getconfigFlags.ConfigContractAddress,
+		"config-contract",
+		"c",
+		"",
+		"address of config contract",
+	)
+	getconfigCmd.MarkFlagRequired("config-contract")
+
+	getconfigCmd.Flags().IntVarP(
+		&getconfigFlags.ConfigIndex,
+		"config-index",
+		"i",
+		0,
+		"the config index",
+	)
+	getconfigCmd.MarkFlagRequired("config-index")
 }
 
 func main() {
@@ -216,6 +259,16 @@ func deploy() {
 	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
 }
 
+func checkContractExists(configContractAddress common.Address) {
+	code, err := client.CodeAt(context.Background(), configContractAddress, nil)
+	if err != nil {
+		panic(err)
+	}
+	if len(code) == 0 {
+		log.Fatalf("No contract deployed at address %s", configContractAddress.Hex())
+	}
+}
+
 func schedule(configContractAddress common.Address, startBatchIndex int, batchSpan int, startBlockNumber int) {
 	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
 	if err != nil {
@@ -233,13 +286,7 @@ func schedule(configContractAddress common.Address, startBatchIndex int, batchSp
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
-	code, err := client.CodeAt(context.Background(), configContractAddress, nil)
-	if err != nil {
-		panic(err)
-	}
-	if len(code) == 0 {
-		log.Fatalf("No contract deployed at address %s", configContractAddress.Hex())
-	}
+	checkContractExists(configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
@@ -279,4 +326,34 @@ func schedule(configContractAddress common.Address, startBatchIndex int, batchSp
 		panic(err)
 	}
 	fmt.Printf("start block of config: %d\n", startBlockNumber)
+}
+
+func getconfig(configContractAddress common.Address, index int) {
+	checkContractExists(configContractAddress)
+	cc, err := contract.NewConfigContract(configContractAddress, client)
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := cc.GetConfigByIndex(nil, uint64(index))
+	if err != nil {
+		panic(err)
+	}
+
+	printConfig(c)
+}
+
+func printConfig(config contract.BatchConfig) {
+	fmt.Printf("     Start batch index: %d\n", config.StartBatchIndex)
+	fmt.Printf("    Start block number: %d\n", config.StartBlockNumber)
+	fmt.Printf("            Batch span: %d\n", config.BatchSpan)
+	fmt.Printf("           Num keypers: %d\n", len(config.Keypers))
+	fmt.Printf("             Threshold: %d\n", config.Threshold)
+	fmt.Printf("        BatchSizeLimit: %d\n", config.BatchSizeLimit)
+	fmt.Printf("  TransactionSizeLimit: %d\n", config.TransactionSizeLimit)
+	fmt.Printf("   TransactionGasLimit: %d\n", config.TransactionGasLimit)
+	fmt.Printf("           FeeReceiver: %s\n", config.FeeReceiver.Hex())
+	fmt.Printf("         TargetAddress: %s\n", config.TargetAddress.Hex())
+	fmt.Printf("TargetFunctionSelector: %x\n", config.TargetFunctionSelector)
+	fmt.Printf("      ExecutionTimeout: %d\n", config.ExecutionTimeout)
 }
