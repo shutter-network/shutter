@@ -72,6 +72,7 @@ type Keyper struct {
 	ctx            context.Context
 	newHeaders     chan *types.Header // start new batches when new block headers arrive
 	group          *errgroup.Group
+	ms             *MessageSender
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex

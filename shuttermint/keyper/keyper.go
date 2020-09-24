@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -68,10 +69,12 @@ func (kpr *Keyper) Run() error {
 	if err != nil {
 		return errors.Wrapf(err, "start shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
-
 	defer shmcl.Stop()
-	query := "tx.height > 3"
 
+	ms := NewMessageSender(shmcl, kpr.Config.SigningKey)
+	kpr.ms = &ms
+
+	query := "tx.height > 3"
 	txs, err := shmcl.Subscribe(kpr.ctx, "test-client", query)
 	kpr.txs = txs
 	if err != nil {
@@ -81,6 +84,7 @@ func (kpr *Keyper) Run() error {
 	kpr.group.Go(kpr.dispatchTxs)
 	kpr.group.Go(kpr.startNewBatches)
 	kpr.group.Go(kpr.watchMainChainHeadBlock)
+	kpr.group.Go(kpr.watchMainChainLogs)
 	err = kpr.group.Wait()
 	return err
 }
@@ -91,10 +95,17 @@ func IsWebsocketURL(url string) bool {
 	return strings.HasPrefix(url, "ws://") || strings.HasPrefix(url, "wss://")
 }
 
-func (kpr *Keyper) watchMainChainHeadBlock() error {
+func (kpr *Keyper) checkEthereumWebsocketURL() error {
 	if !IsWebsocketURL(kpr.Config.EthereumURL) {
 		err := fmt.Errorf("must use ws:// or wss:// URL, have %s", kpr.Config.EthereumURL)
 		log.Printf("Error: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (kpr *Keyper) watchMainChainHeadBlock() error {
+	if err := kpr.checkEthereumWebsocketURL(); err != nil {
 		return err
 	}
 
@@ -121,6 +132,39 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 	}
 }
 
+func (kpr *Keyper) watchMainChainLogs() error {
+	if err := kpr.checkEthereumWebsocketURL(); err != nil {
+		return err
+	}
+
+	cl, err := ethclient.Dial(kpr.Config.EthereumURL)
+	if err != nil {
+		return err
+	}
+
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{
+			kpr.Config.ConfigContractAddress,
+		},
+	}
+	logs := make(chan types.Log)
+	sub, err := cl.SubscribeFilterLogs(context.Background(), query, logs)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-kpr.ctx.Done():
+			return nil
+		case err := <-sub.Err():
+			return err
+		case log := <-logs:
+			kpr.dispatchMainChainLog(log)
+		}
+	}
+}
+
 func (kpr *Keyper) dispatchNewBlockHeader(header *types.Header) {
 	log.Printf("Dispatching new block #%d to %d batches\n", header.Number, len(kpr.batches))
 	kpr.mux.Lock()
@@ -128,6 +172,36 @@ func (kpr *Keyper) dispatchNewBlockHeader(header *types.Header) {
 
 	for _, batch := range kpr.batches {
 		batch.NewBlockHeader(header)
+	}
+}
+
+func (kpr *Keyper) dispatchMainChainLog(l types.Log) {
+	switch l.Address {
+	case kpr.Config.ConfigContractAddress:
+		// TODO: figure out how to effectively distinguish event types
+		ev, err := kpr.configContract.ParseConfigScheduled(l)
+		if err != nil {
+			log.Printf("Failed to parse ConfigScheduled event: %v", err)
+			return
+		}
+		kpr.handleConfigScheduledEvent(ev)
+	default:
+		log.Printf("Received unexpected event from %s", l.Address.Hex())
+	}
+}
+
+func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigScheduled) {
+	index := ev.NumConfigs.Uint64() - 1
+	config, err := kpr.configContract.GetConfigByIndex(nil, index)
+	if err != nil {
+		log.Printf("Failed to fetch config from main chain to vote on it: %v", err)
+		return
+	}
+
+	bc := NewBatchConfig(config.StartBatchIndex.Uint64(), config.Keypers, uint32(config.Threshold.Uint64()))
+	err = kpr.ms.SendMessage(bc)
+	if err != nil {
+		log.Printf("Failed to send batch config vote: %v", err)
 	}
 }
 
