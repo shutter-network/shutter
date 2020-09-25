@@ -29,17 +29,12 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		runMain()
 	},
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if cfgFile == "" {
-			return fmt.Errorf("--config is required")
-		}
-		return nil
-	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (required)")
+	runCmd.MarkPersistentFlagRequired("config")
 }
 
 func runMain() {

@@ -31,22 +31,15 @@ var (
 )
 
 var initCmd = &cobra.Command{
-	Use:     "init",
-	Short:   "Initialize shuttermint",
-	RunE:    initFiles,
-	PreRunE: initCheckRootDir,
-}
-
-func initCheckRootDir(cmd *cobra.Command, args []string) error {
-	if rootDir == "" {
-		return fmt.Errorf("root argument missing")
-	}
-	return nil
+	Use:   "init",
+	Short: "Initialize shuttermint",
+	RunE:  initFiles,
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.PersistentFlags().StringVar(&rootDir, "root", "", "root directory")
+	initCmd.MarkPersistentFlagRequired("root")
 }
 
 func initFiles(cmd *cobra.Command, args []string) error {
