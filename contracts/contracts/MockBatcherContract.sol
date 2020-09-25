@@ -9,10 +9,10 @@ import "./Ownable.sol";
 contract MockBatcherContract {
     enum TransactionType {Cipher, Plain}
 
-    mapping(uint256 => mapping(TransactionType => bytes32)) public batchHashes;
+    mapping(uint64 => mapping(TransactionType => bytes32)) public batchHashes;
 
     function setBatchHash(
-        uint256 _batchIndex,
+        uint64 _batchIndex,
         TransactionType _type,
         bytes32 _hash
     ) external {

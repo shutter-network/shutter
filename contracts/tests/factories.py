@@ -7,7 +7,7 @@ from eth_typing import Address
 from tests.contract_helpers import BatchConfig
 
 
-def make_int(min_value: int = 0, max_value: int = 2 ** 256) -> int:
+def make_int(min_value: int = 0, max_value: int = 2 ** 64) -> int:
     return random.randint(min_value, max_value)
 
 

@@ -16,17 +16,17 @@ contract ExecutorContract {
     /// @param numExecutionHalfSteps The total number of finished execution half steps, including
     ///     the one responsible for emitting the event.
     /// @param batchHash The hash of the executed batch (consisting of plaintext transactions).
-    event BatchExecuted(uint256 numExecutionHalfSteps, bytes32 batchHash);
+    event BatchExecuted(uint64 numExecutionHalfSteps, bytes32 batchHash);
 
     /// @notice The event emitted after execution of the cipher portion of a batch has been skipped.
     /// @param numExecutionHalfSteps The total number of finished execution half steps, including
     ///     this one.
-    event CipherExecutionSkipped(uint256 numExecutionHalfSteps);
+    event CipherExecutionSkipped(uint64 numExecutionHalfSteps);
 
     ConfigContract public configContract;
     BatcherContract public batcherContract;
 
-    uint256 public numExecutionHalfSteps;
+    uint64 public numExecutionHalfSteps;
 
     constructor(
         ConfigContract _configContract,
@@ -50,13 +50,13 @@ contract ExecutorContract {
         bytes32 _cipherBatchHash,
         bytes[] calldata _transactions,
         bytes32 _decryptionKey,
-        uint256[] calldata _signerIndices,
+        uint64[] calldata _signerIndices,
         bytes[] calldata _signatures
     ) external {
         // Check that it's a cipher batch turn
         require(numExecutionHalfSteps % 2 == 0);
 
-        uint256 _batchIndex = numExecutionHalfSteps / 2;
+        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Check that batching is active and the batch is closed
@@ -91,9 +91,9 @@ contract ExecutorContract {
                 _batchHash
             )
         );
-        for (uint256 _i = 0; _i < _signatures.length; _i++) {
+        for (uint64 _i = 0; _i < _signatures.length; _i++) {
             bytes calldata _signature = _signatures[_i];
-            uint256 _signerIndex = _signerIndices[_i];
+            uint64 _signerIndex = _signerIndices[_i];
 
             // Check order to easily prevent duplicates
             require(_i == 0 || _signerIndex > _signerIndices[_i - 1]);
@@ -116,7 +116,7 @@ contract ExecutorContract {
     function skipCipherExecution() external {
         require(numExecutionHalfSteps % 2 == 0);
 
-        uint256 _batchIndex = numExecutionHalfSteps / 2;
+        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         require(_config.batchSpan > 0);
@@ -140,7 +140,7 @@ contract ExecutorContract {
     function executePlainBatch(bytes[] calldata _transactions) external {
         require(numExecutionHalfSteps % 2 == 1);
 
-        uint256 _batchIndex = numExecutionHalfSteps / 2;
+        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Since the cipher part of the batch has already been executed or skipped and the
@@ -172,11 +172,11 @@ contract ExecutorContract {
     function executeTransactions(
         address _targetAddress,
         bytes4 _targetFunctionSelector,
-        uint256 _gasLimit,
+        uint64 _gasLimit,
         bytes[] calldata _transactions
     ) private returns (bytes32) {
         bytes32 _batchHash;
-        for (uint256 _i = 0; _i < _transactions.length; _i++) {
+        for (uint64 _i = 0; _i < _transactions.length; _i++) {
             bytes memory _calldata = abi.encodeWithSelector(
                 _targetFunctionSelector,
                 _transactions[_i]

@@ -17,7 +17,7 @@ contract BatcherContract is Ownable {
     /// @param transaction The encrypted or plaintext transaction (depending on the type).
     /// @param batchHash The batch hash after adding the transaction.
     event TransactionAdded(
-        uint256 batchIndex,
+        uint64 batchIndex,
         TransactionType transactionType,
         bytes transaction,
         bytes32 batchHash
@@ -30,12 +30,12 @@ contract BatcherContract is Ownable {
 
     // Stores the current size of the batches by batch index. Note that cipher and plain batches
     // are not tracked separately but in sum.
-    mapping(uint256 => uint256) public batchSizes;
+    mapping(uint64 => uint64) public batchSizes;
     // The current batch hashes by index and type (cipher or plain).
-    mapping(uint256 => mapping(TransactionType => bytes32)) public batchHashes;
+    mapping(uint64 => mapping(TransactionType => bytes32)) public batchHashes;
 
     // The minimum fee required to add a transaction to a batch.
-    uint256 public minFee;
+    uint64 public minFee;
 
     constructor(address _configContractAddress, address _feeBankAddress)
         public
@@ -50,7 +50,7 @@ contract BatcherContract is Ownable {
     /// @param _type The type of the transaction (either cipher or plain).
     /// @param _transaction The encrypted or plaintext transaction (depending on `_type`).
     function addTransaction(
-        uint256 _batchIndex,
+        uint64 _batchIndex,
         TransactionType _type,
         bytes calldata _transaction
     ) external payable {
@@ -61,11 +61,11 @@ contract BatcherContract is Ownable {
 
         // check given batch is current
         assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
-        uint256 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
-        uint256 _batchStartBlock = config.startBlockNumber +
+        uint64 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
+        uint64 _batchStartBlock = config.startBlockNumber +
             _relativeBatchIndex *
             config.batchSpan;
-        uint256 _batchEndBlock = _batchStartBlock + config.batchSpan;
+        uint64 _batchEndBlock = _batchStartBlock + config.batchSpan;
         require(block.number >= _batchStartBlock);
         require(block.number < _batchEndBlock);
 
@@ -87,7 +87,7 @@ contract BatcherContract is Ownable {
         );
         bytes32 _newBatchHash = keccak256(_batchHashPreimage);
         batchHashes[_batchIndex][_type] = _newBatchHash;
-        batchSizes[_batchIndex] += _transaction.length;
+        batchSizes[_batchIndex] += uint64(_transaction.length);
 
         // pay fee to fee bank and emit event
         if (msg.value > 0 && config.feeReceiver != address(0)) {
@@ -98,7 +98,7 @@ contract BatcherContract is Ownable {
 
     /// @notice Set the minimum fee required to add a transaction to the batch.
     /// @param _minFee The new value for the minimum fee.
-    function setMinFee(uint256 _minFee) external onlyOwner {
+    function setMinFee(uint64 _minFee) external onlyOwner {
         minFee = _minFee;
     }
 }

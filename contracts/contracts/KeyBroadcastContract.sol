@@ -16,9 +16,9 @@ contract KeyBroadcastContract {
     /// @param signatures An array of signatures by keypers attesting to the key.
     event EncryptionKeyBroadcasted(
         address sender,
-        uint256 batchIndex,
+        uint64 batchIndex,
         bytes32 encryptionKey,
-        uint256[] signerIndices,
+        uint64[] signerIndices,
         bytes[] signatures
     );
 
@@ -38,10 +38,10 @@ contract KeyBroadcastContract {
     /// @param _signerIndices An array of indices corresponding to the keypers who signed the key.
     /// @param _signatures An array of signatures by keypers attesting to the key.
     function broadcastEncryptionKey(
-        uint256 _keyperIndex,
-        uint256 _batchIndex,
+        uint64 _keyperIndex,
+        uint64 _batchIndex,
         bytes32 _encryptionKey,
-        uint256[] calldata _signerIndices,
+        uint64[] calldata _signerIndices,
         bytes[] calldata _signatures
     ) public {
         BatchConfig memory _config = configContract.getConfig(_batchIndex);

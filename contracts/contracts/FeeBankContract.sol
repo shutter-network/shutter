@@ -12,8 +12,8 @@ contract FeeBankContract {
     event DepositEvent(
         address depositor,
         address receiver,
-        uint256 amount,
-        uint256 totalAmount
+        uint64 amount,
+        uint64 totalAmount
     );
 
     /// @notice The event emitted whenever ETH is withdrawn.
@@ -24,23 +24,24 @@ contract FeeBankContract {
     event WithdrawEvent(
         address sender,
         address receiver,
-        uint256 amount,
-        uint256 totalAmount
+        uint64 amount,
+        uint64 totalAmount
     );
 
-    mapping(address => uint256) public deposits;
+    mapping(address => uint64) public deposits;
 
     /// @notice Deposit ETH for later withdrawal
     /// @param _receiver Address of the account that is eligible for withdrawal.
     function deposit(address _receiver) external payable {
         require(_receiver != address(0));
         require(msg.value > 0);
-        deposits[_receiver] += msg.value;
+        require(msg.value <= type(uint64).max - deposits[_receiver]);
+        deposits[_receiver] += uint64(msg.value);
 
         emit DepositEvent(
             msg.sender,
             _receiver,
-            msg.value,
+            uint64(msg.value),
             deposits[_receiver]
         );
     }
@@ -48,7 +49,7 @@ contract FeeBankContract {
     /// @notice Withdraw ETH previously deposited in favor of the caller.
     /// @param _receiver The address to which the ETH will be sent.
     /// @param _amount The amount to withdraw (must not be greater than the deposited amount)
-    function withdraw(address _receiver, uint256 _amount) external {
+    function withdraw(address _receiver, uint64 _amount) external {
         withdrawInternal(_receiver, _amount);
     }
 
@@ -57,9 +58,9 @@ contract FeeBankContract {
         withdrawInternal(msg.sender, deposits[msg.sender]);
     }
 
-    function withdrawInternal(address _receiver, uint256 _amount) internal {
+    function withdrawInternal(address _receiver, uint64 _amount) internal {
         require(_receiver != address(0));
-        uint256 _deposit = deposits[msg.sender];
+        uint64 _deposit = deposits[msg.sender];
         require(_deposit > 0);
         require(_amount <= _deposit);
         deposits[msg.sender] = _deposit - _amount;
