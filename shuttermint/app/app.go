@@ -204,8 +204,9 @@ func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Addres
 func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	signer, msg, err := app.decodeTx(req)
 	if err != nil {
-		fmt.Println("Error while decoding transaction:", err)
-		return makeErrorResponse(fmt.Sprintf("Error while decoding transaction: %s", err))
+		msg := fmt.Sprintf("Error while decoding transaction: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
 	}
 	return app.deliverMessage(msg, signer)
 }
@@ -223,8 +224,9 @@ func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment
 	publicKeyBefore := bs.PublicKey
 	err := bs.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
 	if err != nil {
-		fmt.Println("GOT ERROR", err)
-		return makeErrorResponse(fmt.Sprintf("Error in AddPublicKeyCommitment: %s", err))
+		msg := fmt.Sprintf("Error: cannot deliver public key commitment: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
 	}
 	app.BatchStates[pkc.BatchIndex] = bs
 
@@ -244,8 +246,9 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 	privateKeyBefore := bs.PrivateKey
 	err := bs.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
 	if err != nil {
-		fmt.Println("GOT ERROR", err)
-		return makeErrorResponse(fmt.Sprintf("Error in AddSecretShare: %s", err))
+		msg := fmt.Sprintf("Error: cannot add secret share: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
 	}
 	app.BatchStates[ss.BatchIndex] = bs
 	var events []abcitypes.Event
