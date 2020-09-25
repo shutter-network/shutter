@@ -14,11 +14,11 @@ import (
 // of keypers as that one serializes as checksum address.
 type GenesisAppState struct {
 	Keypers   []common.MixedcaseAddress `json:"keypers"`
-	Threshold uint32                    `json:"threshold"`
+	Threshold uint64                    `json:"threshold"`
 }
 
 func NewGenesisAppState(keypers []common.Address, threshold int) GenesisAppState {
-	appState := GenesisAppState{Threshold: uint32(threshold)}
+	appState := GenesisAppState{Threshold: uint64(threshold)}
 	for _, k := range keypers {
 		appState.Keypers = append(appState.Keypers, common.NewMixedcaseAddress(k))
 	}
@@ -39,7 +39,7 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 type BatchConfig struct {
 	StartBatchIndex uint64
 	Keypers         []common.Address
-	Threshold       uint32
+	Threshold       uint64
 }
 
 // ConfigVoting is used to let the keypers vote on new BatchConfigs to be added

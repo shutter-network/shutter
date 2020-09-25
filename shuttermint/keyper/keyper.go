@@ -28,14 +28,14 @@ const newHeadersSize = 8
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
 		Config:                kc,
-		scheduledBatchConfigs: make(map[uint32]contract.BatchConfig),
+		scheduledBatchConfigs: make(map[uint64]contract.BatchConfig),
 		batches:               make(map[uint64]*BatchState),
 		newHeaders:            make(chan *types.Header, newHeadersSize),
 	}
 }
 
 // NewBatchConfigStarted creates a new BatchConfigStarted message
-func NewBatchConfigStarted(configIndex uint32) *shmsg.Message {
+func NewBatchConfigStarted(configIndex uint64) *shmsg.Message {
 	return &shmsg.Message{
 		Payload: &shmsg.Message_BatchConfigStarted{
 			BatchConfigStarted: &shmsg.BatchConfigStarted{
@@ -181,7 +181,7 @@ func (kpr *Keyper) watchMainChainLogs() error {
 func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
 	for i, c := range kpr.scheduledBatchConfigs {
 		if header.Number.Cmp(c.StartBlockNumber) >= 0 {
-			msg := NewBatchConfigStarted(uint32(i))
+			msg := NewBatchConfigStarted(i)
 			err := kpr.ms.SendMessage(msg)
 			if err == nil {
 				log.Printf("BatchConfigStarted message sent for config %d", i)
@@ -227,13 +227,13 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		return
 	}
 
-	bc := NewBatchConfig(config.StartBatchIndex.Uint64(), config.Keypers, uint32(config.Threshold.Uint64()))
+	bc := NewBatchConfig(config.StartBatchIndex.Uint64(), config.Keypers, config.Threshold.Uint64())
 	err = kpr.ms.SendMessage(bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
 
-	kpr.scheduledBatchConfigs[uint32(index)] = config
+	kpr.scheduledBatchConfigs[index] = config
 }
 
 func (kpr *Keyper) dispatchTxs() error {

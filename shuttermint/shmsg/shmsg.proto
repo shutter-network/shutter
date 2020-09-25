@@ -21,7 +21,7 @@ message SecretShare {
 message BatchConfig {
         uint64 start_batch_index = 1;
         repeated bytes keypers = 2;
-        uint32 threshold = 3 ;
+        uint64 threshold = 3 ;
 }
 
 message EncryptionKeyAttestation {
@@ -32,7 +32,7 @@ message EncryptionKeyAttestation {
 }
 
 message BatchConfigStarted {
-        uint32 batch_config_index = 1;
+        uint64 batch_config_index = 1;
 }
 
 

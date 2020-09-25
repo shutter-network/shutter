@@ -124,7 +124,7 @@ func bootstrap() {
 		log.Fatalf("StartBatchIndex (%d) of config at index %d is too big", bc.StartBatchIndex, index)
 	}
 	startBatchIndex := bc.StartBatchIndex.Uint64()
-	threshold := uint32(bc.Threshold.Uint64())
+	threshold := bc.Threshold.Uint64()
 	if big.NewInt(int64(threshold)).Cmp(bc.Threshold) != 0 {
 		log.Fatalf("Threshold (%d) of config at index %d is too big", bc.Threshold, index)
 	}

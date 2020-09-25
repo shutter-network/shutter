@@ -27,7 +27,7 @@ func TestQueryInvalidURL(t *testing.T) {
 			Path: path,
 		}
 		res := app.Query(req)
-		require.Equal(t, res.Code, uint32(1))
+		require.Equal(t, res.Code, 1)
 		t.Log(res.Log)
 	}
 }
@@ -45,7 +45,7 @@ func TestQueryInvalidConfig(t *testing.T) {
 			Path: path,
 		}
 		res := app.Query(req)
-		require.Equal(t, res.Code, uint32(1))
+		require.Equal(t, res.Code, 1)
 		t.Log(res.Log)
 	}
 }
@@ -95,7 +95,7 @@ func TestQueryConfig(t *testing.T) {
 			Path: testCase.path,
 		}
 		res := app.Query(req)
-		require.Equal(t, res.Code, uint32(0))
+		require.Equal(t, res.Code, 0)
 
 		msg := shmsg.Message{}
 		err := proto.Unmarshal(res.Value, &msg)

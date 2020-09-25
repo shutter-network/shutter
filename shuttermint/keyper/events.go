@@ -77,7 +77,7 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 		return BatchConfigEvent{}, err
 	}
 	keypers := app.DecodeAddressesFromEvent(string(ev.Attributes[2].Value))
-	return BatchConfigEvent{uint64(b), uint32(threshold), keypers}, nil
+	return BatchConfigEvent{uint64(b), uint64(threshold), keypers}, nil
 }
 
 // MakeEncryptionKeySignatureAddedEvent creates a EncryptionKeySignatureAddedEvent from the given
