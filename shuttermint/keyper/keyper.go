@@ -19,6 +19,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 const newHeadersSize = 8
@@ -26,9 +27,21 @@ const newHeadersSize = 8
 // NewKeyper creates a new Keyper
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
-		Config:     kc,
-		batches:    make(map[uint64]*BatchState),
-		newHeaders: make(chan *types.Header, newHeadersSize),
+		Config:                kc,
+		scheduledBatchConfigs: make(map[uint32]contract.BatchConfig),
+		batches:               make(map[uint64]*BatchState),
+		newHeaders:            make(chan *types.Header, newHeadersSize),
+	}
+}
+
+// NewBatchConfigStarted creates a new BatchConfigStarted message
+func NewBatchConfigStarted(configIndex uint32) *shmsg.Message {
+	return &shmsg.Message{
+		Payload: &shmsg.Message_BatchConfigStarted{
+			BatchConfigStarted: &shmsg.BatchConfigStarted{
+				BatchConfigIndex: configIndex,
+			},
+		},
 	}
 }
 
@@ -65,7 +78,6 @@ func (kpr *Keyper) Run() error {
 	}
 
 	err = shmcl.Start()
-
 	if err != nil {
 		return errors.Wrapf(err, "start shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
@@ -127,6 +139,7 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 			return err
 		case header := <-headers:
 			kpr.newHeaders <- header
+			kpr.handleNewBlockHeader(header)
 			kpr.dispatchNewBlockHeader(header)
 		}
 	}
@@ -161,6 +174,22 @@ func (kpr *Keyper) watchMainChainLogs() error {
 			return err
 		case log := <-logs:
 			kpr.dispatchMainChainLog(log)
+		}
+	}
+}
+
+func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
+	for i, c := range kpr.scheduledBatchConfigs {
+		if header.Number.Cmp(c.StartBlockNumber) >= 0 {
+			msg := NewBatchConfigStarted(uint32(i))
+			err := kpr.ms.SendMessage(msg)
+			if err == nil {
+				log.Printf("BatchConfigStarted message sent for config %d", i)
+			} else {
+				log.Printf("Failed to send start message for batch config %d: %v", i, err)
+			}
+
+			delete(kpr.scheduledBatchConfigs, i)
 		}
 	}
 }
@@ -203,6 +232,8 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
+
+	kpr.scheduledBatchConfigs[uint32(index)] = config
 }
 
 func (kpr *Keyper) dispatchTxs() error {

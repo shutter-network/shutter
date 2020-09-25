@@ -38,7 +38,7 @@ func multikMain() {
 		ShuttermintURL:                 "http://localhost:26657",
 		EthereumURL:                    "ws://localhost:8545",
 		ConfigContractAddress:          common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
-		KeyBroadcastingContractAddress: common.HexToAddress("0x9c62311E2B81AE323716b9783D08DfDBE1802DD4"),
+		KeyBroadcastingContractAddress: common.HexToAddress("0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e"),
 	}
 
 	privateKey := sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1)

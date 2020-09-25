@@ -63,16 +63,17 @@ type KeyperConfig struct {
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
-	Config         KeyperConfig
-	ethcl          *ethclient.Client
-	configContract *contract.ConfigContract
-	mux            sync.Mutex
-	batches        map[uint64]*BatchState
-	txs            <-chan coretypes.ResultEvent
-	ctx            context.Context
-	newHeaders     chan *types.Header // start new batches when new block headers arrive
-	group          *errgroup.Group
-	ms             *MessageSender
+	Config                KeyperConfig
+	ethcl                 *ethclient.Client
+	configContract        *contract.ConfigContract
+	mux                   sync.Mutex
+	scheduledBatchConfigs map[uint32]contract.BatchConfig
+	batches               map[uint64]*BatchState
+	txs                   <-chan coretypes.ResultEvent
+	ctx                   context.Context
+	newHeaders            chan *types.Header // start new batches when new block headers arrive
+	group                 *errgroup.Group
+	ms                    *MessageSender
 }
 
 // NewBatchParams creates a new BatchParams struct for the given BatchIndex
