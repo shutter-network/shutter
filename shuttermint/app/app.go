@@ -14,25 +14,19 @@ import (
 	"github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-var (
-	// PersistMinDuration is the minimum duration between two calls to persistToDisk
-	// TODO we should probably increase the default here and we should have a way to collect
-	// garbage to keep the persisted state small enough.
-	// The variable is declared here, because we do not want to persist it as part of the
-	// application. The same could be said about the Gobpath field though, which we persist as
-	// part of the application.
-	// If we set this to zero, the state will get saved on every call to Commit
-	PersistMinDuration time.Duration = 30 * time.Second
-	multikAddress      common.Address
-)
+// PersistMinDuration is the minimum duration between two calls to persistToDisk
+// TODO we should probably increase the default here and we should have a way to collect
+// garbage to keep the persisted state small enough.
+// The variable is declared here, because we do not want to persist it as part of the
+// application. The same could be said about the Gobpath field though, which we persist as
+// part of the application.
+// If we set this to zero, the state will get saved on every call to Commit
+var PersistMinDuration time.Duration = 30 * time.Second
 
 func init() {
-	multikAddress = crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1).PublicKey)
-
 	gob.Register(crypto.S256()) // Allow gob to serialize ecsda.PrivateKey
 }
 
@@ -266,9 +260,6 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 }
 
 func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool {
-	if sender == multikAddress && len(app.Configs) == 1 {
-		return true
-	}
 	lastConfig := app.Configs[len(app.Configs)-1]
 	_, ok := lastConfig.KeyperIndex(sender)
 	return ok
