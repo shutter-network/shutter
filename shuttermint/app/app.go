@@ -378,7 +378,6 @@ func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, 
 }
 
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
-	fmt.Println("MSG:", msg)
 	if msg.GetPublicKeyCommitment() != nil {
 		return app.deliverPublicKeyCommitment(msg.GetPublicKeyCommitment(), sender)
 	}
@@ -397,10 +396,8 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	if msg.GetCheckIn() != nil {
 		return app.deliverCheckIn(msg.GetCheckIn(), sender)
 	}
-	return abcitypes.ResponseDeliverTx{
-		Code:   0,
-		Events: []abcitypes.Event{},
-	}
+	log.Print("Error: cannot deliver messsage", msg)
+	return makeErrorResponse("cannot deliver message")
 }
 
 func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
