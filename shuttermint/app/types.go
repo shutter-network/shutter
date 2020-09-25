@@ -9,6 +9,30 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// GenesisAppState is used to hold the initial list of keypers, who will bootstrap the system by
+// providing the first real BatchConfig to be used. We use common.MixedcaseAddress to hold the list
+// of keypers as that one serializes as checksum address.
+type GenesisAppState struct {
+	Keypers   []common.MixedcaseAddress `json:"keypers"`
+	Threshold uint32                    `json:"threshold"`
+}
+
+func NewGenesisAppState(keypers []common.Address, threshold int) GenesisAppState {
+	appState := GenesisAppState{Threshold: uint32(threshold)}
+	for _, k := range keypers {
+		appState.Keypers = append(appState.Keypers, common.NewMixedcaseAddress(k))
+	}
+	return appState
+}
+
+func (appState *GenesisAppState) GetKeypers() []common.Address {
+	var res []common.Address
+	for _, k := range appState.Keypers {
+		res = append(res, k.Address())
+	}
+	return res
+}
+
 // BatchConfig is the configuration we use for a consecutive sequence of batches.
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
 // deployed on the main chain.

@@ -22,6 +22,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
+	github.com/tendermint/go-amino v0.14.1
 	github.com/tendermint/tendermint v0.33.8
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
@@ -29,5 +30,6 @@ require (
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
+	gotest.tools v2.2.0+incompatible
 	mvdan.cc/gofumpt v0.0.0-20200802201014-ab5a8192947d
 )

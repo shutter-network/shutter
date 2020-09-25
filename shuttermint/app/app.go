@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
@@ -150,7 +152,33 @@ where one DeliverTx is called for each transaction in the block. The result is a
 application state. Cryptographic commitments to the results of DeliverTx, EndBlock, and Commit are
 included in the header of the next block.
 */
-func (ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+func (app *ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+	genesisState := GenesisAppState{}
+	err := amino.NewCodec().UnmarshalJSON(req.AppStateBytes, &genesisState)
+	if err != nil {
+		log.Fatalf("Cannot unmarshal genesis app state: %s", err)
+	}
+
+	bc := BatchConfig{
+		StartBatchIndex: 0,
+		Keypers:         genesisState.GetKeypers(),
+		Threshold:       genesisState.Threshold,
+	}
+	err = bc.EnsureValid()
+	if err != nil {
+		log.Fatalf("Invalid genesis app state: %s", err)
+	}
+
+	if len(app.Configs) == 1 && len(app.Configs[0].Keypers) == 0 {
+		log.Print("Initializing new chain")
+		for i, k := range genesisState.Keypers {
+			log.Printf("Initial keyper #%d: %s", i, k.String())
+		}
+
+		app.Configs = []*BatchConfig{&bc}
+	} else if !reflect.DeepEqual(bc, *app.Configs[0]) {
+		log.Fatalf("Mismatch between stored app state and initial app state, stored=%+v initial=%+v", app.Configs[0], bc)
+	}
 	return abcitypes.ResponseInitChain{}
 }
 

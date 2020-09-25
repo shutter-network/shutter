@@ -7,8 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/tendermint/go-amino"
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -17,6 +20,9 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
+
+	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 var (
@@ -55,11 +61,16 @@ func initFiles(cmd *cobra.Command, args []string) error {
 	// EnsureRoot also write the config file but with the default config. We want our own, so
 	// let's overwrite it.
 	cfg.WriteConfigFile(filepath.Join(rootDir, "config", "config.toml"), config)
+	appState := app.NewGenesisAppState(
+		[]common.Address{
+			crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1).PublicKey),
+		},
+		1)
 
-	return initFilesWithConfig(config)
+	return initFilesWithConfig(config, appState)
 }
 
-func initFilesWithConfig(config *cfg.Config) error {
+func initFilesWithConfig(config *cfg.Config, appState app.GenesisAppState) error {
 	// private validator
 	privValKeyFile := config.PrivValidatorKeyFile()
 	privValStateFile := config.PrivValidatorStateFile()
@@ -90,10 +101,15 @@ func initFilesWithConfig(config *cfg.Config) error {
 	if tmos.FileExists(genFile) {
 		logger.Info("Found genesis file", "path", genFile)
 	} else {
+		appStateBytes, err := amino.NewCodec().MarshalJSONIndent(appState, "", "    ")
+		if err != nil {
+			return err
+		}
 		genDoc := types.GenesisDoc{
 			ChainID:         fmt.Sprintf("shutter-test-chain-%v", tmrand.Str(6)),
 			GenesisTime:     tmtime.Now(),
 			ConsensusParams: types.DefaultConsensusParams(),
+			AppState:        appStateBytes,
 		}
 		pubKey, err := pv.GetPubKey()
 		if err != nil {
