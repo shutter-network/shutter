@@ -66,8 +66,8 @@ func runMain() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	<-c
-	fmt.Println("Got signal. Exiting.")
+	sig := <-c
+	stdlog.Printf("Got signal '%s'. Exiting.", sig)
 	// Previously we had an os.Exit(0) call here, but now we do wait until the defer function
 	// above is done
 }
