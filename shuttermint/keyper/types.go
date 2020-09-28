@@ -19,22 +19,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// RoundInterval is the duration between the start of two consecutive rounds
-// var RoundInterval time.Duration = 5 * time.Second
-
-// PrivateKeyDelay is the duration between the start of the public key generation and the the start
-// of the private key generation for a single round
-// var PrivateKeyDelay time.Duration = 45 * time.Second
-
 // BatchParams describes the parameters for single Batch identified by the BatchIndex
 type BatchParams = contract.BatchParams
-
-// type BatchParams struct {
-//	BatchIndex                    uint64
-//	BatchConfig                   app.BatchConfig
-//	PublicKeyGenerationStartTime  time.Time
-//	PrivateKeyGenerationStartTime time.Time
-// }
 
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
