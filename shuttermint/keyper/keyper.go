@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 	"time"
 
@@ -174,18 +175,29 @@ func (kpr *Keyper) watchMainChainLogs() error {
 	}
 }
 
-func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
-	for i, c := range kpr.scheduledBatchConfigs {
-		if header.Number.Cmp(c.StartBlockNumber) >= 0 {
-			msg := NewBatchConfigStarted(i)
-			err := kpr.ms.SendMessage(msg)
-			if err == nil {
-				log.Printf("BatchConfigStarted message sent for config %d", i)
-			} else {
-				log.Printf("Failed to send start message for batch config %d: %v", i, err)
-			}
+// findStartedBatchConfigs finds the indexes of the BatchConfigs, which started. It removes them
+// from the scheduledBatchConfigs map.
+func (kpr *Keyper) findStartedBatchConfigs(blockNumber *big.Int) []uint64 {
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
+	var res []uint64
+	for configIndex, bc := range kpr.scheduledBatchConfigs {
+		if blockNumber.Cmp(bc.StartBlockNumber) >= 0 {
+			res = append(res, configIndex)
+			delete(kpr.scheduledBatchConfigs, configIndex)
+		}
+	}
+	return res
+}
 
-			delete(kpr.scheduledBatchConfigs, i)
+func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
+	for _, configIndex := range kpr.findStartedBatchConfigs(header.Number) {
+		msg := NewBatchConfigStarted(configIndex)
+		err := kpr.ms.SendMessage(msg)
+		if err == nil {
+			log.Printf("BatchConfigStarted message sent for config %d", configIndex)
+		} else {
+			log.Printf("Failed to send start message for batch config %d: %v", configIndex, err)
 		}
 	}
 }
@@ -229,6 +241,8 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
 
+	kpr.mux.Lock()
+	defer kpr.mux.Unlock()
 	kpr.scheduledBatchConfigs[index] = config
 }
 
