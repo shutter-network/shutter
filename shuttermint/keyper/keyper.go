@@ -178,8 +178,8 @@ func (kpr *Keyper) watchMainChainLogs() error {
 // findStartedBatchConfigs finds the indexes of the BatchConfigs, which started. It removes them
 // from the scheduledBatchConfigs map.
 func (kpr *Keyper) findStartedBatchConfigs(blockNumber *big.Int) []uint64 {
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 	var res []uint64
 	for configIndex, bc := range kpr.scheduledBatchConfigs {
 		if blockNumber.Cmp(bc.StartBlockNumber) >= 0 {
@@ -204,8 +204,8 @@ func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
 
 func (kpr *Keyper) dispatchNewBlockHeader(header *types.Header) {
 	log.Printf("Dispatching new block #%d to %d batches\n", header.Number, len(kpr.batches))
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 
 	for _, batch := range kpr.batches {
 		batch.NewBlockHeader(header)
@@ -241,8 +241,8 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
 
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 	kpr.scheduledBatchConfigs[index] = config
 }
 
@@ -325,8 +325,8 @@ func (kpr *Keyper) startNewBatches() error {
 
 func (kpr *Keyper) removeBatch(batchIndex uint64) {
 	log.Printf("Batch %d finished", batchIndex)
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 	delete(kpr.batches, batchIndex)
 }
 
@@ -344,8 +344,8 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
 	)
 	batch := NewBatchState(bp, kpr.Config, &ms, &cc)
 
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 
 	kpr.batches[batchIndex] = &batch
 
@@ -369,8 +369,8 @@ func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
 }
 
 func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
-	kpr.mux.Lock()
-	defer kpr.mux.Unlock()
+	kpr.Lock()
+	defer kpr.Unlock()
 
 	batch, ok := kpr.batches[batchIndex]
 

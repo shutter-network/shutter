@@ -49,10 +49,11 @@ type KeyperConfig struct {
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
+	sync.Mutex
+
 	Config                KeyperConfig
 	ethcl                 *ethclient.Client
 	configContract        *contract.ConfigContract
-	mux                   sync.Mutex
 	scheduledBatchConfigs map[uint64]contract.BatchConfig
 	batches               map[uint64]*BatchState
 	txs                   <-chan coretypes.ResultEvent
