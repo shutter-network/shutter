@@ -65,6 +65,10 @@ func (kpr *Keyper) init() error {
 // Run runs the keyper process. It determines the next BatchIndex and runs the key generation
 // process for this BatchIndex and all following batches.
 func (kpr *Keyper) Run() error {
+	if err := kpr.checkEthereumWebsocketURL(); err != nil {
+		return err
+	}
+
 	log.Printf("Running keyper with address %s", kpr.Config.Address().Hex())
 	err := kpr.init()
 	if err != nil {
@@ -117,10 +121,6 @@ func (kpr *Keyper) checkEthereumWebsocketURL() error {
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
-	if err := kpr.checkEthereumWebsocketURL(); err != nil {
-		return err
-	}
-
 	cl, err := ethclient.Dial(kpr.Config.EthereumURL)
 	if err != nil {
 		return err
@@ -146,10 +146,6 @@ func (kpr *Keyper) watchMainChainHeadBlock() error {
 }
 
 func (kpr *Keyper) watchMainChainLogs() error {
-	if err := kpr.checkEthereumWebsocketURL(); err != nil {
-		return err
-	}
-
 	cl, err := ethclient.Dial(kpr.Config.EthereumURL)
 	if err != nil {
 		return err
