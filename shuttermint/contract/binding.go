@@ -28,59 +28,59 @@ var (
 
 // BatchConfig is an auto generated low-level Go binding around an user-defined struct.
 type BatchConfig struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
 	Keypers                []common.Address
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }
 
 // ConfigContractABI is the input ABI used to generate the binding from.
-const ConfigContractABI = "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_configChangeHeadsUpBlocks\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"numConfigs\",\"type\":\"uint256\"}],\"name\":\"ConfigScheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"numConfigs\",\"type\":\"uint256\"}],\"name\":\"ConfigUnscheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"configChangeHeadsUpBlocks\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_configIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_keyperIndex\",\"type\":\"uint256\"}],\"name\":\"configKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_configIndex\",\"type\":\"uint256\"}],\"name\":\"configNumKeypers\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"configs\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"startBatchIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"startBlockNumber\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSpan\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint256\",\"name\":\"executionTimeout\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_batchIndex\",\"type\":\"uint256\"}],\"name\":\"getConfig\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"startBatchIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"startBlockNumber\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"keypers\",\"type\":\"address[]\"},{\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSpan\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint256\",\"name\":\"executionTimeout\",\"type\":\"uint256\"}],\"internalType\":\"structBatchConfig\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfig\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"startBatchIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"startBlockNumber\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"threshold\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSpan\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"batchSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionSizeLimit\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"transactionGasLimit\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint256\",\"name\":\"executionTimeout\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_newKeypers\",\"type\":\"address[]\"}],\"name\":\"nextConfigAddKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_index\",\"type\":\"uint256\"}],\"name\":\"nextConfigKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfigNumKeypers\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"n\",\"type\":\"uint256\"}],\"name\":\"nextConfigRemoveKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_batchSizeLimit\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetBatchSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_batchSpan\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetBatchSpan\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_executionTimeout\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetExecutionTimeout\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeReceiver\",\"type\":\"address\"}],\"name\":\"nextConfigSetFeeReceiver\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_startBatchIndex\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetStartBatchIndex\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_startBlockNumber\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetStartBlockNumber\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_targetAddress\",\"type\":\"address\"}],\"name\":\"nextConfigSetTargetAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"_targetFunctionSelector\",\"type\":\"bytes4\"}],\"name\":\"nextConfigSetTargetFunctionSelector\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_transactionGasLimit\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetTransactionGasLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_transactionSizeLimit\",\"type\":\"uint256\"}],\"name\":\"nextConfigSetTransactionSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numConfigs\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"scheduleNextConfig\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_fromStartBlockNumber\",\"type\":\"uint256\"}],\"name\":\"unscheduleConfigs\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const ConfigContractABI = "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configChangeHeadsUpBlocks\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numConfigs\",\"type\":\"uint64\"}],\"name\":\"ConfigScheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numConfigs\",\"type\":\"uint64\"}],\"name\":\"ConfigUnscheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"configChangeHeadsUpBlocks\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"_keyperIndex\",\"type\":\"uint64\"}],\"name\":\"configKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configIndex\",\"type\":\"uint64\"}],\"name\":\"configNumKeypers\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"configs\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"}],\"name\":\"getConfig\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"address[]\",\"name\":\"keypers\",\"type\":\"address[]\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"internalType\":\"structBatchConfig\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfig\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_newKeypers\",\"type\":\"address[]\"}],\"name\":\"nextConfigAddKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_index\",\"type\":\"uint64\"}],\"name\":\"nextConfigKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfigNumKeypers\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"n\",\"type\":\"uint64\"}],\"name\":\"nextConfigRemoveKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchSizeLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetBatchSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchSpan\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetBatchSpan\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_executionTimeout\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetExecutionTimeout\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeReceiver\",\"type\":\"address\"}],\"name\":\"nextConfigSetFeeReceiver\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_startBatchIndex\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetStartBatchIndex\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_startBlockNumber\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetStartBlockNumber\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_targetAddress\",\"type\":\"address\"}],\"name\":\"nextConfigSetTargetAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"_targetFunctionSelector\",\"type\":\"bytes4\"}],\"name\":\"nextConfigSetTargetFunctionSelector\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_threshold\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_transactionGasLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetTransactionGasLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_transactionSizeLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetTransactionSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numConfigs\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"scheduleNextConfig\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_fromStartBlockNumber\",\"type\":\"uint64\"}],\"name\":\"unscheduleConfigs\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // ConfigContractFuncSigs maps the 4-byte function signature to its string representation.
 var ConfigContractFuncSigs = map[string]string{
 	"cd21aee7": "configChangeHeadsUpBlocks()",
-	"d1e27177": "configKeypers(uint256,uint256)",
-	"875b341b": "configNumKeypers(uint256)",
+	"fa84ea02": "configKeypers(uint64,uint64)",
+	"d9a58f24": "configNumKeypers(uint64)",
 	"0098fa22": "configs(uint256)",
-	"a81b2f8d": "getConfig(uint256)",
+	"e008cb62": "getConfig(uint64)",
 	"64e9f671": "nextConfig()",
 	"62fced0e": "nextConfigAddKeypers(address[])",
-	"ef89319d": "nextConfigKeypers(uint256)",
+	"660744dc": "nextConfigKeypers(uint64)",
 	"287447c4": "nextConfigNumKeypers()",
-	"763c538d": "nextConfigRemoveKeypers(uint256)",
-	"c7b91e02": "nextConfigSetBatchSizeLimit(uint256)",
-	"43c1b435": "nextConfigSetBatchSpan(uint256)",
-	"ae76bf05": "nextConfigSetExecutionTimeout(uint256)",
+	"9d63753e": "nextConfigRemoveKeypers(uint64)",
+	"c7c6e9f4": "nextConfigSetBatchSizeLimit(uint64)",
+	"5dc6fdb8": "nextConfigSetBatchSpan(uint64)",
+	"719f2e17": "nextConfigSetExecutionTimeout(uint64)",
 	"2b2cc6c4": "nextConfigSetFeeReceiver(address)",
-	"9d10e7ae": "nextConfigSetStartBatchIndex(uint256)",
-	"9ee82110": "nextConfigSetStartBlockNumber(uint256)",
+	"ce9919b8": "nextConfigSetStartBatchIndex(uint64)",
+	"81e905a3": "nextConfigSetStartBlockNumber(uint64)",
 	"bcf67268": "nextConfigSetTargetAddress(address)",
 	"d1ac2e52": "nextConfigSetTargetFunctionSelector(bytes4)",
-	"cead20fd": "nextConfigSetThreshold(uint256)",
-	"f95388c2": "nextConfigSetTransactionGasLimit(uint256)",
-	"3c820436": "nextConfigSetTransactionSizeLimit(uint256)",
+	"73ed43db": "nextConfigSetThreshold(uint64)",
+	"564093fc": "nextConfigSetTransactionGasLimit(uint64)",
+	"606df514": "nextConfigSetTransactionSizeLimit(uint64)",
 	"0f0aae6f": "numConfigs()",
 	"8da5cb5b": "owner()",
 	"715018a6": "renounceOwnership()",
 	"18b5e830": "scheduleNextConfig()",
 	"f2fde38b": "transferOwnership(address)",
-	"ae8708f0": "unscheduleConfigs(uint256)",
+	"c9515c58": "unscheduleConfigs(uint64)",
 }
 
 // ConfigContractBin is the compiled bytecode used for deploying new contracts.
-var ConfigContractBin = "0x60a06040523480156200001157600080fd5b5060405162001a9538038062001a9583398101604081905262000034916200033a565b6000620000406200017d565b600080546001600160a01b0319166001600160a01b0383169081178255604051929350917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a35060016200009662000181565b81546001818101845560009384526020938490208351600b9093020191825583830151908201556040820151805192939192620000da926002850192019062000232565b5060608201516003820155608080830151600483015560a0830151600583015560c0830151600683015560e08084015160078401556101008401516008840180546001600160a01b03199081166001600160a01b03938416179091556101208601516009860180546101408901519316919093161763ffffffff60a01b1916600160a01b9190931c0291909117905561016090920151600a909101555262000353565b3390565b6200018b6200029c565b604051806101800160405280600081526020016000815260200160006001600160401b0381118015620001bd57600080fd5b50604051908082528060200260200182016040528015620001e8578160200160208202803683370190505b50815260006020820181905260408201819052606082018190526080820181905260a0820181905260c0820181905260e08201819052610100820181905261012090910152905090565b8280548282559060005260206000209081019282156200028a579160200282015b828111156200028a57825182546001600160a01b0319166001600160a01b0390911617825560209092019160019091019062000253565b506200029892915062000319565b5090565b604051806101800160405280600081526020016000815260200160608152602001600081526020016000815260200160008152602001600081526020016000815260200160006001600160a01b0316815260200160006001600160a01b0316815260200160006001600160e01b0319168152602001600081525090565b5b80821115620002985780546001600160a01b03191681556001016200031a565b6000602082840312156200034c578081fd5b5051919050565b6080516117186200037d6000398061059952806109205280610dad5280610f9052506117186000f3fe608060405234801561001057600080fd5b50600436106101a85760003560e01c80639d10e7ae116100f9578063cd21aee711610097578063d1e2717711610071578063d1e271771461035e578063ef89319d14610371578063f2fde38b14610384578063f95388c214610397576101a8565b8063cd21aee714610330578063cead20fd14610338578063d1ac2e521461034b576101a8565b8063ae76bf05116100d3578063ae76bf05146102e4578063ae8708f0146102f7578063bcf672681461030a578063c7b91e021461031d576101a8565b80639d10e7ae1461029e5780639ee82110146102b1578063a81b2f8d146102c4576101a8565b806343c1b43511610166578063715018a611610140578063715018a61461025b578063763c538d14610263578063875b341b146102765780638da5cb5b14610289576101a8565b806343c1b4351461022d57806362fced0e1461024057806364e9f67114610253576101a8565b806298fa22146101ad5780630f0aae6f146101e057806318b5e830146101f5578063287447c4146101ff5780632b2cc6c4146102075780633c8204361461021a575b600080fd5b6101c06101bb366004611496565b6103aa565b6040516101d79b9a9998979695949392919061167e565b60405180910390f35b6101e8610425565b6040516101d79190611675565b6101fd61042b565b005b6101e8610852565b6101fd6102153660046113d1565b610858565b6101fd610228366004611496565b6108af565b6101fd61023b366004611496565b6108e9565b6101fd61024e3660046113ff565b61094f565b6101c06109ef565b6101fd610a2a565b6101fd610271366004611496565b610aa9565b6101e8610284366004611496565b610b3e565b610291610b6a565b6040516101d7919061152d565b6101fd6102ac366004611496565b610b79565b6101fd6102bf366004611496565b610bb3565b6102d76102d2366004611496565b610bed565b6040516101d791906115bc565b6101fd6102f2366004611496565b610d3c565b6101fd610305366004611496565b610d76565b6101fd6103183660046113d1565b610efd565b6101fd61032b366004611496565b610f54565b6101e8610f8e565b6101fd610346366004611496565b610fb2565b6101fd61035936600461146e565b610fec565b61029161036c3660046114ae565b611045565b61029161037f366004611496565b61108c565b6101fd6103923660046113d1565b6110b8565b6101fd6103a5366004611496565b61116e565b600181815481106103b757fe5b60009182526020909120600b90910201805460018201546003830154600484015460058501546006860154600787015460088801546009890154600a909901549799509597949693959294919390926001600160a01b039081169290811691600160a01b90910460e01b908b565b60015490565b6104336111a8565b6000546001600160a01b039081169116146104695760405162461bcd60e51b815260040161046090611587565b60405180910390fd5b61047161125a565b60018054600019810190811061048357fe5b90600052602060002090600b02016040518061018001604052908160008201548152602001600182015481526020016002820180548060200260200160405190810160405280929190818152602001828054801561050a57602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116104ec575b50505091835250506003828101546020830152600483015460408301526005830154606083015260068301546080830152600783015460a083015260088301546001600160a01b0390811660c0840152600984015490811660e0808501919091526001600160e01b0319600160a01b909204901b16610100830152600a909201546101209091015254909150437f000000000000000000000000000000000000000000000000000000000000000001106105c357600080fd5b608081015115610609578051600254116105dc57600080fd5b80516002546003546080840151602085015193909203929183029091011461060357600080fd5b50610618565b80516002541461061857600080fd5b60018054808201825560009190915260028054600b9092027fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf681019283556003547fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf7820155600480549293926106b1927fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf80191906112d7565b50600382810154908201556004808301549082015560058083015490820155600680830154908201556007808301549082015560088083015490820180546001600160a01b03199081166001600160a01b03938416179091556009808501805491850180549093169190931617808255915463ffffffff600160a01b91829004160263ffffffff60a01b19909216919091179055600a918201549101556107566111ac565b805160029081556020808301516003556040830151805161077b926004920190611327565b50606082015160038201556080820151600482015560a0820151600582015560c0820151600682015560e08083015160078301556101008301516008830180546001600160a01b03199081166001600160a01b03938416179091556101208501516009850180546101408801519316919093161763ffffffff60a01b1916600160a01b9190931c0291909117905561016090910151600a909101556001546040517f70314c9d999fae58774cd9cfa5d4b3bb270ce8d953911e74bbae0b0ad7f408909161084791611675565b60405180910390a150565b60045490565b6108606111a8565b6000546001600160a01b0390811691161461088d5760405162461bcd60e51b815260040161046090611587565b600a80546001600160a01b0319166001600160a01b0392909216919091179055565b6108b76111a8565b6000546001600160a01b039081169116146108e45760405162461bcd60e51b815260040161046090611587565b600855565b6108f16111a8565b6000546001600160a01b0390811691161461091e5760405162461bcd60e51b815260040161046090611587565b7f0000000000000000000000000000000000000000000000000000000000000000811061094a57600080fd5b600655565b6109576111a8565b6000546001600160a01b039081169116146109845760405162461bcd60e51b815260040161046090611587565b60005b818110156109ea57600483838381811061099d57fe5b90506020020160208101906109b291906113d1565b815460018082018455600093845260209093200180546001600160a01b0319166001600160a01b039290921691909117905501610987565b505050565b600254600354600554600654600754600854600954600a54600b54600c546001600160a01b0392831692821691600160a01b900460e01b908b565b610a326111a8565b6000546001600160a01b03908116911614610a5f5760405162461bcd60e51b815260040161046090611587565b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b610ab16111a8565b6000546001600160a01b03908116911614610ade5760405162461bcd60e51b815260040161046090611587565b600454808211610b2e5760005b82811015610b28576004805480610afe57fe5b600082815260209020810160001990810180546001600160a01b0319169055019055600101610aeb565b50610b3a565b610b3a6004600061137c565b5050565b600060018281548110610b4d57fe5b90600052602060002090600b02016002018054905090505b919050565b6000546001600160a01b031690565b610b816111a8565b6000546001600160a01b03908116911614610bae5760405162461bcd60e51b815260040161046090611587565b600255565b610bbb6111a8565b6000546001600160a01b03908116911614610be85760405162461bcd60e51b815260040161046090611587565b600355565b610bf561125a565b600154600019015b600060018281548110610c0c57fe5b90600052602060002090600b0201905083816000015411610d32578060405180610180016040529081600082015481526020016001820154815260200160028201805480602002602001604051908101604052809291908181526020018280548015610ca157602002820191906000526020600020905b81546001600160a01b03168152600190910190602001808311610c83575b505050918352505060038201546020820152600482015460408201526005820154606082015260068201546080820152600782015460a082015260088201546001600160a01b0390811660c0830152600983015490811660e0808401919091526001600160e01b0319600160a01b909204901b16610100820152600a90910154610120909101529250610b65915050565b5060001901610bfd565b610d446111a8565b6000546001600160a01b03908116911614610d715760405162461bcd60e51b815260040161046090611587565b600c55565b610d7e6111a8565b6000546001600160a01b03908116911614610dab5760405162461bcd60e51b815260040161046090611587565b7f000000000000000000000000000000000000000000000000000000000000000043018111610dd957600080fd5b60015460001981015b8015610eb157600060018281548110610df757fe5b90600052602060002090600b0201905083816001015410610ea1576001805480610e1d57fe5b600082815260208120600b600019909301928302018181556001810182905590610e4a600283018261137c565b50600060038201819055600482018190556005820181905560068201819055600782018190556008820180546001600160a01b03191690556009820180546001600160c01b0319169055600a909101559055610ea7565b50610eb1565b5060001901610de2565b506001548111610ec057600080fd5b6001546040517f41c1b23350f511849a3106d2288e79ceb1bb67dfa351403abe1917144b2db9ee91610ef191611675565b60405180910390a15050565b610f056111a8565b6000546001600160a01b03908116911614610f325760405162461bcd60e51b815260040161046090611587565b600b80546001600160a01b0319166001600160a01b0392909216919091179055565b610f5c6111a8565b6000546001600160a01b03908116911614610f895760405162461bcd60e51b815260040161046090611587565b600755565b7f000000000000000000000000000000000000000000000000000000000000000081565b610fba6111a8565b6000546001600160a01b03908116911614610fe75760405162461bcd60e51b815260040161046090611587565b600555565b610ff46111a8565b6000546001600160a01b039081169116146110215760405162461bcd60e51b815260040161046090611587565b600b805460e09290921c600160a01b0263ffffffff60a01b19909216919091179055565b60006001838154811061105457fe5b90600052602060002090600b0201600201828154811061107057fe5b6000918252602090912001546001600160a01b03169392505050565b600060028001828154811061109d57fe5b6000918252602090912001546001600160a01b031692915050565b6110c06111a8565b6000546001600160a01b039081169116146110ed5760405162461bcd60e51b815260040161046090611587565b6001600160a01b0381166111135760405162461bcd60e51b815260040161046090611541565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b6111766111a8565b6000546001600160a01b039081169116146111a35760405162461bcd60e51b815260040161046090611587565b600955565b3390565b6111b461125a565b6040518061018001604052806000815260200160008152602001600067ffffffffffffffff811180156111e657600080fd5b50604051908082528060200260200182016040528015611210578160200160208202803683370190505b50815260006020820181905260408201819052606082018190526080820181905260a0820181905260c0820181905260e08201819052610100820181905261012090910152905090565b604051806101800160405280600081526020016000815260200160608152602001600081526020016000815260200160008152602001600081526020016000815260200160006001600160a01b0316815260200160006001600160a01b0316815260200160006001600160e01b0319168152602001600081525090565b8280548282559060005260206000209081019282156113175760005260206000209182015b828111156113175782548255916001019190600101906112fc565b5061132392915061139d565b5090565b828054828255906000526020600020908101928215611317579160200282015b8281111561131757825182546001600160a01b0319166001600160a01b03909116178255602090920191600190910190611347565b508054600082559060005260206000209081019061139a91906113bc565b50565b5b808211156113235780546001600160a01b031916815560010161139e565b5b8082111561132357600081556001016113bd565b6000602082840312156113e2578081fd5b81356001600160a01b03811681146113f8578182fd5b9392505050565b60008060208385031215611411578081fd5b823567ffffffffffffffff80821115611428578283fd5b818501915085601f83011261143b578283fd5b813581811115611449578384fd5b866020808302850101111561145c578384fd5b60209290920196919550909350505050565b60006020828403121561147f578081fd5b81356001600160e01b0319811681146113f8578182fd5b6000602082840312156114a7578081fd5b5035919050565b600080604083850312156114c0578182fd5b50508035926020909101359150565b6001600160a01b03169052565b6000815180845260208085019450808401835b838110156115145781516001600160a01b0316875295820195908201906001016114ef565b509495945050505050565b6001600160e01b0319169052565b6001600160a01b0391909116815260200190565b60208082526026908201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160408201526564647265737360d01b606082015260800190565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b600060208252825160208301526020830151604083015260408301516101808060608501526115ef6101a08501836114dc565b915060608501516080850152608085015160a085015260a085015160c085015260c085015160e085015260e085015161010081818701528087015191505061012061163c818701836114cf565b8601519050610140611650868201836114cf565b86015190506101606116648682018361151f565b959095015193019290925250919050565b90815260200190565b9a8b5260208b019990995260408a01979097526060890195909552608088019390935260a087019190915260c08601526001600160a01b0390811660e0860152166101008401526001600160e01b031916610120830152610140820152610160019056fea2646970667358221220ca7ec0181de5c52da04a101b1912a65a965321761f0bb5afc4e68da0df2d3f5464736f6c63430007010033"
+var ConfigContractBin = "0x60a06040523480156200001157600080fd5b5060405162001f8738038062001f878339810160408190526200003491620003b8565b60006200004062000249565b600080546001600160a01b0319166001600160a01b0383169081178255604051929350917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a3506001620000966200024d565b815460018181018455600093845260209384902083516005909302018054858501516001600160401b039081166801000000000000000002600160401b600160801b0319919095166001600160401b0319909216919091171692909217825560408301518051939492936200011493928501929190910190620002c8565b50606082015160028201805460808086015160a087015160c0808901516001600160401b03199586166001600160401b0398891617600160401b600160801b03191668010000000000000000948916850217600160801b600160c01b031916600160801b93891693909302929092176001600160c01b03908116600160c01b93891684021790965560e0808a015160038a0180546101008d01519816918a1691909117600160401b600160e01b0319166001600160a01b0397881690950294909417909355610120890151600490980180546101408b0151610160909b01516001600160a01b0319909116999096169890981763ffffffff60a01b1916600160a01b9990931c989098029190911790931691909316909102179091556001600160c01b03199290911b919091169052620003e8565b3390565b6200025762000332565b506040805161018081018252600080825260208083018290528351828152908101845292820192909252606081018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b82805482825590600052602060002090810192821562000320579160200282015b828111156200032057825182546001600160a01b0319166001600160a01b03909116178255602090920191600190910190620002e9565b506200032e92915062000397565b5090565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b5b808211156200032e5780546001600160a01b031916815560010162000398565b600060208284031215620003ca578081fd5b81516001600160401b0381168114620003e1578182fd5b9392505050565b60805160c01c611b7262000415600039806105e75280610b1f528061109952806111f85250611b726000f3fe608060405234801561001057600080fd5b50600436106101a85760003560e01c806373ed43db116100f9578063cd21aee711610097578063d9a58f2411610071578063d9a58f2414610351578063e008cb6214610364578063f2fde38b14610384578063fa84ea0214610397576101a8565b8063cd21aee714610323578063ce9919b81461032b578063d1ac2e521461033e576101a8565b80639d63753e116100d35780639d63753e146102d7578063bcf67268146102ea578063c7c6e9f4146102fd578063c9515c5814610310576101a8565b806373ed43db146102a957806381e905a3146102bc5780638da5cb5b146102cf576101a8565b80635dc6fdb81161016657806364e9f6711161014057806364e9f67114610266578063660744dc1461026e578063715018a61461028e578063719f2e1714610296576101a8565b80635dc6fdb81461022d578063606df5141461024057806362fced0e14610253576101a8565b806298fa22146101ad5780630f0aae6f146101e057806318b5e830146101f5578063287447c4146101ff5780632b2cc6c414610207578063564093fc1461021a575b600080fd5b6101c06101bb366004611843565b6103aa565b6040516101d79b9a99989796959493929190611ab4565b60405180910390f35b6101e8610437565b6040516101d79190611aa0565b6101fd61043d565b005b6101e8610a29565b6101fd61021536600461177f565b610a2f565b6101fd61022836600461185b565b610a90565b6101fd61023b36600461185b565b610ae8565b6101fd61024e36600461185b565b610b88565b6101fd6102613660046117ad565b610be5565b6101c0610cb0565b61028161027c36600461185b565b610d1c565b6040516101d79190611915565b6101fd610d54565b6101fd6102a436600461185b565b610dd3565b6101fd6102b736600461185b565b610e30565b6101fd6102ca36600461185b565b610e88565b610281610eea565b6101fd6102e536600461185b565b610ef9565b6101fd6102f836600461177f565b610fa9565b6101fd61030b36600461185b565b611000565b6101fd61031e36600461185b565b611062565b6101e86111f6565b6101fd61033936600461185b565b61121a565b6101fd61034c36600461181b565b611272565b6101e861035f36600461185b565b6112cb565b61037761037236600461185b565b6112fd565b6040516101d791906119a4565b6101fd61039236600461177f565b61147b565b6102816103a5366004611876565b611531565b600181815481106103b757fe5b600091825260209091206005909102018054600282015460038301546004909301546001600160401b038084169550600160401b9384900481169483821694808504831694600160801b8104841694600160c01b91829004851694848116946001600160a01b03949004841693821692600160a01b830460e01b9204168b565b60015490565b61044561158c565b6000546001600160a01b0390811691161461047b5760405162461bcd60e51b81526004016104729061196f565b60405180910390fd5b60015467fffffffffffffffe1161049157600080fd5b610499611609565b6001805460001981019081106104ab57fe5b60009182526020918290206040805161018081018252600590930290910180546001600160401b038082168552600160401b9091041683850152600181018054835181870281018701855281815294959294938601939283018282801561053b57602002820191906000526020600020905b81546001600160a01b0316815260019091019060200180831161051d575b50505091835250506002828101546001600160401b038082166020850152600160401b80830482166040860152600160801b830482166060860152600160c01b9283900482166080860152600386015480831660a08701528190046001600160a01b0390811660c087015260049096015495861660e080870191909152600160a01b8704901b6001600160e01b03191661010086015291909404841661012090930192909252549293507f0000000000000000000000000000000000000000000000000000000000000000821643019204161161061757600080fd5b60808101516001600160401b0316156106845780516002546001600160401b0391821691161161064657600080fd5b8051600254608083015160208401516001600160401b038084169490940393918402018116600160401b909204161461067e57600080fd5b506106a0565b80516002546001600160401b039081169116146106a057600080fd5b6001805480820182556000919091526002805460059092027fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf68101805467ffffffffffffffff19166001600160401b03948516178082558354600160401b9081900490951690940267ffffffffffffffff60401b1990941693909317835560038054929392610752927fb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf701919061166e565b5060028281018054918301805467ffffffffffffffff199081166001600160401b03948516178083558354600160401b908190048616810267ffffffffffffffff60401b19909216919091178084558454600160801b9081900487160267ffffffffffffffff60801b19909116178084559354600160c01b90819004861681026001600160c01b03958616179093556003808801805491880180549094169187169190911780845590546001600160a01b03908390048116909202600160401b600160e01b031990911617909155600495860180549690950180546001600160a01b0319169690911695909517808655845463ffffffff600160a01b91829004160263ffffffff60a01b19909116178086559354819004909216909102911617905561087c611590565b80516002805460208085015167ffffffffffffffff199092166001600160401b039485161767ffffffffffffffff60401b1916600160401b94909216939093021781556040830151805191926108d892600392909101906116be565b506060820151600282018054608085015160a086015160c087015167ffffffffffffffff199384166001600160401b039687161767ffffffffffffffff60401b1916600160401b93871684021767ffffffffffffffff60801b1916600160801b92871692909202919091176001600160c01b03908116600160c01b92871683021790945560e0808801516003880180546101008b0151961691881691909117600160401b600160e01b0319166001600160a01b039586169094029390931790925561012087015160049096018054610140890151610160909901516001600160a01b0319909116979094169690961763ffffffff60a01b1916600160a01b9790921c969096021790911691169092029190911790556001546040517f38889ef980014448a73b6e5dc5579ba1a4b7bd213a586b3f4832351448c48ae691610a1e91611aa0565b60405180910390a150565b60035490565b610a3761158c565b6000546001600160a01b03908116911614610a645760405162461bcd60e51b81526004016104729061196f565b600580546001600160a01b03909216600160401b02600160401b600160e01b0319909216919091179055565b610a9861158c565b6000546001600160a01b03908116911614610ac55760405162461bcd60e51b81526004016104729061196f565b6005805467ffffffffffffffff19166001600160401b0392909216919091179055565b610af061158c565b6000546001600160a01b03908116911614610b1d5760405162461bcd60e51b81526004016104729061196f565b7f00000000000000000000000000000000000000000000000000000000000000006001600160401b0316816001600160401b031610610b5b57600080fd5b600480546001600160401b03909216600160401b0267ffffffffffffffff60401b19909216919091179055565b610b9061158c565b6000546001600160a01b03908116911614610bbd5760405162461bcd60e51b81526004016104729061196f565b600480546001600160401b03909216600160c01b026001600160c01b03909216919091179055565b610bed61158c565b6000546001600160a01b03908116911614610c1a5760405162461bcd60e51b81526004016104729061196f565b6003546001600160401b038290031015610c3357600080fd5b60005b6001600160401b038116821115610cab57600383836001600160401b038416818110610c5e57fe5b9050602002016020810190610c73919061177f565b815460018082018455600093845260209093200180546001600160a01b0319166001600160a01b039290921691909117905501610c36565b505050565b6002546004546005546006546001600160401b0380851694600160401b9081900482169482811694828204841694600160801b8304851694600160c01b938490048116948184169493046001600160a01b039081169390831692600160a01b810460e01b92919004168b565b60006002600101826001600160401b031681548110610d3757fe5b6000918252602090912001546001600160a01b031690505b919050565b610d5c61158c565b6000546001600160a01b03908116911614610d895760405162461bcd60e51b81526004016104729061196f565b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b610ddb61158c565b6000546001600160a01b03908116911614610e085760405162461bcd60e51b81526004016104729061196f565b600680546001600160401b03909216600160c01b026001600160c01b03909216919091179055565b610e3861158c565b6000546001600160a01b03908116911614610e655760405162461bcd60e51b81526004016104729061196f565b6004805467ffffffffffffffff19166001600160401b0392909216919091179055565b610e9061158c565b6000546001600160a01b03908116911614610ebd5760405162461bcd60e51b81526004016104729061196f565b600280546001600160401b03909216600160401b0267ffffffffffffffff60401b19909216919091179055565b6000546001600160a01b031690565b610f0161158c565b6000546001600160a01b03908116911614610f2e5760405162461bcd60e51b81526004016104729061196f565b6003546001600160401b0382168110610f995760005b826001600160401b0316816001600160401b03161015610f93576003805480610f6957fe5b600082815260209020810160001990810180546001600160a01b0319169055019055600101610f44565b50610fa5565b610fa560036000611713565b5050565b610fb161158c565b6000546001600160a01b03908116911614610fde5760405162461bcd60e51b81526004016104729061196f565b600680546001600160a01b0319166001600160a01b0392909216919091179055565b61100861158c565b6000546001600160a01b039081169116146110355760405162461bcd60e51b81526004016104729061196f565b600480546001600160401b03909216600160801b0267ffffffffffffffff60801b19909216919091179055565b61106a61158c565b6000546001600160a01b039081169116146110975760405162461bcd60e51b81526004016104729061196f565b7f00000000000000000000000000000000000000000000000000000000000000006001600160401b03164301816001600160401b0316116110d757600080fd5b60015460001981015b80156111a1576000600182815481106110f557fe5b6000918252602090912060059091020180549091506001600160401b03808616600160401b909204161061119157600180548061112e57fe5b60008281526020812060056000199093019283020180546fffffffffffffffffffffffffffffffff19168155906111686001830182611713565b506000600282018190556003820180546001600160e01b03191690556004909101559055611197565b506111a1565b50600019016110e0565b506001546001600160401b038216116111b957600080fd5b6001546040517f202adac5e4f5fa65a6e6ec3afc99da8986c020c2799f4e0aee50552a05a0bfdf916111ea91611aa0565b60405180910390a15050565b7f000000000000000000000000000000000000000000000000000000000000000081565b61122261158c565b6000546001600160a01b0390811691161461124f5760405162461bcd60e51b81526004016104729061196f565b6002805467ffffffffffffffff19166001600160401b0392909216919091179055565b61127a61158c565b6000546001600160a01b039081169116146112a75760405162461bcd60e51b81526004016104729061196f565b6006805460e09290921c600160a01b0263ffffffff60a01b19909216919091179055565b60006001826001600160401b0316815481106112e357fe5b600091825260209091206001600590920201015492915050565b611305611609565b600154600019015b60006001828154811061131c57fe5b6000918252602090912060059091020180549091506001600160401b0380861691161161147157604080516101808101825282546001600160401b038082168352600160401b9091041660208083019190915260018401805484518184028101840186528181529394869490860193909291908301828280156113c857602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116113aa575b505050918352505060028201546001600160401b038082166020840152600160401b80830482166040850152600160801b830482166060850152600160c01b9283900482166080850152600385015480831660a0860152046001600160a01b0390811660c085015260049094015493841660e080850191909152600160a01b8504901b6001600160e01b0319166101008401529204909116610120909101529250610d4f915050565b506000190161130d565b61148361158c565b6000546001600160a01b039081169116146114b05760405162461bcd60e51b81526004016104729061196f565b6001600160a01b0381166114d65760405162461bcd60e51b815260040161047290611929565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b60006001836001600160401b03168154811061154957fe5b9060005260206000209060050201600101826001600160401b03168154811061156e57fe5b6000918252602090912001546001600160a01b031690505b92915050565b3390565b611598611609565b506040805161018081018252600080825260208083018290528351828152908101845292820192909252606081018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b8280548282559060005260206000209081019282156116ae5760005260206000209182015b828111156116ae578254825591600101919060010190611693565b506116ba929150611734565b5090565b8280548282559060005260206000209081019282156116ae579160200282015b828111156116ae57825182546001600160a01b0319166001600160a01b039091161782556020909201916001909101906116de565b50805460008255906000526020600020908101906117319190611753565b50565b5b808211156116ba5780546001600160a01b0319168155600101611735565b5b808211156116ba5760008155600101611754565b80356001600160401b038116811461158657600080fd5b600060208284031215611790578081fd5b81356001600160a01b03811681146117a6578182fd5b9392505050565b600080602083850312156117bf578081fd5b82356001600160401b03808211156117d5578283fd5b818501915085601f8301126117e8578283fd5b8135818111156117f6578384fd5b8660208083028501011115611809578384fd5b60209290920196919550909350505050565b60006020828403121561182c578081fd5b81356001600160e01b0319811681146117a6578182fd5b600060208284031215611854578081fd5b5035919050565b60006020828403121561186c578081fd5b6117a68383611768565b60008060408385031215611888578182fd5b6118928484611768565b91506118a18460208501611768565b90509250929050565b6001600160a01b03169052565b6000815180845260208085019450808401835b838110156118ef5781516001600160a01b0316875295820195908201906001016118ca565b509495945050505050565b6001600160e01b0319169052565b6001600160401b03169052565b6001600160a01b0391909116815260200190565b60208082526026908201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160408201526564647265737360d01b606082015260800190565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b6000602082526119b8602083018451611908565b60208301516119ca6040840182611908565b5060408301516101808060608501526119e76101a08501836118b7565b915060608501516119fb6080860182611908565b506080850151611a0e60a0860182611908565b5060a0850151611a2160c0860182611908565b5060c0850151611a3460e0860182611908565b5060e0850151610100611a4981870183611908565b8601519050610120611a5d868201836118aa565b8601519050610140611a71868201836118aa565b8601519050610160611a85868201836118fa565b8601519050611a9685830182611908565b5090949350505050565b6001600160401b0391909116815260200190565b6001600160401b038c811682528b811660208301528a811660408301528981166060830152888116608083015287811660a0830152861660c08201526001600160a01b0385811660e083015284166101008201526001600160e01b031983166101208201526101608101611b2c610140830184611908565b9c9b50505050505050505050505056fea26469706673582212207799794ef762e457b7206ce33d312692b4bc7d60640064d424e2cef2fb4b90e964736f6c63430007010033"
 
 // DeployConfigContract deploys a new Ethereum contract, binding an instance of ConfigContract to it.
-func DeployConfigContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configChangeHeadsUpBlocks *big.Int) (common.Address, *types.Transaction, *ConfigContract, error) {
+func DeployConfigContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configChangeHeadsUpBlocks uint64) (common.Address, *types.Transaction, *ConfigContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(ConfigContractABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -237,10 +237,10 @@ func (_ConfigContract *ConfigContractTransactorRaw) Transact(opts *bind.Transact
 
 // ConfigChangeHeadsUpBlocks is a free data retrieval call binding the contract method 0xcd21aee7.
 //
-// Solidity: function configChangeHeadsUpBlocks() view returns(uint256)
-func (_ConfigContract *ConfigContractCaller) ConfigChangeHeadsUpBlocks(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function configChangeHeadsUpBlocks() view returns(uint64)
+func (_ConfigContract *ConfigContractCaller) ConfigChangeHeadsUpBlocks(opts *bind.CallOpts) (uint64, error) {
 	var (
-		ret0 = new(*big.Int)
+		ret0 = new(uint64)
 	)
 	out := ret0
 	err := _ConfigContract.contract.Call(opts, out, "configChangeHeadsUpBlocks")
@@ -249,22 +249,22 @@ func (_ConfigContract *ConfigContractCaller) ConfigChangeHeadsUpBlocks(opts *bin
 
 // ConfigChangeHeadsUpBlocks is a free data retrieval call binding the contract method 0xcd21aee7.
 //
-// Solidity: function configChangeHeadsUpBlocks() view returns(uint256)
-func (_ConfigContract *ConfigContractSession) ConfigChangeHeadsUpBlocks() (*big.Int, error) {
+// Solidity: function configChangeHeadsUpBlocks() view returns(uint64)
+func (_ConfigContract *ConfigContractSession) ConfigChangeHeadsUpBlocks() (uint64, error) {
 	return _ConfigContract.Contract.ConfigChangeHeadsUpBlocks(&_ConfigContract.CallOpts)
 }
 
 // ConfigChangeHeadsUpBlocks is a free data retrieval call binding the contract method 0xcd21aee7.
 //
-// Solidity: function configChangeHeadsUpBlocks() view returns(uint256)
-func (_ConfigContract *ConfigContractCallerSession) ConfigChangeHeadsUpBlocks() (*big.Int, error) {
+// Solidity: function configChangeHeadsUpBlocks() view returns(uint64)
+func (_ConfigContract *ConfigContractCallerSession) ConfigChangeHeadsUpBlocks() (uint64, error) {
 	return _ConfigContract.Contract.ConfigChangeHeadsUpBlocks(&_ConfigContract.CallOpts)
 }
 
-// ConfigKeypers is a free data retrieval call binding the contract method 0xd1e27177.
+// ConfigKeypers is a free data retrieval call binding the contract method 0xfa84ea02.
 //
-// Solidity: function configKeypers(uint256 _configIndex, uint256 _keyperIndex) view returns(address)
-func (_ConfigContract *ConfigContractCaller) ConfigKeypers(opts *bind.CallOpts, _configIndex *big.Int, _keyperIndex *big.Int) (common.Address, error) {
+// Solidity: function configKeypers(uint64 _configIndex, uint64 _keyperIndex) view returns(address)
+func (_ConfigContract *ConfigContractCaller) ConfigKeypers(opts *bind.CallOpts, _configIndex uint64, _keyperIndex uint64) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
@@ -273,74 +273,74 @@ func (_ConfigContract *ConfigContractCaller) ConfigKeypers(opts *bind.CallOpts, 
 	return *ret0, err
 }
 
-// ConfigKeypers is a free data retrieval call binding the contract method 0xd1e27177.
+// ConfigKeypers is a free data retrieval call binding the contract method 0xfa84ea02.
 //
-// Solidity: function configKeypers(uint256 _configIndex, uint256 _keyperIndex) view returns(address)
-func (_ConfigContract *ConfigContractSession) ConfigKeypers(_configIndex *big.Int, _keyperIndex *big.Int) (common.Address, error) {
+// Solidity: function configKeypers(uint64 _configIndex, uint64 _keyperIndex) view returns(address)
+func (_ConfigContract *ConfigContractSession) ConfigKeypers(_configIndex uint64, _keyperIndex uint64) (common.Address, error) {
 	return _ConfigContract.Contract.ConfigKeypers(&_ConfigContract.CallOpts, _configIndex, _keyperIndex)
 }
 
-// ConfigKeypers is a free data retrieval call binding the contract method 0xd1e27177.
+// ConfigKeypers is a free data retrieval call binding the contract method 0xfa84ea02.
 //
-// Solidity: function configKeypers(uint256 _configIndex, uint256 _keyperIndex) view returns(address)
-func (_ConfigContract *ConfigContractCallerSession) ConfigKeypers(_configIndex *big.Int, _keyperIndex *big.Int) (common.Address, error) {
+// Solidity: function configKeypers(uint64 _configIndex, uint64 _keyperIndex) view returns(address)
+func (_ConfigContract *ConfigContractCallerSession) ConfigKeypers(_configIndex uint64, _keyperIndex uint64) (common.Address, error) {
 	return _ConfigContract.Contract.ConfigKeypers(&_ConfigContract.CallOpts, _configIndex, _keyperIndex)
 }
 
-// ConfigNumKeypers is a free data retrieval call binding the contract method 0x875b341b.
+// ConfigNumKeypers is a free data retrieval call binding the contract method 0xd9a58f24.
 //
-// Solidity: function configNumKeypers(uint256 _configIndex) view returns(uint256)
-func (_ConfigContract *ConfigContractCaller) ConfigNumKeypers(opts *bind.CallOpts, _configIndex *big.Int) (*big.Int, error) {
+// Solidity: function configNumKeypers(uint64 _configIndex) view returns(uint64)
+func (_ConfigContract *ConfigContractCaller) ConfigNumKeypers(opts *bind.CallOpts, _configIndex uint64) (uint64, error) {
 	var (
-		ret0 = new(*big.Int)
+		ret0 = new(uint64)
 	)
 	out := ret0
 	err := _ConfigContract.contract.Call(opts, out, "configNumKeypers", _configIndex)
 	return *ret0, err
 }
 
-// ConfigNumKeypers is a free data retrieval call binding the contract method 0x875b341b.
+// ConfigNumKeypers is a free data retrieval call binding the contract method 0xd9a58f24.
 //
-// Solidity: function configNumKeypers(uint256 _configIndex) view returns(uint256)
-func (_ConfigContract *ConfigContractSession) ConfigNumKeypers(_configIndex *big.Int) (*big.Int, error) {
+// Solidity: function configNumKeypers(uint64 _configIndex) view returns(uint64)
+func (_ConfigContract *ConfigContractSession) ConfigNumKeypers(_configIndex uint64) (uint64, error) {
 	return _ConfigContract.Contract.ConfigNumKeypers(&_ConfigContract.CallOpts, _configIndex)
 }
 
-// ConfigNumKeypers is a free data retrieval call binding the contract method 0x875b341b.
+// ConfigNumKeypers is a free data retrieval call binding the contract method 0xd9a58f24.
 //
-// Solidity: function configNumKeypers(uint256 _configIndex) view returns(uint256)
-func (_ConfigContract *ConfigContractCallerSession) ConfigNumKeypers(_configIndex *big.Int) (*big.Int, error) {
+// Solidity: function configNumKeypers(uint64 _configIndex) view returns(uint64)
+func (_ConfigContract *ConfigContractCallerSession) ConfigNumKeypers(_configIndex uint64) (uint64, error) {
 	return _ConfigContract.Contract.ConfigNumKeypers(&_ConfigContract.CallOpts, _configIndex)
 }
 
 // Configs is a free data retrieval call binding the contract method 0x0098fa22.
 //
-// Solidity: function configs(uint256 ) view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function configs(uint256 ) view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractCaller) Configs(opts *bind.CallOpts, arg0 *big.Int) (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	ret := new(struct {
-		StartBatchIndex        *big.Int
-		StartBlockNumber       *big.Int
-		Threshold              *big.Int
-		BatchSpan              *big.Int
-		BatchSizeLimit         *big.Int
-		TransactionSizeLimit   *big.Int
-		TransactionGasLimit    *big.Int
+		StartBatchIndex        uint64
+		StartBlockNumber       uint64
+		Threshold              uint64
+		BatchSpan              uint64
+		BatchSizeLimit         uint64
+		TransactionSizeLimit   uint64
+		TransactionGasLimit    uint64
 		FeeReceiver            common.Address
 		TargetAddress          common.Address
 		TargetFunctionSelector [4]byte
-		ExecutionTimeout       *big.Int
+		ExecutionTimeout       uint64
 	})
 	out := ret
 	err := _ConfigContract.contract.Call(opts, out, "configs", arg0)
@@ -349,46 +349,46 @@ func (_ConfigContract *ConfigContractCaller) Configs(opts *bind.CallOpts, arg0 *
 
 // Configs is a free data retrieval call binding the contract method 0x0098fa22.
 //
-// Solidity: function configs(uint256 ) view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function configs(uint256 ) view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractSession) Configs(arg0 *big.Int) (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	return _ConfigContract.Contract.Configs(&_ConfigContract.CallOpts, arg0)
 }
 
 // Configs is a free data retrieval call binding the contract method 0x0098fa22.
 //
-// Solidity: function configs(uint256 ) view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function configs(uint256 ) view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractCallerSession) Configs(arg0 *big.Int) (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	return _ConfigContract.Contract.Configs(&_ConfigContract.CallOpts, arg0)
 }
 
-// GetConfig is a free data retrieval call binding the contract method 0xa81b2f8d.
+// GetConfig is a free data retrieval call binding the contract method 0xe008cb62.
 //
-// Solidity: function getConfig(uint256 _batchIndex) view returns((uint256,uint256,address[],uint256,uint256,uint256,uint256,uint256,address,address,bytes4,uint256))
-func (_ConfigContract *ConfigContractCaller) GetConfig(opts *bind.CallOpts, _batchIndex *big.Int) (BatchConfig, error) {
+// Solidity: function getConfig(uint64 _batchIndex) view returns((uint64,uint64,address[],uint64,uint64,uint64,uint64,uint64,address,address,bytes4,uint64))
+func (_ConfigContract *ConfigContractCaller) GetConfig(opts *bind.CallOpts, _batchIndex uint64) (BatchConfig, error) {
 	var (
 		ret0 = new(BatchConfig)
 	)
@@ -397,48 +397,48 @@ func (_ConfigContract *ConfigContractCaller) GetConfig(opts *bind.CallOpts, _bat
 	return *ret0, err
 }
 
-// GetConfig is a free data retrieval call binding the contract method 0xa81b2f8d.
+// GetConfig is a free data retrieval call binding the contract method 0xe008cb62.
 //
-// Solidity: function getConfig(uint256 _batchIndex) view returns((uint256,uint256,address[],uint256,uint256,uint256,uint256,uint256,address,address,bytes4,uint256))
-func (_ConfigContract *ConfigContractSession) GetConfig(_batchIndex *big.Int) (BatchConfig, error) {
+// Solidity: function getConfig(uint64 _batchIndex) view returns((uint64,uint64,address[],uint64,uint64,uint64,uint64,uint64,address,address,bytes4,uint64))
+func (_ConfigContract *ConfigContractSession) GetConfig(_batchIndex uint64) (BatchConfig, error) {
 	return _ConfigContract.Contract.GetConfig(&_ConfigContract.CallOpts, _batchIndex)
 }
 
-// GetConfig is a free data retrieval call binding the contract method 0xa81b2f8d.
+// GetConfig is a free data retrieval call binding the contract method 0xe008cb62.
 //
-// Solidity: function getConfig(uint256 _batchIndex) view returns((uint256,uint256,address[],uint256,uint256,uint256,uint256,uint256,address,address,bytes4,uint256))
-func (_ConfigContract *ConfigContractCallerSession) GetConfig(_batchIndex *big.Int) (BatchConfig, error) {
+// Solidity: function getConfig(uint64 _batchIndex) view returns((uint64,uint64,address[],uint64,uint64,uint64,uint64,uint64,address,address,bytes4,uint64))
+func (_ConfigContract *ConfigContractCallerSession) GetConfig(_batchIndex uint64) (BatchConfig, error) {
 	return _ConfigContract.Contract.GetConfig(&_ConfigContract.CallOpts, _batchIndex)
 }
 
 // NextConfig is a free data retrieval call binding the contract method 0x64e9f671.
 //
-// Solidity: function nextConfig() view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function nextConfig() view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractCaller) NextConfig(opts *bind.CallOpts) (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	ret := new(struct {
-		StartBatchIndex        *big.Int
-		StartBlockNumber       *big.Int
-		Threshold              *big.Int
-		BatchSpan              *big.Int
-		BatchSizeLimit         *big.Int
-		TransactionSizeLimit   *big.Int
-		TransactionGasLimit    *big.Int
+		StartBatchIndex        uint64
+		StartBlockNumber       uint64
+		Threshold              uint64
+		BatchSpan              uint64
+		BatchSizeLimit         uint64
+		TransactionSizeLimit   uint64
+		TransactionGasLimit    uint64
 		FeeReceiver            common.Address
 		TargetAddress          common.Address
 		TargetFunctionSelector [4]byte
-		ExecutionTimeout       *big.Int
+		ExecutionTimeout       uint64
 	})
 	out := ret
 	err := _ConfigContract.contract.Call(opts, out, "nextConfig")
@@ -447,46 +447,46 @@ func (_ConfigContract *ConfigContractCaller) NextConfig(opts *bind.CallOpts) (st
 
 // NextConfig is a free data retrieval call binding the contract method 0x64e9f671.
 //
-// Solidity: function nextConfig() view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function nextConfig() view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractSession) NextConfig() (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	return _ConfigContract.Contract.NextConfig(&_ConfigContract.CallOpts)
 }
 
 // NextConfig is a free data retrieval call binding the contract method 0x64e9f671.
 //
-// Solidity: function nextConfig() view returns(uint256 startBatchIndex, uint256 startBlockNumber, uint256 threshold, uint256 batchSpan, uint256 batchSizeLimit, uint256 transactionSizeLimit, uint256 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint256 executionTimeout)
+// Solidity: function nextConfig() view returns(uint64 startBatchIndex, uint64 startBlockNumber, uint64 threshold, uint64 batchSpan, uint64 batchSizeLimit, uint64 transactionSizeLimit, uint64 transactionGasLimit, address feeReceiver, address targetAddress, bytes4 targetFunctionSelector, uint64 executionTimeout)
 func (_ConfigContract *ConfigContractCallerSession) NextConfig() (struct {
-	StartBatchIndex        *big.Int
-	StartBlockNumber       *big.Int
-	Threshold              *big.Int
-	BatchSpan              *big.Int
-	BatchSizeLimit         *big.Int
-	TransactionSizeLimit   *big.Int
-	TransactionGasLimit    *big.Int
+	StartBatchIndex        uint64
+	StartBlockNumber       uint64
+	Threshold              uint64
+	BatchSpan              uint64
+	BatchSizeLimit         uint64
+	TransactionSizeLimit   uint64
+	TransactionGasLimit    uint64
 	FeeReceiver            common.Address
 	TargetAddress          common.Address
 	TargetFunctionSelector [4]byte
-	ExecutionTimeout       *big.Int
+	ExecutionTimeout       uint64
 }, error) {
 	return _ConfigContract.Contract.NextConfig(&_ConfigContract.CallOpts)
 }
 
-// NextConfigKeypers is a free data retrieval call binding the contract method 0xef89319d.
+// NextConfigKeypers is a free data retrieval call binding the contract method 0x660744dc.
 //
-// Solidity: function nextConfigKeypers(uint256 _index) view returns(address)
-func (_ConfigContract *ConfigContractCaller) NextConfigKeypers(opts *bind.CallOpts, _index *big.Int) (common.Address, error) {
+// Solidity: function nextConfigKeypers(uint64 _index) view returns(address)
+func (_ConfigContract *ConfigContractCaller) NextConfigKeypers(opts *bind.CallOpts, _index uint64) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
@@ -495,26 +495,26 @@ func (_ConfigContract *ConfigContractCaller) NextConfigKeypers(opts *bind.CallOp
 	return *ret0, err
 }
 
-// NextConfigKeypers is a free data retrieval call binding the contract method 0xef89319d.
+// NextConfigKeypers is a free data retrieval call binding the contract method 0x660744dc.
 //
-// Solidity: function nextConfigKeypers(uint256 _index) view returns(address)
-func (_ConfigContract *ConfigContractSession) NextConfigKeypers(_index *big.Int) (common.Address, error) {
+// Solidity: function nextConfigKeypers(uint64 _index) view returns(address)
+func (_ConfigContract *ConfigContractSession) NextConfigKeypers(_index uint64) (common.Address, error) {
 	return _ConfigContract.Contract.NextConfigKeypers(&_ConfigContract.CallOpts, _index)
 }
 
-// NextConfigKeypers is a free data retrieval call binding the contract method 0xef89319d.
+// NextConfigKeypers is a free data retrieval call binding the contract method 0x660744dc.
 //
-// Solidity: function nextConfigKeypers(uint256 _index) view returns(address)
-func (_ConfigContract *ConfigContractCallerSession) NextConfigKeypers(_index *big.Int) (common.Address, error) {
+// Solidity: function nextConfigKeypers(uint64 _index) view returns(address)
+func (_ConfigContract *ConfigContractCallerSession) NextConfigKeypers(_index uint64) (common.Address, error) {
 	return _ConfigContract.Contract.NextConfigKeypers(&_ConfigContract.CallOpts, _index)
 }
 
 // NextConfigNumKeypers is a free data retrieval call binding the contract method 0x287447c4.
 //
-// Solidity: function nextConfigNumKeypers() view returns(uint256)
-func (_ConfigContract *ConfigContractCaller) NextConfigNumKeypers(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function nextConfigNumKeypers() view returns(uint64)
+func (_ConfigContract *ConfigContractCaller) NextConfigNumKeypers(opts *bind.CallOpts) (uint64, error) {
 	var (
-		ret0 = new(*big.Int)
+		ret0 = new(uint64)
 	)
 	out := ret0
 	err := _ConfigContract.contract.Call(opts, out, "nextConfigNumKeypers")
@@ -523,24 +523,24 @@ func (_ConfigContract *ConfigContractCaller) NextConfigNumKeypers(opts *bind.Cal
 
 // NextConfigNumKeypers is a free data retrieval call binding the contract method 0x287447c4.
 //
-// Solidity: function nextConfigNumKeypers() view returns(uint256)
-func (_ConfigContract *ConfigContractSession) NextConfigNumKeypers() (*big.Int, error) {
+// Solidity: function nextConfigNumKeypers() view returns(uint64)
+func (_ConfigContract *ConfigContractSession) NextConfigNumKeypers() (uint64, error) {
 	return _ConfigContract.Contract.NextConfigNumKeypers(&_ConfigContract.CallOpts)
 }
 
 // NextConfigNumKeypers is a free data retrieval call binding the contract method 0x287447c4.
 //
-// Solidity: function nextConfigNumKeypers() view returns(uint256)
-func (_ConfigContract *ConfigContractCallerSession) NextConfigNumKeypers() (*big.Int, error) {
+// Solidity: function nextConfigNumKeypers() view returns(uint64)
+func (_ConfigContract *ConfigContractCallerSession) NextConfigNumKeypers() (uint64, error) {
 	return _ConfigContract.Contract.NextConfigNumKeypers(&_ConfigContract.CallOpts)
 }
 
 // NumConfigs is a free data retrieval call binding the contract method 0x0f0aae6f.
 //
-// Solidity: function numConfigs() view returns(uint256)
-func (_ConfigContract *ConfigContractCaller) NumConfigs(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function numConfigs() view returns(uint64)
+func (_ConfigContract *ConfigContractCaller) NumConfigs(opts *bind.CallOpts) (uint64, error) {
 	var (
-		ret0 = new(*big.Int)
+		ret0 = new(uint64)
 	)
 	out := ret0
 	err := _ConfigContract.contract.Call(opts, out, "numConfigs")
@@ -549,15 +549,15 @@ func (_ConfigContract *ConfigContractCaller) NumConfigs(opts *bind.CallOpts) (*b
 
 // NumConfigs is a free data retrieval call binding the contract method 0x0f0aae6f.
 //
-// Solidity: function numConfigs() view returns(uint256)
-func (_ConfigContract *ConfigContractSession) NumConfigs() (*big.Int, error) {
+// Solidity: function numConfigs() view returns(uint64)
+func (_ConfigContract *ConfigContractSession) NumConfigs() (uint64, error) {
 	return _ConfigContract.Contract.NumConfigs(&_ConfigContract.CallOpts)
 }
 
 // NumConfigs is a free data retrieval call binding the contract method 0x0f0aae6f.
 //
-// Solidity: function numConfigs() view returns(uint256)
-func (_ConfigContract *ConfigContractCallerSession) NumConfigs() (*big.Int, error) {
+// Solidity: function numConfigs() view returns(uint64)
+func (_ConfigContract *ConfigContractCallerSession) NumConfigs() (uint64, error) {
 	return _ConfigContract.Contract.NumConfigs(&_ConfigContract.CallOpts)
 }
 
@@ -608,87 +608,87 @@ func (_ConfigContract *ConfigContractTransactorSession) NextConfigAddKeypers(_ne
 	return _ConfigContract.Contract.NextConfigAddKeypers(&_ConfigContract.TransactOpts, _newKeypers)
 }
 
-// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x763c538d.
+// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x9d63753e.
 //
-// Solidity: function nextConfigRemoveKeypers(uint256 n) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigRemoveKeypers(opts *bind.TransactOpts, n *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigRemoveKeypers(uint64 n) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigRemoveKeypers(opts *bind.TransactOpts, n uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigRemoveKeypers", n)
 }
 
-// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x763c538d.
+// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x9d63753e.
 //
-// Solidity: function nextConfigRemoveKeypers(uint256 n) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigRemoveKeypers(n *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigRemoveKeypers(uint64 n) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigRemoveKeypers(n uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigRemoveKeypers(&_ConfigContract.TransactOpts, n)
 }
 
-// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x763c538d.
+// NextConfigRemoveKeypers is a paid mutator transaction binding the contract method 0x9d63753e.
 //
-// Solidity: function nextConfigRemoveKeypers(uint256 n) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigRemoveKeypers(n *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigRemoveKeypers(uint64 n) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigRemoveKeypers(n uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigRemoveKeypers(&_ConfigContract.TransactOpts, n)
 }
 
-// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7b91e02.
+// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7c6e9f4.
 //
-// Solidity: function nextConfigSetBatchSizeLimit(uint256 _batchSizeLimit) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetBatchSizeLimit(opts *bind.TransactOpts, _batchSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSizeLimit(uint64 _batchSizeLimit) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetBatchSizeLimit(opts *bind.TransactOpts, _batchSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetBatchSizeLimit", _batchSizeLimit)
 }
 
-// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7b91e02.
+// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7c6e9f4.
 //
-// Solidity: function nextConfigSetBatchSizeLimit(uint256 _batchSizeLimit) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetBatchSizeLimit(_batchSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSizeLimit(uint64 _batchSizeLimit) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetBatchSizeLimit(_batchSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetBatchSizeLimit(&_ConfigContract.TransactOpts, _batchSizeLimit)
 }
 
-// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7b91e02.
+// NextConfigSetBatchSizeLimit is a paid mutator transaction binding the contract method 0xc7c6e9f4.
 //
-// Solidity: function nextConfigSetBatchSizeLimit(uint256 _batchSizeLimit) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetBatchSizeLimit(_batchSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSizeLimit(uint64 _batchSizeLimit) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetBatchSizeLimit(_batchSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetBatchSizeLimit(&_ConfigContract.TransactOpts, _batchSizeLimit)
 }
 
-// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x43c1b435.
+// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x5dc6fdb8.
 //
-// Solidity: function nextConfigSetBatchSpan(uint256 _batchSpan) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetBatchSpan(opts *bind.TransactOpts, _batchSpan *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSpan(uint64 _batchSpan) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetBatchSpan(opts *bind.TransactOpts, _batchSpan uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetBatchSpan", _batchSpan)
 }
 
-// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x43c1b435.
+// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x5dc6fdb8.
 //
-// Solidity: function nextConfigSetBatchSpan(uint256 _batchSpan) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetBatchSpan(_batchSpan *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSpan(uint64 _batchSpan) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetBatchSpan(_batchSpan uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetBatchSpan(&_ConfigContract.TransactOpts, _batchSpan)
 }
 
-// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x43c1b435.
+// NextConfigSetBatchSpan is a paid mutator transaction binding the contract method 0x5dc6fdb8.
 //
-// Solidity: function nextConfigSetBatchSpan(uint256 _batchSpan) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetBatchSpan(_batchSpan *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetBatchSpan(uint64 _batchSpan) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetBatchSpan(_batchSpan uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetBatchSpan(&_ConfigContract.TransactOpts, _batchSpan)
 }
 
-// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0xae76bf05.
+// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0x719f2e17.
 //
-// Solidity: function nextConfigSetExecutionTimeout(uint256 _executionTimeout) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetExecutionTimeout(opts *bind.TransactOpts, _executionTimeout *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetExecutionTimeout(uint64 _executionTimeout) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetExecutionTimeout(opts *bind.TransactOpts, _executionTimeout uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetExecutionTimeout", _executionTimeout)
 }
 
-// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0xae76bf05.
+// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0x719f2e17.
 //
-// Solidity: function nextConfigSetExecutionTimeout(uint256 _executionTimeout) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetExecutionTimeout(_executionTimeout *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetExecutionTimeout(uint64 _executionTimeout) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetExecutionTimeout(_executionTimeout uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetExecutionTimeout(&_ConfigContract.TransactOpts, _executionTimeout)
 }
 
-// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0xae76bf05.
+// NextConfigSetExecutionTimeout is a paid mutator transaction binding the contract method 0x719f2e17.
 //
-// Solidity: function nextConfigSetExecutionTimeout(uint256 _executionTimeout) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetExecutionTimeout(_executionTimeout *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetExecutionTimeout(uint64 _executionTimeout) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetExecutionTimeout(_executionTimeout uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetExecutionTimeout(&_ConfigContract.TransactOpts, _executionTimeout)
 }
 
@@ -713,45 +713,45 @@ func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetFeeReceiver
 	return _ConfigContract.Contract.NextConfigSetFeeReceiver(&_ConfigContract.TransactOpts, _feeReceiver)
 }
 
-// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0x9d10e7ae.
+// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0xce9919b8.
 //
-// Solidity: function nextConfigSetStartBatchIndex(uint256 _startBatchIndex) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetStartBatchIndex(opts *bind.TransactOpts, _startBatchIndex *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBatchIndex(uint64 _startBatchIndex) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetStartBatchIndex(opts *bind.TransactOpts, _startBatchIndex uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetStartBatchIndex", _startBatchIndex)
 }
 
-// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0x9d10e7ae.
+// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0xce9919b8.
 //
-// Solidity: function nextConfigSetStartBatchIndex(uint256 _startBatchIndex) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetStartBatchIndex(_startBatchIndex *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBatchIndex(uint64 _startBatchIndex) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetStartBatchIndex(_startBatchIndex uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetStartBatchIndex(&_ConfigContract.TransactOpts, _startBatchIndex)
 }
 
-// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0x9d10e7ae.
+// NextConfigSetStartBatchIndex is a paid mutator transaction binding the contract method 0xce9919b8.
 //
-// Solidity: function nextConfigSetStartBatchIndex(uint256 _startBatchIndex) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetStartBatchIndex(_startBatchIndex *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBatchIndex(uint64 _startBatchIndex) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetStartBatchIndex(_startBatchIndex uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetStartBatchIndex(&_ConfigContract.TransactOpts, _startBatchIndex)
 }
 
-// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x9ee82110.
+// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x81e905a3.
 //
-// Solidity: function nextConfigSetStartBlockNumber(uint256 _startBlockNumber) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetStartBlockNumber(opts *bind.TransactOpts, _startBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBlockNumber(uint64 _startBlockNumber) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetStartBlockNumber(opts *bind.TransactOpts, _startBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetStartBlockNumber", _startBlockNumber)
 }
 
-// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x9ee82110.
+// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x81e905a3.
 //
-// Solidity: function nextConfigSetStartBlockNumber(uint256 _startBlockNumber) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetStartBlockNumber(_startBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBlockNumber(uint64 _startBlockNumber) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetStartBlockNumber(_startBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetStartBlockNumber(&_ConfigContract.TransactOpts, _startBlockNumber)
 }
 
-// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x9ee82110.
+// NextConfigSetStartBlockNumber is a paid mutator transaction binding the contract method 0x81e905a3.
 //
-// Solidity: function nextConfigSetStartBlockNumber(uint256 _startBlockNumber) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetStartBlockNumber(_startBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetStartBlockNumber(uint64 _startBlockNumber) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetStartBlockNumber(_startBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetStartBlockNumber(&_ConfigContract.TransactOpts, _startBlockNumber)
 }
 
@@ -797,66 +797,66 @@ func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetTargetFunct
 	return _ConfigContract.Contract.NextConfigSetTargetFunctionSelector(&_ConfigContract.TransactOpts, _targetFunctionSelector)
 }
 
-// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0xcead20fd.
+// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0x73ed43db.
 //
-// Solidity: function nextConfigSetThreshold(uint256 _threshold) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetThreshold(opts *bind.TransactOpts, _threshold *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetThreshold(uint64 _threshold) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetThreshold(opts *bind.TransactOpts, _threshold uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetThreshold", _threshold)
 }
 
-// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0xcead20fd.
+// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0x73ed43db.
 //
-// Solidity: function nextConfigSetThreshold(uint256 _threshold) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetThreshold(_threshold *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetThreshold(uint64 _threshold) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetThreshold(_threshold uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetThreshold(&_ConfigContract.TransactOpts, _threshold)
 }
 
-// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0xcead20fd.
+// NextConfigSetThreshold is a paid mutator transaction binding the contract method 0x73ed43db.
 //
-// Solidity: function nextConfigSetThreshold(uint256 _threshold) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetThreshold(_threshold *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetThreshold(uint64 _threshold) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetThreshold(_threshold uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetThreshold(&_ConfigContract.TransactOpts, _threshold)
 }
 
-// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0xf95388c2.
+// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0x564093fc.
 //
-// Solidity: function nextConfigSetTransactionGasLimit(uint256 _transactionGasLimit) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetTransactionGasLimit(opts *bind.TransactOpts, _transactionGasLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionGasLimit(uint64 _transactionGasLimit) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetTransactionGasLimit(opts *bind.TransactOpts, _transactionGasLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetTransactionGasLimit", _transactionGasLimit)
 }
 
-// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0xf95388c2.
+// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0x564093fc.
 //
-// Solidity: function nextConfigSetTransactionGasLimit(uint256 _transactionGasLimit) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetTransactionGasLimit(_transactionGasLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionGasLimit(uint64 _transactionGasLimit) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetTransactionGasLimit(_transactionGasLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetTransactionGasLimit(&_ConfigContract.TransactOpts, _transactionGasLimit)
 }
 
-// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0xf95388c2.
+// NextConfigSetTransactionGasLimit is a paid mutator transaction binding the contract method 0x564093fc.
 //
-// Solidity: function nextConfigSetTransactionGasLimit(uint256 _transactionGasLimit) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetTransactionGasLimit(_transactionGasLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionGasLimit(uint64 _transactionGasLimit) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetTransactionGasLimit(_transactionGasLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetTransactionGasLimit(&_ConfigContract.TransactOpts, _transactionGasLimit)
 }
 
-// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x3c820436.
+// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x606df514.
 //
-// Solidity: function nextConfigSetTransactionSizeLimit(uint256 _transactionSizeLimit) returns()
-func (_ConfigContract *ConfigContractTransactor) NextConfigSetTransactionSizeLimit(opts *bind.TransactOpts, _transactionSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionSizeLimit(uint64 _transactionSizeLimit) returns()
+func (_ConfigContract *ConfigContractTransactor) NextConfigSetTransactionSizeLimit(opts *bind.TransactOpts, _transactionSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "nextConfigSetTransactionSizeLimit", _transactionSizeLimit)
 }
 
-// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x3c820436.
+// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x606df514.
 //
-// Solidity: function nextConfigSetTransactionSizeLimit(uint256 _transactionSizeLimit) returns()
-func (_ConfigContract *ConfigContractSession) NextConfigSetTransactionSizeLimit(_transactionSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionSizeLimit(uint64 _transactionSizeLimit) returns()
+func (_ConfigContract *ConfigContractSession) NextConfigSetTransactionSizeLimit(_transactionSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetTransactionSizeLimit(&_ConfigContract.TransactOpts, _transactionSizeLimit)
 }
 
-// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x3c820436.
+// NextConfigSetTransactionSizeLimit is a paid mutator transaction binding the contract method 0x606df514.
 //
-// Solidity: function nextConfigSetTransactionSizeLimit(uint256 _transactionSizeLimit) returns()
-func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetTransactionSizeLimit(_transactionSizeLimit *big.Int) (*types.Transaction, error) {
+// Solidity: function nextConfigSetTransactionSizeLimit(uint64 _transactionSizeLimit) returns()
+func (_ConfigContract *ConfigContractTransactorSession) NextConfigSetTransactionSizeLimit(_transactionSizeLimit uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.NextConfigSetTransactionSizeLimit(&_ConfigContract.TransactOpts, _transactionSizeLimit)
 }
 
@@ -923,24 +923,24 @@ func (_ConfigContract *ConfigContractTransactorSession) TransferOwnership(newOwn
 	return _ConfigContract.Contract.TransferOwnership(&_ConfigContract.TransactOpts, newOwner)
 }
 
-// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xae8708f0.
+// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xc9515c58.
 //
-// Solidity: function unscheduleConfigs(uint256 _fromStartBlockNumber) returns()
-func (_ConfigContract *ConfigContractTransactor) UnscheduleConfigs(opts *bind.TransactOpts, _fromStartBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function unscheduleConfigs(uint64 _fromStartBlockNumber) returns()
+func (_ConfigContract *ConfigContractTransactor) UnscheduleConfigs(opts *bind.TransactOpts, _fromStartBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.contract.Transact(opts, "unscheduleConfigs", _fromStartBlockNumber)
 }
 
-// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xae8708f0.
+// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xc9515c58.
 //
-// Solidity: function unscheduleConfigs(uint256 _fromStartBlockNumber) returns()
-func (_ConfigContract *ConfigContractSession) UnscheduleConfigs(_fromStartBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function unscheduleConfigs(uint64 _fromStartBlockNumber) returns()
+func (_ConfigContract *ConfigContractSession) UnscheduleConfigs(_fromStartBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.UnscheduleConfigs(&_ConfigContract.TransactOpts, _fromStartBlockNumber)
 }
 
-// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xae8708f0.
+// UnscheduleConfigs is a paid mutator transaction binding the contract method 0xc9515c58.
 //
-// Solidity: function unscheduleConfigs(uint256 _fromStartBlockNumber) returns()
-func (_ConfigContract *ConfigContractTransactorSession) UnscheduleConfigs(_fromStartBlockNumber *big.Int) (*types.Transaction, error) {
+// Solidity: function unscheduleConfigs(uint64 _fromStartBlockNumber) returns()
+func (_ConfigContract *ConfigContractTransactorSession) UnscheduleConfigs(_fromStartBlockNumber uint64) (*types.Transaction, error) {
 	return _ConfigContract.Contract.UnscheduleConfigs(&_ConfigContract.TransactOpts, _fromStartBlockNumber)
 }
 
@@ -1013,13 +1013,13 @@ func (it *ConfigContractConfigScheduledIterator) Close() error {
 
 // ConfigContractConfigScheduled represents a ConfigScheduled event raised by the ConfigContract contract.
 type ConfigContractConfigScheduled struct {
-	NumConfigs *big.Int
+	NumConfigs uint64
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterConfigScheduled is a free log retrieval operation binding the contract event 0x70314c9d999fae58774cd9cfa5d4b3bb270ce8d953911e74bbae0b0ad7f40890.
+// FilterConfigScheduled is a free log retrieval operation binding the contract event 0x38889ef980014448a73b6e5dc5579ba1a4b7bd213a586b3f4832351448c48ae6.
 //
-// Solidity: event ConfigScheduled(uint256 numConfigs)
+// Solidity: event ConfigScheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) FilterConfigScheduled(opts *bind.FilterOpts) (*ConfigContractConfigScheduledIterator, error) {
 
 	logs, sub, err := _ConfigContract.contract.FilterLogs(opts, "ConfigScheduled")
@@ -1029,9 +1029,9 @@ func (_ConfigContract *ConfigContractFilterer) FilterConfigScheduled(opts *bind.
 	return &ConfigContractConfigScheduledIterator{contract: _ConfigContract.contract, event: "ConfigScheduled", logs: logs, sub: sub}, nil
 }
 
-// WatchConfigScheduled is a free log subscription operation binding the contract event 0x70314c9d999fae58774cd9cfa5d4b3bb270ce8d953911e74bbae0b0ad7f40890.
+// WatchConfigScheduled is a free log subscription operation binding the contract event 0x38889ef980014448a73b6e5dc5579ba1a4b7bd213a586b3f4832351448c48ae6.
 //
-// Solidity: event ConfigScheduled(uint256 numConfigs)
+// Solidity: event ConfigScheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) WatchConfigScheduled(opts *bind.WatchOpts, sink chan<- *ConfigContractConfigScheduled) (event.Subscription, error) {
 
 	logs, sub, err := _ConfigContract.contract.WatchLogs(opts, "ConfigScheduled")
@@ -1066,9 +1066,9 @@ func (_ConfigContract *ConfigContractFilterer) WatchConfigScheduled(opts *bind.W
 	}), nil
 }
 
-// ParseConfigScheduled is a log parse operation binding the contract event 0x70314c9d999fae58774cd9cfa5d4b3bb270ce8d953911e74bbae0b0ad7f40890.
+// ParseConfigScheduled is a log parse operation binding the contract event 0x38889ef980014448a73b6e5dc5579ba1a4b7bd213a586b3f4832351448c48ae6.
 //
-// Solidity: event ConfigScheduled(uint256 numConfigs)
+// Solidity: event ConfigScheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) ParseConfigScheduled(log types.Log) (*ConfigContractConfigScheduled, error) {
 	event := new(ConfigContractConfigScheduled)
 	if err := _ConfigContract.contract.UnpackLog(event, "ConfigScheduled", log); err != nil {
@@ -1146,13 +1146,13 @@ func (it *ConfigContractConfigUnscheduledIterator) Close() error {
 
 // ConfigContractConfigUnscheduled represents a ConfigUnscheduled event raised by the ConfigContract contract.
 type ConfigContractConfigUnscheduled struct {
-	NumConfigs *big.Int
+	NumConfigs uint64
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterConfigUnscheduled is a free log retrieval operation binding the contract event 0x41c1b23350f511849a3106d2288e79ceb1bb67dfa351403abe1917144b2db9ee.
+// FilterConfigUnscheduled is a free log retrieval operation binding the contract event 0x202adac5e4f5fa65a6e6ec3afc99da8986c020c2799f4e0aee50552a05a0bfdf.
 //
-// Solidity: event ConfigUnscheduled(uint256 numConfigs)
+// Solidity: event ConfigUnscheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) FilterConfigUnscheduled(opts *bind.FilterOpts) (*ConfigContractConfigUnscheduledIterator, error) {
 
 	logs, sub, err := _ConfigContract.contract.FilterLogs(opts, "ConfigUnscheduled")
@@ -1162,9 +1162,9 @@ func (_ConfigContract *ConfigContractFilterer) FilterConfigUnscheduled(opts *bin
 	return &ConfigContractConfigUnscheduledIterator{contract: _ConfigContract.contract, event: "ConfigUnscheduled", logs: logs, sub: sub}, nil
 }
 
-// WatchConfigUnscheduled is a free log subscription operation binding the contract event 0x41c1b23350f511849a3106d2288e79ceb1bb67dfa351403abe1917144b2db9ee.
+// WatchConfigUnscheduled is a free log subscription operation binding the contract event 0x202adac5e4f5fa65a6e6ec3afc99da8986c020c2799f4e0aee50552a05a0bfdf.
 //
-// Solidity: event ConfigUnscheduled(uint256 numConfigs)
+// Solidity: event ConfigUnscheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) WatchConfigUnscheduled(opts *bind.WatchOpts, sink chan<- *ConfigContractConfigUnscheduled) (event.Subscription, error) {
 
 	logs, sub, err := _ConfigContract.contract.WatchLogs(opts, "ConfigUnscheduled")
@@ -1199,9 +1199,9 @@ func (_ConfigContract *ConfigContractFilterer) WatchConfigUnscheduled(opts *bind
 	}), nil
 }
 
-// ParseConfigUnscheduled is a log parse operation binding the contract event 0x41c1b23350f511849a3106d2288e79ceb1bb67dfa351403abe1917144b2db9ee.
+// ParseConfigUnscheduled is a log parse operation binding the contract event 0x202adac5e4f5fa65a6e6ec3afc99da8986c020c2799f4e0aee50552a05a0bfdf.
 //
-// Solidity: event ConfigUnscheduled(uint256 numConfigs)
+// Solidity: event ConfigUnscheduled(uint64 numConfigs)
 func (_ConfigContract *ConfigContractFilterer) ParseConfigUnscheduled(log types.Log) (*ConfigContractConfigUnscheduled, error) {
 	event := new(ConfigContractConfigUnscheduled)
 	if err := _ConfigContract.contract.UnpackLog(event, "ConfigUnscheduled", log); err != nil {
@@ -1508,16 +1508,16 @@ func (_Context *ContextTransactorRaw) Transact(opts *bind.TransactOpts, method s
 }
 
 // KeyBroadcastContractABI is the input ABI used to generate the binding from.
-const KeyBroadcastContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_configContractAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"batchIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"encryptionKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"signerIndices\",\"type\":\"uint256[]\"},{\"indexed\":false,\"internalType\":\"bytes[]\",\"name\":\"signatures\",\"type\":\"bytes[]\"}],\"name\":\"EncryptionKeyBroadcasted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_keyperIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_batchIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_encryptionKey\",\"type\":\"bytes32\"},{\"internalType\":\"uint256[]\",\"name\":\"_signerIndices\",\"type\":\"uint256[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_signatures\",\"type\":\"bytes[]\"}],\"name\":\"broadcastEncryptionKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const KeyBroadcastContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_configContractAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"batchIndex\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"encryptionKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"signerIndices\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes[]\",\"name\":\"signatures\",\"type\":\"bytes[]\"}],\"name\":\"EncryptionKeyBroadcasted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_keyperIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"_encryptionKey\",\"type\":\"bytes32\"},{\"internalType\":\"uint64[]\",\"name\":\"_signerIndices\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_signatures\",\"type\":\"bytes[]\"}],\"name\":\"broadcastEncryptionKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // KeyBroadcastContractFuncSigs maps the 4-byte function signature to its string representation.
 var KeyBroadcastContractFuncSigs = map[string]string{
-	"4e48f976": "broadcastEncryptionKey(uint256,uint256,bytes32,uint256[],bytes[])",
+	"2712860b": "broadcastEncryptionKey(uint64,uint64,bytes32,uint64[],bytes[])",
 	"bf66a182": "configContract()",
 }
 
 // KeyBroadcastContractBin is the compiled bytecode used for deploying new contracts.
-var KeyBroadcastContractBin = "0x608060405234801561001057600080fd5b506040516106cf3803806106cf83398101604081905261002f91610054565b600080546001600160a01b0319166001600160a01b0392909216919091179055610082565b600060208284031215610065578081fd5b81516001600160a01b038116811461007b578182fd5b9392505050565b61063e806100916000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80634e48f9761461003b578063bf66a18214610050575b600080fd5b61004e610049366004610424565b61006e565b005b61005861018f565b60405161006591906105c4565b60405180910390f35b61007661019e565b60005460405163a81b2f8d60e01b81526001600160a01b039091169063a81b2f8d906100a6908a906004016105d8565b60006040518083038186803b1580156100be57600080fd5b505afa1580156100d2573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526100fa9190810190610321565b9050806040015151881061010d57600080fd5b8060400151888151811061011d57fe5b60200260200101516001600160a01b0316336001600160a01b03161461014257600080fd5b7f49cb4b2fc5d10bf803d7f52c3e7c4c6bc3e7c6aa813792f7eec1638fdf8465c73388888888888860405161017d97969594939291906104d8565b60405180910390a15050505050505050565b6000546001600160a01b031681565b604051806101800160405280600081526020016000815260200160608152602001600081526020016000815260200160008152602001600081526020016000815260200160006001600160a01b0316815260200160006001600160a01b0316815260200160006001600160e01b0319168152602001600081525090565b80516001600160a01b038116811461023257600080fd5b92915050565b600082601f830112610248578081fd5b815167ffffffffffffffff81111561025e578182fd5b602080820261026e8282016105e1565b8381529350818401858301828701840188101561028a57600080fd5b600092505b848310156102b5576102a1888261021b565b82526001929092019190830190830161028f565b505050505092915050565b60008083601f8401126102d1578081fd5b50813567ffffffffffffffff8111156102e8578182fd5b602083019150836020808302850101111561030257600080fd5b9250929050565b80516001600160e01b03198116811461023257600080fd5b600060208284031215610332578081fd5b815167ffffffffffffffff80821115610349578283fd5b818401915061018080838703121561035f578384fd5b610368816105e1565b90508251815260208301516020820152604083015182811115610389578485fd5b61039587828601610238565b604083015250606083015160608201526080830151608082015260a083015160a082015260c083015160c082015260e083015160e082015261010091506103de8683850161021b565b8282015261012091506103f38683850161021b565b82820152610140915061040886838501610309565b9181019190915261016091820151918101919091529392505050565b600080600080600080600060a0888a03121561043e578283fd5b873596506020880135955060408801359450606088013567ffffffffffffffff8082111561046a578485fd5b6104768b838c016102c0565b909650945060808a013591508082111561048e578384fd5b5061049b8a828b016102c0565b989b979a50959850939692959293505050565b60008284528282602086013780602084860101526020601f19601f85011685010190509392505050565b6001600160a01b038816815260208082018890526040820187905260a06060830181905282018590526000906001600160fb1b03861115610517578182fd5b808602808860c0860137830183810360c090810160808601528101859052818502810160e090810190820187855b888110156105b15784840360df190183528135368b9003601e1901811261056a578788fd5b8a01803567ffffffffffffffff811115610582578889fd5b8036038c1315610590578889fd5b61059d86828a85016104ae565b955050509185019190850190600101610545565b50919d9c50505050505050505050505050565b6001600160a01b0391909116815260200190565b90815260200190565b60405181810167ffffffffffffffff8111828210171561060057600080fd5b60405291905056fea264697066735822122019b732495ba7a2d8394536f2ca839612e3446d43fac683f40126ad205014ca5064736f6c63430007010033"
+var KeyBroadcastContractBin = "0x608060405234801561001057600080fd5b5060405161074238038061074283398101604081905261002f91610054565b600080546001600160a01b0319166001600160a01b0392909216919091179055610082565b600060208284031215610065578081fd5b81516001600160a01b038116811461007b578182fd5b9392505050565b6106b1806100916000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80632712860b1461003b578063bf66a18214610050575b600080fd5b61004e61004936600461046b565b61006e565b005b6100586101a3565b6040516100659190610612565b60405180910390f35b6100766101b2565b60005460405163700465b160e11b81526001600160a01b039091169063e008cb62906100a6908a90600401610626565b60006040518083038186803b1580156100be57600080fd5b505afa1580156100d2573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526100fa9190810190610328565b90508060400151518867ffffffffffffffff161061011757600080fd5b80604001518867ffffffffffffffff168151811061013157fe5b60200260200101516001600160a01b0316336001600160a01b03161461015657600080fd5b7f4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a338888888888886040516101919796959493929190610507565b60405180910390a15050505050505050565b6000546001600160a01b031681565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b80516001600160a01b038116811461022e57600080fd5b92915050565b600082601f830112610244578081fd5b815167ffffffffffffffff81111561025a578182fd5b602080820261026a82820161063b565b8381529350818401858301828701840188101561028657600080fd5b600092505b848310156102b15761029d8882610217565b82526001929092019190830190830161028b565b505050505092915050565b60008083601f8401126102cd578081fd5b50813567ffffffffffffffff8111156102e4578182fd5b60208301915083602080830285010111156102fe57600080fd5b9250929050565b80516001600160e01b03198116811461022e57600080fd5b805161022e81610662565b600060208284031215610339578081fd5b815167ffffffffffffffff80821115610350578283fd5b8184019150610180808387031215610366578384fd5b61036f8161063b565b905061037b868461031d565b815261038a866020850161031d565b60208201526040830151828111156103a0578485fd5b6103ac87828601610234565b6040830152506103bf866060850161031d565b60608201526103d1866080850161031d565b60808201526103e38660a0850161031d565b60a08201526103f58660c0850161031d565b60c08201526104078660e0850161031d565b60e0820152610100915061041d86838501610217565b82820152610120915061043286838501610217565b82820152610140915061044786838501610305565b82820152610160915061045c8683850161031d565b91810191909152949350505050565b600080600080600080600060a0888a031215610485578283fd5b873561049081610662565b965060208801356104a081610662565b955060408801359450606088013567ffffffffffffffff808211156104c3578485fd5b6104cf8b838c016102bc565b909650945060808a01359150808211156104e7578384fd5b506104f48a828b016102bc565b989b979a50959850939692959293505050565b6001600160a01b038816815267ffffffffffffffff8781166020808401919091526040830188905260a060608401819052830186905260009187919060c08501845b8981101561057057843561055c81610662565b831682529383019390830190600101610549565b50858103608087015286815282810193508287028101830188865b898110156105fe57601f19808585030188528235601e198d36030181126105b057898afd5b8c018035878111156105c0578a8bfd5b8036038e13156105ce578a8bfd5b808652808983018a88013785810189018b905298880198601f01909116909301860192509085019060010161058b565b50909e9d5050505050505050505050505050565b6001600160a01b0391909116815260200190565b67ffffffffffffffff91909116815260200190565b60405181810167ffffffffffffffff8111828210171561065a57600080fd5b604052919050565b67ffffffffffffffff8116811461067857600080fd5b5056fea26469706673582212209e84c69b46a99f09a96cc90c34146d3f835efdccc38492459fb41470fd17afff64736f6c63430007010033"
 
 // DeployKeyBroadcastContract deploys a new Ethereum contract, binding an instance of KeyBroadcastContract to it.
 func DeployKeyBroadcastContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configContractAddress common.Address) (common.Address, *types.Transaction, *KeyBroadcastContract, error) {
@@ -1701,24 +1701,24 @@ func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) ConfigContract()
 	return _KeyBroadcastContract.Contract.ConfigContract(&_KeyBroadcastContract.CallOpts)
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x4e48f976.
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
 //
-// Solidity: function broadcastEncryptionKey(uint256 _keyperIndex, uint256 _batchIndex, bytes32 _encryptionKey, uint256[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractTransactor) BroadcastEncryptionKey(opts *bind.TransactOpts, _keyperIndex *big.Int, _batchIndex *big.Int, _encryptionKey [32]byte, _signerIndices []*big.Int, _signatures [][]byte) (*types.Transaction, error) {
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactor) BroadcastEncryptionKey(opts *bind.TransactOpts, _keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
 	return _KeyBroadcastContract.contract.Transact(opts, "broadcastEncryptionKey", _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x4e48f976.
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
 //
-// Solidity: function broadcastEncryptionKey(uint256 _keyperIndex, uint256 _batchIndex, bytes32 _encryptionKey, uint256[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractSession) BroadcastEncryptionKey(_keyperIndex *big.Int, _batchIndex *big.Int, _encryptionKey [32]byte, _signerIndices []*big.Int, _signatures [][]byte) (*types.Transaction, error) {
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
 	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x4e48f976.
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
 //
-// Solidity: function broadcastEncryptionKey(uint256 _keyperIndex, uint256 _batchIndex, bytes32 _encryptionKey, uint256[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractTransactorSession) BroadcastEncryptionKey(_keyperIndex *big.Int, _batchIndex *big.Int, _encryptionKey [32]byte, _signerIndices []*big.Int, _signatures [][]byte) (*types.Transaction, error) {
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactorSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
 	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
 }
 
@@ -1792,16 +1792,16 @@ func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Close() error {
 // KeyBroadcastContractEncryptionKeyBroadcasted represents a EncryptionKeyBroadcasted event raised by the KeyBroadcastContract contract.
 type KeyBroadcastContractEncryptionKeyBroadcasted struct {
 	Sender        common.Address
-	BatchIndex    *big.Int
+	BatchIndex    uint64
 	EncryptionKey [32]byte
-	SignerIndices []*big.Int
+	SignerIndices []uint64
 	Signatures    [][]byte
 	Raw           types.Log // Blockchain specific contextual infos
 }
 
-// FilterEncryptionKeyBroadcasted is a free log retrieval operation binding the contract event 0x49cb4b2fc5d10bf803d7f52c3e7c4c6bc3e7c6aa813792f7eec1638fdf8465c7.
+// FilterEncryptionKeyBroadcasted is a free log retrieval operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint256 batchIndex, bytes32 encryptionKey, uint256[] signerIndices, bytes[] signatures)
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
 func (_KeyBroadcastContract *KeyBroadcastContractFilterer) FilterEncryptionKeyBroadcasted(opts *bind.FilterOpts) (*KeyBroadcastContractEncryptionKeyBroadcastedIterator, error) {
 
 	logs, sub, err := _KeyBroadcastContract.contract.FilterLogs(opts, "EncryptionKeyBroadcasted")
@@ -1811,9 +1811,9 @@ func (_KeyBroadcastContract *KeyBroadcastContractFilterer) FilterEncryptionKeyBr
 	return &KeyBroadcastContractEncryptionKeyBroadcastedIterator{contract: _KeyBroadcastContract.contract, event: "EncryptionKeyBroadcasted", logs: logs, sub: sub}, nil
 }
 
-// WatchEncryptionKeyBroadcasted is a free log subscription operation binding the contract event 0x49cb4b2fc5d10bf803d7f52c3e7c4c6bc3e7c6aa813792f7eec1638fdf8465c7.
+// WatchEncryptionKeyBroadcasted is a free log subscription operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint256 batchIndex, bytes32 encryptionKey, uint256[] signerIndices, bytes[] signatures)
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
 func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBroadcasted(opts *bind.WatchOpts, sink chan<- *KeyBroadcastContractEncryptionKeyBroadcasted) (event.Subscription, error) {
 
 	logs, sub, err := _KeyBroadcastContract.contract.WatchLogs(opts, "EncryptionKeyBroadcasted")
@@ -1848,9 +1848,9 @@ func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBro
 	}), nil
 }
 
-// ParseEncryptionKeyBroadcasted is a log parse operation binding the contract event 0x49cb4b2fc5d10bf803d7f52c3e7c4c6bc3e7c6aa813792f7eec1638fdf8465c7.
+// ParseEncryptionKeyBroadcasted is a log parse operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint256 batchIndex, bytes32 encryptionKey, uint256[] signerIndices, bytes[] signatures)
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
 func (_KeyBroadcastContract *KeyBroadcastContractFilterer) ParseEncryptionKeyBroadcasted(log types.Log) (*KeyBroadcastContractEncryptionKeyBroadcasted, error) {
 	event := new(KeyBroadcastContractEncryptionKeyBroadcasted)
 	if err := _KeyBroadcastContract.contract.UnpackLog(event, "EncryptionKeyBroadcasted", log); err != nil {

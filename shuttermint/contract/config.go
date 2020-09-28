@@ -29,12 +29,12 @@ func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 }
 
 func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
-	batchSpan := bc.BatchSpan.Uint64()
-	startBatchIndex := bc.StartBatchIndex.Uint64()
+	batchSpan := bc.BatchSpan
+	startBatchIndex := bc.StartBatchIndex
 	if batchIndex < startBatchIndex {
 		return BatchParams{}, fmt.Errorf("bad parameters: %d %d", batchIndex, startBatchIndex)
 	}
-	startBlock := bc.StartBlockNumber.Uint64() + batchSpan*(batchIndex-startBatchIndex)
+	startBlock := bc.StartBlockNumber + batchSpan*(batchIndex-startBatchIndex)
 	endBlock := startBlock + batchSpan
 	return BatchParams{
 		BatchIndex:  batchIndex,
@@ -46,7 +46,7 @@ func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 
 // QueryBatchParams queries the config contract for the batch parameters of the given batch index.
 func (cc *ConfigContract) QueryBatchParams(opts *bind.CallOpts, batchIndex uint64) (BatchParams, error) {
-	bc, err := cc.GetConfig(opts, big.NewInt(0).SetUint64(batchIndex))
+	bc, err := cc.GetConfig(opts, batchIndex)
 	if err != nil {
 		return BatchParams{}, err
 	}
@@ -55,24 +55,23 @@ func (cc *ConfigContract) QueryBatchParams(opts *bind.CallOpts, batchIndex uint6
 
 // NextBatchIndex determines the next batch index to be started after the given block number.
 func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
-	_numConfigs, err := cc.NumConfigs(nil)
+	numConfigs, err := cc.NumConfigs(nil)
 	if err != nil {
 		return 0, err
 	}
-	numConfigs := _numConfigs.Int64()
 	for i := numConfigs - 1; i >= 0; i-- {
-		cfg, err := cc.Configs(nil, big.NewInt(i))
+		cfg, err := cc.Configs(nil, big.NewInt(0).SetUint64(i))
 		if err != nil {
 			return 0, err
 		}
 
-		startBlockNumber := cfg.StartBlockNumber.Uint64()
-		batchSpan := cfg.BatchSpan.Uint64()
+		startBlockNumber := cfg.StartBlockNumber
+		batchSpan := cfg.BatchSpan
 		if batchSpan == 0 {
-			return cfg.StartBatchIndex.Uint64(), nil
+			return cfg.StartBatchIndex, nil
 		}
 		if startBlockNumber <= blockNumber {
-			next := cfg.StartBatchIndex.Uint64() + (blockNumber-startBlockNumber+batchSpan-1)/batchSpan
+			next := cfg.StartBatchIndex + (blockNumber-startBlockNumber+batchSpan-1)/batchSpan
 			return next, nil
 		}
 	}
@@ -83,18 +82,13 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint64) ([]common.Address, error) {
 	var keypers []common.Address
 
-	configIndexBig := big.NewInt(0).SetUint64(configIndex)
-
-	numKeypers, err := cc.ConfigNumKeypers(opts, configIndexBig)
+	numKeypers, err := cc.ConfigNumKeypers(opts, configIndex)
 	if err != nil {
 		return keypers, err
 	}
-	if !numKeypers.IsUint64() {
-		return keypers, fmt.Errorf("number of keypers too big: %d", numKeypers)
-	}
 
-	for i := uint64(0); i < numKeypers.Uint64(); i++ {
-		keyper, err := cc.ConfigKeypers(opts, configIndexBig, big.NewInt(0).SetUint64(i))
+	for i := uint64(0); i < numKeypers; i++ {
+		keyper, err := cc.ConfigKeypers(opts, configIndex, i)
 		if err != nil {
 			return keypers, err
 		}

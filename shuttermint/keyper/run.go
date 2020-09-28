@@ -170,7 +170,7 @@ func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]Encryptio
 		select {
 		case ev := <-batch.encryptionKeySignatureAdded:
 			events = append(events, ev)
-			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold.Int64()) {
+			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold) {
 				return events, nil
 			}
 		case <-batch.endBlockSeen:

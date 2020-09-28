@@ -2,8 +2,6 @@ package contract
 
 // This file adds some custom methods to the abigen generated KeyBroadcastContract class
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -19,18 +17,12 @@ func (kbc *KeyBroadcastContract) BroadcastEncryptionKey2(
 	encryptionKeySized := [32]byte{}
 	copy(encryptionKeySized[:], encryptionKey[:32])
 
-	signerIndicesBig := []*big.Int{}
-	for _, signerIndex := range signerIndices {
-		signerIndexBig := big.NewInt(int64(signerIndex))
-		signerIndicesBig = append(signerIndicesBig, signerIndexBig)
-	}
-
 	return kbc.BroadcastEncryptionKey(
 		auth,
-		big.NewInt(int64(keyperIndex)),
-		big.NewInt(int64(batchIndex)),
+		keyperIndex,
+		batchIndex,
 		encryptionKeySized,
-		signerIndicesBig,
+		signerIndices,
 		signatures,
 	)
 }

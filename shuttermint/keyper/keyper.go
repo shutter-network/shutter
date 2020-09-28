@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
 	"strings"
 	"time"
 
@@ -177,12 +176,12 @@ func (kpr *Keyper) watchMainChainLogs() error {
 
 // findStartedBatchConfigs finds the indexes of the BatchConfigs, which started. It removes them
 // from the scheduledBatchConfigs map.
-func (kpr *Keyper) findStartedBatchConfigs(blockNumber *big.Int) []uint64 {
+func (kpr *Keyper) findStartedBatchConfigs(blockNumber uint64) []uint64 {
 	kpr.Lock()
 	defer kpr.Unlock()
 	var res []uint64
 	for configIndex, bc := range kpr.scheduledBatchConfigs {
-		if blockNumber.Cmp(bc.StartBlockNumber) >= 0 {
+		if blockNumber >= bc.StartBlockNumber {
 			res = append(res, configIndex)
 			delete(kpr.scheduledBatchConfigs, configIndex)
 		}
@@ -191,7 +190,7 @@ func (kpr *Keyper) findStartedBatchConfigs(blockNumber *big.Int) []uint64 {
 }
 
 func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
-	for _, configIndex := range kpr.findStartedBatchConfigs(header.Number) {
+	for _, configIndex := range kpr.findStartedBatchConfigs(header.Number.Uint64()) {
 		msg := NewBatchConfigStarted(configIndex)
 		err := kpr.ms.SendMessage(msg)
 		if err == nil {
@@ -228,14 +227,14 @@ func (kpr *Keyper) dispatchMainChainLog(l types.Log) {
 }
 
 func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigScheduled) {
-	index := ev.NumConfigs.Uint64() - 1
+	index := ev.NumConfigs - 1
 	config, err := kpr.configContract.GetConfigByIndex(nil, index)
 	if err != nil {
 		log.Printf("Failed to fetch config from main chain to vote on it: %v", err)
 		return
 	}
 
-	bc := NewBatchConfig(config.StartBatchIndex.Uint64(), config.Keypers, config.Threshold.Uint64())
+	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold)
 	err = kpr.ms.SendMessage(bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)

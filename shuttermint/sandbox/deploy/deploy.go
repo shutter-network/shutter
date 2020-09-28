@@ -77,7 +77,12 @@ var scheduleCmd = &cobra.Command{
 			log.Fatalf("Invalid config contract address %s", scheduleFlags.ConfigContractAddress)
 		}
 
-		schedule(configContractAddress, scheduleFlags.StartBatchIndex, scheduleFlags.BatchSpan, scheduleFlags.StartBlockNumber)
+		schedule(
+			configContractAddress,
+			uint64(scheduleFlags.StartBatchIndex),
+			uint64(scheduleFlags.BatchSpan),
+			uint64(scheduleFlags.StartBlockNumber),
+		)
 	},
 }
 
@@ -255,7 +260,8 @@ func deploy() {
 	configAddress, tx, _, err := contract.DeployConfigContract(
 		auth,
 		client,
-		big.NewInt(defaultConfigChangeHeadsUpBlocks))
+		defaultConfigChangeHeadsUpBlocks,
+	)
 	addTx()
 
 	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
@@ -279,7 +285,7 @@ func checkContractExists(configContractAddress common.Address) {
 	}
 }
 
-func schedule(configContractAddress common.Address, startBatchIndex int, batchSpan int, startBlockNumber int) {
+func schedule(configContractAddress common.Address, startBatchIndex uint64, batchSpan uint64, startBlockNumber uint64) {
 	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
 	if err != nil {
 		panic(err)
@@ -302,25 +308,24 @@ func schedule(configContractAddress common.Address, startBatchIndex int, batchSp
 		panic(err)
 	}
 
-	tx, err = cc.NextConfigSetStartBatchIndex(auth, big.NewInt(int64(startBatchIndex)))
+	tx, err = cc.NextConfigSetStartBatchIndex(auth, startBatchIndex)
 	addTx()
 
-	tx, err = cc.NextConfigSetBatchSpan(auth, big.NewInt(int64(batchSpan)))
+	tx, err = cc.NextConfigSetBatchSpan(auth, batchSpan)
 	addTx()
 
 	tx, err = cc.NextConfigAddKeypers(auth, makeKeypers())
 	addTx()
 
-	tx, err = cc.NextConfigSetThreshold(auth, big.NewInt(int64(threshold)))
+	tx, err = cc.NextConfigSetThreshold(auth, threshold)
 	addTx()
 
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
-	minStartBlockNumber := big.NewInt(0).Add(header.Number, big.NewInt(startBlockNumberOffset))
-	startBlockNumberBig := big.NewInt(int64(startBlockNumber))
-	if startBlockNumberBig.Cmp(minStartBlockNumber) < 1 {
+	minStartBlockNumber := header.Number.Uint64() + startBlockNumberOffset
+	if startBlockNumber < minStartBlockNumber {
 		log.Fatalf(
 			"Start block number %d is too close to current head %d (required offset %d)",
 			startBlockNumber,
@@ -328,7 +333,7 @@ func schedule(configContractAddress common.Address, startBatchIndex int, batchSp
 			startBlockNumberOffset,
 		)
 	}
-	tx, err = cc.NextConfigSetStartBlockNumber(auth, startBlockNumberBig)
+	tx, err = cc.NextConfigSetStartBlockNumber(auth, startBlockNumber)
 	addTx()
 
 	tx, err = cc.ScheduleNextConfig(auth)

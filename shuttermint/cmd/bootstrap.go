@@ -114,31 +114,22 @@ func bootstrap() {
 	if bootstrapFlags.BatchConfigIndex <= 0 {
 		log.Fatalf("Batch config index must be at least 1")
 	}
-	index := big.NewInt(int64(bootstrapFlags.BatchConfigIndex))
-	bc, err := configContract.Configs(opts, index)
+	indexBig := big.NewInt(int64(bootstrapFlags.BatchConfigIndex))
+	bc, err := configContract.Configs(opts, indexBig)
 	if err != nil {
 		log.Fatalf("Failed to fetch config at index %d: %v", bootstrapFlags.BatchConfigIndex, err)
 	}
 
-	if !bc.StartBatchIndex.IsUint64() {
-		log.Fatalf("StartBatchIndex (%d) of config at index %d is too big", bc.StartBatchIndex, index)
-	}
-	startBatchIndex := bc.StartBatchIndex.Uint64()
-	threshold := bc.Threshold.Uint64()
-	if big.NewInt(int64(threshold)).Cmp(bc.Threshold) != 0 {
-		log.Fatalf("Threshold (%d) of config at index %d is too big", bc.Threshold, index)
-	}
-
-	keypers, err := configContract.GetConfigKeypers(opts, index.Uint64())
+	keypers, err := configContract.GetConfigKeypers(opts, uint64(bootstrapFlags.BatchConfigIndex))
 	if err != nil {
 		log.Fatalf("Failed to fetch keyper set: %s", err)
 	}
 
 	ms := keyper.NewMessageSender(shmcl, signingKey)
 	message := keyper.NewBatchConfig(
-		startBatchIndex,
+		bc.StartBatchIndex,
 		keypers,
-		threshold,
+		bc.Threshold,
 	)
 
 	err = ms.SendMessage(message)
@@ -147,8 +138,8 @@ func bootstrap() {
 	}
 
 	log.Println("Submitted bootstrapping transaction")
-	log.Printf("Config index: %d", index)
-	log.Printf("StartBatchIndex: %d", startBatchIndex)
-	log.Printf("Threshold: %d", threshold)
+	log.Printf("Config index: %d", bootstrapFlags.BatchConfigIndex)
+	log.Printf("StartBatchIndex: %d", bc.StartBatchIndex)
+	log.Printf("Threshold: %d", bc.Threshold)
 	log.Printf("Num Keypers: %d", len(keypers))
 }
