@@ -56,6 +56,7 @@ type Keyper struct {
 	configContract        *contract.ConfigContract
 	scheduledBatchConfigs map[uint64]contract.BatchConfig
 	batches               map[uint64]*BatchState
+	checkedIn             bool
 	txs                   <-chan coretypes.ResultEvent
 	ctx                   context.Context
 	newHeaders            chan *types.Header // start new batches when new block headers arrive

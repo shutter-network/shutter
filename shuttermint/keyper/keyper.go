@@ -30,6 +30,7 @@ func NewKeyper(kc KeyperConfig) Keyper {
 		Config:                kc,
 		scheduledBatchConfigs: make(map[uint64]contract.BatchConfig),
 		batches:               make(map[uint64]*BatchState),
+		checkedIn:             false,
 		newHeaders:            make(chan *types.Header, newHeadersSize),
 	}
 }
@@ -40,6 +41,17 @@ func NewBatchConfigStarted(configIndex uint64) *shmsg.Message {
 		Payload: &shmsg.Message_BatchConfigStarted{
 			BatchConfigStarted: &shmsg.BatchConfigStarted{
 				BatchConfigIndex: configIndex,
+			},
+		},
+	}
+}
+
+// NewCheckIn creates a new CheckIn message
+func NewCheckIn(publicKey []byte) *shmsg.Message {
+	return &shmsg.Message{
+		Payload: &shmsg.Message_CheckIn{
+			CheckIn: &shmsg.CheckIn{
+				Pubkey: publicKey,
 			},
 		},
 	}
@@ -234,15 +246,42 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		return
 	}
 
+	func() {
+		kpr.Lock()
+		defer kpr.Unlock()
+		kpr.scheduledBatchConfigs[index] = config
+	}()
+
 	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold)
 	err = kpr.ms.SendMessage(bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
 
-	kpr.Lock()
-	defer kpr.Unlock()
-	kpr.scheduledBatchConfigs[index] = config
+	err = kpr.maybeSendCheckIn(config)
+	if err != nil {
+		log.Printf("Failed to send checkin message: %v", err)
+	}
+}
+
+func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
+	if kpr.checkedIn {
+		return nil
+	}
+
+	if _, isKeyper := config.KeyperIndex(kpr.Config.Address()); !isKeyper {
+		return nil
+	}
+
+	msg := NewCheckIn(make([]byte, 32)) // TODO: use actual key
+	err := kpr.ms.SendMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Check in message sent")
+	kpr.checkedIn = true
+	return nil
 }
 
 func (kpr *Keyper) dispatchTxs() error {
