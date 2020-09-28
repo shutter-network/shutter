@@ -76,24 +76,6 @@ type Keyper struct {
 	ms                    *MessageSender
 }
 
-// NewBatchParams creates a new BatchParams struct for the given BatchIndex
-// func NewBatchParams(batchIndex uint64) BatchParams {
-//	ts := int64(batchIndex) * int64(RoundInterval)
-
-//	pubstart := time.Unix(ts/int64(time.Second), ts%int64(time.Second))
-//	privstart := pubstart.Add(PrivateKeyDelay)
-//	return BatchParams{
-//		BatchIndex:                    batchIndex,
-//		PublicKeyGenerationStartTime:  pubstart,
-//		PrivateKeyGenerationStartTime: privstart,
-//	}
-// }
-
-// NextBatchIndex computes the BatchIndex for the next batch to be started
-// func NextBatchIndex(t time.Time) uint64 {
-//	return uint64((t.UnixNano() + int64(RoundInterval) - 1) / int64(RoundInterval))
-// }
-
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint
 type MessageSender struct {
 	rpcclient  client.Client
