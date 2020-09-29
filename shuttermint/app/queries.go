@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/protobuf/proto"
 )
@@ -28,8 +29,11 @@ func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery
 		return makeQueryErrorResponse("invalid request url")
 	}
 
-	if requestURL.Path == "/configs" {
+	switch requestURL.Path {
+	case "/configs":
 		return app.queryBatchConfig(requestURL.Query())
+	case "/checkedIn":
+		return app.queryCheckedIn(requestURL.Query())
 	}
 	return makeQueryErrorResponse("unknown method")
 }
@@ -55,5 +59,27 @@ func (app *ShutterApp) queryBatchConfig(vs url.Values) abcitypes.ResponseQuery {
 	return abcitypes.ResponseQuery{
 		Code:  0,
 		Value: configBytes,
+	}
+}
+
+func (app *ShutterApp) queryCheckedIn(vs url.Values) abcitypes.ResponseQuery {
+	addressStr := vs.Get("address")
+	if addressStr == "" {
+		return makeQueryErrorResponse("missing address parameter")
+	}
+
+	address := common.HexToAddress(addressStr)
+	if addressStr != address.Hex() {
+		return makeQueryErrorResponse("invalid address")
+	}
+
+	var resultByte byte
+	if _, ok := app.Identities[address]; ok {
+		resultByte = 1
+	}
+
+	return abcitypes.ResponseQuery{
+		Code:  0,
+		Value: []byte{resultByte},
 	}
 }

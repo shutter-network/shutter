@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -110,4 +111,30 @@ func TestQueryConfig(t *testing.T) {
 			require.Equal(t, address, testCase.config.Keypers[i])
 		}
 	}
+}
+
+func TestQueryCheckedIn(t *testing.T) {
+	app := NewShutterApp()
+
+	req := abcitypes.RequestQuery{
+		Path: "/checkedIn?address=asdf",
+	}
+	res := app.Query(req)
+	require.Equal(t, uint32(1), res.Code)
+
+	address := common.BigToAddress(big.NewInt(0))
+	req = abcitypes.RequestQuery{
+		Path: fmt.Sprintf("/checkedIn?address=%s", address.Hex()),
+	}
+	res = app.Query(req)
+	require.Equal(t, uint32(0), res.Code)
+	require.Equal(t, res.Value, []byte{0})
+
+	app.Identities[address] = ValidatorPubkey{Data: []byte{}}
+	req = abcitypes.RequestQuery{
+		Path: fmt.Sprintf("/checkedIn?address=%s", address.Hex()),
+	}
+	res = app.Query(req)
+	require.Equal(t, uint32(0), res.Code)
+	require.Equal(t, res.Value, []byte{1})
 }
