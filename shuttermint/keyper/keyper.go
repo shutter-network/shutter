@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -19,6 +20,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -64,6 +66,16 @@ func (kpr *Keyper) init() error {
 		return err
 	}
 	kpr.ethcl = ethcl
+
+	shmcl, err := http.New(kpr.Config.ShuttermintURL, "/websocket")
+	if err != nil {
+		return errors.Wrapf(err, "create shuttermint client at %s", kpr.Config.ShuttermintURL)
+	}
+	kpr.shmcl = shmcl
+
+	ms := NewMessageSender(kpr.shmcl, kpr.Config.SigningKey)
+	kpr.ms = &ms
+
 	group, ctx := errgroup.WithContext(context.Background())
 	kpr.ctx = ctx
 	kpr.group = group
@@ -88,24 +100,20 @@ func (kpr *Keyper) Run() error {
 		return err
 	}
 
-	var shmcl client.Client
-	shmcl, err = http.New(kpr.Config.ShuttermintURL, "/websocket")
-	if err != nil {
-		return errors.Wrapf(err, "create shuttermint client at %s", kpr.Config.ShuttermintURL)
-	}
-
-	err = shmcl.Start()
+	err = kpr.shmcl.Start()
 	if err != nil {
 		return errors.Wrapf(err, "start shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
-	defer shmcl.Stop()
-
-	ms := NewMessageSender(shmcl, kpr.Config.SigningKey)
-	kpr.ms = &ms
+	defer kpr.shmcl.Stop()
 
 	query := "tx.height > 3"
-	txs, err := shmcl.Subscribe(kpr.ctx, "test-client", query)
+	txs, err := kpr.shmcl.Subscribe(kpr.ctx, "test-client", query)
 	kpr.txs = txs
+	if err != nil {
+		return err
+	}
+
+	err = kpr.startUp()
 	if err != nil {
 		return err
 	}
@@ -131,6 +139,63 @@ func (kpr *Keyper) checkEthereumWebsocketURL() error {
 		return err
 	}
 	return nil
+}
+
+func (kpr *Keyper) startUp() error {
+	startupHeader, err := kpr.ethcl.HeaderByNumber(kpr.ctx, nil)
+	if err != nil {
+		return err
+	}
+	opts := &bind.CallOpts{
+		BlockNumber: startupHeader.Number,
+		Context:     kpr.ctx,
+	}
+
+	err = kpr.doInitialCheckIn(opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
+	configs, err := kpr.configContract.CurrentAndFutureConfigs(opts, opts.BlockNumber.Uint64())
+	if err != nil {
+		return err
+	}
+
+	// Check if we are a keyper now or in some scheduled config. If not, no need to check in.
+	isKeyper := false
+	for _, config := range configs {
+		if config.IsKeyper(kpr.Config.Address()) {
+			isKeyper = true
+			break
+		}
+	}
+	if !isKeyper {
+		return nil
+	}
+
+	// Check that we're not already checked in. If not, no need to check in.
+	res, err := kpr.shmcl.ABCIQuery(fmt.Sprintf("/checkedIn?address=%s", kpr.Config.Address().Hex()), []byte{})
+	if err != nil {
+		return err
+	}
+	if res.Response.Code != 0 {
+		return fmt.Errorf("checkin query failed, not checking in")
+	}
+	checkedIn, err := app.ParseCheckInQueryResponseValue(res.Response.Value)
+	if err != nil {
+		return err
+	}
+
+	if checkedIn {
+		log.Println("already checked in")
+		kpr.checkedIn = true
+		return nil
+	}
+	return kpr.sendCheckIn()
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
@@ -265,6 +330,8 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 	}
 }
 
+// send check in if we aren't checked in already and if we are a member of the keyper set in the
+// given config.
 func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 	if kpr.checkedIn {
 		return nil
@@ -274,6 +341,10 @@ func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 		return nil
 	}
 
+	return kpr.sendCheckIn()
+}
+
+func (kpr *Keyper) sendCheckIn() error {
 	publicKey, ok := kpr.Config.ValidatorKey.Public().(ed25519.PublicKey)
 	if !ok {
 		panic("Failed to assert type")

@@ -55,6 +55,7 @@ type Keyper struct {
 
 	Config                KeyperConfig
 	ethcl                 *ethclient.Client
+	shmcl                 client.Client
 	configContract        *contract.ConfigContract
 	scheduledBatchConfigs map[uint64]contract.BatchConfig
 	batches               map[uint64]*BatchState

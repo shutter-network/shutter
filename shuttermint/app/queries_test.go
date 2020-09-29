@@ -138,3 +138,19 @@ func TestQueryCheckedIn(t *testing.T) {
 	require.Equal(t, uint32(0), res.Code)
 	require.Equal(t, res.Value, []byte{1})
 }
+
+func TestCheckInQueryResponseValueParsing(t *testing.T) {
+	b, err := ParseCheckInQueryResponseValue([]byte{})
+	require.NotNil(t, err)
+
+	b, err = ParseCheckInQueryResponseValue([]byte{0})
+	require.Nil(t, err)
+	require.False(t, b)
+
+	b, err = ParseCheckInQueryResponseValue([]byte{1})
+	require.Nil(t, err)
+	require.True(t, b)
+
+	b, err = ParseCheckInQueryResponseValue([]byte{2})
+	require.NotNil(t, err)
+}

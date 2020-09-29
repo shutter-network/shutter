@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -81,5 +82,20 @@ func (app *ShutterApp) queryCheckedIn(vs url.Values) abcitypes.ResponseQuery {
 	return abcitypes.ResponseQuery{
 		Code:  0,
 		Value: []byte{resultByte},
+	}
+}
+
+// ParseCheckInQueryResponseValue interprets the response value of the checkin query
+func ParseCheckInQueryResponseValue(v []byte) (bool, error) {
+	if len(v) != 1 {
+		return false, fmt.Errorf("Check in response must be single byte, got %d", len(v))
+	}
+	switch v[0] {
+	case 0:
+		return false, nil
+	case 1:
+		return true, nil
+	default:
+		return false, fmt.Errorf("Check in response byte must be either 0 or 1, got %v", v[0])
 	}
 }

@@ -28,6 +28,12 @@ func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	return 0, false
 }
 
+// IsKeyper returns true if the given address is part of the keyper set, otherwise false
+func (bc *BatchConfig) IsKeyper(address common.Address) bool {
+	_, isKeyper := bc.KeyperIndex(address)
+	return isKeyper
+}
+
 func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 	batchSpan := bc.BatchSpan
 	startBatchIndex := bc.StartBatchIndex
@@ -124,4 +130,31 @@ func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint
 		ExecutionTimeout:       config.ExecutionTimeout,
 		Keypers:                keypers,
 	}, nil
+}
+
+// CurrentAndFutureConfigs fetches the config that is active at the given block number as well as
+// all following ones. They will be ordered from oldest to newest.
+func (cc *ConfigContract) CurrentAndFutureConfigs(opts *bind.CallOpts, blockNumber uint64) ([]BatchConfig, error) {
+	emptyResult := []BatchConfig{}
+
+	numConfigs, err := cc.NumConfigs(opts)
+	if err != nil {
+		return emptyResult, err
+	}
+
+	configs := []BatchConfig{}
+	for i := numConfigs - 1; i >= 0; i-- {
+		config, err := cc.GetConfigByIndex(opts, i)
+		if err != nil {
+			return emptyResult, err
+		}
+
+		if config.StartBlockNumber < blockNumber {
+			break
+		}
+
+		configs = append([]BatchConfig{config}, configs...) // prepend
+	}
+
+	return configs, nil
 }
