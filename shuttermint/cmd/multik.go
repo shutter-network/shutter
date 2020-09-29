@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"log"
 	"time"
 
@@ -43,12 +44,17 @@ func multikMain() {
 
 	privateKey := sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1)
 
-	var keys [3]*ecdsa.PrivateKey
+	var signingKeys [3]*ecdsa.PrivateKey
+	var validatorKeys [3]ed25519.PrivateKey
 	var keypers [3]common.Address
 	for i := 0; i < 3; i++ {
 		k := sandbox.GanacheKey(i)
-		keys[i] = k
+		signingKeys[i] = k
 		keypers[i] = crypto.PubkeyToAddress(k.PublicKey)
+
+		validatorSeed := make([]byte, 32)
+		copy(keypers[i].Bytes(), validatorSeed)
+		validatorKeys[i] = ed25519.NewKeyFromSeed(validatorSeed)
 	}
 
 	ethcl, err := ethclient.Dial(baseConfig.EthereumURL)
@@ -78,15 +84,17 @@ func multikMain() {
 	}
 	log.Printf("Send new BatchConfig (start batch index %d)", startBatchIndex)
 	for i := 0; i < 3; i++ {
-		go func(key *ecdsa.PrivateKey) {
+		go func(signingKey *ecdsa.PrivateKey, validatorKey ed25519.PrivateKey) {
 			config := baseConfig
-			config.SigningKey = key
+			config.SigningKey = signingKey
+			config.ValidatorKey = validatorKey
+
 			kpr := keyper.NewKeyper(config)
 			err = kpr.Run()
 			if err != nil {
 				panic(err)
 			}
-		}(keys[i])
+		}(signingKeys[i], validatorKeys[i])
 	}
 	time.Sleep(time.Hour)
 }

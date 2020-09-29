@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -17,6 +19,7 @@ type RawKeyperConfig struct {
 	ShuttermintURL          string
 	EthereumURL             string
 	SigningKey              string
+	ValidatorSeed           string
 	ConfigContract          string
 	BatcherContract         string
 	KeyBroadcastingContract string
@@ -41,6 +44,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ShuttermintURL")
 	viper.BindEnv("EthereumURL")
 	viper.BindEnv("SigningKey")
+	viper.BindEnv("ValidatorSeed")
 	viper.BindEnv("ConfigContract")
 	viper.BindEnv("BatcherContract")
 	viper.BindEnv("KeyBroadcastingContract")
@@ -83,6 +87,15 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		return emptyConfig, fmt.Errorf("bad signing key: %w", err)
 	}
 
+	validatorSeed, err := hex.DecodeString(r.ValidatorSeed)
+	if err != nil {
+		return emptyConfig, fmt.Errorf("invalid validator seed: %w", err)
+	}
+	if len(validatorSeed) != ed25519.SeedSize {
+		return emptyConfig, fmt.Errorf("invalid validator seed length %d (must be %d)", len(validatorSeed), ed25519.SeedSize)
+	}
+	validatorKey := ed25519.NewKeyFromSeed(validatorSeed)
+
 	if !keyper.IsWebsocketURL(r.EthereumURL) {
 		return emptyConfig, fmt.Errorf("EthereumURL must start with ws:// or wss://")
 	}
@@ -108,6 +121,7 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		ShuttermintURL:                 r.ShuttermintURL,
 		EthereumURL:                    r.EthereumURL,
 		SigningKey:                     signingKey,
+		ValidatorKey:                   validatorKey,
 		ConfigContractAddress:          configContractAddress,
 		BatcherContractAddress:         batcherContractAddress,
 		KeyBroadcastingContractAddress: keyBroadcastingContractAddress,

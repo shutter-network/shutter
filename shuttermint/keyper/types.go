@@ -3,6 +3,7 @@ package keyper
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
 	"sync"
@@ -42,6 +43,7 @@ type KeyperConfig struct {
 	ShuttermintURL                 string
 	EthereumURL                    string
 	SigningKey                     *ecdsa.PrivateKey
+	ValidatorKey                   ed25519.PrivateKey
 	ConfigContractAddress          common.Address
 	BatcherContractAddress         common.Address
 	KeyBroadcastingContractAddress common.Address

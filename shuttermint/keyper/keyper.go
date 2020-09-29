@@ -2,6 +2,7 @@ package keyper
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"log"
 	"strings"
@@ -273,7 +274,11 @@ func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 		return nil
 	}
 
-	msg := NewCheckIn(make([]byte, 32)) // TODO: use actual key
+	publicKey, ok := kpr.Config.ValidatorKey.Public().(ed25519.PublicKey)
+	if !ok {
+		panic("Failed to assert type")
+	}
+	msg := NewCheckIn([]byte(publicKey))
 	err := kpr.ms.SendMessage(msg)
 	if err != nil {
 		return err
