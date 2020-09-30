@@ -219,6 +219,11 @@ func makeErrorResponse(msg string) abcitypes.ResponseDeliverTx {
 	}
 }
 
+func notAKeyper(sender common.Address) abcitypes.ResponseDeliverTx {
+	return makeErrorResponse(fmt.Sprintf(
+		"sender %s is not a keyper", sender.Hex()))
+}
+
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
 	bs := app.getBatchState(pkc.BatchIndex)
 	publicKeyBefore := bs.PublicKey
@@ -329,7 +334,7 @@ func (app *ShutterApp) deliverEncryptionKeyAttestation(
 	keyperIndex, ok := bs.Config.KeyperIndex(sender)
 	if !ok {
 		// this is already checked in AddEncryptionKeyAttestation, but no harm in handling it twice
-		return makeErrorResponse("not a keyper")
+		return notAKeyper(sender)
 	}
 
 	event := MakeEncryptionKeySignatureAddedEvent(keyperIndex, msg.BatchIndex, msg.Key, msg.Signature)
@@ -357,8 +362,7 @@ func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address)
 			"sender %s already checked in", sender.Hex()))
 	}
 	if !app.isKeyper(sender) {
-		return makeErrorResponse(fmt.Sprintf(
-			"sender %s is not a keyper", sender.Hex()))
+		return notAKeyper(sender)
 	}
 
 	pk, err := NewValidatorPubkey(msg.Pubkey)
