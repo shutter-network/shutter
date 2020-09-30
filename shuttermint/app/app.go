@@ -192,7 +192,6 @@ func (app *ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.Respo
 			log.Fatalf("InitChain: cannot handle validator keys: %s", err)
 		}
 		app.Validators = validators
-		fmt.Print("VAL", app.Validators)
 		app.Configs = []*BatchConfig{&bc}
 	} else if !reflect.DeepEqual(bc, *app.Configs[0]) {
 		log.Fatalf("Mismatch between stored app state and initial app state, stored=%+v initial=%+v", app.Configs[0], bc)
@@ -451,6 +450,9 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 }
 
 func (app *ShutterApp) LastConfig() *BatchConfig {
+	if len(app.Configs) == 0 {
+		panic("internal error: app.Configs is empty")
+	}
 	return app.Configs[len(app.Configs)-1]
 }
 
@@ -471,7 +473,7 @@ func (app *ShutterApp) makePowermap(keypers []common.Address) Powermap {
 
 // CurrentValidators returns a powermap of current validators.
 func (app *ShutterApp) CurrentValidators() Powermap {
-	for i := len(app.Configs); i >= 0; i-- {
+	for i := len(app.Configs) - 1; i >= 0; i-- {
 		if app.Configs[i].Started && app.Configs[i].ValidatorsUpdated {
 			return app.makePowermap(app.Configs[i].Keypers)
 		}
