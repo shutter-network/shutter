@@ -318,7 +318,7 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		kpr.scheduledBatchConfigs[index] = config
 	}()
 
-	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold)
+	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold, index)
 	err = kpr.ms.SendMessage(bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)

@@ -40,6 +40,7 @@ type BatchConfig struct {
 	StartBatchIndex uint64
 	Keypers         []common.Address
 	Threshold       uint64
+	ConfigIndex     uint64
 }
 
 // ConfigVoting is used to let the keypers vote on new BatchConfigs to be added

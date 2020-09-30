@@ -20,7 +20,7 @@ func SleepUntil(t time.Time) {
 }
 
 // NewBatchConfig creates a new BatchConfig with the given values wrapped in a shmsg.Message
-func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold uint64) *shmsg.Message {
+func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold, configIndex uint64) *shmsg.Message {
 	var addresses [][]byte
 	for _, k := range keypers {
 		addresses = append(addresses, k.Bytes())
@@ -31,6 +31,7 @@ func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold 
 				StartBatchIndex: startBatchIndex,
 				Keypers:         addresses,
 				Threshold:       threshold,
+				ConfigIndex:     configIndex,
 			},
 		},
 	}

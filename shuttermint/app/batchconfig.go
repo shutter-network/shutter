@@ -70,6 +70,7 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 		StartBatchIndex: m.StartBatchIndex,
 		Keypers:         keypers,
 		Threshold:       m.Threshold,
+		ConfigIndex:     m.ConfigIndex,
 	}
 	return bc, nil
 }

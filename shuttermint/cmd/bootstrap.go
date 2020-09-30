@@ -130,6 +130,7 @@ func bootstrap() {
 		bc.StartBatchIndex,
 		keypers,
 		bc.Threshold,
+		uint64(bootstrapFlags.BatchConfigIndex),
 	)
 
 	err = ms.SendMessage(message)

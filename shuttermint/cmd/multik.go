@@ -77,7 +77,7 @@ func multikMain() {
 	}
 
 	ms := keyper.NewMessageSender(shmcl, privateKey)
-	bc := keyper.NewBatchConfig(startBatchIndex, keypers[:], 2)
+	bc := keyper.NewBatchConfig(startBatchIndex, keypers[:], 2, 999999)
 	err = ms.SendMessage(bc)
 	if err != nil {
 		panic(err)
