@@ -89,11 +89,11 @@ type BatchState struct {
 // ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key
 // We use this is a map key, so don't use a byte slice
 type ValidatorPubkey struct {
-	ed25519pubkey string
+	Ed25519pubkey string
 }
 
 func (vp ValidatorPubkey) String() string {
-	return fmt.Sprintf("ed25519:%s", hex.EncodeToString([]byte(vp.ed25519pubkey)))
+	return fmt.Sprintf("ed25519:%s", hex.EncodeToString([]byte(vp.Ed25519pubkey)))
 }
 
 // Powermap maps a ValidatorPubkey to the validators voting power
@@ -105,7 +105,7 @@ func NewValidatorPubkey(pubkey []byte) (ValidatorPubkey, error) {
 	if len(pubkey) != ed25519.PublicKeySize {
 		return ValidatorPubkey{}, fmt.Errorf("pubkey must be 32 bytes")
 	}
-	return ValidatorPubkey{ed25519pubkey: string(pubkey)}, nil
+	return ValidatorPubkey{Ed25519pubkey: string(pubkey)}, nil
 }
 
 // ShutterApp holds our data structures used for the tendermint app.

@@ -63,7 +63,7 @@ func (pm Powermap) ValidatorUpdates() []abcitypes.ValidatorUpdate {
 			Power: p,
 			PubKey: abcitypes.PubKey{
 				Type: "ed25519",
-				Data: []byte(k.ed25519pubkey),
+				Data: []byte(k.Ed25519pubkey),
 			},
 		})
 	}

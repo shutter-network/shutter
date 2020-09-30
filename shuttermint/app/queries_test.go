@@ -130,7 +130,7 @@ func TestQueryCheckedIn(t *testing.T) {
 	require.Equal(t, uint32(0), res.Code)
 	require.Equal(t, []byte{0}, res.Value)
 
-	app.Identities[address] = ValidatorPubkey{ed25519pubkey: ""}
+	app.Identities[address] = ValidatorPubkey{Ed25519pubkey: ""}
 	req = abcitypes.RequestQuery{
 		Path: fmt.Sprintf("/checkedIn?address=%s", address.Hex()),
 	}

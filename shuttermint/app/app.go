@@ -45,7 +45,7 @@ func init() {
 
 // ABCIPubkey returns an abcitypes.PubKey struct suitable for updating the shuttermint validators
 func (vp ValidatorPubkey) ABCIPubkey() abcitypes.PubKey {
-	return abcitypes.PubKey{Type: "ed25519", Data: []byte(vp.ed25519pubkey)}
+	return abcitypes.PubKey{Type: "ed25519", Data: []byte(vp.Ed25519pubkey)}
 }
 
 // Visit https://github.com/tendermint/spec/blob/master/spec/abci/abci.md for more information on
