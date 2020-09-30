@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -84,9 +85,17 @@ type BatchState struct {
 }
 
 // ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key
+// We use this is a map key, so don't use a byte slice
 type ValidatorPubkey struct {
-	Data []byte
+	ed25519pubkey string
 }
+
+func (vp ValidatorPubkey) String() string {
+	return fmt.Sprintf("ed25519:%s", hex.EncodeToString([]byte(vp.ed25519pubkey)))
+}
+
+// Powermap maps a ValidatorPubkey to the validators voting power
+type Powermap map[ValidatorPubkey]int64
 
 // NewValidatorPubkey creates a new ValidatorPubkey from a 32 byte ed25519 raw pubkey. See
 // https://docs.tendermint.com/master/spec/abci/apps.html#validator-updates for more information
@@ -94,7 +103,7 @@ func NewValidatorPubkey(pubkey []byte) (ValidatorPubkey, error) {
 	if len(pubkey) != ed25519.PublicKeySize {
 		return ValidatorPubkey{}, fmt.Errorf("pubkey must be 32 bytes")
 	}
-	return ValidatorPubkey{Data: pubkey}, nil
+	return ValidatorPubkey{ed25519pubkey: string(pubkey)}, nil
 }
 
 // ShutterApp holds our data structures used for the tendermint app.
