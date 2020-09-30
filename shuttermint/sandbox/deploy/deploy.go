@@ -258,7 +258,7 @@ func deploy(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
-
+	auth.Context = ctx
 	var txs []*types.Transaction
 	var tx *types.Transaction
 
@@ -307,6 +307,7 @@ func schedule(
 	if err != nil {
 		panic(err)
 	}
+	auth.Context = ctx
 
 	var txs []*types.Transaction
 	var tx *types.Transaction
