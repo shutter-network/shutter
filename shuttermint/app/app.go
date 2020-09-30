@@ -17,17 +17,35 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// PersistMinDuration is the minimum duration between two calls to persistToDisk
-// TODO we should probably increase the default here and we should have a way to collect
-// garbage to keep the persisted state small enough.
-// The variable is declared here, because we do not want to persist it as part of the
-// application. The same could be said about the Gobpath field though, which we persist as
-// part of the application.
-// If we set this to zero, the state will get saved on every call to Commit
-var PersistMinDuration time.Duration = 30 * time.Second
+var (
+	// PersistMinDuration is the minimum duration between two calls to persistToDisk
+	// TODO we should probably increase the default here and we should have a way to collect
+	// garbage to keep the persisted state small enough.
+	// The variable is declared here, because we do not want to persist it as part of the
+	// application. The same could be said about the Gobpath field though, which we persist as
+	// part of the application.
+	// If we set this to zero, the state will get saved on every call to Commit
+	PersistMinDuration time.Duration = 30 * time.Second
+
+	// NonExistentValidator is an artificial key used to replace the voting power of validators
+	// that haven't sent their CheckIn message yet
+	NonExistentValidator ValidatorPubkey
+)
 
 func init() {
 	gob.Register(crypto.S256()) // Allow gob to serialize ecsda.PrivateKey
+
+	var err error
+	k := [32]byte{'n', 'o', 'v', 'a', 'l', 'i', 'd', 'a', 't', 'o', 'r'}
+	NonExistentValidator, err = NewValidatorPubkey(k[:])
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ABCIPubkey returns an abcitypes.PubKey struct suitable for updating the shuttermint validators
+func (vp ValidatorPubkey) ABCIPubkey() abcitypes.PubKey {
+	return abcitypes.PubKey{Type: "ed25519", Data: []byte(vp.ed25519pubkey)}
 }
 
 // Visit https://github.com/tendermint/spec/blob/master/spec/abci/abci.md for more information on
@@ -43,10 +61,11 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 // NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
-		Configs:     []*BatchConfig{{}},
-		BatchStates: make(map[uint64]BatchState),
-		Voting:      NewConfigVoting(),
-		Identities:  make(map[common.Address]ValidatorPubkey),
+		Configs:      []*BatchConfig{{}},
+		BatchStates:  make(map[uint64]BatchState),
+		Voting:       NewConfigVoting(),
+		Identities:   make(map[common.Address]ValidatorPubkey),
+		StartedVotes: make(map[common.Address]bool),
 	}
 }
 
@@ -168,7 +187,12 @@ func (app *ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.Respo
 		for i, k := range genesisState.Keypers {
 			log.Printf("Initial keyper #%d: %s", i, k.String())
 		}
-
+		validators, err := MakePowermap(req.Validators)
+		if err != nil {
+			log.Fatalf("InitChain: cannot handle validator keys: %s", err)
+		}
+		app.Validators = validators
+		fmt.Print("VAL", app.Validators)
 		app.Configs = []*BatchConfig{&bc}
 	} else if !reflect.DeepEqual(bc, *app.Configs[0]) {
 		log.Fatalf("Mismatch between stored app state and initial app state, stored=%+v initial=%+v", app.Configs[0], bc)
@@ -378,6 +402,25 @@ func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address)
 }
 
 func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, sender common.Address) abcitypes.ResponseDeliverTx {
+	configIndex := msg.GetBatchConfigIndex()
+	lastBatchConfig := app.Configs[len(app.Configs)-1]
+	if configIndex != lastBatchConfig.ConfigIndex {
+		return makeErrorResponse(fmt.Sprintf(
+			"can only start last config with index %d, got index %d",
+			lastBatchConfig.ConfigIndex, configIndex))
+	}
+	if len(app.Configs) <= 1 {
+		return makeErrorResponse("no config to vote on")
+	}
+	// We have to look into the config before the last config to see if we're allowed to vote
+	if !app.Configs[len(app.Configs)-2].IsKeyper(sender) {
+		return notAKeyper(sender)
+	}
+
+	if !lastBatchConfig.Started {
+		app.StartedVotes[sender] = true
+	}
+
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{},
@@ -407,9 +450,62 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	return makeErrorResponse("cannot deliver message")
 }
 
+func (app *ShutterApp) LastConfig() *BatchConfig {
+	return app.Configs[len(app.Configs)-1]
+}
+
+// makePowermap creates a power map for the given slice of keypers. The voting power of each keyper
+// that hasn't registered yet, is given to the NonExistentValidator key
+func (app *ShutterApp) makePowermap(keypers []common.Address) Powermap {
+	pm := make(Powermap)
+	for _, k := range keypers {
+		pk, ok := app.Identities[k]
+		if ok {
+			pm[pk] += 10
+		} else {
+			pm[NonExistentValidator] += 10
+		}
+	}
+	return pm
+}
+
+// CurrentValidators returns a powermap of current validators.
+func (app *ShutterApp) CurrentValidators() Powermap {
+	for i := len(app.Configs); i >= 0; i-- {
+		if app.Configs[i].Started && app.Configs[i].ValidatorsUpdated {
+			return app.makePowermap(app.Configs[i].Keypers)
+		}
+	}
+	return app.Validators
+}
+
+// countCheckedInKeypers counts the number of keypers that have already checked in in the given slice
+func (app *ShutterApp) countCheckedInKeypers(keypers []common.Address) uint64 {
+	var numCheckedIn uint64
+	for _, k := range keypers {
+		_, ok := app.Identities[k]
+		if ok {
+			numCheckedIn++
+		}
+	}
+	return numCheckedIn
+}
+
 func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+	lastConfig := app.LastConfig()
+	if uint64(len(app.StartedVotes)) >= lastConfig.Threshold {
+		lastConfig.Started = true
+		app.StartedVotes = make(map[common.Address]bool)
+	}
+	if lastConfig.Started && !lastConfig.ValidatorsUpdated && app.countCheckedInKeypers(lastConfig.Keypers) >= lastConfig.Threshold {
+		lastConfig.ValidatorsUpdated = true
+	}
+
+	newValidators := app.CurrentValidators()
+	validatorUpdates := DiffPowermaps(app.Validators, newValidators).ValidatorUpdates()
+	app.Validators = newValidators
 	app.LastBlockHeight = req.Height
-	return abcitypes.ResponseEndBlock{}
+	return abcitypes.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
 
 // persistToDisk stores the ShutterApp on disk. This method first writes to a temporary file and

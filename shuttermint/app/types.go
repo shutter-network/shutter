@@ -38,10 +38,12 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
 // deployed on the main chain.
 type BatchConfig struct {
-	StartBatchIndex uint64
-	Keypers         []common.Address
-	Threshold       uint64
-	ConfigIndex     uint64
+	StartBatchIndex   uint64
+	Keypers           []common.Address
+	Threshold         uint64
+	ConfigIndex       uint64
+	Started           bool
+	ValidatorsUpdated bool
 }
 
 // ConfigVoting is used to let the keypers vote on new BatchConfigs to be added
@@ -115,4 +117,6 @@ type ShutterApp struct {
 	LastSaved       time.Time
 	LastBlockHeight int64
 	Identities      map[common.Address]ValidatorPubkey
+	StartedVotes    map[common.Address]bool
+	Validators      Powermap
 }
