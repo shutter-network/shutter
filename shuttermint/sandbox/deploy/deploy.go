@@ -188,9 +188,9 @@ func main() {
 	}
 }
 
-func waitForTransactionReceipt(cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
+func waitForTransactionReceipt(ctx context.Context, cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
 	for {
-		receipt, err := cl.TransactionReceipt(context.Background(), txHash)
+		receipt, err := cl.TransactionReceipt(ctx, txHash)
 		if err == ethereum.NotFound {
 			time.Sleep(time.Second)
 			continue
@@ -199,13 +199,13 @@ func waitForTransactionReceipt(cl *ethclient.Client, txHash common.Hash) (*types
 	}
 }
 
-func waitForTransactions(client *ethclient.Client, txs []*types.Transaction) ([]*types.Receipt, error) {
+func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*types.Transaction) ([]*types.Receipt, error) {
 	defer fmt.Print("\n")
 	var res []*types.Receipt
 
 	failedTxs := []int{}
 	for i, tx := range txs {
-		receipt, err := waitForTransactionReceipt(client, tx.Hash())
+		receipt, err := waitForTransactionReceipt(ctx, client, tx.Hash())
 		if err != nil {
 			return res, err
 		}
@@ -280,7 +280,7 @@ func deploy(ctx context.Context) {
 	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
 	addTx()
 
-	_, err = waitForTransactions(client, txs)
+	_, err = waitForTransactions(ctx, client, txs)
 	if err != nil {
 		panic(err)
 	}
@@ -319,7 +319,7 @@ func schedule(
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
-	checkContractExists(context.Background(), configContractAddress)
+	checkContractExists(ctx, configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
@@ -337,7 +337,7 @@ func schedule(
 	tx, err = cc.NextConfigSetThreshold(auth, threshold)
 	addTx()
 
-	header, err := client.HeaderByNumber(context.Background(), nil)
+	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -356,7 +356,7 @@ func schedule(
 	tx, err = cc.ScheduleNextConfig(auth)
 	addTx()
 
-	_, err = waitForTransactions(client, txs)
+	_, err = waitForTransactions(ctx, client, txs)
 	if err != nil {
 		panic(err)
 	}
