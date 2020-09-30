@@ -32,6 +32,10 @@ const (
 	ganacheKeyIdx                    = 9
 	numKeypers                       = 3
 	threshold                        = 2
+	dialDefaultTimeout               = 5 * time.Second
+	getconfigDefaultTimeout          = 10 * time.Second
+	deployDefaultTimeout             = 15 * time.Second
+	scheduleDefaultTimeout           = 15 * time.Second
 )
 
 var (
@@ -43,9 +47,11 @@ var rootCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Helper tools to deploy and interact with the Shutter contracts",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		ctx, cancel := context.WithTimeout(context.Background(), dialDefaultTimeout)
+		defer cancel()
 		key = sandbox.GanacheKey(ganacheKeyIdx)
 
-		cl, err := ethclient.Dial("http://localhost:8545")
+		cl, err := ethclient.DialContext(ctx, "http://localhost:8545")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,7 +63,9 @@ var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy all contracts",
 	Run: func(cmd *cobra.Command, args []string) {
-		deploy()
+		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
+		defer cancel()
+		deploy(ctx)
 	},
 }
 
@@ -77,7 +85,11 @@ var scheduleCmd = &cobra.Command{
 			log.Fatalf("Invalid config contract address %s", scheduleFlags.ConfigContractAddress)
 		}
 
+		ctx, cancel := context.WithTimeout(context.Background(), scheduleDefaultTimeout)
+		defer cancel()
+
 		schedule(
+			ctx,
 			configContractAddress,
 			uint64(scheduleFlags.StartBatchIndex),
 			uint64(scheduleFlags.BatchSpan),
@@ -99,8 +111,9 @@ var getconfigCmd = &cobra.Command{
 		if getconfigFlags.ConfigContractAddress != configContractAddress.Hex() {
 			log.Fatalf("Invalid config contract address %s", getconfigFlags.ConfigContractAddress)
 		}
-
-		getconfig(configContractAddress, getconfigFlags.ConfigIndex)
+		ctx, cancel := context.WithTimeout(context.Background(), getconfigDefaultTimeout)
+		defer cancel()
+		getconfig(ctx, configContractAddress, getconfigFlags.ConfigIndex)
 	},
 }
 
@@ -220,15 +233,15 @@ func makeKeypers() []common.Address {
 	return keypers
 }
 
-func makeAuth(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
+func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	nonce, err := client.PendingNonceAt(ctx, fromAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	gasPrice, err := client.SuggestGasPrice(context.Background())
+	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -240,8 +253,8 @@ func makeAuth(client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.Tra
 	return auth, nil
 }
 
-func deploy() {
-	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
+func deploy(ctx context.Context) {
+	auth, err := makeAuth(ctx, client, sandbox.GanacheKey(ganacheKeyIdx))
 	if err != nil {
 		panic(err)
 	}
@@ -275,8 +288,8 @@ func deploy() {
 	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
 }
 
-func checkContractExists(configContractAddress common.Address) {
-	code, err := client.CodeAt(context.Background(), configContractAddress, nil)
+func checkContractExists(ctx context.Context, configContractAddress common.Address) {
+	code, err := client.CodeAt(ctx, configContractAddress, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -285,8 +298,12 @@ func checkContractExists(configContractAddress common.Address) {
 	}
 }
 
-func schedule(configContractAddress common.Address, startBatchIndex uint64, batchSpan uint64, startBlockNumber uint64) {
-	auth, err := makeAuth(client, sandbox.GanacheKey(ganacheKeyIdx))
+func schedule(
+	ctx context.Context,
+	configContractAddress common.Address,
+	startBatchIndex, batchSpan, startBlockNumber uint64,
+) {
+	auth, err := makeAuth(ctx, client, sandbox.GanacheKey(ganacheKeyIdx))
 	if err != nil {
 		panic(err)
 	}
@@ -302,7 +319,7 @@ func schedule(configContractAddress common.Address, startBatchIndex uint64, batc
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
-	checkContractExists(configContractAddress)
+	checkContractExists(context.Background(), configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
@@ -346,14 +363,13 @@ func schedule(configContractAddress common.Address, startBatchIndex uint64, batc
 	fmt.Printf("start block of config: %d\n", startBlockNumber)
 }
 
-func getconfig(configContractAddress common.Address, index int) {
-	checkContractExists(configContractAddress)
+func getconfig(ctx context.Context, configContractAddress common.Address, index int) {
+	checkContractExists(ctx, configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
 	}
-
-	c, err := cc.GetConfigByIndex(nil, uint64(index))
+	c, err := cc.GetConfigByIndex(&bind.CallOpts{Context: ctx}, uint64(index))
 	if err != nil {
 		panic(err)
 	}
