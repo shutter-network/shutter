@@ -35,6 +35,8 @@ func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery
 		return app.queryBatchConfig(requestURL.Query())
 	case "/checkedIn":
 		return app.queryCheckedIn(requestURL.Query())
+	case "/vote":
+		return app.queryVote(requestURL.Query())
 	}
 	return makeQueryErrorResponse("unknown method")
 }
@@ -82,6 +84,38 @@ func (app *ShutterApp) queryCheckedIn(vs url.Values) abcitypes.ResponseQuery {
 	return abcitypes.ResponseQuery{
 		Code:  0,
 		Value: []byte{resultByte},
+	}
+}
+
+func (app *ShutterApp) queryVote(vs url.Values) abcitypes.ResponseQuery {
+	addressStr := vs.Get("address")
+	if addressStr == "" {
+		return makeQueryErrorResponse("missing address parameter")
+	}
+
+	address := common.HexToAddress(addressStr)
+	if addressStr != address.Hex() {
+		return makeQueryErrorResponse("invalid address")
+	}
+
+	index, voted := app.Voting.Votes[address]
+	if !voted {
+		return abcitypes.ResponseQuery{
+			Code:  0,
+			Value: []byte{},
+		}
+	}
+
+	config := app.Voting.Candidates[index]
+	configMsg := config.Message()
+	configBytes, err := proto.Marshal(&configMsg)
+	if err != nil {
+		return makeQueryErrorResponse("error encoding message")
+	}
+
+	return abcitypes.ResponseQuery{
+		Code:  0,
+		Value: configBytes,
 	}
 }
 

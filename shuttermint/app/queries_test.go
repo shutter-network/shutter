@@ -154,3 +154,43 @@ func TestCheckInQueryResponseValueParsing(t *testing.T) {
 	b, err = ParseCheckInQueryResponseValue([]byte{2})
 	require.NotNil(t, err)
 }
+
+func TestQueryVote(t *testing.T) {
+	app := NewShutterApp()
+
+	req := abcitypes.RequestQuery{
+		Path: "/vote",
+	}
+	res := app.Query(req)
+	require.Equal(t, uint32(1), res.Code)
+
+	req = abcitypes.RequestQuery{
+		Path: "/vote?address=asdf",
+	}
+	res = app.Query(req)
+	require.Equal(t, uint32(1), res.Code)
+
+	address := common.BigToAddress(big.NewInt(0))
+	req = abcitypes.RequestQuery{
+		Path: fmt.Sprintf("/vote?address=%s", address.Hex()),
+	}
+	res = app.Query(req)
+	require.Equal(t, uint32(0), res.Code)
+	require.Equal(t, res.Value, []byte{})
+
+	config := BatchConfig{
+		StartBatchIndex: 100,
+	}
+	app.Voting.AddVote(address, config)
+	req = abcitypes.RequestQuery{
+		Path: fmt.Sprintf("/vote?address=%s", address.Hex()),
+	}
+	res = app.Query(req)
+	require.Equal(t, uint32(0), res.Code)
+	msg := shmsg.Message{}
+	err := proto.Unmarshal(res.Value, &msg)
+	require.Nil(t, err)
+	batchConfigMsg := msg.GetBatchConfig()
+	require.NotNil(t, batchConfigMsg)
+	require.Equal(t, batchConfigMsg.StartBatchIndex, config.StartBatchIndex)
+}
