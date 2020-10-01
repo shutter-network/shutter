@@ -126,16 +126,22 @@ func bootstrap() {
 	}
 
 	ms := keyper.NewMessageSender(shmcl, signingKey)
-	message := keyper.NewBatchConfig(
+	batchConfigMsg := keyper.NewBatchConfig(
 		bc.StartBatchIndex,
 		keypers,
 		bc.Threshold,
 		uint64(bootstrapFlags.BatchConfigIndex),
 	)
 
-	err = ms.SendMessage(message)
+	err = ms.SendMessage(batchConfigMsg)
 	if err != nil {
 		log.Fatalf("Failed to send batch config message: %v", err)
+	}
+
+	batchConfigStartedMsg := keyper.NewBatchConfigStarted(uint64(bootstrapFlags.BatchConfigIndex))
+	err = ms.SendMessage(batchConfigStartedMsg)
+	if err != nil {
+		log.Fatalf("Failed to send start message: %v", err)
 	}
 
 	log.Println("Submitted bootstrapping transaction")
