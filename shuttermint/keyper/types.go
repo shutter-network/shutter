@@ -53,18 +53,18 @@ type KeyperConfig struct {
 type Keyper struct {
 	sync.Mutex
 
-	Config                KeyperConfig
-	ethcl                 *ethclient.Client
-	shmcl                 client.Client
-	configContract        *contract.ConfigContract
-	scheduledBatchConfigs map[uint64]contract.BatchConfig
-	batches               map[uint64]*BatchState
-	checkedIn             bool
-	txs                   <-chan coretypes.ResultEvent
-	ctx                   context.Context
-	newHeaders            chan *types.Header // start new batches when new block headers arrive
-	group                 *errgroup.Group
-	ms                    *MessageSender
+	Config         KeyperConfig
+	ethcl          *ethclient.Client
+	shmcl          client.Client
+	configContract *contract.ConfigContract
+	batchConfigs   map[uint64]contract.BatchConfig
+	batches        map[uint64]*BatchState
+	checkedIn      bool
+	txs            <-chan coretypes.ResultEvent
+	ctx            context.Context
+	newHeaders     chan *types.Header // start new batches when new block headers arrive
+	group          *errgroup.Group
+	ms             *MessageSender
 }
 
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint

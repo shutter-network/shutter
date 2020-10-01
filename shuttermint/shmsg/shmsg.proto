@@ -23,6 +23,8 @@ message BatchConfig {
         repeated bytes keypers = 2;
         uint64 threshold = 3 ;
         uint64 config_index = 4;
+        bool started = 5;
+        bool validatorsUpdated = 6;
 }
 
 message EncryptionKeyAttestation {

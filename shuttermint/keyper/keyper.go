@@ -20,7 +20,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -30,11 +29,29 @@ const newHeadersSize = 8
 // NewKeyper creates a new Keyper
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
-		Config:                kc,
-		scheduledBatchConfigs: make(map[uint64]contract.BatchConfig),
-		batches:               make(map[uint64]*BatchState),
-		checkedIn:             false,
-		newHeaders:            make(chan *types.Header, newHeadersSize),
+		Config:       kc,
+		batchConfigs: make(map[uint64]contract.BatchConfig),
+		batches:      make(map[uint64]*BatchState),
+		checkedIn:    false,
+		newHeaders:   make(chan *types.Header, newHeadersSize),
+	}
+}
+
+// NewBatchConfig creates a new BatchConfig message
+func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold uint64, configIndex uint64) *shmsg.Message {
+	var addresses [][]byte
+	for _, k := range keypers {
+		addresses = append(addresses, k.Bytes())
+	}
+	return &shmsg.Message{
+		Payload: &shmsg.Message_BatchConfig{
+			BatchConfig: &shmsg.BatchConfig{
+				StartBatchIndex: startBatchIndex,
+				Keypers:         addresses,
+				Threshold:       threshold,
+				ConfigIndex:     configIndex,
+			},
+		},
 	}
 }
 
@@ -151,9 +168,38 @@ func (kpr *Keyper) startUp() error {
 		Context:     kpr.ctx,
 	}
 
+	err = kpr.initializeConfigs(opts)
+	if err != nil {
+		return err
+	}
+
 	err = kpr.doInitialCheckIn(opts)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// initializeConfigs fills batchConfigs with the current as well as all already scheduled future
+// configs from the config contract.
+func (kpr *Keyper) initializeConfigs(opts *bind.CallOpts) error {
+	numConfigs, err := kpr.configContract.NumConfigs(opts)
+	if err != nil {
+		return err
+	}
+
+	for i := numConfigs - 1; i >= 0; i-- {
+		config, err := kpr.configContract.GetConfigByIndex(opts, i)
+		if err != nil {
+			return err
+		}
+
+		kpr.batchConfigs[i] = config
+
+		if config.StartBlockNumber < opts.BlockNumber.Uint64() {
+			break
+		}
 	}
 
 	return nil
@@ -178,23 +224,13 @@ func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
 	}
 
 	// Check that we're not already checked in. If not, no need to check in.
-	res, err := kpr.shmcl.ABCIQuery(fmt.Sprintf("/checkedIn?address=%s", kpr.Config.Address().Hex()), []byte{})
-	if err != nil {
-		return err
-	}
-	if res.Response.Code != 0 {
-		return fmt.Errorf("checkin query failed, not checking in")
-	}
-	checkedIn, err := app.ParseCheckInQueryResponseValue(res.Response.Value)
-	if err != nil {
-		return err
-	}
-
+	checkedIn, err := queryCheckedIn(kpr.shmcl, kpr.Config.Address())
 	if checkedIn {
 		log.Println("already checked in")
 		kpr.checkedIn = true
 		return nil
 	}
+
 	return kpr.sendCheckIn()
 }
 
@@ -252,30 +288,118 @@ func (kpr *Keyper) watchMainChainLogs() error {
 	}
 }
 
-// findStartedBatchConfigs finds the indexes of the BatchConfigs, which started. It removes them
-// from the scheduledBatchConfigs map.
-func (kpr *Keyper) findStartedBatchConfigs(blockNumber uint64) []uint64 {
-	kpr.Lock()
-	defer kpr.Unlock()
-	var res []uint64
-	for configIndex, bc := range kpr.scheduledBatchConfigs {
-		if blockNumber >= bc.StartBlockNumber {
-			res = append(res, configIndex)
-			delete(kpr.scheduledBatchConfigs, configIndex)
-		}
+func (kpr *Keyper) maybeSendConfigVote() error {
+	// don't vote if previous vote is still being processed
+	_, voted, err := queryVote(kpr.shmcl, kpr.Config.Address())
+	if err != nil {
+		return err
 	}
-	return res
+	if voted {
+		return nil
+	}
+
+	// don't vote if last config has not started yet
+	lastConfig, err := queryLastBatchConfig(kpr.shmcl)
+	if err != nil {
+		return err
+	}
+	if !lastConfig.Started {
+		return nil
+	}
+
+	// don't vote if there's no newer config
+	nextConfigIndex := lastConfig.ConfigIndex + 1
+	ok := func() bool {
+		kpr.Lock()
+		defer kpr.Unlock()
+		_, ok := kpr.batchConfigs[nextConfigIndex]
+		return ok
+	}()
+	if !ok {
+		return nil
+	}
+
+	// don't vote if we're not a keyper in current config
+	if !lastConfig.IsKeyper(kpr.Config.Address()) {
+		return nil
+	}
+
+	return kpr.sendConfigVote(nextConfigIndex)
+}
+
+func (kpr *Keyper) sendConfigVote(configIndex uint64) error {
+	config, ok := func() (contract.BatchConfig, bool) {
+		kpr.Lock()
+		defer kpr.Unlock()
+		c, ok := kpr.batchConfigs[configIndex]
+		return c, ok
+	}()
+	if !ok {
+		return fmt.Errorf("cannot vote on config %d as it is unknown", configIndex)
+	}
+
+	msg := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold, configIndex)
+	err := kpr.ms.SendMessage(msg)
+	if err != nil {
+		return err
+	}
+	log.Printf("voted for config %d", configIndex)
+	return nil
+}
+
+func (kpr *Keyper) maybeSendStartVote(blockNumber uint64) error {
+	lastConfig, err := queryLastBatchConfig(kpr.shmcl)
+	if err != nil {
+		return err
+	}
+
+	// don't vote to start if last config is already started
+	if lastConfig.Started {
+		return nil
+	}
+
+	// don't vote to start if last config is unknown
+	localConfig, configKnown := func() (contract.BatchConfig, bool) {
+		kpr.Lock()
+		defer kpr.Unlock()
+		localConfig, configKnown := kpr.batchConfigs[lastConfig.ConfigIndex]
+		return localConfig, configKnown
+	}()
+	if !configKnown && lastConfig.ConfigIndex > 0 {
+		log.Printf("not voting to start unknown config %d", lastConfig.ConfigIndex)
+		return nil
+	}
+
+	// don't vote to start if start block number is still in the future
+	if localConfig.StartBlockNumber > blockNumber {
+		return nil
+	}
+
+	// don't vote to start if we're not a keyper
+	if !localConfig.IsKeyper(kpr.Config.Address()) {
+		return nil
+	}
+
+	// otherwise vote
+	msg := NewBatchConfigStarted(lastConfig.ConfigIndex)
+	err = kpr.ms.SendMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("voted to start batch config with index %d", lastConfig.ConfigIndex)
+	return nil
 }
 
 func (kpr *Keyper) handleNewBlockHeader(header *types.Header) {
-	for _, configIndex := range kpr.findStartedBatchConfigs(header.Number.Uint64()) {
-		msg := NewBatchConfigStarted(configIndex)
-		err := kpr.ms.SendMessage(msg)
-		if err == nil {
-			log.Printf("BatchConfigStarted message sent for config %d", configIndex)
-		} else {
-			log.Printf("Failed to send start message for batch config %d: %v", configIndex, err)
-		}
+	err := kpr.maybeSendConfigVote()
+	if err != nil {
+		log.Printf("error during send config vote step: %v", err)
+	}
+
+	err = kpr.maybeSendStartVote(header.Number.Uint64())
+	if err != nil {
+		log.Printf("error during send start vote step: %v", err)
 	}
 }
 
@@ -315,7 +439,7 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 	func() {
 		kpr.Lock()
 		defer kpr.Unlock()
-		kpr.scheduledBatchConfigs[index] = config
+		kpr.batchConfigs[index] = config
 	}()
 
 	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold, index)

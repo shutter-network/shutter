@@ -19,24 +19,6 @@ func SleepUntil(t time.Time) {
 	time.Sleep(time.Until(t))
 }
 
-// NewBatchConfig creates a new BatchConfig with the given values wrapped in a shmsg.Message
-func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold, configIndex uint64) *shmsg.Message {
-	var addresses [][]byte
-	for _, k := range keypers {
-		addresses = append(addresses, k.Bytes())
-	}
-	return &shmsg.Message{
-		Payload: &shmsg.Message_BatchConfig{
-			BatchConfig: &shmsg.BatchConfig{
-				StartBatchIndex: startBatchIndex,
-				Keypers:         addresses,
-				Threshold:       threshold,
-				ConfigIndex:     configIndex,
-			},
-		},
-	}
-}
-
 // NewPublicKeyCommitment creates a new PublicKeyCommitment with the given values wrapped in a shmsg.Message
 func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
 	return &shmsg.Message{
