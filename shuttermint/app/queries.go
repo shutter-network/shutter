@@ -43,16 +43,30 @@ func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery
 
 func (app *ShutterApp) queryBatchConfig(vs url.Values) abcitypes.ResponseQuery {
 	batchIndexStr := vs.Get("batchIndex")
-	if batchIndexStr == "" {
-		return makeQueryErrorResponse("missing batch index parameter")
+	lastConfigStr := vs.Get("last")
+	if batchIndexStr == "" && lastConfigStr == "" {
+		return makeQueryErrorResponse("missing parameter batchIndex or last")
+	}
+	if batchIndexStr != "" && lastConfigStr != "" {
+		return makeQueryErrorResponse("both batchIndex and last parameter given")
 	}
 
-	batchIndex, err := strconv.Atoi(batchIndexStr)
-	if err != nil || batchIndex < 0 {
-		return makeQueryErrorResponse("batch index not valid integer")
+	var config *BatchConfig
+	if batchIndexStr != "" {
+		batchIndex, err := strconv.Atoi(batchIndexStr)
+		if err != nil || batchIndex < 0 {
+			return makeQueryErrorResponse("batch index not valid integer")
+		}
+		config = app.getConfig(uint64(batchIndex))
+	} else if lastConfigStr != "" {
+		if lastConfigStr != "true" {
+			return makeQueryErrorResponse("last parameter must be true if given")
+		}
+		config = app.Configs[len(app.Configs)-1]
+	} else {
+		panic("unreachable")
 	}
 
-	config := app.getConfig(uint64(batchIndex))
 	configMsg := config.Message()
 	configBytes, err := proto.Marshal(&configMsg)
 	if err != nil {

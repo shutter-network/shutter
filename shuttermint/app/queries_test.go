@@ -38,6 +38,8 @@ func TestQueryInvalidConfig(t *testing.T) {
 		"/configs",
 		"/configs?batchIndex=-1",
 		"/configs?batchIndex=one",
+		"/configs?last=false",
+		"/configs?batchIndex=1?last=true",
 	}
 
 	app := NewShutterApp()
@@ -87,6 +89,10 @@ func TestQueryConfig(t *testing.T) {
 		},
 		{
 			path:   "/configs?batchIndex=200",
+			config: c2,
+		},
+		{
+			path:   "/configs?last=true",
 			config: c2,
 		},
 	}
