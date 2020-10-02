@@ -297,7 +297,6 @@ func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool 
 }
 
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
-	// XXX everyone can call this at the moment
 	bc, err := BatchConfigFromMessage(msg)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
