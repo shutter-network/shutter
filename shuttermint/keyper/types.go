@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"fmt"
+	"math/big"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -59,6 +60,7 @@ type Keyper struct {
 	configContract *contract.ConfigContract
 	batchConfigs   map[uint64]contract.BatchConfig
 	batches        map[uint64]*BatchState
+	startBlock     *big.Int
 	checkedIn      bool
 	txs            <-chan coretypes.ResultEvent
 	ctx            context.Context

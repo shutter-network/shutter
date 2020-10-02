@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 	"time"
 
@@ -130,10 +131,11 @@ func (kpr *Keyper) Run() error {
 		return err
 	}
 
-	err = kpr.startUp()
+	startBlock, err := kpr.startUp()
 	if err != nil {
 		return err
 	}
+	kpr.startBlock = startBlock
 
 	kpr.group.Go(kpr.dispatchTxs)
 	kpr.group.Go(kpr.startNewBatches)
@@ -158,10 +160,10 @@ func (kpr *Keyper) checkEthereumWebsocketURL() error {
 	return nil
 }
 
-func (kpr *Keyper) startUp() error {
+func (kpr *Keyper) startUp() (*big.Int, error) {
 	startupHeader, err := kpr.ethcl.HeaderByNumber(kpr.ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	opts := &bind.CallOpts{
 		BlockNumber: startupHeader.Number,
@@ -170,15 +172,15 @@ func (kpr *Keyper) startUp() error {
 
 	err = kpr.initializeConfigs(opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = kpr.doInitialCheckIn(opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return startupHeader.Number, nil
 }
 
 // initializeConfigs fills batchConfigs with the current as well as all already scheduled future
@@ -235,16 +237,14 @@ func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
-	cl, err := ethclient.Dial(kpr.Config.EthereumURL)
-	if err != nil {
-		return err
-	}
+	// We might have missed some blocks between startup (i.e. kpr.startBlock) and setting up the
+	// header subscription. We don't rely on receiving all blocks though, so this is fine.
 	headers := make(chan *types.Header)
-
-	subscription, err := cl.SubscribeNewHead(kpr.ctx, headers)
+	subscription, err := kpr.ethcl.SubscribeNewHead(kpr.ctx, headers)
 	if err != nil {
 		return err
 	}
+
 	for {
 		select {
 		case <-kpr.ctx.Done():
@@ -269,6 +269,7 @@ func (kpr *Keyper) watchMainChainLogs() error {
 		Addresses: []common.Address{
 			kpr.Config.ConfigContractAddress,
 		},
+		FromBlock: kpr.startBlock,
 	}
 	logs := make(chan types.Log)
 	sub, err := cl.SubscribeFilterLogs(context.Background(), query, logs)
