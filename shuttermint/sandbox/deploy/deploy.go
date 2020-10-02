@@ -117,10 +117,21 @@ var getconfigCmd = &cobra.Command{
 	},
 }
 
+var fundCmd = &cobra.Command{
+	Use:   "fund",
+	Short: "Fund accounts",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx, cancel := context.WithTimeout(context.Background(), getconfigDefaultTimeout)
+		defer cancel()
+		fund(ctx)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(scheduleCmd)
 	rootCmd.AddCommand(getconfigCmd)
+	rootCmd.AddCommand(fundCmd)
 
 	initScheduleFlags()
 	initGetconfigFlags()
@@ -398,5 +409,71 @@ func printConfig(config contract.BatchConfig) {
 		for i, k := range config.Keypers {
 			fmt.Printf("  %d: %s\n", i, k.Hex())
 		}
+	}
+}
+
+func fund(ctx context.Context) {
+	privkey := sandbox.GanacheKey(ganacheKeyIdx)
+	fromAddress := crypto.PubkeyToAddress(privkey.PublicKey)
+
+	var txs []*types.Transaction
+	var tx *types.Transaction
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	nonce, err := client.PendingNonceAt(ctx, fromAddress)
+	if err != nil {
+		panic(err)
+	}
+
+	amount := big.NewInt(1000000000000000000) // 1 eth
+	gasLimit := uint64(21000)
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	addTx := func() {
+		if err != nil {
+			panic(err)
+		}
+		txs = append(txs, tx)
+		nonce++
+	}
+
+	signer := types.NewEIP155Signer(chainID)
+
+	for i := 0; i < sandbox.NumGanacheKeys()-1; i++ {
+		receiver := crypto.PubkeyToAddress(sandbox.GanacheKey(i).PublicKey)
+		var data []byte
+		tx = types.NewTransaction(nonce, receiver, amount, gasLimit, gasPrice, data)
+
+		tx, err = types.SignTx(tx, signer, privkey)
+		if err != nil {
+			panic(err)
+		}
+
+		err = client.SendTransaction(ctx, tx)
+		if err != nil {
+			panic(err)
+		}
+		addTx()
+	}
+
+	_, err = waitForTransactions(ctx, client, txs)
+	if err != nil {
+		panic(err)
+	}
+
+	for i := 0; i < sandbox.NumGanacheKeys(); i++ {
+		addr := crypto.PubkeyToAddress(sandbox.GanacheKey(i).PublicKey)
+		balance, err := client.BalanceAt(context.Background(), addr, nil)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s: %s\n", addr.Hex(), balance)
 	}
 }
