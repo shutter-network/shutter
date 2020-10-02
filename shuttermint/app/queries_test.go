@@ -56,6 +56,7 @@ func TestQueryInvalidConfig(t *testing.T) {
 func TestQueryConfig(t *testing.T) {
 	app := NewShutterApp()
 	c1 := BatchConfig{
+		ConfigIndex:     1,
 		StartBatchIndex: 100,
 		Threshold:       1,
 		Keypers: []common.Address{
@@ -64,6 +65,7 @@ func TestQueryConfig(t *testing.T) {
 		},
 	}
 	c2 := BatchConfig{
+		ConfigIndex:     2,
 		StartBatchIndex: 200,
 		Threshold:       1,
 		Keypers: []common.Address{
@@ -109,6 +111,7 @@ func TestQueryConfig(t *testing.T) {
 		require.Nil(t, err)
 		batchConfigMsg := msg.GetBatchConfig()
 		require.NotNil(t, batchConfigMsg)
+		require.Equal(t, batchConfigMsg.ConfigIndex, testCase.config.ConfigIndex)
 		require.Equal(t, batchConfigMsg.StartBatchIndex, testCase.config.StartBatchIndex)
 		require.Equal(t, batchConfigMsg.Threshold, testCase.config.Threshold)
 		require.Equal(t, len(batchConfigMsg.Keypers), len(testCase.config.Keypers))

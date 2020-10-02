@@ -117,6 +117,13 @@ func (app *ShutterApp) checkConfig(cfg BatchConfig) error {
 			lastConfig.StartBatchIndex,
 		)
 	}
+	if cfg.ConfigIndex <= lastConfig.ConfigIndex {
+		return fmt.Errorf(
+			"config index of next config (%d) not greater than current one (%d)",
+			cfg.ConfigIndex,
+			lastConfig.ConfigIndex,
+		)
+	}
 	return nil
 }
 
@@ -125,6 +132,7 @@ func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("adding config %d", cfg.ConfigIndex)
 	app.Configs = append(app.Configs, &cfg)
 	return nil
 }
