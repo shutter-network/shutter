@@ -109,7 +109,7 @@ func (app *ShutterApp) checkConfig(cfg BatchConfig) error {
 	if err != nil {
 		return err
 	}
-	lastConfig := app.Configs[len(app.Configs)-1]
+	lastConfig := app.LastConfig()
 	if cfg.StartBatchIndex < lastConfig.StartBatchIndex {
 		return fmt.Errorf(
 			"start batch index of next config (%d) lower than current one (%d)",
@@ -291,7 +291,7 @@ func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.A
 }
 
 func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool {
-	lastConfig := app.Configs[len(app.Configs)-1]
+	lastConfig := app.LastConfig()
 	_, ok := lastConfig.KeyperIndex(sender)
 	return ok
 }
@@ -318,7 +318,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 	}
 
-	_, ok := app.Voting.Outcome(int(app.Configs[len(app.Configs)-1].Threshold))
+	_, ok := app.Voting.Outcome(int(app.LastConfig().Threshold))
 	if ok {
 		app.Voting = NewConfigVoting()
 		err = app.addConfig(bc)
@@ -401,7 +401,7 @@ func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address)
 
 func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, sender common.Address) abcitypes.ResponseDeliverTx {
 	configIndex := msg.GetBatchConfigIndex()
-	lastBatchConfig := app.Configs[len(app.Configs)-1]
+	lastBatchConfig := app.LastConfig()
 	if configIndex != lastBatchConfig.ConfigIndex {
 		return makeErrorResponse(fmt.Sprintf(
 			"can only start last config with index %d, got index %d",
@@ -494,10 +494,17 @@ func (app *ShutterApp) countCheckedInKeypers(keypers []common.Address) uint64 {
 
 func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
 	lastConfig := app.LastConfig()
-	if uint64(len(app.StartedVotes)) >= lastConfig.Threshold {
-		lastConfig.Started = true
-		app.StartedVotes = make(map[common.Address]bool)
+
+	// start last config if there are enough votes
+	if len(app.Configs) >= 2 {
+		currentConfig := app.Configs[len(app.Configs)-2]
+		if uint64(len(app.StartedVotes)) >= currentConfig.Threshold {
+			log.Printf("starting config %d", lastConfig.ConfigIndex)
+			lastConfig.Started = true
+			app.StartedVotes = make(map[common.Address]bool)
+		}
 	}
+
 	if lastConfig.Started && !lastConfig.ValidatorsUpdated && app.countCheckedInKeypers(lastConfig.Keypers) >= lastConfig.Threshold {
 		lastConfig.ValidatorsUpdated = true
 	}
