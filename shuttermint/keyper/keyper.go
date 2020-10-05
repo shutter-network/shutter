@@ -624,15 +624,18 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 }
 
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
-	log.Printf("Dispatching event: %+v", ev)
 	switch e := ev.(type) {
 	case PubkeyGeneratedEvent:
+		log.Printf("Dispatching PubkeyGenerated event for batch %d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case PrivkeyGeneratedEvent:
+		log.Printf("Dispatching PrivkeyGenerated event for batch %d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case BatchConfigEvent:
+		log.Printf("Dropping BatchConfig event")
 		_ = e
 	case EncryptionKeySignatureAddedEvent:
+		log.Printf("Dispatching EncryptionKeySignatureAdded event for batch %d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	default:
 		panic("unknown type")
