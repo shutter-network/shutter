@@ -22,9 +22,10 @@ message BatchConfig {
         uint64 start_batch_index = 1;
         repeated bytes keypers = 2;
         uint64 threshold = 3 ;
-        uint64 config_index = 4;
-        bool started = 5;
-        bool validatorsUpdated = 6;
+        bytes config_contract_address = 4;
+        uint64 config_index = 5;
+        bool started = 6;
+        bool validatorsUpdated = 7;
 }
 
 message EncryptionKeyAttestation {

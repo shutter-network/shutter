@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -110,6 +111,13 @@ func (bs *BatchState) FindEncryptionKeyAttestation(addr common.Address) (Encrypt
 
 // AddEncryptionKeyAttestation adds an EncryptionKeyAttestation to the batch.
 func (bs *BatchState) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) error {
+	if a.ConfigContractAddress != bs.Config.ConfigContractAddress {
+		return fmt.Errorf(
+			"wrong config contract address %s instead of %s",
+			a.ConfigContractAddress.Hex(),
+			bs.Config.ConfigContractAddress.Hex(),
+		)
+	}
 	// TODO: consider verifying the config contract address here
 
 	if !bs.Config.IsKeyper(a.Sender) {

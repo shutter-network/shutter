@@ -48,12 +48,13 @@ func (bc *BatchConfig) Message() shmsg.Message {
 
 	msg := shmsg.Message_BatchConfig{
 		BatchConfig: &shmsg.BatchConfig{
-			StartBatchIndex:   bc.StartBatchIndex,
-			Keypers:           keypers,
-			Threshold:         bc.Threshold,
-			ConfigIndex:       bc.ConfigIndex,
-			Started:           bc.Started,
-			ValidatorsUpdated: bc.ValidatorsUpdated,
+			StartBatchIndex:       bc.StartBatchIndex,
+			Keypers:               keypers,
+			Threshold:             bc.Threshold,
+			ConfigContractAddress: bc.ConfigContractAddress.Bytes(),
+			ConfigIndex:           bc.ConfigIndex,
+			Started:               bc.Started,
+			ValidatorsUpdated:     bc.ValidatorsUpdated,
 		},
 	}
 	return shmsg.Message{Payload: &msg}
@@ -69,13 +70,23 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 		keypers = append(keypers, common.BytesToAddress(b))
 	}
 
+	if len(m.ConfigContractAddress) != common.AddressLength {
+		return BatchConfig{}, fmt.Errorf(
+			"config contract address has invalid length (%d instead of %d)",
+			len(m.ConfigContractAddress),
+			common.AddressLength,
+		)
+	}
+	configContractAddress := common.BytesToAddress(m.ConfigContractAddress)
+
 	bc := BatchConfig{
-		StartBatchIndex:   m.StartBatchIndex,
-		Keypers:           keypers,
-		Threshold:         m.Threshold,
-		ConfigIndex:       m.ConfigIndex,
-		Started:           m.Started,
-		ValidatorsUpdated: m.ValidatorsUpdated,
+		StartBatchIndex:       m.StartBatchIndex,
+		Keypers:               keypers,
+		Threshold:             m.Threshold,
+		ConfigContractAddress: configContractAddress,
+		ConfigIndex:           m.ConfigIndex,
+		Started:               m.Started,
+		ValidatorsUpdated:     m.ValidatorsUpdated,
 	}
 	return bc, nil
 }

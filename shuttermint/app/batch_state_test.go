@@ -178,11 +178,22 @@ func TestAddEncryptionKeyAttestation(t *testing.T) {
 	err = batchState.AddEncryptionKeyAttestation(att)
 	require.Error(t, err)
 
-	// add attestation from keyper
 	preimage = EncryptionKeyPreimage(publicKey, batchState.BatchIndex, configContractAddress)
 	hash = crypto.Keccak256Hash(preimage)
 	sig, err = crypto.Sign(hash.Bytes(), keys[0])
 	require.Nil(t, err)
+
+	// don't accept attestation with wrong config contract address
+	err = batchState.AddEncryptionKeyAttestation(EncryptionKeyAttestation{
+		Sender:                addresses[0],
+		EncryptionKey:         publicKey,
+		BatchIndex:            batchState.BatchIndex,
+		ConfigContractAddress: addresses[6],
+		Signature:             sig,
+	})
+	require.Error(t, err)
+
+	// add attestation from keyper
 	att = EncryptionKeyAttestation{
 		Sender:                addresses[0],
 		EncryptionKey:         publicKey,

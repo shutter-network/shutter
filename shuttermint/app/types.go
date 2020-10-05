@@ -26,6 +26,7 @@ func NewGenesisAppState(keypers []common.Address, threshold int) GenesisAppState
 	return appState
 }
 
+// GetKeypers returns the keypers defined in the GenesisAppState
 func (appState *GenesisAppState) GetKeypers() []common.Address {
 	var res []common.Address
 	for _, k := range appState.Keypers {
@@ -38,10 +39,13 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
 // deployed on the main chain.
 type BatchConfig struct {
-	StartBatchIndex   uint64
-	Keypers           []common.Address
-	Threshold         uint64
-	ConfigIndex       uint64
+	StartBatchIndex uint64
+	Keypers         []common.Address
+	Threshold       uint64
+
+	ConfigContractAddress common.Address
+	ConfigIndex           uint64
+
 	Started           bool
 	ValidatorsUpdated bool
 }

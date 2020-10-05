@@ -38,7 +38,13 @@ func NewKeyper(kc KeyperConfig) Keyper {
 }
 
 // NewBatchConfig creates a new BatchConfig message
-func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold uint64, configIndex uint64) *shmsg.Message {
+func NewBatchConfig(
+	startBatchIndex uint64,
+	keypers []common.Address,
+	threshold uint64,
+	configContractAddress common.Address,
+	configIndex uint64,
+) *shmsg.Message {
 	var addresses [][]byte
 	for _, k := range keypers {
 		addresses = append(addresses, k.Bytes())
@@ -46,10 +52,11 @@ func NewBatchConfig(startBatchIndex uint64, keypers []common.Address, threshold 
 	return &shmsg.Message{
 		Payload: &shmsg.Message_BatchConfig{
 			BatchConfig: &shmsg.BatchConfig{
-				StartBatchIndex: startBatchIndex,
-				Keypers:         addresses,
-				Threshold:       threshold,
-				ConfigIndex:     configIndex,
+				StartBatchIndex:       startBatchIndex,
+				Keypers:               addresses,
+				Threshold:             threshold,
+				ConfigContractAddress: configContractAddress.Bytes(),
+				ConfigIndex:           configIndex,
 			},
 		},
 	}
@@ -338,7 +345,13 @@ func (kpr *Keyper) sendConfigVote(configIndex uint64) error {
 		return fmt.Errorf("cannot vote on config %d as it is unknown", configIndex)
 	}
 
-	msg := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold, configIndex)
+	msg := NewBatchConfig(
+		config.StartBatchIndex,
+		config.Keypers,
+		config.Threshold,
+		kpr.Config.ConfigContractAddress,
+		configIndex,
+	)
 	err := kpr.ms.SendMessage(msg)
 	if err != nil {
 		return err
@@ -442,7 +455,13 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		kpr.batchConfigs[index] = config
 	}()
 
-	bc := NewBatchConfig(config.StartBatchIndex, config.Keypers, config.Threshold, index)
+	bc := NewBatchConfig(
+		config.StartBatchIndex,
+		config.Keypers,
+		config.Threshold,
+		kpr.Config.ConfigContractAddress,
+		index,
+	)
 	err = kpr.ms.SendMessage(bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)

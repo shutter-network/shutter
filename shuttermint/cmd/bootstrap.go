@@ -130,6 +130,7 @@ func bootstrap() {
 		bc.StartBatchIndex,
 		keypers,
 		bc.Threshold,
+		configContractAddress,
 		uint64(bootstrapFlags.BatchConfigIndex),
 	)
 
