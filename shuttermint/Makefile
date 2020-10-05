@@ -19,6 +19,10 @@ run: build init
 test:
 	go test ./...
 
+coverage:
+	go test -covermode=count -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+
 clean:
 	rm -rf ${TESTROOT}
 	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper bin/deploy
@@ -55,4 +59,4 @@ abigen:
 deploy-ganache:
 	go run ./sandbox/deploy/deploy.go deploy
 
-.PHONY: build run init clean test install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen
+.PHONY: build run init clean test install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen coverage
