@@ -34,6 +34,11 @@ func (bc *BatchConfig) IsKeyper(address common.Address) bool {
 	return isKeyper
 }
 
+// IsActive checks if the config is active, i.e. the batch span is non-zero
+func (bc *BatchConfig) IsActive() bool {
+	return bc.BatchSpan > 0
+}
+
 func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 	batchSpan := bc.BatchSpan
 	startBatchIndex := bc.StartBatchIndex
@@ -72,11 +77,11 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 		}
 
 		startBlockNumber := cfg.StartBlockNumber
-		batchSpan := cfg.BatchSpan
-		if batchSpan == 0 {
-			return cfg.StartBatchIndex, nil
-		}
 		if startBlockNumber <= blockNumber {
+			batchSpan := cfg.BatchSpan
+			if batchSpan == 0 {
+				return cfg.StartBatchIndex, nil
+			}
 			next := cfg.StartBatchIndex + (blockNumber-startBlockNumber+batchSpan-1)/batchSpan
 			return next, nil
 		}

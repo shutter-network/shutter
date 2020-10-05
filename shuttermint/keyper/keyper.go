@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
-	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
@@ -521,15 +520,7 @@ func (kpr *Keyper) waitCurrentBlockHeader() *types.Header {
 }
 
 func (kpr *Keyper) startNewBatches() error {
-	var cl client.Client
-	cl, err := http.New(kpr.Config.ShuttermintURL, "/websocket")
-	if err != nil {
-		return err
-	}
-	_ = cl
-
 	// We wait for block header that is not too old.
-
 	header := kpr.waitCurrentBlockHeader()
 	if header == nil {
 		return nil
@@ -539,17 +530,32 @@ func (kpr *Keyper) startNewBatches() error {
 	if err != nil {
 		return err
 	}
-	lastBatchIndex := nextBatchIndex - 1 // we'll start only the batch for nextBatchIndex
+	lastBatchIndex := nextBatchIndex - 1
+
 	for {
+		// Start batches between lastBatchIndex and nextBatchIndex. Usually this will be only a
+		// single one. If the batch is inactive (or we fail to query the batch config to check),
+		// break out of the loop in order to wait for the next header and try again.
 		for batchIndex := lastBatchIndex + 1; batchIndex <= nextBatchIndex; batchIndex++ {
-			log.Printf("Starting batch #%d", batchIndex)
-			err = kpr.startBatch(nextBatchIndex, cl)
+			bp, err := kpr.configContract.QueryBatchParams(nil, batchIndex)
 			if err != nil {
-				log.Printf("Error: could not start batch #%d: %s", nextBatchIndex, err)
+				log.Printf("Failed to query batch params for batch #%d", batchIndex)
+				break
+			}
+			if !bp.BatchConfig.IsActive() {
+				log.Printf("Batching is inactive at #%d", batchIndex)
+				break
+			}
+
+			log.Printf("Starting batch #%d", batchIndex)
+			err = kpr.startBatch(bp)
+			lastBatchIndex = batchIndex
+			if err != nil {
+				log.Printf("Error: could not start batch #%d: %s", batchIndex, err)
 			}
 		}
-		lastBatchIndex = nextBatchIndex
 
+		// Wait for next header and update nextBatchIndex accordingly.
 		select {
 		case <-kpr.ctx.Done():
 			return nil
@@ -569,27 +575,26 @@ func (kpr *Keyper) removeBatch(batchIndex uint64) {
 	delete(kpr.batches, batchIndex)
 }
 
-func (kpr *Keyper) startBatch(batchIndex uint64, cl client.Client) error {
-	bp, err := kpr.configContract.QueryBatchParams(nil, batchIndex)
-	if err != nil {
-		return err
+func (kpr *Keyper) startBatch(bp BatchParams) error {
+	if !bp.BatchConfig.IsActive() {
+		log.Printf("shutter is turned off right now, waiting...")
+		return nil
 	}
 
-	ms := NewMessageSender(cl, kpr.Config.SigningKey)
 	cc := NewContractCaller(
 		kpr.Config.EthereumURL,
 		kpr.Config.SigningKey,
 		kpr.Config.KeyBroadcastingContractAddress,
 	)
-	batch := NewBatchState(bp, kpr.Config, &ms, &cc)
+	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc)
 
 	kpr.Lock()
 	defer kpr.Unlock()
 
-	kpr.batches[batchIndex] = &batch
+	kpr.batches[bp.BatchIndex] = &batch
 
 	go func() {
-		defer kpr.removeBatch(batchIndex)
+		defer kpr.removeBatch(bp.BatchIndex)
 
 		// XXX we should check against what is configured in shuttermint
 		// Here is the code we used to get the config from shuttermint:
