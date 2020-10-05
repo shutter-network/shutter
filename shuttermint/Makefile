@@ -25,6 +25,9 @@ clean:
 
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports
 
+install-geth:
+	go install github.com/ethereum/go-ethereum/cmd/geth
+
 install-abigen:
 	go install github.com/ethereum/go-ethereum/cmd/abigen
 
@@ -52,4 +55,4 @@ abigen:
 deploy-ganache:
 	go run ./sandbox/deploy/deploy.go deploy
 
-.PHONY: build run init clean test install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen
+.PHONY: build run init clean test install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen
