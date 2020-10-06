@@ -42,6 +42,710 @@ type BatchConfig struct {
 	ExecutionTimeout       uint64
 }
 
+// BatcherContractABI is the input ABI used to generate the binding from.
+const BatcherContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_configContractAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_feeBankAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"batchIndex\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"enumTransactionType\",\"name\":\"transactionType\",\"type\":\"uint8\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"transaction\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"batchHash\",\"type\":\"bytes32\"}],\"name\":\"TransactionAdded\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"},{\"internalType\":\"enumTransactionType\",\"name\":\"_type\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"_transaction\",\"type\":\"bytes\"}],\"name\":\"addTransaction\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"},{\"internalType\":\"enumTransactionType\",\"name\":\"\",\"type\":\"uint8\"}],\"name\":\"batchHashes\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"name\":\"batchSizes\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"feeBankContract\",\"outputs\":[{\"internalType\":\"contractFeeBankContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minFee\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_minFee\",\"type\":\"uint64\"}],\"name\":\"setMinFee\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// BatcherContractFuncSigs maps the 4-byte function signature to its string representation.
+var BatcherContractFuncSigs = map[string]string{
+	"246673dc": "addTransaction(uint64,uint8,bytes)",
+	"c87afa8a": "batchHashes(uint64,uint8)",
+	"bfd260ca": "batchSizes(uint64)",
+	"bf66a182": "configContract()",
+	"36e1290d": "feeBankContract()",
+	"24ec7590": "minFee()",
+	"8da5cb5b": "owner()",
+	"715018a6": "renounceOwnership()",
+	"48fd5acc": "setMinFee(uint64)",
+	"f2fde38b": "transferOwnership(address)",
+}
+
+// BatcherContractBin is the compiled bytecode used for deploying new contracts.
+var BatcherContractBin = "0x608060405234801561001057600080fd5b50604051610d48380380610d4883398101604081905261002f916100d5565b60006100396100b4565b600080546001600160a01b0319166001600160a01b0383169081178255604051929350917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a350600180546001600160a01b039384166001600160a01b03199182161790915560028054929093169116179055610109565b3390565b80516001600160a01b03811681146100cf57600080fd5b92915050565b600080604083850312156100e7578182fd5b6100f184846100b8565b915061010084602085016100b8565b90509250929050565b610c30806101186000396000f3fe6080604052600436106100915760003560e01c80638da5cb5b116100595780638da5cb5b1461012d578063bf66a18214610142578063bfd260ca14610157578063c87afa8a14610177578063f2fde38b146101a457610091565b8063246673dc1461009657806324ec7590146100ab57806336e1290d146100d657806348fd5acc146100f8578063715018a614610118575b600080fd5b6100a96100a4366004610a02565b6101c4565b005b3480156100b757600080fd5b506100c061050e565b6040516100cd9190610b3a565b60405180910390f35b3480156100e257600080fd5b506100eb61051d565b6040516100cd9190610aa2565b34801561010457600080fd5b506100a96101133660046109b1565b61052c565b34801561012457600080fd5b506100a961058d565b34801561013957600080fd5b506100eb61060c565b34801561014e57600080fd5b506100eb61061b565b34801561016357600080fd5b506100c06101723660046109b1565b61062a565b34801561018357600080fd5b506101976101923660046109cd565b610645565b6040516100cd9190610ab6565b3480156101b057600080fd5b506100a96101bf36600461084c565b610662565b6101cc61071c565b60015460405163700465b160e11b81526001600160a01b039091169063e008cb62906101fc908890600401610b3a565b60006040518083038186803b15801561021457600080fd5b505afa158015610228573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f19168201604052610250919081019061086f565b9050600081608001516001600160401b03161161026c57600080fd5b80600001516001600160401b0316856001600160401b0316101561028c57fe5b80516080820151602083015191870391818302019081016001600160401b0382164310156102b957600080fd5b806001600160401b031643106102ce57600080fd5b846102d857600080fd5b60c08401516001600160401b03168511156102f257600080fd5b60a08401516001600160401b0389811660009081526003602052604090205491811691168601111561032357600080fd5b6005546001600160401b031634101561033b57600080fd5b6001600160401b0388166000908152600460205260408120606091889188918b600181111561036657fe5b600181111561037157fe5b81526020019081526020016000205460405160200161039293929190610a8d565b604051602081830303815290604052905060008180519060200120905080600460008c6001600160401b03166001600160401b0316815260200190815260200160002060008b60018111156103e357fe5b60018111156103ee57fe5b815260208082019290925260409081016000908120939093556001600160401b038d811684526003909252909120805467ffffffffffffffff1981169083168a01909216919091179055341580159061045457506101008601516001600160a01b031615155b156104c35760025461010087015160405163f340fa0160e01b81526001600160a01b039092169163f340fa019134916104909190600401610aa2565b6000604051808303818588803b1580156104a957600080fd5b505af11580156104bd573d6000803e3d6000fd5b50505050505b7ffc285e0b48a09e92ec4acb05226c557c0af1c3976d350d24b4fd4fa104f82c988a8a8a8a856040516104fa959493929190610b4e565b60405180910390a150505050505050505050565b6005546001600160401b031681565b6002546001600160a01b031681565b610534610718565b6000546001600160a01b0390811691161461056a5760405162461bcd60e51b815260040161056190610b05565b60405180910390fd5b6005805467ffffffffffffffff19166001600160401b0392909216919091179055565b610595610718565b6000546001600160a01b039081169116146105c25760405162461bcd60e51b815260040161056190610b05565b600080546040516001600160a01b03909116907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3600080546001600160a01b0319169055565b6000546001600160a01b031690565b6001546001600160a01b031681565b6003602052600090815260409020546001600160401b031681565b600460209081526000928352604080842090915290825290205481565b61066a610718565b6000546001600160a01b039081169116146106975760405162461bcd60e51b815260040161056190610b05565b6001600160a01b0381166106bd5760405162461bcd60e51b815260040161056190610abf565b600080546040516001600160a01b03808516939216917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e091a3600080546001600160a01b0319166001600160a01b0392909216919091179055565b3390565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b805161078c81610bcd565b92915050565b600082601f8301126107a2578081fd5b81516001600160401b038111156107b7578182fd5b60208082026107c7828201610ba7565b838152935081840185830182870184018810156107e357600080fd5b600092505b8483101561080f5780516107fb81610bcd565b8252600192909201919083019083016107e8565b505050505092915050565b80516001600160e01b03198116811461078c57600080fd5b80356002811061078c57600080fd5b805161078c81610be5565b60006020828403121561085d578081fd5b813561086881610bcd565b9392505050565b600060208284031215610880578081fd5b81516001600160401b0380821115610896578283fd5b81840191506101808083870312156108ac578384fd5b6108b581610ba7565b90506108c18684610841565b81526108d08660208501610841565b60208201526040830151828111156108e6578485fd5b6108f287828601610792565b6040830152506109058660608501610841565b60608201526109178660808501610841565b60808201526109298660a08501610841565b60a082015261093b8660c08501610841565b60c082015261094d8660e08501610841565b60e0820152610100915061096386838501610781565b82820152610120915061097886838501610781565b82820152610140915061098d8683850161081a565b8282015261016091506109a286838501610841565b91810191909152949350505050565b6000602082840312156109c2578081fd5b813561086881610be5565b600080604083850312156109df578081fd5b82356109ea81610be5565b91506109f98460208501610832565b90509250929050565b60008060008060608587031215610a17578182fd5b8435610a2281610be5565b9350610a318660208701610832565b925060408501356001600160401b0380821115610a4c578384fd5b818701915087601f830112610a5f578384fd5b813581811115610a6d578485fd5b886020828501011115610a7e578485fd5b95989497505060200194505050565b60008385833750909101908152602001919050565b6001600160a01b0391909116815260200190565b90815260200190565b60208082526026908201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160408201526564647265737360d01b606082015260800190565b6020808252818101527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572604082015260600190565b6001600160401b0391909116815260200190565b60006001600160401b038716825260028610610b6657fe5b85602083015260806040830152836080830152838560a08401378060a0858401015260a0601f19601f86011683010190508260608301529695505050505050565b6040518181016001600160401b0381118282101715610bc557600080fd5b604052919050565b6001600160a01b0381168114610be257600080fd5b50565b6001600160401b0381168114610be257600080fdfea26469706673582212200d59970524a918f72718b04f3d1161b708a5bf9844156d504bf444e672b26a1f64736f6c63430007010033"
+
+// DeployBatcherContract deploys a new Ethereum contract, binding an instance of BatcherContract to it.
+func DeployBatcherContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configContractAddress common.Address, _feeBankAddress common.Address) (common.Address, *types.Transaction, *BatcherContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(BatcherContractABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(BatcherContractBin), backend, _configContractAddress, _feeBankAddress)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &BatcherContract{BatcherContractCaller: BatcherContractCaller{contract: contract}, BatcherContractTransactor: BatcherContractTransactor{contract: contract}, BatcherContractFilterer: BatcherContractFilterer{contract: contract}}, nil
+}
+
+// BatcherContract is an auto generated Go binding around an Ethereum contract.
+type BatcherContract struct {
+	BatcherContractCaller     // Read-only binding to the contract
+	BatcherContractTransactor // Write-only binding to the contract
+	BatcherContractFilterer   // Log filterer for contract events
+}
+
+// BatcherContractCaller is an auto generated read-only Go binding around an Ethereum contract.
+type BatcherContractCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// BatcherContractTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type BatcherContractTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// BatcherContractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type BatcherContractFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// BatcherContractSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type BatcherContractSession struct {
+	Contract     *BatcherContract  // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// BatcherContractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type BatcherContractCallerSession struct {
+	Contract *BatcherContractCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts          // Call options to use throughout this session
+}
+
+// BatcherContractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type BatcherContractTransactorSession struct {
+	Contract     *BatcherContractTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts          // Transaction auth options to use throughout this session
+}
+
+// BatcherContractRaw is an auto generated low-level Go binding around an Ethereum contract.
+type BatcherContractRaw struct {
+	Contract *BatcherContract // Generic contract binding to access the raw methods on
+}
+
+// BatcherContractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type BatcherContractCallerRaw struct {
+	Contract *BatcherContractCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// BatcherContractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type BatcherContractTransactorRaw struct {
+	Contract *BatcherContractTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewBatcherContract creates a new instance of BatcherContract, bound to a specific deployed contract.
+func NewBatcherContract(address common.Address, backend bind.ContractBackend) (*BatcherContract, error) {
+	contract, err := bindBatcherContract(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContract{BatcherContractCaller: BatcherContractCaller{contract: contract}, BatcherContractTransactor: BatcherContractTransactor{contract: contract}, BatcherContractFilterer: BatcherContractFilterer{contract: contract}}, nil
+}
+
+// NewBatcherContractCaller creates a new read-only instance of BatcherContract, bound to a specific deployed contract.
+func NewBatcherContractCaller(address common.Address, caller bind.ContractCaller) (*BatcherContractCaller, error) {
+	contract, err := bindBatcherContract(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContractCaller{contract: contract}, nil
+}
+
+// NewBatcherContractTransactor creates a new write-only instance of BatcherContract, bound to a specific deployed contract.
+func NewBatcherContractTransactor(address common.Address, transactor bind.ContractTransactor) (*BatcherContractTransactor, error) {
+	contract, err := bindBatcherContract(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContractTransactor{contract: contract}, nil
+}
+
+// NewBatcherContractFilterer creates a new log filterer instance of BatcherContract, bound to a specific deployed contract.
+func NewBatcherContractFilterer(address common.Address, filterer bind.ContractFilterer) (*BatcherContractFilterer, error) {
+	contract, err := bindBatcherContract(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContractFilterer{contract: contract}, nil
+}
+
+// bindBatcherContract binds a generic wrapper to an already deployed contract.
+func bindBatcherContract(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(BatcherContractABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_BatcherContract *BatcherContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _BatcherContract.Contract.BatcherContractCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_BatcherContract *BatcherContractRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BatcherContract.Contract.BatcherContractTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_BatcherContract *BatcherContractRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _BatcherContract.Contract.BatcherContractTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_BatcherContract *BatcherContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _BatcherContract.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_BatcherContract *BatcherContractTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BatcherContract.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_BatcherContract *BatcherContractTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _BatcherContract.Contract.contract.Transact(opts, method, params...)
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_BatcherContract *BatcherContractCaller) BatchHashes(opts *bind.CallOpts, arg0 uint64, arg1 uint8) ([32]byte, error) {
+	var (
+		ret0 = new([32]byte)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "batchHashes", arg0, arg1)
+	return *ret0, err
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_BatcherContract *BatcherContractSession) BatchHashes(arg0 uint64, arg1 uint8) ([32]byte, error) {
+	return _BatcherContract.Contract.BatchHashes(&_BatcherContract.CallOpts, arg0, arg1)
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_BatcherContract *BatcherContractCallerSession) BatchHashes(arg0 uint64, arg1 uint8) ([32]byte, error) {
+	return _BatcherContract.Contract.BatchHashes(&_BatcherContract.CallOpts, arg0, arg1)
+}
+
+// BatchSizes is a free data retrieval call binding the contract method 0xbfd260ca.
+//
+// Solidity: function batchSizes(uint64 ) view returns(uint64)
+func (_BatcherContract *BatcherContractCaller) BatchSizes(opts *bind.CallOpts, arg0 uint64) (uint64, error) {
+	var (
+		ret0 = new(uint64)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "batchSizes", arg0)
+	return *ret0, err
+}
+
+// BatchSizes is a free data retrieval call binding the contract method 0xbfd260ca.
+//
+// Solidity: function batchSizes(uint64 ) view returns(uint64)
+func (_BatcherContract *BatcherContractSession) BatchSizes(arg0 uint64) (uint64, error) {
+	return _BatcherContract.Contract.BatchSizes(&_BatcherContract.CallOpts, arg0)
+}
+
+// BatchSizes is a free data retrieval call binding the contract method 0xbfd260ca.
+//
+// Solidity: function batchSizes(uint64 ) view returns(uint64)
+func (_BatcherContract *BatcherContractCallerSession) BatchSizes(arg0 uint64) (uint64, error) {
+	return _BatcherContract.Contract.BatchSizes(&_BatcherContract.CallOpts, arg0)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_BatcherContract *BatcherContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "configContract")
+	return *ret0, err
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_BatcherContract *BatcherContractSession) ConfigContract() (common.Address, error) {
+	return _BatcherContract.Contract.ConfigContract(&_BatcherContract.CallOpts)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_BatcherContract *BatcherContractCallerSession) ConfigContract() (common.Address, error) {
+	return _BatcherContract.Contract.ConfigContract(&_BatcherContract.CallOpts)
+}
+
+// FeeBankContract is a free data retrieval call binding the contract method 0x36e1290d.
+//
+// Solidity: function feeBankContract() view returns(address)
+func (_BatcherContract *BatcherContractCaller) FeeBankContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "feeBankContract")
+	return *ret0, err
+}
+
+// FeeBankContract is a free data retrieval call binding the contract method 0x36e1290d.
+//
+// Solidity: function feeBankContract() view returns(address)
+func (_BatcherContract *BatcherContractSession) FeeBankContract() (common.Address, error) {
+	return _BatcherContract.Contract.FeeBankContract(&_BatcherContract.CallOpts)
+}
+
+// FeeBankContract is a free data retrieval call binding the contract method 0x36e1290d.
+//
+// Solidity: function feeBankContract() view returns(address)
+func (_BatcherContract *BatcherContractCallerSession) FeeBankContract() (common.Address, error) {
+	return _BatcherContract.Contract.FeeBankContract(&_BatcherContract.CallOpts)
+}
+
+// MinFee is a free data retrieval call binding the contract method 0x24ec7590.
+//
+// Solidity: function minFee() view returns(uint64)
+func (_BatcherContract *BatcherContractCaller) MinFee(opts *bind.CallOpts) (uint64, error) {
+	var (
+		ret0 = new(uint64)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "minFee")
+	return *ret0, err
+}
+
+// MinFee is a free data retrieval call binding the contract method 0x24ec7590.
+//
+// Solidity: function minFee() view returns(uint64)
+func (_BatcherContract *BatcherContractSession) MinFee() (uint64, error) {
+	return _BatcherContract.Contract.MinFee(&_BatcherContract.CallOpts)
+}
+
+// MinFee is a free data retrieval call binding the contract method 0x24ec7590.
+//
+// Solidity: function minFee() view returns(uint64)
+func (_BatcherContract *BatcherContractCallerSession) MinFee() (uint64, error) {
+	return _BatcherContract.Contract.MinFee(&_BatcherContract.CallOpts)
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_BatcherContract *BatcherContractCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _BatcherContract.contract.Call(opts, out, "owner")
+	return *ret0, err
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_BatcherContract *BatcherContractSession) Owner() (common.Address, error) {
+	return _BatcherContract.Contract.Owner(&_BatcherContract.CallOpts)
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_BatcherContract *BatcherContractCallerSession) Owner() (common.Address, error) {
+	return _BatcherContract.Contract.Owner(&_BatcherContract.CallOpts)
+}
+
+// AddTransaction is a paid mutator transaction binding the contract method 0x246673dc.
+//
+// Solidity: function addTransaction(uint64 _batchIndex, uint8 _type, bytes _transaction) payable returns()
+func (_BatcherContract *BatcherContractTransactor) AddTransaction(opts *bind.TransactOpts, _batchIndex uint64, _type uint8, _transaction []byte) (*types.Transaction, error) {
+	return _BatcherContract.contract.Transact(opts, "addTransaction", _batchIndex, _type, _transaction)
+}
+
+// AddTransaction is a paid mutator transaction binding the contract method 0x246673dc.
+//
+// Solidity: function addTransaction(uint64 _batchIndex, uint8 _type, bytes _transaction) payable returns()
+func (_BatcherContract *BatcherContractSession) AddTransaction(_batchIndex uint64, _type uint8, _transaction []byte) (*types.Transaction, error) {
+	return _BatcherContract.Contract.AddTransaction(&_BatcherContract.TransactOpts, _batchIndex, _type, _transaction)
+}
+
+// AddTransaction is a paid mutator transaction binding the contract method 0x246673dc.
+//
+// Solidity: function addTransaction(uint64 _batchIndex, uint8 _type, bytes _transaction) payable returns()
+func (_BatcherContract *BatcherContractTransactorSession) AddTransaction(_batchIndex uint64, _type uint8, _transaction []byte) (*types.Transaction, error) {
+	return _BatcherContract.Contract.AddTransaction(&_BatcherContract.TransactOpts, _batchIndex, _type, _transaction)
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_BatcherContract *BatcherContractTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BatcherContract.contract.Transact(opts, "renounceOwnership")
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_BatcherContract *BatcherContractSession) RenounceOwnership() (*types.Transaction, error) {
+	return _BatcherContract.Contract.RenounceOwnership(&_BatcherContract.TransactOpts)
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_BatcherContract *BatcherContractTransactorSession) RenounceOwnership() (*types.Transaction, error) {
+	return _BatcherContract.Contract.RenounceOwnership(&_BatcherContract.TransactOpts)
+}
+
+// SetMinFee is a paid mutator transaction binding the contract method 0x48fd5acc.
+//
+// Solidity: function setMinFee(uint64 _minFee) returns()
+func (_BatcherContract *BatcherContractTransactor) SetMinFee(opts *bind.TransactOpts, _minFee uint64) (*types.Transaction, error) {
+	return _BatcherContract.contract.Transact(opts, "setMinFee", _minFee)
+}
+
+// SetMinFee is a paid mutator transaction binding the contract method 0x48fd5acc.
+//
+// Solidity: function setMinFee(uint64 _minFee) returns()
+func (_BatcherContract *BatcherContractSession) SetMinFee(_minFee uint64) (*types.Transaction, error) {
+	return _BatcherContract.Contract.SetMinFee(&_BatcherContract.TransactOpts, _minFee)
+}
+
+// SetMinFee is a paid mutator transaction binding the contract method 0x48fd5acc.
+//
+// Solidity: function setMinFee(uint64 _minFee) returns()
+func (_BatcherContract *BatcherContractTransactorSession) SetMinFee(_minFee uint64) (*types.Transaction, error) {
+	return _BatcherContract.Contract.SetMinFee(&_BatcherContract.TransactOpts, _minFee)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_BatcherContract *BatcherContractTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _BatcherContract.contract.Transact(opts, "transferOwnership", newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_BatcherContract *BatcherContractSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _BatcherContract.Contract.TransferOwnership(&_BatcherContract.TransactOpts, newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_BatcherContract *BatcherContractTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _BatcherContract.Contract.TransferOwnership(&_BatcherContract.TransactOpts, newOwner)
+}
+
+// BatcherContractOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the BatcherContract contract.
+type BatcherContractOwnershipTransferredIterator struct {
+	Event *BatcherContractOwnershipTransferred // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BatcherContractOwnershipTransferredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BatcherContractOwnershipTransferred)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BatcherContractOwnershipTransferred)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BatcherContractOwnershipTransferredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BatcherContractOwnershipTransferredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BatcherContractOwnershipTransferred represents a OwnershipTransferred event raised by the BatcherContract contract.
+type BatcherContractOwnershipTransferred struct {
+	PreviousOwner common.Address
+	NewOwner      common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_BatcherContract *BatcherContractFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*BatcherContractOwnershipTransferredIterator, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _BatcherContract.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContractOwnershipTransferredIterator{contract: _BatcherContract.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+}
+
+// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_BatcherContract *BatcherContractFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *BatcherContractOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _BatcherContract.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BatcherContractOwnershipTransferred)
+				if err := _BatcherContract.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_BatcherContract *BatcherContractFilterer) ParseOwnershipTransferred(log types.Log) (*BatcherContractOwnershipTransferred, error) {
+	event := new(BatcherContractOwnershipTransferred)
+	if err := _BatcherContract.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// BatcherContractTransactionAddedIterator is returned from FilterTransactionAdded and is used to iterate over the raw logs and unpacked data for TransactionAdded events raised by the BatcherContract contract.
+type BatcherContractTransactionAddedIterator struct {
+	Event *BatcherContractTransactionAdded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *BatcherContractTransactionAddedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(BatcherContractTransactionAdded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(BatcherContractTransactionAdded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *BatcherContractTransactionAddedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *BatcherContractTransactionAddedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// BatcherContractTransactionAdded represents a TransactionAdded event raised by the BatcherContract contract.
+type BatcherContractTransactionAdded struct {
+	BatchIndex      uint64
+	TransactionType uint8
+	Transaction     []byte
+	BatchHash       [32]byte
+	Raw             types.Log // Blockchain specific contextual infos
+}
+
+// FilterTransactionAdded is a free log retrieval operation binding the contract event 0xfc285e0b48a09e92ec4acb05226c557c0af1c3976d350d24b4fd4fa104f82c98.
+//
+// Solidity: event TransactionAdded(uint64 batchIndex, uint8 transactionType, bytes transaction, bytes32 batchHash)
+func (_BatcherContract *BatcherContractFilterer) FilterTransactionAdded(opts *bind.FilterOpts) (*BatcherContractTransactionAddedIterator, error) {
+
+	logs, sub, err := _BatcherContract.contract.FilterLogs(opts, "TransactionAdded")
+	if err != nil {
+		return nil, err
+	}
+	return &BatcherContractTransactionAddedIterator{contract: _BatcherContract.contract, event: "TransactionAdded", logs: logs, sub: sub}, nil
+}
+
+// WatchTransactionAdded is a free log subscription operation binding the contract event 0xfc285e0b48a09e92ec4acb05226c557c0af1c3976d350d24b4fd4fa104f82c98.
+//
+// Solidity: event TransactionAdded(uint64 batchIndex, uint8 transactionType, bytes transaction, bytes32 batchHash)
+func (_BatcherContract *BatcherContractFilterer) WatchTransactionAdded(opts *bind.WatchOpts, sink chan<- *BatcherContractTransactionAdded) (event.Subscription, error) {
+
+	logs, sub, err := _BatcherContract.contract.WatchLogs(opts, "TransactionAdded")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(BatcherContractTransactionAdded)
+				if err := _BatcherContract.contract.UnpackLog(event, "TransactionAdded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTransactionAdded is a log parse operation binding the contract event 0xfc285e0b48a09e92ec4acb05226c557c0af1c3976d350d24b4fd4fa104f82c98.
+//
+// Solidity: event TransactionAdded(uint64 batchIndex, uint8 transactionType, bytes transaction, bytes32 batchHash)
+func (_BatcherContract *BatcherContractFilterer) ParseTransactionAdded(log types.Log) (*BatcherContractTransactionAdded, error) {
+	event := new(BatcherContractTransactionAdded)
+	if err := _BatcherContract.contract.UnpackLog(event, "TransactionAdded", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // ConfigContractABI is the input ABI used to generate the binding from.
 const ConfigContractABI = "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configChangeHeadsUpBlocks\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numConfigs\",\"type\":\"uint64\"}],\"name\":\"ConfigScheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numConfigs\",\"type\":\"uint64\"}],\"name\":\"ConfigUnscheduled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"configChangeHeadsUpBlocks\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"_keyperIndex\",\"type\":\"uint64\"}],\"name\":\"configKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_configIndex\",\"type\":\"uint64\"}],\"name\":\"configNumKeypers\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"configs\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"}],\"name\":\"getConfig\",\"outputs\":[{\"components\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"address[]\",\"name\":\"keypers\",\"type\":\"address[]\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"internalType\":\"structBatchConfig\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfig\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBlockNumber\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"threshold\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSpan\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"batchSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionSizeLimit\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"transactionGasLimit\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"feeReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"targetAddress\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"targetFunctionSelector\",\"type\":\"bytes4\"},{\"internalType\":\"uint64\",\"name\":\"executionTimeout\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"_newKeypers\",\"type\":\"address[]\"}],\"name\":\"nextConfigAddKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_index\",\"type\":\"uint64\"}],\"name\":\"nextConfigKeypers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextConfigNumKeypers\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"n\",\"type\":\"uint64\"}],\"name\":\"nextConfigRemoveKeypers\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchSizeLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetBatchSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchSpan\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetBatchSpan\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_executionTimeout\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetExecutionTimeout\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_feeReceiver\",\"type\":\"address\"}],\"name\":\"nextConfigSetFeeReceiver\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_startBatchIndex\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetStartBatchIndex\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_startBlockNumber\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetStartBlockNumber\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_targetAddress\",\"type\":\"address\"}],\"name\":\"nextConfigSetTargetAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"_targetFunctionSelector\",\"type\":\"bytes4\"}],\"name\":\"nextConfigSetTargetFunctionSelector\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_threshold\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetThreshold\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_transactionGasLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetTransactionGasLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_transactionSizeLimit\",\"type\":\"uint64\"}],\"name\":\"nextConfigSetTransactionSizeLimit\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numConfigs\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"scheduleNextConfig\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_fromStartBlockNumber\",\"type\":\"uint64\"}],\"name\":\"unscheduleConfigs\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
@@ -1505,6 +2209,537 @@ func (_Context *ContextTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.
 // Transact invokes the (paid) contract method with params as input values.
 func (_Context *ContextTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _Context.Contract.contract.Transact(opts, method, params...)
+}
+
+// FeeBankContractABI is the input ABI used to generate the binding from.
+const FeeBankContractABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"depositor\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"amount\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"totalAmount\",\"type\":\"uint64\"}],\"name\":\"DepositEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"amount\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"totalAmount\",\"type\":\"uint64\"}],\"name\":\"WithdrawEvent\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"_amount\",\"type\":\"uint64\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// FeeBankContractFuncSigs maps the 4-byte function signature to its string representation.
+var FeeBankContractFuncSigs = map[string]string{
+	"f340fa01": "deposit(address)",
+	"fc7e286d": "deposits(address)",
+	"3ccfd60b": "withdraw()",
+	"d6dad060": "withdraw(address,uint64)",
+}
+
+// FeeBankContractBin is the compiled bytecode used for deploying new contracts.
+var FeeBankContractBin = "0x608060405234801561001057600080fd5b506103ce806100206000396000f3fe60806040526004361061003f5760003560e01c80633ccfd60b14610044578063d6dad0601461005b578063f340fa011461009e578063fc7e286d146100c4575b600080fd5b34801561005057600080fd5b50610059610114565b005b34801561006757600080fd5b506100596004803603604081101561007e57600080fd5b5080356001600160a01b0316906020013567ffffffffffffffff1661013a565b610059600480360360208110156100b457600080fd5b50356001600160a01b0316610148565b3480156100d057600080fd5b506100f7600480360360208110156100e757600080fd5b50356001600160a01b0316610227565b6040805167ffffffffffffffff9092168252519081900360200190f35b33600081815260208190526040902054610138919067ffffffffffffffff16610243565b565b6101448282610243565b5050565b6001600160a01b03811661015b57600080fd5b6000341161016857600080fd5b6001600160a01b03811660009081526020819052604090205467ffffffffffffffff90811681031634111561019c57600080fd5b6001600160a01b03811660008181526020818152604091829020805467ffffffffffffffff80821634908101821667ffffffffffffffff1990931692909217928390558451338152938401959095528416828401529092166060830152517fc8b0ade8d126aac77fd16ecf68538fc2dfcc7cf77e879421a5907c3dff4fc4d99181900360800190a150565b60006020819052908152604090205467ffffffffffffffff1681565b6001600160a01b03821661025657600080fd5b3360009081526020819052604090205467ffffffffffffffff168061027a57600080fd5b8067ffffffffffffffff168267ffffffffffffffff16111561029b57600080fd5b33600090815260208190526040808220805467ffffffffffffffff191685850367ffffffffffffffff9081169190911790915590516001600160a01b038616918516908381818185875af1925050503d8060008114610316576040519150601f19603f3d011682016040523d82523d6000602084013e61031b565b606091505b505090508061032957600080fd5b33600081815260208181526040918290205482519384526001600160a01b0388169184019190915267ffffffffffffffff80871684840152166060830152517f4b8a4210268358b51dbd708b44cd83ba67563b2fba3c695343cc3f3e160d796e9181900360800190a15050505056fea2646970667358221220d8e393eeac731eb6e62c42d625a2372a151b2c14d77f3d37575cb6b1e6a829a264736f6c63430007010033"
+
+// DeployFeeBankContract deploys a new Ethereum contract, binding an instance of FeeBankContract to it.
+func DeployFeeBankContract(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *FeeBankContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(FeeBankContractABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(FeeBankContractBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &FeeBankContract{FeeBankContractCaller: FeeBankContractCaller{contract: contract}, FeeBankContractTransactor: FeeBankContractTransactor{contract: contract}, FeeBankContractFilterer: FeeBankContractFilterer{contract: contract}}, nil
+}
+
+// FeeBankContract is an auto generated Go binding around an Ethereum contract.
+type FeeBankContract struct {
+	FeeBankContractCaller     // Read-only binding to the contract
+	FeeBankContractTransactor // Write-only binding to the contract
+	FeeBankContractFilterer   // Log filterer for contract events
+}
+
+// FeeBankContractCaller is an auto generated read-only Go binding around an Ethereum contract.
+type FeeBankContractCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// FeeBankContractTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type FeeBankContractTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// FeeBankContractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type FeeBankContractFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// FeeBankContractSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type FeeBankContractSession struct {
+	Contract     *FeeBankContract  // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// FeeBankContractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type FeeBankContractCallerSession struct {
+	Contract *FeeBankContractCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts          // Call options to use throughout this session
+}
+
+// FeeBankContractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type FeeBankContractTransactorSession struct {
+	Contract     *FeeBankContractTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts          // Transaction auth options to use throughout this session
+}
+
+// FeeBankContractRaw is an auto generated low-level Go binding around an Ethereum contract.
+type FeeBankContractRaw struct {
+	Contract *FeeBankContract // Generic contract binding to access the raw methods on
+}
+
+// FeeBankContractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type FeeBankContractCallerRaw struct {
+	Contract *FeeBankContractCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// FeeBankContractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type FeeBankContractTransactorRaw struct {
+	Contract *FeeBankContractTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewFeeBankContract creates a new instance of FeeBankContract, bound to a specific deployed contract.
+func NewFeeBankContract(address common.Address, backend bind.ContractBackend) (*FeeBankContract, error) {
+	contract, err := bindFeeBankContract(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContract{FeeBankContractCaller: FeeBankContractCaller{contract: contract}, FeeBankContractTransactor: FeeBankContractTransactor{contract: contract}, FeeBankContractFilterer: FeeBankContractFilterer{contract: contract}}, nil
+}
+
+// NewFeeBankContractCaller creates a new read-only instance of FeeBankContract, bound to a specific deployed contract.
+func NewFeeBankContractCaller(address common.Address, caller bind.ContractCaller) (*FeeBankContractCaller, error) {
+	contract, err := bindFeeBankContract(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContractCaller{contract: contract}, nil
+}
+
+// NewFeeBankContractTransactor creates a new write-only instance of FeeBankContract, bound to a specific deployed contract.
+func NewFeeBankContractTransactor(address common.Address, transactor bind.ContractTransactor) (*FeeBankContractTransactor, error) {
+	contract, err := bindFeeBankContract(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContractTransactor{contract: contract}, nil
+}
+
+// NewFeeBankContractFilterer creates a new log filterer instance of FeeBankContract, bound to a specific deployed contract.
+func NewFeeBankContractFilterer(address common.Address, filterer bind.ContractFilterer) (*FeeBankContractFilterer, error) {
+	contract, err := bindFeeBankContract(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContractFilterer{contract: contract}, nil
+}
+
+// bindFeeBankContract binds a generic wrapper to an already deployed contract.
+func bindFeeBankContract(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(FeeBankContractABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_FeeBankContract *FeeBankContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _FeeBankContract.Contract.FeeBankContractCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_FeeBankContract *FeeBankContractRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.FeeBankContractTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_FeeBankContract *FeeBankContractRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.FeeBankContractTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_FeeBankContract *FeeBankContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _FeeBankContract.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_FeeBankContract *FeeBankContractTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_FeeBankContract *FeeBankContractTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.contract.Transact(opts, method, params...)
+}
+
+// Deposits is a free data retrieval call binding the contract method 0xfc7e286d.
+//
+// Solidity: function deposits(address ) view returns(uint64)
+func (_FeeBankContract *FeeBankContractCaller) Deposits(opts *bind.CallOpts, arg0 common.Address) (uint64, error) {
+	var (
+		ret0 = new(uint64)
+	)
+	out := ret0
+	err := _FeeBankContract.contract.Call(opts, out, "deposits", arg0)
+	return *ret0, err
+}
+
+// Deposits is a free data retrieval call binding the contract method 0xfc7e286d.
+//
+// Solidity: function deposits(address ) view returns(uint64)
+func (_FeeBankContract *FeeBankContractSession) Deposits(arg0 common.Address) (uint64, error) {
+	return _FeeBankContract.Contract.Deposits(&_FeeBankContract.CallOpts, arg0)
+}
+
+// Deposits is a free data retrieval call binding the contract method 0xfc7e286d.
+//
+// Solidity: function deposits(address ) view returns(uint64)
+func (_FeeBankContract *FeeBankContractCallerSession) Deposits(arg0 common.Address) (uint64, error) {
+	return _FeeBankContract.Contract.Deposits(&_FeeBankContract.CallOpts, arg0)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
+//
+// Solidity: function deposit(address _receiver) payable returns()
+func (_FeeBankContract *FeeBankContractTransactor) Deposit(opts *bind.TransactOpts, _receiver common.Address) (*types.Transaction, error) {
+	return _FeeBankContract.contract.Transact(opts, "deposit", _receiver)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
+//
+// Solidity: function deposit(address _receiver) payable returns()
+func (_FeeBankContract *FeeBankContractSession) Deposit(_receiver common.Address) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Deposit(&_FeeBankContract.TransactOpts, _receiver)
+}
+
+// Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
+//
+// Solidity: function deposit(address _receiver) payable returns()
+func (_FeeBankContract *FeeBankContractTransactorSession) Deposit(_receiver common.Address) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Deposit(&_FeeBankContract.TransactOpts, _receiver)
+}
+
+// Withdraw is a paid mutator transaction binding the contract method 0x3ccfd60b.
+//
+// Solidity: function withdraw() returns()
+func (_FeeBankContract *FeeBankContractTransactor) Withdraw(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _FeeBankContract.contract.Transact(opts, "withdraw")
+}
+
+// Withdraw is a paid mutator transaction binding the contract method 0x3ccfd60b.
+//
+// Solidity: function withdraw() returns()
+func (_FeeBankContract *FeeBankContractSession) Withdraw() (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Withdraw(&_FeeBankContract.TransactOpts)
+}
+
+// Withdraw is a paid mutator transaction binding the contract method 0x3ccfd60b.
+//
+// Solidity: function withdraw() returns()
+func (_FeeBankContract *FeeBankContractTransactorSession) Withdraw() (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Withdraw(&_FeeBankContract.TransactOpts)
+}
+
+// Withdraw0 is a paid mutator transaction binding the contract method 0xd6dad060.
+//
+// Solidity: function withdraw(address _receiver, uint64 _amount) returns()
+func (_FeeBankContract *FeeBankContractTransactor) Withdraw0(opts *bind.TransactOpts, _receiver common.Address, _amount uint64) (*types.Transaction, error) {
+	return _FeeBankContract.contract.Transact(opts, "withdraw0", _receiver, _amount)
+}
+
+// Withdraw0 is a paid mutator transaction binding the contract method 0xd6dad060.
+//
+// Solidity: function withdraw(address _receiver, uint64 _amount) returns()
+func (_FeeBankContract *FeeBankContractSession) Withdraw0(_receiver common.Address, _amount uint64) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Withdraw0(&_FeeBankContract.TransactOpts, _receiver, _amount)
+}
+
+// Withdraw0 is a paid mutator transaction binding the contract method 0xd6dad060.
+//
+// Solidity: function withdraw(address _receiver, uint64 _amount) returns()
+func (_FeeBankContract *FeeBankContractTransactorSession) Withdraw0(_receiver common.Address, _amount uint64) (*types.Transaction, error) {
+	return _FeeBankContract.Contract.Withdraw0(&_FeeBankContract.TransactOpts, _receiver, _amount)
+}
+
+// FeeBankContractDepositEventIterator is returned from FilterDepositEvent and is used to iterate over the raw logs and unpacked data for DepositEvent events raised by the FeeBankContract contract.
+type FeeBankContractDepositEventIterator struct {
+	Event *FeeBankContractDepositEvent // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *FeeBankContractDepositEventIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(FeeBankContractDepositEvent)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(FeeBankContractDepositEvent)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *FeeBankContractDepositEventIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *FeeBankContractDepositEventIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// FeeBankContractDepositEvent represents a DepositEvent event raised by the FeeBankContract contract.
+type FeeBankContractDepositEvent struct {
+	Depositor   common.Address
+	Receiver    common.Address
+	Amount      uint64
+	TotalAmount uint64
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterDepositEvent is a free log retrieval operation binding the contract event 0xc8b0ade8d126aac77fd16ecf68538fc2dfcc7cf77e879421a5907c3dff4fc4d9.
+//
+// Solidity: event DepositEvent(address depositor, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) FilterDepositEvent(opts *bind.FilterOpts) (*FeeBankContractDepositEventIterator, error) {
+
+	logs, sub, err := _FeeBankContract.contract.FilterLogs(opts, "DepositEvent")
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContractDepositEventIterator{contract: _FeeBankContract.contract, event: "DepositEvent", logs: logs, sub: sub}, nil
+}
+
+// WatchDepositEvent is a free log subscription operation binding the contract event 0xc8b0ade8d126aac77fd16ecf68538fc2dfcc7cf77e879421a5907c3dff4fc4d9.
+//
+// Solidity: event DepositEvent(address depositor, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) WatchDepositEvent(opts *bind.WatchOpts, sink chan<- *FeeBankContractDepositEvent) (event.Subscription, error) {
+
+	logs, sub, err := _FeeBankContract.contract.WatchLogs(opts, "DepositEvent")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(FeeBankContractDepositEvent)
+				if err := _FeeBankContract.contract.UnpackLog(event, "DepositEvent", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDepositEvent is a log parse operation binding the contract event 0xc8b0ade8d126aac77fd16ecf68538fc2dfcc7cf77e879421a5907c3dff4fc4d9.
+//
+// Solidity: event DepositEvent(address depositor, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) ParseDepositEvent(log types.Log) (*FeeBankContractDepositEvent, error) {
+	event := new(FeeBankContractDepositEvent)
+	if err := _FeeBankContract.contract.UnpackLog(event, "DepositEvent", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// FeeBankContractWithdrawEventIterator is returned from FilterWithdrawEvent and is used to iterate over the raw logs and unpacked data for WithdrawEvent events raised by the FeeBankContract contract.
+type FeeBankContractWithdrawEventIterator struct {
+	Event *FeeBankContractWithdrawEvent // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *FeeBankContractWithdrawEventIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(FeeBankContractWithdrawEvent)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(FeeBankContractWithdrawEvent)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *FeeBankContractWithdrawEventIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *FeeBankContractWithdrawEventIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// FeeBankContractWithdrawEvent represents a WithdrawEvent event raised by the FeeBankContract contract.
+type FeeBankContractWithdrawEvent struct {
+	Sender      common.Address
+	Receiver    common.Address
+	Amount      uint64
+	TotalAmount uint64
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterWithdrawEvent is a free log retrieval operation binding the contract event 0x4b8a4210268358b51dbd708b44cd83ba67563b2fba3c695343cc3f3e160d796e.
+//
+// Solidity: event WithdrawEvent(address sender, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) FilterWithdrawEvent(opts *bind.FilterOpts) (*FeeBankContractWithdrawEventIterator, error) {
+
+	logs, sub, err := _FeeBankContract.contract.FilterLogs(opts, "WithdrawEvent")
+	if err != nil {
+		return nil, err
+	}
+	return &FeeBankContractWithdrawEventIterator{contract: _FeeBankContract.contract, event: "WithdrawEvent", logs: logs, sub: sub}, nil
+}
+
+// WatchWithdrawEvent is a free log subscription operation binding the contract event 0x4b8a4210268358b51dbd708b44cd83ba67563b2fba3c695343cc3f3e160d796e.
+//
+// Solidity: event WithdrawEvent(address sender, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) WatchWithdrawEvent(opts *bind.WatchOpts, sink chan<- *FeeBankContractWithdrawEvent) (event.Subscription, error) {
+
+	logs, sub, err := _FeeBankContract.contract.WatchLogs(opts, "WithdrawEvent")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(FeeBankContractWithdrawEvent)
+				if err := _FeeBankContract.contract.UnpackLog(event, "WithdrawEvent", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseWithdrawEvent is a log parse operation binding the contract event 0x4b8a4210268358b51dbd708b44cd83ba67563b2fba3c695343cc3f3e160d796e.
+//
+// Solidity: event WithdrawEvent(address sender, address receiver, uint64 amount, uint64 totalAmount)
+func (_FeeBankContract *FeeBankContractFilterer) ParseWithdrawEvent(log types.Log) (*FeeBankContractWithdrawEvent, error) {
+	event := new(FeeBankContractWithdrawEvent)
+	if err := _FeeBankContract.contract.UnpackLog(event, "WithdrawEvent", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // KeyBroadcastContractABI is the input ABI used to generate the binding from.
