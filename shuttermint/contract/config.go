@@ -66,11 +66,16 @@ func (cc *ConfigContract) QueryBatchParams(opts *bind.CallOpts, batchIndex uint6
 
 // NextBatchIndex determines the next batch index to be started after the given block number.
 func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
-	numConfigs, err := cc.NumConfigs(nil)
+	i, err := cc.NumConfigs(nil)
 	if err != nil {
 		return 0, err
 	}
-	for i := numConfigs - 1; i >= 0; i-- {
+	for {
+		if i == 0 {
+			return uint64(0), fmt.Errorf("contract misconfigured")
+		}
+		i--
+
 		cfg, err := cc.Configs(nil, big.NewInt(0).SetUint64(i))
 		if err != nil {
 			return 0, err
@@ -86,7 +91,6 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 			return next, nil
 		}
 	}
-	return uint64(0), fmt.Errorf("contract misconfigured")
 }
 
 // GetConfigKeypers queries the list of keypers defined in the config given by its index
