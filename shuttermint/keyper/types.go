@@ -30,6 +30,7 @@ type BatchState struct {
 	KeyperConfig                KeyperConfig
 	MessageSender               *MessageSender
 	ContractCaller              *ContractCaller
+	KeyBroadcastContract        *contract.KeyBroadcastContract
 	pubkeyGenerated             chan PubkeyGeneratedEvent
 	privkeyGenerated            chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded chan EncryptionKeySignatureAddedEvent
@@ -41,32 +42,35 @@ type BatchState struct {
 
 // KeyperConfig contains validated configuration parameters for the keyper client
 type KeyperConfig struct {
-	ShuttermintURL                 string
-	EthereumURL                    string
-	SigningKey                     *ecdsa.PrivateKey
-	ValidatorKey                   ed25519.PrivateKey
-	ConfigContractAddress          common.Address
-	BatcherContractAddress         common.Address
-	KeyBroadcastingContractAddress common.Address
+	ShuttermintURL              string
+	EthereumURL                 string
+	SigningKey                  *ecdsa.PrivateKey
+	ValidatorKey                ed25519.PrivateKey
+	ConfigContractAddress       common.Address
+	BatcherContractAddress      common.Address
+	KeyBroadcastContractAddress common.Address
 }
 
 // Keyper is used to run the keyper key generation
 type Keyper struct {
 	sync.Mutex
 
-	Config         KeyperConfig
-	ethcl          *ethclient.Client
-	shmcl          client.Client
-	configContract *contract.ConfigContract
-	batchConfigs   map[uint64]contract.BatchConfig
-	batches        map[uint64]*BatchState
-	startBlock     *big.Int
-	checkedIn      bool
-	txs            <-chan coretypes.ResultEvent
-	ctx            context.Context
-	newHeaders     chan *types.Header // start new batches when new block headers arrive
-	group          *errgroup.Group
-	ms             *MessageSender
+	Config KeyperConfig
+	ethcl  *ethclient.Client
+	shmcl  client.Client
+
+	configContract       *contract.ConfigContract
+	keyBroadcastContract *contract.KeyBroadcastContract
+
+	batchConfigs map[uint64]contract.BatchConfig
+	batches      map[uint64]*BatchState
+	startBlock   *big.Int
+	checkedIn    bool
+	txs          <-chan coretypes.ResultEvent
+	ctx          context.Context
+	newHeaders   chan *types.Header // start new batches when new block headers arrive
+	group        *errgroup.Group
+	ms           *MessageSender
 }
 
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint
@@ -138,16 +142,22 @@ func (EncryptionKeySignatureAddedEvent) IEvent() {}
 
 // ContractCaller interacts with the contracts on Ethereum.
 type ContractCaller struct {
-	ethereumURL                 string
-	signingKey                  *ecdsa.PrivateKey
-	keyBroadcastContractAddress common.Address
+	client     *ethclient.Client
+	signingKey *ecdsa.PrivateKey
+
+	KeyBroadcastContract *contract.KeyBroadcastContract
 }
 
 // NewContractCaller creates a new ContractCaller.
-func NewContractCaller(ethereumURL string, signingKey *ecdsa.PrivateKey, keyBroadcastContractAddress common.Address) ContractCaller {
+func NewContractCaller(
+	client *ethclient.Client,
+	signingKey *ecdsa.PrivateKey,
+	keyBroadcastContract *contract.KeyBroadcastContract,
+) ContractCaller {
 	return ContractCaller{
-		ethereumURL:                 ethereumURL,
-		signingKey:                  signingKey,
-		keyBroadcastContractAddress: keyBroadcastContractAddress,
+		client:     client,
+		signingKey: signingKey,
+
+		KeyBroadcastContract: keyBroadcastContract,
 	}
 }

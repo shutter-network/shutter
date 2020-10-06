@@ -103,11 +103,19 @@ func (kpr *Keyper) init() error {
 	group, ctx := errgroup.WithContext(context.Background())
 	kpr.ctx = ctx
 	kpr.group = group
+
 	cc, err := contract.NewConfigContract(kpr.Config.ConfigContractAddress, kpr.ethcl)
 	if err != nil {
 		return err
 	}
 	kpr.configContract = cc
+
+	kbc, err := contract.NewKeyBroadcastContract(kpr.Config.KeyBroadcastContractAddress, kpr.ethcl)
+	if err != nil {
+		return err
+	}
+	kpr.keyBroadcastContract = kbc
+
 	return nil
 }
 
@@ -601,9 +609,9 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 	}
 
 	cc := NewContractCaller(
-		kpr.Config.EthereumURL,
+		kpr.ethcl,
 		kpr.Config.SigningKey,
-		kpr.Config.KeyBroadcastingContractAddress,
+		kpr.keyBroadcastContract,
 	)
 	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc)
 

@@ -181,13 +181,25 @@ func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 		indices = append(indices, ev.KeyperIndex)
 	}
 
-	return batch.ContractCaller.BroadcastEncryptionKey(
+	auth, err := batch.ContractCaller.Auth()
+	if err != nil {
+		return err
+	}
+	auth.GasLimit = 100000
+	tx, err := batch.ContractCaller.KeyBroadcastContract.BroadcastEncryptionKey2(
+		auth,
 		keyperIndex,
 		batch.BatchParams.BatchIndex,
 		encryptionKey,
 		indices,
 		sigs,
 	)
+	if err != nil {
+		return err
+	}
+	log.Printf("Encryption key broadcasted with tx %s", tx.Hash().Hex())
+
+	return nil
 }
 
 func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {

@@ -16,13 +16,13 @@ import (
 
 // RawKeyperConfig contains raw, unvalidated configuration parameters
 type RawKeyperConfig struct {
-	ShuttermintURL          string
-	EthereumURL             string
-	SigningKey              string
-	ValidatorSeed           string
-	ConfigContract          string
-	BatcherContract         string
-	KeyBroadcastingContract string
+	ShuttermintURL       string
+	EthereumURL          string
+	SigningKey           string
+	ValidatorSeed        string
+	ConfigContract       string
+	BatcherContract      string
+	KeyBroadcastContract string
 }
 
 // keyperCmd represents the keyper command
@@ -47,7 +47,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ValidatorSeed")
 	viper.BindEnv("ConfigContract")
 	viper.BindEnv("BatcherContract")
-	viper.BindEnv("KeyBroadcastingContract")
+	viper.BindEnv("KeyBroadcastContract")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
 	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
@@ -110,21 +110,21 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		return emptyConfig, fmt.Errorf("BatcherContract must be a valid checksummed address")
 	}
 
-	keyBroadcastingContractAddress := common.HexToAddress(r.KeyBroadcastingContract)
-	if r.KeyBroadcastingContract != keyBroadcastingContractAddress.Hex() {
+	keyBroadcastContractAddress := common.HexToAddress(r.KeyBroadcastContract)
+	if r.KeyBroadcastContract != keyBroadcastContractAddress.Hex() {
 		return emptyConfig, fmt.Errorf(
-			"KeyBroadcastingContract must be a valid checksummed address",
+			"KeyBroadcastContract must be a valid checksummed address",
 		)
 	}
 
 	return keyper.KeyperConfig{
-		ShuttermintURL:                 r.ShuttermintURL,
-		EthereumURL:                    r.EthereumURL,
-		SigningKey:                     signingKey,
-		ValidatorKey:                   validatorKey,
-		ConfigContractAddress:          configContractAddress,
-		BatcherContractAddress:         batcherContractAddress,
-		KeyBroadcastingContractAddress: keyBroadcastingContractAddress,
+		ShuttermintURL:              r.ShuttermintURL,
+		EthereumURL:                 r.EthereumURL,
+		SigningKey:                  signingKey,
+		ValidatorKey:                validatorKey,
+		ConfigContractAddress:       configContractAddress,
+		BatcherContractAddress:      batcherContractAddress,
+		KeyBroadcastContractAddress: keyBroadcastContractAddress,
 	}, nil
 }
 
