@@ -1,4 +1,4 @@
-package contract
+package keybroadcastcontract
 
 // This file adds some custom methods to the abigen generated KeyBroadcastContract class
 import (

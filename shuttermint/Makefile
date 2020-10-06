@@ -54,7 +54,9 @@ lint-changes:
 	golangci-lint run --new-from-rev origin/master
 
 abigen:
-	abigen --pkg contract --out contract/binding.go --sol ../contracts/contracts/ConfigContract.sol --sol ../contracts/contracts/KeyBroadcastContract.sol --sol ../contracts/contracts/BatcherContract.sol
+	abigen --pkg configcontract --out contracts/configcontract/binding.go --sol ../contracts/contracts/ConfigContract.sol
+	abigen --pkg keybroadcastcontract --out contracts/keybroadcastcontract/binding.go --sol ../contracts/contracts/KeyBroadcastContract.sol
+	abigen --pkg batchercontract --out contracts/batchercontract/binding.go --sol ../contracts/contracts/BatcherContract.sol
 
 deploy-ganache:
 	go run ./sandbox/deploy/deploy.go deploy

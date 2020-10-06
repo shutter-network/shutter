@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/contracts/configcontract"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 		panic(err)
 	}
 	addr := common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962")
-	cc, err := contract.NewConfigContract(addr, cl)
+	cc, err := configcontract.NewConfigContract(addr, cl)
 	if err != nil {
 		panic(err)
 	}

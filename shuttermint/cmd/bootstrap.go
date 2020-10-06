@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/contracts/configcontract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
@@ -96,7 +96,7 @@ func bootstrap() {
 	if bootstrapFlags.ConfigContract != configContractAddress.Hex() {
 		log.Fatalf("Invalid config contract address %s", bootstrapFlags.ConfigContract)
 	}
-	configContract, err := contract.NewConfigContract(configContractAddress, ethcl)
+	configContract, err := configcontract.NewConfigContract(configContractAddress, ethcl)
 	if err != nil {
 		log.Fatalf("Failed to instantiate ConfigContract: %v", err)
 	}
