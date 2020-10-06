@@ -21,8 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/contracts/configcontract"
-	"github.com/brainbot-com/shutter/shuttermint/contracts/keybroadcastcontract"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
@@ -282,14 +281,14 @@ func deploy(ctx context.Context) {
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
-	configAddress, tx, _, err := configcontract.DeployConfigContract(
+	configAddress, tx, _, err := contract.DeployConfigContract(
 		auth,
 		client,
 		defaultConfigChangeHeadsUpBlocks,
 	)
 	addTx()
 
-	broadcastAddress, tx, _, err := keybroadcastcontract.DeployKeyBroadcastContract(auth, client, configAddress)
+	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
 	addTx()
 
 	_, err = waitForTransactions(ctx, client, txs)
@@ -333,7 +332,7 @@ func schedule(
 	}
 
 	checkContractExists(ctx, configContractAddress)
-	cc, err := configcontract.NewConfigContract(configContractAddress, client)
+	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
 	}
@@ -378,7 +377,7 @@ func schedule(
 
 func getconfig(ctx context.Context, configContractAddress common.Address, index int) {
 	checkContractExists(ctx, configContractAddress)
-	cc, err := configcontract.NewConfigContract(configContractAddress, client)
+	cc, err := contract.NewConfigContract(configContractAddress, client)
 	if err != nil {
 		panic(err)
 	}
@@ -390,7 +389,7 @@ func getconfig(ctx context.Context, configContractAddress common.Address, index 
 	printConfig(c)
 }
 
-func printConfig(config configcontract.BatchConfig) {
+func printConfig(config contract.BatchConfig) {
 	fmt.Printf("     Start batch index: %d\n", config.StartBatchIndex)
 	fmt.Printf("    Start block number: %d\n", config.StartBlockNumber)
 	fmt.Printf("            Batch span: %d\n", config.BatchSpan)

@@ -1,4 +1,4 @@
-package configcontract
+package contract
 
 // This file adds some custom methods to the abigen generated ConfigContract class
 

@@ -20,8 +20,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/brainbot-com/shutter/shuttermint/contracts/configcontract"
-	"github.com/brainbot-com/shutter/shuttermint/contracts/keybroadcastcontract"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -31,7 +30,7 @@ const newHeadersSize = 8
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
 		Config:       kc,
-		batchConfigs: make(map[uint64]configcontract.BatchConfig),
+		batchConfigs: make(map[uint64]contract.BatchConfig),
 		batches:      make(map[uint64]*BatchState),
 		checkedIn:    false,
 		newHeaders:   make(chan *types.Header, newHeadersSize),
@@ -105,13 +104,13 @@ func (kpr *Keyper) init() error {
 	kpr.ctx = ctx
 	kpr.group = group
 
-	cc, err := configcontract.NewConfigContract(kpr.Config.ConfigContractAddress, kpr.ethcl)
+	cc, err := contract.NewConfigContract(kpr.Config.ConfigContractAddress, kpr.ethcl)
 	if err != nil {
 		return err
 	}
 	kpr.configContract = cc
 
-	kbc, err := keybroadcastcontract.NewKeyBroadcastContract(kpr.Config.KeyBroadcastContractAddress, kpr.ethcl)
+	kbc, err := contract.NewKeyBroadcastContract(kpr.Config.KeyBroadcastContractAddress, kpr.ethcl)
 	if err != nil {
 		return err
 	}
@@ -344,7 +343,7 @@ func (kpr *Keyper) maybeSendConfigVote() error {
 }
 
 func (kpr *Keyper) sendConfigVote(configIndex uint64) error {
-	config, ok := func() (configcontract.BatchConfig, bool) {
+	config, ok := func() (contract.BatchConfig, bool) {
 		kpr.Lock()
 		defer kpr.Unlock()
 		c, ok := kpr.batchConfigs[configIndex]
@@ -381,7 +380,7 @@ func (kpr *Keyper) maybeSendStartVote(blockNumber uint64) error {
 	}
 
 	// don't vote to start if last config is unknown
-	localConfig, configKnown := func() (configcontract.BatchConfig, bool) {
+	localConfig, configKnown := func() (contract.BatchConfig, bool) {
 		kpr.Lock()
 		defer kpr.Unlock()
 		localConfig, configKnown := kpr.batchConfigs[lastConfig.ConfigIndex]
@@ -450,7 +449,7 @@ func (kpr *Keyper) dispatchMainChainLog(l types.Log) {
 	}
 }
 
-func (kpr *Keyper) handleConfigScheduledEvent(ev *configcontract.ConfigContractConfigScheduled) {
+func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigScheduled) {
 	index := ev.NumConfigs - 1
 	config, err := kpr.configContract.GetConfigByIndex(nil, index)
 	if err != nil {
@@ -484,7 +483,7 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *configcontract.ConfigContractC
 
 // send check in if we aren't checked in already and if we are a member of the keyper set in the
 // given config.
-func (kpr *Keyper) maybeSendCheckIn(config configcontract.BatchConfig) error {
+func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 	if kpr.checkedIn {
 		return nil
 	}

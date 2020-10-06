@@ -1,7 +1,7 @@
 // Code generated - DO NOT EDIT.
 // This file is a generated binding and any manual changes will be lost.
 
-package configcontract
+package contract
 
 import (
 	"math/big"
@@ -1505,6 +1505,358 @@ func (_Context *ContextTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.
 // Transact invokes the (paid) contract method with params as input values.
 func (_Context *ContextTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _Context.Contract.contract.Transact(opts, method, params...)
+}
+
+// KeyBroadcastContractABI is the input ABI used to generate the binding from.
+const KeyBroadcastContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_configContractAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"batchIndex\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"encryptionKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"signerIndices\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes[]\",\"name\":\"signatures\",\"type\":\"bytes[]\"}],\"name\":\"EncryptionKeyBroadcasted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_keyperIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"_encryptionKey\",\"type\":\"bytes32\"},{\"internalType\":\"uint64[]\",\"name\":\"_signerIndices\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_signatures\",\"type\":\"bytes[]\"}],\"name\":\"broadcastEncryptionKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+
+// KeyBroadcastContractFuncSigs maps the 4-byte function signature to its string representation.
+var KeyBroadcastContractFuncSigs = map[string]string{
+	"2712860b": "broadcastEncryptionKey(uint64,uint64,bytes32,uint64[],bytes[])",
+	"bf66a182": "configContract()",
+}
+
+// KeyBroadcastContractBin is the compiled bytecode used for deploying new contracts.
+var KeyBroadcastContractBin = "0x608060405234801561001057600080fd5b5060405161074238038061074283398101604081905261002f91610054565b600080546001600160a01b0319166001600160a01b0392909216919091179055610082565b600060208284031215610065578081fd5b81516001600160a01b038116811461007b578182fd5b9392505050565b6106b1806100916000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80632712860b1461003b578063bf66a18214610050575b600080fd5b61004e61004936600461046b565b61006e565b005b6100586101a3565b6040516100659190610612565b60405180910390f35b6100766101b2565b60005460405163700465b160e11b81526001600160a01b039091169063e008cb62906100a6908a90600401610626565b60006040518083038186803b1580156100be57600080fd5b505afa1580156100d2573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526100fa9190810190610328565b90508060400151518867ffffffffffffffff161061011757600080fd5b80604001518867ffffffffffffffff168151811061013157fe5b60200260200101516001600160a01b0316336001600160a01b03161461015657600080fd5b7f4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a338888888888886040516101919796959493929190610507565b60405180910390a15050505050505050565b6000546001600160a01b031681565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b80516001600160a01b038116811461022e57600080fd5b92915050565b600082601f830112610244578081fd5b815167ffffffffffffffff81111561025a578182fd5b602080820261026a82820161063b565b8381529350818401858301828701840188101561028657600080fd5b600092505b848310156102b15761029d8882610217565b82526001929092019190830190830161028b565b505050505092915050565b60008083601f8401126102cd578081fd5b50813567ffffffffffffffff8111156102e4578182fd5b60208301915083602080830285010111156102fe57600080fd5b9250929050565b80516001600160e01b03198116811461022e57600080fd5b805161022e81610662565b600060208284031215610339578081fd5b815167ffffffffffffffff80821115610350578283fd5b8184019150610180808387031215610366578384fd5b61036f8161063b565b905061037b868461031d565b815261038a866020850161031d565b60208201526040830151828111156103a0578485fd5b6103ac87828601610234565b6040830152506103bf866060850161031d565b60608201526103d1866080850161031d565b60808201526103e38660a0850161031d565b60a08201526103f58660c0850161031d565b60c08201526104078660e0850161031d565b60e0820152610100915061041d86838501610217565b82820152610120915061043286838501610217565b82820152610140915061044786838501610305565b82820152610160915061045c8683850161031d565b91810191909152949350505050565b600080600080600080600060a0888a031215610485578283fd5b873561049081610662565b965060208801356104a081610662565b955060408801359450606088013567ffffffffffffffff808211156104c3578485fd5b6104cf8b838c016102bc565b909650945060808a01359150808211156104e7578384fd5b506104f48a828b016102bc565b989b979a50959850939692959293505050565b6001600160a01b038816815267ffffffffffffffff8781166020808401919091526040830188905260a060608401819052830186905260009187919060c08501845b8981101561057057843561055c81610662565b831682529383019390830190600101610549565b50858103608087015286815282810193508287028101830188865b898110156105fe57601f19808585030188528235601e198d36030181126105b057898afd5b8c018035878111156105c0578a8bfd5b8036038e13156105ce578a8bfd5b808652808983018a88013785810189018b905298880198601f01909116909301860192509085019060010161058b565b50909e9d5050505050505050505050505050565b6001600160a01b0391909116815260200190565b67ffffffffffffffff91909116815260200190565b60405181810167ffffffffffffffff8111828210171561065a57600080fd5b604052919050565b67ffffffffffffffff8116811461067857600080fd5b5056fea26469706673582212209e84c69b46a99f09a96cc90c34146d3f835efdccc38492459fb41470fd17afff64736f6c63430007010033"
+
+// DeployKeyBroadcastContract deploys a new Ethereum contract, binding an instance of KeyBroadcastContract to it.
+func DeployKeyBroadcastContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configContractAddress common.Address) (common.Address, *types.Transaction, *KeyBroadcastContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(KeyBroadcastContractABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(KeyBroadcastContractBin), backend, _configContractAddress)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &KeyBroadcastContract{KeyBroadcastContractCaller: KeyBroadcastContractCaller{contract: contract}, KeyBroadcastContractTransactor: KeyBroadcastContractTransactor{contract: contract}, KeyBroadcastContractFilterer: KeyBroadcastContractFilterer{contract: contract}}, nil
+}
+
+// KeyBroadcastContract is an auto generated Go binding around an Ethereum contract.
+type KeyBroadcastContract struct {
+	KeyBroadcastContractCaller     // Read-only binding to the contract
+	KeyBroadcastContractTransactor // Write-only binding to the contract
+	KeyBroadcastContractFilterer   // Log filterer for contract events
+}
+
+// KeyBroadcastContractCaller is an auto generated read-only Go binding around an Ethereum contract.
+type KeyBroadcastContractCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// KeyBroadcastContractTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type KeyBroadcastContractTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// KeyBroadcastContractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type KeyBroadcastContractFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// KeyBroadcastContractSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type KeyBroadcastContractSession struct {
+	Contract     *KeyBroadcastContract // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts         // Call options to use throughout this session
+	TransactOpts bind.TransactOpts     // Transaction auth options to use throughout this session
+}
+
+// KeyBroadcastContractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type KeyBroadcastContractCallerSession struct {
+	Contract *KeyBroadcastContractCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts               // Call options to use throughout this session
+}
+
+// KeyBroadcastContractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type KeyBroadcastContractTransactorSession struct {
+	Contract     *KeyBroadcastContractTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts               // Transaction auth options to use throughout this session
+}
+
+// KeyBroadcastContractRaw is an auto generated low-level Go binding around an Ethereum contract.
+type KeyBroadcastContractRaw struct {
+	Contract *KeyBroadcastContract // Generic contract binding to access the raw methods on
+}
+
+// KeyBroadcastContractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type KeyBroadcastContractCallerRaw struct {
+	Contract *KeyBroadcastContractCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// KeyBroadcastContractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type KeyBroadcastContractTransactorRaw struct {
+	Contract *KeyBroadcastContractTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewKeyBroadcastContract creates a new instance of KeyBroadcastContract, bound to a specific deployed contract.
+func NewKeyBroadcastContract(address common.Address, backend bind.ContractBackend) (*KeyBroadcastContract, error) {
+	contract, err := bindKeyBroadcastContract(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &KeyBroadcastContract{KeyBroadcastContractCaller: KeyBroadcastContractCaller{contract: contract}, KeyBroadcastContractTransactor: KeyBroadcastContractTransactor{contract: contract}, KeyBroadcastContractFilterer: KeyBroadcastContractFilterer{contract: contract}}, nil
+}
+
+// NewKeyBroadcastContractCaller creates a new read-only instance of KeyBroadcastContract, bound to a specific deployed contract.
+func NewKeyBroadcastContractCaller(address common.Address, caller bind.ContractCaller) (*KeyBroadcastContractCaller, error) {
+	contract, err := bindKeyBroadcastContract(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &KeyBroadcastContractCaller{contract: contract}, nil
+}
+
+// NewKeyBroadcastContractTransactor creates a new write-only instance of KeyBroadcastContract, bound to a specific deployed contract.
+func NewKeyBroadcastContractTransactor(address common.Address, transactor bind.ContractTransactor) (*KeyBroadcastContractTransactor, error) {
+	contract, err := bindKeyBroadcastContract(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &KeyBroadcastContractTransactor{contract: contract}, nil
+}
+
+// NewKeyBroadcastContractFilterer creates a new log filterer instance of KeyBroadcastContract, bound to a specific deployed contract.
+func NewKeyBroadcastContractFilterer(address common.Address, filterer bind.ContractFilterer) (*KeyBroadcastContractFilterer, error) {
+	contract, err := bindKeyBroadcastContract(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &KeyBroadcastContractFilterer{contract: contract}, nil
+}
+
+// bindKeyBroadcastContract binds a generic wrapper to an already deployed contract.
+func bindKeyBroadcastContract(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(KeyBroadcastContractABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_KeyBroadcastContract *KeyBroadcastContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _KeyBroadcastContract.Contract.KeyBroadcastContractCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_KeyBroadcastContract *KeyBroadcastContractRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.KeyBroadcastContractTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_KeyBroadcastContract *KeyBroadcastContractRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.KeyBroadcastContractTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_KeyBroadcastContract *KeyBroadcastContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _KeyBroadcastContract.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_KeyBroadcastContract *KeyBroadcastContractTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_KeyBroadcastContract *KeyBroadcastContractTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.contract.Transact(opts, method, params...)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _KeyBroadcastContract.contract.Call(opts, out, "configContract")
+	return *ret0, err
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractSession) ConfigContract() (common.Address, error) {
+	return _KeyBroadcastContract.Contract.ConfigContract(&_KeyBroadcastContract.CallOpts)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) ConfigContract() (common.Address, error) {
+	return _KeyBroadcastContract.Contract.ConfigContract(&_KeyBroadcastContract.CallOpts)
+}
+
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+//
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactor) BroadcastEncryptionKey(opts *bind.TransactOpts, _keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.contract.Transact(opts, "broadcastEncryptionKey", _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+}
+
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+//
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+}
+
+// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+//
+// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactorSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+}
+
+// KeyBroadcastContractEncryptionKeyBroadcastedIterator is returned from FilterEncryptionKeyBroadcasted and is used to iterate over the raw logs and unpacked data for EncryptionKeyBroadcasted events raised by the KeyBroadcastContract contract.
+type KeyBroadcastContractEncryptionKeyBroadcastedIterator struct {
+	Event *KeyBroadcastContractEncryptionKeyBroadcasted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(KeyBroadcastContractEncryptionKeyBroadcasted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(KeyBroadcastContractEncryptionKeyBroadcasted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// KeyBroadcastContractEncryptionKeyBroadcasted represents a EncryptionKeyBroadcasted event raised by the KeyBroadcastContract contract.
+type KeyBroadcastContractEncryptionKeyBroadcasted struct {
+	Sender        common.Address
+	BatchIndex    uint64
+	EncryptionKey [32]byte
+	SignerIndices []uint64
+	Signatures    [][]byte
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterEncryptionKeyBroadcasted is a free log retrieval operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+//
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) FilterEncryptionKeyBroadcasted(opts *bind.FilterOpts) (*KeyBroadcastContractEncryptionKeyBroadcastedIterator, error) {
+
+	logs, sub, err := _KeyBroadcastContract.contract.FilterLogs(opts, "EncryptionKeyBroadcasted")
+	if err != nil {
+		return nil, err
+	}
+	return &KeyBroadcastContractEncryptionKeyBroadcastedIterator{contract: _KeyBroadcastContract.contract, event: "EncryptionKeyBroadcasted", logs: logs, sub: sub}, nil
+}
+
+// WatchEncryptionKeyBroadcasted is a free log subscription operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+//
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBroadcasted(opts *bind.WatchOpts, sink chan<- *KeyBroadcastContractEncryptionKeyBroadcasted) (event.Subscription, error) {
+
+	logs, sub, err := _KeyBroadcastContract.contract.WatchLogs(opts, "EncryptionKeyBroadcasted")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(KeyBroadcastContractEncryptionKeyBroadcasted)
+				if err := _KeyBroadcastContract.contract.UnpackLog(event, "EncryptionKeyBroadcasted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseEncryptionKeyBroadcasted is a log parse operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+//
+// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) ParseEncryptionKeyBroadcasted(log types.Log) (*KeyBroadcastContractEncryptionKeyBroadcasted, error) {
+	event := new(KeyBroadcastContractEncryptionKeyBroadcasted)
+	if err := _KeyBroadcastContract.contract.UnpackLog(event, "EncryptionKeyBroadcasted", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // OwnableABI is the input ABI used to generate the binding from.

@@ -17,13 +17,12 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/brainbot-com/shutter/shuttermint/contracts/configcontract"
-	"github.com/brainbot-com/shutter/shuttermint/contracts/keybroadcastcontract"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 // BatchParams describes the parameters for single Batch identified by the BatchIndex
-type BatchParams = configcontract.BatchParams
+type BatchParams = contract.BatchParams
 
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
@@ -31,7 +30,7 @@ type BatchState struct {
 	KeyperConfig                KeyperConfig
 	MessageSender               *MessageSender
 	ContractCaller              *ContractCaller
-	KeyBroadcastContract        *keybroadcastcontract.KeyBroadcastContract
+	KeyBroadcastContract        *contract.KeyBroadcastContract
 	pubkeyGenerated             chan PubkeyGeneratedEvent
 	privkeyGenerated            chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded chan EncryptionKeySignatureAddedEvent
@@ -60,10 +59,10 @@ type Keyper struct {
 	ethcl  *ethclient.Client
 	shmcl  client.Client
 
-	configContract       *configcontract.ConfigContract
-	keyBroadcastContract *keybroadcastcontract.KeyBroadcastContract
+	configContract       *contract.ConfigContract
+	keyBroadcastContract *contract.KeyBroadcastContract
 
-	batchConfigs map[uint64]configcontract.BatchConfig
+	batchConfigs map[uint64]contract.BatchConfig
 	batches      map[uint64]*BatchState
 	startBlock   *big.Int
 	checkedIn    bool
@@ -146,14 +145,14 @@ type ContractCaller struct {
 	client     *ethclient.Client
 	signingKey *ecdsa.PrivateKey
 
-	KeyBroadcastContract *keybroadcastcontract.KeyBroadcastContract
+	KeyBroadcastContract *contract.KeyBroadcastContract
 }
 
 // NewContractCaller creates a new ContractCaller.
 func NewContractCaller(
 	client *ethclient.Client,
 	signingKey *ecdsa.PrivateKey,
-	keyBroadcastContract *keybroadcastcontract.KeyBroadcastContract,
+	keyBroadcastContract *contract.KeyBroadcastContract,
 ) ContractCaller {
 	return ContractCaller{
 		client:     client,
