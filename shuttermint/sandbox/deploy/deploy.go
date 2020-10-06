@@ -291,12 +291,20 @@ func deploy(ctx context.Context) {
 	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
 	addTx()
 
+	feeAddress, tx, _, err := contract.DeployFeeBankContract(auth, client)
+	addTx()
+
+	batcherAddress, tx, _, err := contract.DeployBatcherContract(auth, client, configAddress, feeAddress)
+	addTx()
+
 	_, err = waitForTransactions(ctx, client, txs)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("ConfigContract address:", configAddress.Hex())
 	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
+	fmt.Println("FeeBankContract address:", feeAddress.Hex())
+	fmt.Println("BatcherContract address:", batcherAddress.Hex())
 }
 
 func checkContractExists(ctx context.Context, configContractAddress common.Address) {

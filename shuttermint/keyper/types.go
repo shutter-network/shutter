@@ -61,6 +61,7 @@ type Keyper struct {
 
 	configContract       *contract.ConfigContract
 	keyBroadcastContract *contract.KeyBroadcastContract
+	batcherContract      *contract.BatcherContract
 
 	batchConfigs map[uint64]contract.BatchConfig
 	batches      map[uint64]*BatchState
