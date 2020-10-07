@@ -39,3 +39,27 @@ func DecryptionKeyToBytes(key *ecdsa.PrivateKey) []byte {
 	copy(result[32-len(keyBytes):], keyBytes)
 	return result
 }
+
+// ComputeCipherDecryptionSignature computes the signature to be submitted for each keyper when
+// executing a batch.
+func ComputeCipherDecryptionSignature(
+	key *ecdsa.PrivateKey,
+	batcherContractAddress common.Address,
+	cipherBatchHash common.Hash,
+	decryptionKey *ecdsa.PrivateKey,
+	batchHash common.Hash,
+) ([]byte, error) {
+	preimage := crypto.Keccak256(
+		batcherContractAddress.Bytes(),
+		cipherBatchHash.Bytes(),
+		DecryptionKeyToBytes(decryptionKey),
+		batchHash.Bytes(),
+	)
+	sig, err := crypto.Sign(preimage, key)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	copy(sig[64:], []byte{sig[64] + 27})
+	return sig, nil
+}
