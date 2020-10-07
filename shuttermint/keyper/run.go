@@ -305,6 +305,7 @@ func (batch *BatchState) Run() {
 	err = batch.sendEncryptionKeySignature(ev.Pubkey)
 	if err != nil {
 		log.Printf("Error while trying to send encryption key signature: %s", err)
+		return
 	}
 
 	err = batch.broadcastEncryptionKey(key)
@@ -321,15 +322,20 @@ func (batch *BatchState) Run() {
 		return
 	}
 
-	_, err = batch.waitPrivkeyGenerated()
+	privkeyGeneratedEvent, err := batch.waitPrivkeyGenerated()
 	if err != nil {
 		log.Printf("Error while waiting for decryption key generation: %s", err)
+		return
 	}
+	decryptionKey := privkeyGeneratedEvent.Privkey
 
-	_, err = batch.downloadTransactions()
+	cipherTxs, err := batch.downloadTransactions()
 	if err != nil {
 		log.Printf("Error while downloading transactions: %s", err)
+		return
 	}
+
+	_ = DecryptTransactions(decryptionKey, cipherTxs)
 }
 
 // KeyperAddress returns the keyper's Ethereum address.
