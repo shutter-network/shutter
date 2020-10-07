@@ -12,10 +12,11 @@ import (
 
 // BatchParams desribes the parameters to be used for a single batch
 type BatchParams struct {
-	BatchIndex  uint64
-	StartBlock  uint64
-	EndBlock    uint64
-	BatchConfig *BatchConfig
+	BatchIndex            uint64
+	StartBlock            uint64
+	EndBlock              uint64
+	ExecutionTimeoutBlock uint64
+	BatchConfig           *BatchConfig
 }
 
 // KeyperIndex returns the index of the keyper identified by the given address
@@ -45,13 +46,17 @@ func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 	if batchIndex < startBatchIndex {
 		return BatchParams{}, fmt.Errorf("bad parameters: %d %d", batchIndex, startBatchIndex)
 	}
+
 	startBlock := bc.StartBlockNumber + batchSpan*(batchIndex-startBatchIndex)
 	endBlock := startBlock + batchSpan
+	executionTimeoutBlock := endBlock + bc.ExecutionTimeout
+
 	return BatchParams{
-		BatchIndex:  batchIndex,
-		StartBlock:  startBlock,
-		EndBlock:    endBlock,
-		BatchConfig: bc,
+		BatchIndex:            batchIndex,
+		StartBlock:            startBlock,
+		EndBlock:              endBlock,
+		ExecutionTimeoutBlock: executionTimeoutBlock,
+		BatchConfig:           bc,
 	}, nil
 }
 

@@ -26,18 +26,19 @@ type BatchParams = contract.BatchParams
 
 // BatchState is used to manage the key generation process for a single batch inside the keyper
 type BatchState struct {
-	BatchParams                 BatchParams
-	KeyperConfig                KeyperConfig
-	MessageSender               *MessageSender
-	ContractCaller              *ContractCaller
-	KeyBroadcastContract        *contract.KeyBroadcastContract
-	pubkeyGenerated             chan PubkeyGeneratedEvent
-	privkeyGenerated            chan PrivkeyGeneratedEvent
-	encryptionKeySignatureAdded chan EncryptionKeySignatureAddedEvent
-	startBlockSeen              chan struct{}
-	endBlockSeen                chan struct{}
-	startBlockSeenOnce          sync.Once
-	endBlockSeenOnce            sync.Once
+	BatchParams                   BatchParams
+	KeyperConfig                  KeyperConfig
+	MessageSender                 *MessageSender
+	ContractCaller                *ContractCaller
+	pubkeyGenerated               chan PubkeyGeneratedEvent
+	privkeyGenerated              chan PrivkeyGeneratedEvent
+	encryptionKeySignatureAdded   chan EncryptionKeySignatureAddedEvent
+	startBlockSeen                chan struct{}
+	endBlockSeen                  chan struct{}
+	executionTimeoutBlockSeen     chan struct{}
+	startBlockSeenOnce            sync.Once
+	endBlockSeenOnce              sync.Once
+	executionTimeoutBlockSeenOnce sync.Once
 }
 
 // KeyperConfig contains validated configuration parameters for the keyper client
@@ -147,6 +148,7 @@ type ContractCaller struct {
 	signingKey *ecdsa.PrivateKey
 
 	KeyBroadcastContract *contract.KeyBroadcastContract
+	BatcherContract      *contract.BatcherContract
 }
 
 // NewContractCaller creates a new ContractCaller.
@@ -154,11 +156,13 @@ func NewContractCaller(
 	client *ethclient.Client,
 	signingKey *ecdsa.PrivateKey,
 	keyBroadcastContract *contract.KeyBroadcastContract,
+	batcherContract *contract.BatcherContract,
 ) ContractCaller {
 	return ContractCaller{
 		client:     client,
 		signingKey: signingKey,
 
 		KeyBroadcastContract: keyBroadcastContract,
+		BatcherContract:      batcherContract,
 	}
 }

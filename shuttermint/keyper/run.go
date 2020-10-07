@@ -1,16 +1,19 @@
 package keyper
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -79,6 +82,7 @@ func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *Contr
 		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
 		startBlockSeen:              make(chan struct{}),
 		endBlockSeen:                make(chan struct{}),
+		executionTimeoutBlockSeen:   make(chan struct{}),
 	}
 }
 
@@ -113,11 +117,26 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
 	select {
 	case ev := <-batch.pubkeyGenerated:
-		log.Printf("Got event %+v", ev)
+		log.Printf("Received PubkeyGenerated event")
 		return ev, nil
 	case <-batch.endBlockSeen:
 		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
 		return PubkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for public key generation to finish")
+	}
+}
+
+// waitPrivkeyGenerated waits for a PrivkeyGeneratedEvent to be put into the privkeyGenerated
+// channel. We do expect exactly one instance to be put there via a call to
+// dispatchShuttermintEvent by the keyper from a different goroutine. The call times out when with
+// the execution timeout.
+func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
+	select {
+	case ev := <-batch.privkeyGenerated:
+		log.Printf("Received PrivkeyGenerated event")
+		return ev, nil
+	case <-batch.executionTimeoutBlockSeen:
+		log.Print("Timeout while waiting for private key generation to finish", batch.BatchParams)
+		return PrivkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for private key generation to finish")
 	}
 }
 
@@ -208,6 +227,37 @@ func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
 	return batch.MessageSender.SendMessage(msg)
 }
 
+func (batch *BatchState) downloadTransactions() ([][]byte, error) {
+	filterOpts := &bind.FilterOpts{
+		Context: context.TODO(),
+		Start:   batch.BatchParams.StartBlock,
+		End:     &batch.BatchParams.EndBlock,
+	}
+	itr, err := batch.ContractCaller.BatcherContract.FilterTransactionAdded(filterOpts)
+	if err != nil {
+		return [][]byte{}, err
+	}
+
+	txs := [][]byte{}
+	var batchHash common.Hash
+	for itr.Next() {
+		if itr.Event.BatchIndex != batch.BatchParams.BatchIndex {
+			continue
+		}
+		if itr.Event.TransactionType != contract.TransactionTypeCipher {
+			continue
+		}
+
+		batchHash = itr.Event.BatchHash
+		txs = append(txs, itr.Event.Transaction)
+	}
+	if batchHash != ComputeBatchHash(txs) {
+		return [][]byte{}, fmt.Errorf("failed to verify batch hash of batch #%d", batch.BatchParams.BatchIndex)
+	}
+
+	return txs, nil
+}
+
 func (batch *BatchState) NewBlockHeader(header *types.Header) {
 	blockNumber := header.Number.Uint64()
 	if blockNumber >= batch.BatchParams.StartBlock {
@@ -215,6 +265,9 @@ func (batch *BatchState) NewBlockHeader(header *types.Header) {
 	}
 	if blockNumber >= batch.BatchParams.EndBlock {
 		batch.endBlockSeenOnce.Do(func() { close(batch.endBlockSeen) })
+	}
+	if blockNumber >= batch.BatchParams.ExecutionTimeoutBlock {
+		batch.executionTimeoutBlockSeenOnce.Do(func() { close(batch.executionTimeoutBlockSeen) })
 	}
 }
 
@@ -266,6 +319,16 @@ func (batch *BatchState) Run() {
 	if err != nil {
 		log.Printf("Error while trying to send secret share: %s", err)
 		return
+	}
+
+	_, err = batch.waitPrivkeyGenerated()
+	if err != nil {
+		log.Printf("Error while waiting for decryption key generation: %s", err)
+	}
+
+	_, err = batch.downloadTransactions()
+	if err != nil {
+		log.Printf("Error while downloading transactions: %s", err)
 	}
 }
 
