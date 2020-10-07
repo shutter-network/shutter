@@ -357,6 +357,15 @@ func schedule(
 	tx, err = cc.NextConfigSetThreshold(auth, threshold)
 	addTx()
 
+	tx, err = cc.NextConfigSetExecutionTimeout(auth, batchSpan)
+	addTx()
+
+	tx, err = cc.NextConfigSetTransactionSizeLimit(auth, 100)
+	addTx()
+
+	tx, err = cc.NextConfigSetBatchSizeLimit(auth, 100*100)
+	addTx()
+
 	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
 		panic(err)
