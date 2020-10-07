@@ -1,9 +1,11 @@
 package keyper
 
 import (
+	"crypto/ecdsa"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,4 +25,28 @@ func TestBatchHash(t *testing.T) {
 	require.Equal(t, ComputeBatchHash([][]byte{tx2}), bh2)
 	require.Equal(t, ComputeBatchHash([][]byte{tx1, tx2}), bh12)
 	require.Equal(t, ComputeBatchHash([][]byte{tx2, tx1}), bh21)
+}
+
+func TestDecryptionKeyEncoding(t *testing.T) {
+	keys := []*ecdsa.PrivateKey{}
+	for i := 0; i < 5; i++ {
+		key, err := crypto.GenerateKey()
+		require.Nil(t, err)
+		keys = append(keys, key)
+	}
+
+	bs := make([]byte, 32)
+	copy(bs[31:], []byte{1})
+	oneKey, err := crypto.ToECDSA(bs)
+	require.Nil(t, err)
+	keys = append(keys, oneKey)
+
+	for _, key := range keys {
+		encoded := DecryptionKeyToBytes(key)
+		require.True(t, len(encoded) <= 32)
+
+		recoveredKey, err := crypto.ToECDSA(encoded)
+		require.Nil(t, err)
+		require.Equal(t, recoveredKey, key)
+	}
 }

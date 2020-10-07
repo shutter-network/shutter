@@ -31,3 +31,11 @@ func DecryptTransactions(key *ecdsa.PrivateKey, cipherTxs [][]byte) [][]byte {
 	}
 	return txs
 }
+
+// DecryptionKeyToBytes converts a decryption key to its byte representation.
+func DecryptionKeyToBytes(key *ecdsa.PrivateKey) []byte {
+	keyBytes := key.D.Bytes()
+	result := make([]byte, 32)
+	copy(result[32-len(keyBytes):], keyBytes)
+	return result
+}
