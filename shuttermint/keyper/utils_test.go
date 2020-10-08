@@ -52,7 +52,7 @@ func TestDecryptionKeyEncoding(t *testing.T) {
 	}
 }
 
-func TestComputeDecryptionSigning(t *testing.T) {
+func TestDecryptionSigning(t *testing.T) {
 	batcherContractAddress := common.HexToAddress("1cd2a8349c8508756f75c5addb1aa01b8df60799")
 	cipherBatchHash := common.HexToHash("c67a3d98c6950912688d10218a54576af8734b6f648fe0c7f288af47439730ac")
 	decryptionKeyBytes, _ := hex.DecodeString("5bc5d4a9a24ca47a19f7c6d4ed04bd864dc7eabc721286e06b266bd4faf66546")
@@ -61,10 +61,15 @@ func TestComputeDecryptionSigning(t *testing.T) {
 
 	signingKeyBytes, _ := hex.DecodeString("a154d1e21620e97eaac10355eef72a488d04c95ffb0d289507fa48ba2d6653b8")
 	signingKey, _ := crypto.ToECDSA(signingKeyBytes)
+	signer := crypto.PubkeyToAddress(signingKey.PublicKey)
 
 	expectedSignature, _ := hex.DecodeString("bc0af048df027eb11893647d1833d0b4a2e27df6a4fe1c8bf5a0fc16f77912d37282ac5c0a5e24288c9365007982199106cf308150c85253b76623457ff9d7f41b")
 
 	signature, err := ComputeDecryptionSignature(signingKey, batcherContractAddress, cipherBatchHash, decryptionKey, batchHash)
 	require.Nil(t, err)
 	require.Equal(t, signature, expectedSignature)
+
+	recoveredSigner, err := RecoverDecryptionSignatureSigner(signature, batcherContractAddress, cipherBatchHash, decryptionKey, batchHash)
+	require.Nil(t, err)
+	require.Equal(t, signer, recoveredSigner)
 }

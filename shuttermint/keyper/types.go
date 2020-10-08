@@ -33,6 +33,7 @@ type BatchState struct {
 	pubkeyGenerated               chan PubkeyGeneratedEvent
 	privkeyGenerated              chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded   chan EncryptionKeySignatureAddedEvent
+	decryptionSignatureAdded      chan DecryptionSignatureEvent
 	startBlockSeen                chan struct{}
 	endBlockSeen                  chan struct{}
 	executionTimeoutBlockSeen     chan struct{}

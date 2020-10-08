@@ -84,6 +84,7 @@ func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *Contr
 	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
 	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
 	encryptionKeySignatureAdded := make(chan EncryptionKeySignatureAddedEvent, numKeypers)
+	decryptionSignatureAdded := make(chan DecryptionSignatureEvent, numKeypers)
 	return BatchState{
 		BatchParams:                 bp,
 		KeyperConfig:                kc,
@@ -92,6 +93,7 @@ func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *Contr
 		pubkeyGenerated:             pubkeyGenerated,
 		privkeyGenerated:            privkeyGenerated,
 		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
+		decryptionSignatureAdded:    decryptionSignatureAdded,
 		startBlockSeen:              make(chan struct{}),
 		endBlockSeen:                make(chan struct{}),
 		executionTimeoutBlockSeen:   make(chan struct{}),
@@ -115,6 +117,12 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 	case EncryptionKeySignatureAddedEvent:
 		select {
 		case batch.encryptionKeySignatureAdded <- e:
+		default:
+			// this should not happen
+		}
+	case DecryptionSignatureEvent:
+		select {
+		case batch.decryptionSignatureAdded <- e:
 		default:
 			// this should not happen
 		}
@@ -189,6 +197,41 @@ func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]Encryptio
 			}
 		case <-batch.endBlockSeen:
 			return events, fmt.Errorf("timeout while waiting for encryption key signatures")
+		}
+	}
+}
+
+func (batch *BatchState) collectDecryptionSignatureEvents(
+	cipherBatchHash common.Hash,
+	decryptionKey *ecdsa.PrivateKey,
+	batchHash common.Hash,
+) ([]DecryptionSignatureEvent, error) {
+	events := []DecryptionSignatureEvent{}
+	for {
+		select {
+		case ev := <-batch.decryptionSignatureAdded:
+			recoveredSigner, err := RecoverDecryptionSignatureSigner(
+				ev.Signature,
+				batch.KeyperConfig.BatcherContractAddress,
+				cipherBatchHash,
+				decryptionKey,
+				batchHash,
+			)
+			if err != nil {
+				log.Printf("failed to recover signer of decryption signature message from %s", ev.Sender.Hex())
+				continue
+			}
+			if recoveredSigner != ev.Sender {
+				log.Printf("failed to verify decryption signature message from %s", ev.Sender.Hex())
+				continue
+			}
+
+			events = append(events, ev)
+			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold) {
+				return events, nil
+			}
+		case <-batch.executionTimeoutBlockSeen:
+			return events, fmt.Errorf("timeout while waiting for decryption signatures")
 		}
 	}
 }
@@ -286,6 +329,7 @@ func (batch *BatchState) sendDecryptionSignature(cipherTxs [][]byte, decryptedTx
 	return batch.MessageSender.SendMessage(msg)
 }
 
+// NewBlockHeader is called whenever a new block header arrives.
 func (batch *BatchState) NewBlockHeader(header *types.Header) {
 	blockNumber := header.Number.Uint64()
 	if blockNumber >= batch.BatchParams.StartBlock {
@@ -358,17 +402,25 @@ func (batch *BatchState) Run() {
 	decryptionKey := privkeyGeneratedEvent.Privkey
 
 	cipherTxs, err := batch.downloadTransactions()
+	cipherBatchHash := ComputeBatchHash(cipherTxs)
 	if err != nil {
 		log.Printf("Error while downloading transactions: %s", err)
 		return
 	}
 
 	decryptedTxs := DecryptTransactions(decryptionKey, cipherTxs)
+	batchHash := ComputeBatchHash(decryptedTxs)
 	err = batch.sendDecryptionSignature(cipherTxs, decryptedTxs, decryptionKey)
 	if err != nil {
 		log.Printf("Error sending decryption signature: %s", err)
 		return
 	}
+
+	decryptionSignatureEvents, err := batch.collectDecryptionSignatureEvents(cipherBatchHash, decryptionKey, batchHash)
+	if err != nil {
+		log.Printf("Error collecting decryption signatures: %s", err)
+	}
+	log.Printf("collected %d signatures", len(decryptionSignatureEvents))
 }
 
 // KeyperAddress returns the keyper's Ethereum address.

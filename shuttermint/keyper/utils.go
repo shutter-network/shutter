@@ -40,6 +40,20 @@ func DecryptionKeyToBytes(key *ecdsa.PrivateKey) []byte {
 	return result
 }
 
+func computeDecryptionSignatureHash(
+	batcherContractAddress common.Address,
+	cipherBatchHash common.Hash,
+	decryptionKey *ecdsa.PrivateKey,
+	batchHash common.Hash,
+) []byte {
+	return crypto.Keccak256(
+		batcherContractAddress.Bytes(),
+		cipherBatchHash.Bytes(),
+		DecryptionKeyToBytes(decryptionKey),
+		batchHash.Bytes(),
+	)
+}
+
 // ComputeDecryptionSignature computes the signature to be submitted for each keyper when
 // executing a batch.
 func ComputeDecryptionSignature(
@@ -49,17 +63,40 @@ func ComputeDecryptionSignature(
 	decryptionKey *ecdsa.PrivateKey,
 	batchHash common.Hash,
 ) ([]byte, error) {
-	preimage := crypto.Keccak256(
-		batcherContractAddress.Bytes(),
-		cipherBatchHash.Bytes(),
-		DecryptionKeyToBytes(decryptionKey),
-		batchHash.Bytes(),
+	hash := computeDecryptionSignatureHash(
+		batcherContractAddress,
+		cipherBatchHash,
+		decryptionKey,
+		batchHash,
 	)
-	sig, err := crypto.Sign(preimage, key)
+	sig, err := crypto.Sign(hash, key)
 	if err != nil {
 		return []byte{}, err
 	}
 
 	copy(sig[64:], []byte{sig[64] + 27})
 	return sig, nil
+}
+
+// RecoverDecryptionSignatureSigner recovers the address of the account that has signed the
+// decryption message.
+func RecoverDecryptionSignatureSigner(
+	signature []byte,
+	batcherContractAddress common.Address,
+	cipherBatchHash common.Hash,
+	decryptionKey *ecdsa.PrivateKey,
+	batchHash common.Hash,
+) (common.Address, error) {
+	hash := computeDecryptionSignatureHash(
+		batcherContractAddress,
+		cipherBatchHash,
+		decryptionKey,
+		batchHash,
+	)
+	copy(signature[64:], []byte{signature[64] - 27})
+	pubkey, err := crypto.SigToPub(hash, signature)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return crypto.PubkeyToAddress(*pubkey), nil
 }

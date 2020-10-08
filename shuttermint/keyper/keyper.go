@@ -672,7 +672,8 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		log.Printf("Dispatching EncryptionKeySignatureAdded event for batch %d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case DecryptionSignatureEvent:
-		log.Printf("Dropping DecryptionSignature event for batch %d", e.BatchIndex)
+		log.Printf("Dispatching DecryptionSignature event for batch %d", e.BatchIndex)
+		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	default:
 		panic("unknown event type")
 	}
