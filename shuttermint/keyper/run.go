@@ -66,6 +66,18 @@ func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message
 	}
 }
 
+// NewDecryptionSignature creates a new DecryptionSignature message.
+func NewDecryptionSignature(batchIndex uint64, signature []byte) *shmsg.Message {
+	return &shmsg.Message{
+		Payload: &shmsg.Message_DecryptionSignature{
+			DecryptionSignature: &shmsg.DecryptionSignature{
+				BatchIndex: batchIndex,
+				Signature:  signature,
+			},
+		},
+	}
+}
+
 // NewBatchState created a new BatchState object with the given parameters.
 func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *ContractCaller) BatchState {
 	numKeypers := len(bp.BatchConfig.Keypers)
@@ -258,6 +270,22 @@ func (batch *BatchState) downloadTransactions() ([][]byte, error) {
 	return txs, nil
 }
 
+func (batch *BatchState) sendDecryptionSignature(cipherTxs [][]byte, decryptedTxs [][]byte, decryptionKey *ecdsa.PrivateKey) error {
+	decryptionSignature, err := ComputeDecryptionSignature(
+		batch.KeyperConfig.SigningKey,
+		batch.KeyperConfig.BatcherContractAddress,
+		ComputeBatchHash(cipherTxs),
+		decryptionKey,
+		ComputeBatchHash(decryptedTxs),
+	)
+	if err != nil {
+		return fmt.Errorf("error computing dercyption signature: %s", err)
+	}
+
+	msg := NewDecryptionSignature(batch.BatchParams.BatchIndex, decryptionSignature)
+	return batch.MessageSender.SendMessage(msg)
+}
+
 func (batch *BatchState) NewBlockHeader(header *types.Header) {
 	blockNumber := header.Number.Uint64()
 	if blockNumber >= batch.BatchParams.StartBlock {
@@ -335,7 +363,12 @@ func (batch *BatchState) Run() {
 		return
 	}
 
-	_ = DecryptTransactions(decryptionKey, cipherTxs)
+	decryptedTxs := DecryptTransactions(decryptionKey, cipherTxs)
+	err = batch.sendDecryptionSignature(cipherTxs, decryptedTxs, decryptionKey)
+	if err != nil {
+		log.Printf("Error sending decryption signature: %s", err)
+		return
+	}
 }
 
 // KeyperAddress returns the keyper's Ethereum address.

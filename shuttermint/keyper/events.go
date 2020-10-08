@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
@@ -121,6 +122,41 @@ func MakeEncryptionKeySignatureAddedEvent(ev abcitypes.Event) (EncryptionKeySign
 	}, nil
 }
 
+// MakeDecryptionSignatureEvent creates a DecryptionSignatureEvent from the given tendermint event
+// of type "shutter.decryption-signature".
+func MakeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignatureEvent, error) {
+	if len(ev.Attributes) < 3 {
+		return DecryptionSignatureEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
+	}
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("Sender")) ||
+		!bytes.Equal(ev.Attributes[2].Key, []byte("Signature")) {
+		return DecryptionSignatureEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
+	}
+
+	batchIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	if err != nil {
+		return DecryptionSignatureEvent{}, err
+	}
+
+	encodedSender := string(ev.Attributes[1].Value)
+	sender := common.HexToAddress(encodedSender)
+	if sender.Hex() != encodedSender {
+		return DecryptionSignatureEvent{}, fmt.Errorf("invalid sender address %s", encodedSender)
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	if err != nil {
+		return DecryptionSignatureEvent{}, err
+	}
+
+	return DecryptionSignatureEvent{
+		BatchIndex: uint64(batchIndex),
+		Sender:     sender,
+		Signature:  signature,
+	}, nil
+}
+
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
@@ -152,5 +188,12 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 		}
 		return res, nil
 	}
-	return nil, fmt.Errorf("cannot make event from %+v", ev)
+	if ev.Type == "shutter.decryption-signature" {
+		res, err := MakeDecryptionSignatureEvent(ev)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+	return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 }

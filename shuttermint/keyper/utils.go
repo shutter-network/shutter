@@ -40,9 +40,9 @@ func DecryptionKeyToBytes(key *ecdsa.PrivateKey) []byte {
 	return result
 }
 
-// ComputeCipherDecryptionSignature computes the signature to be submitted for each keyper when
+// ComputeDecryptionSignature computes the signature to be submitted for each keyper when
 // executing a batch.
-func ComputeCipherDecryptionSignature(
+func ComputeDecryptionSignature(
 	key *ecdsa.PrivateKey,
 	batcherContractAddress common.Address,
 	cipherBatchHash common.Hash,
