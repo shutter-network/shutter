@@ -228,3 +228,45 @@ func TestEncodePubkeyForEvent(t *testing.T) {
 	t.Logf("Decoded: %+v", decoded)
 	require.Equal(t, key.PublicKey, *decoded)
 }
+
+func TestAddDecryptionSignature(t *testing.T) {
+	app := NewShutterApp()
+	keypers := addresses[:3]
+	err := app.addConfig(BatchConfig{
+		ConfigIndex:     1,
+		StartBatchIndex: 100,
+		Threshold:       2,
+		Keypers:         keypers,
+	})
+	require.Nil(t, err)
+
+	// don't accept signature from non-keyper
+	res1 := app.deliverDecryptionSignature(
+		&shmsg.DecryptionSignature{
+			BatchIndex: 200,
+			Signature:  []byte("signature"),
+		},
+		addresses[3],
+	)
+	require.True(t, res1.IsErr())
+
+	// accept signature from keyper
+	res2 := app.deliverDecryptionSignature(
+		&shmsg.DecryptionSignature{
+			BatchIndex: 200,
+			Signature:  []byte("signature"),
+		},
+		keypers[0],
+	)
+	require.True(t, res2.IsOK())
+
+	// don't accept another signature
+	res3 := app.deliverDecryptionSignature(
+		&shmsg.DecryptionSignature{
+			BatchIndex: 200,
+			Signature:  []byte("signature"),
+		},
+		keypers[0],
+	)
+	require.True(t, res3.IsErr())
+}

@@ -79,6 +79,12 @@ type EncryptionKeyAttestation struct {
 	ConfigContractAddress common.Address
 }
 
+// DecryptionSignature stores the decryption key signature created by one of the keypers.
+type DecryptionSignature struct {
+	Sender    common.Address
+	Signature []byte
+}
+
 // The BatchState structure is used to manage the key generation process for a certain batch
 type BatchState struct {
 	BatchIndex                uint64
@@ -88,6 +94,7 @@ type BatchState struct {
 	PublicKey                 *ecdsa.PublicKey
 	PrivateKey                *ecdsa.PrivateKey
 	EncryptionKeyAttestations []EncryptionKeyAttestation
+	DecryptionSignatures      []DecryptionSignature
 }
 
 // ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key

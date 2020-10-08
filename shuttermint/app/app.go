@@ -433,6 +433,21 @@ func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, 
 	}
 }
 
+func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature, sender common.Address) abcitypes.ResponseDeliverTx {
+	bs := app.getBatchState(msg.BatchIndex)
+	err := bs.AddDecryptionSignature(DecryptionSignature{Sender: sender, Signature: msg.Signature})
+	if err != nil {
+		msg := fmt.Sprintf("Error: cannot add decryption signature: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+	app.BatchStates[msg.BatchIndex] = bs
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{},
+	}
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	if msg.GetPublicKeyCommitment() != nil {
 		return app.deliverPublicKeyCommitment(msg.GetPublicKeyCommitment(), sender)
@@ -451,6 +466,9 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetCheckIn() != nil {
 		return app.deliverCheckIn(msg.GetCheckIn(), sender)
+	}
+	if msg.GetDecryptionSignature() != nil {
+		return app.deliverDecryptionSignature(msg.GetDecryptionSignature(), sender)
 	}
 	log.Print("Error: cannot deliver messsage", msg)
 	return makeErrorResponse("cannot deliver message")

@@ -44,6 +44,11 @@ message CheckIn {
         bytes pubkey = 1;  // 32 byte ed25519 public key
 }
 
+message DecryptionSignature {
+        uint64 batchIndex = 1;
+        bytes signature = 2;
+}
+
 message Message {
         oneof payload {
                 PublicKeyCommitment public_key_commitment = 1;
@@ -53,5 +58,6 @@ message Message {
                 EncryptionKeyAttestation encryption_key_attestation = 5;
                 BatchConfigStarted batch_config_started = 6;
                 CheckIn check_in = 7;
+                DecryptionSignature decryption_signature = 8;
         }
 }
