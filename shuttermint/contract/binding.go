@@ -2211,6 +2211,748 @@ func (_Context *ContextTransactorRaw) Transact(opts *bind.TransactOpts, method s
 	return _Context.Contract.contract.Transact(opts, method, params...)
 }
 
+// ECDSAABI is the input ABI used to generate the binding from.
+const ECDSAABI = "[]"
+
+// ECDSABin is the compiled bytecode used for deploying new contracts.
+var ECDSABin = "0x60566023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122019832fc4782af028f56210fb1ed54c6b3b19ca17d61d13bdbb3c41e1d5b0c05264736f6c63430007010033"
+
+// DeployECDSA deploys a new Ethereum contract, binding an instance of ECDSA to it.
+func DeployECDSA(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *ECDSA, error) {
+	parsed, err := abi.JSON(strings.NewReader(ECDSAABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(ECDSABin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &ECDSA{ECDSACaller: ECDSACaller{contract: contract}, ECDSATransactor: ECDSATransactor{contract: contract}, ECDSAFilterer: ECDSAFilterer{contract: contract}}, nil
+}
+
+// ECDSA is an auto generated Go binding around an Ethereum contract.
+type ECDSA struct {
+	ECDSACaller     // Read-only binding to the contract
+	ECDSATransactor // Write-only binding to the contract
+	ECDSAFilterer   // Log filterer for contract events
+}
+
+// ECDSACaller is an auto generated read-only Go binding around an Ethereum contract.
+type ECDSACaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ECDSATransactor is an auto generated write-only Go binding around an Ethereum contract.
+type ECDSATransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ECDSAFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type ECDSAFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ECDSASession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type ECDSASession struct {
+	Contract     *ECDSA            // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// ECDSACallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type ECDSACallerSession struct {
+	Contract *ECDSACaller  // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts // Call options to use throughout this session
+}
+
+// ECDSATransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type ECDSATransactorSession struct {
+	Contract     *ECDSATransactor  // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// ECDSARaw is an auto generated low-level Go binding around an Ethereum contract.
+type ECDSARaw struct {
+	Contract *ECDSA // Generic contract binding to access the raw methods on
+}
+
+// ECDSACallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type ECDSACallerRaw struct {
+	Contract *ECDSACaller // Generic read-only contract binding to access the raw methods on
+}
+
+// ECDSATransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type ECDSATransactorRaw struct {
+	Contract *ECDSATransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewECDSA creates a new instance of ECDSA, bound to a specific deployed contract.
+func NewECDSA(address common.Address, backend bind.ContractBackend) (*ECDSA, error) {
+	contract, err := bindECDSA(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &ECDSA{ECDSACaller: ECDSACaller{contract: contract}, ECDSATransactor: ECDSATransactor{contract: contract}, ECDSAFilterer: ECDSAFilterer{contract: contract}}, nil
+}
+
+// NewECDSACaller creates a new read-only instance of ECDSA, bound to a specific deployed contract.
+func NewECDSACaller(address common.Address, caller bind.ContractCaller) (*ECDSACaller, error) {
+	contract, err := bindECDSA(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ECDSACaller{contract: contract}, nil
+}
+
+// NewECDSATransactor creates a new write-only instance of ECDSA, bound to a specific deployed contract.
+func NewECDSATransactor(address common.Address, transactor bind.ContractTransactor) (*ECDSATransactor, error) {
+	contract, err := bindECDSA(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ECDSATransactor{contract: contract}, nil
+}
+
+// NewECDSAFilterer creates a new log filterer instance of ECDSA, bound to a specific deployed contract.
+func NewECDSAFilterer(address common.Address, filterer bind.ContractFilterer) (*ECDSAFilterer, error) {
+	contract, err := bindECDSA(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &ECDSAFilterer{contract: contract}, nil
+}
+
+// bindECDSA binds a generic wrapper to an already deployed contract.
+func bindECDSA(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(ECDSAABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_ECDSA *ECDSARaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _ECDSA.Contract.ECDSACaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_ECDSA *ECDSARaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ECDSA.Contract.ECDSATransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_ECDSA *ECDSARaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _ECDSA.Contract.ECDSATransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_ECDSA *ECDSACallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _ECDSA.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_ECDSA *ECDSATransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ECDSA.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_ECDSA *ECDSATransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _ECDSA.Contract.contract.Transact(opts, method, params...)
+}
+
+// ExecutorContractABI is the input ABI used to generate the binding from.
+const ExecutorContractABI = "[{\"inputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"_configContract\",\"type\":\"address\"},{\"internalType\":\"contractBatcherContract\",\"name\":\"_batcherContract\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numExecutionHalfSteps\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"batchHash\",\"type\":\"bytes32\"}],\"name\":\"BatchExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numExecutionHalfSteps\",\"type\":\"uint64\"}],\"name\":\"CipherExecutionSkipped\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"batcherContract\",\"outputs\":[{\"internalType\":\"contractBatcherContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_cipherBatchHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes[]\",\"name\":\"_transactions\",\"type\":\"bytes[]\"},{\"internalType\":\"bytes32\",\"name\":\"_decryptionKey\",\"type\":\"bytes32\"},{\"internalType\":\"uint64[]\",\"name\":\"_signerIndices\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_signatures\",\"type\":\"bytes[]\"}],\"name\":\"executeCipherBatch\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"_transactions\",\"type\":\"bytes[]\"}],\"name\":\"executePlainBatch\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"numExecutionHalfSteps\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"skipCipherExecution\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// ExecutorContractFuncSigs maps the 4-byte function signature to its string representation.
+var ExecutorContractFuncSigs = map[string]string{
+	"beb3b50e": "batcherContract()",
+	"bf66a182": "configContract()",
+	"72654848": "executeCipherBatch(bytes32,bytes[],bytes32,uint64[],bytes[])",
+	"d57a29d0": "executePlainBatch(bytes[])",
+	"fa6385f4": "numExecutionHalfSteps()",
+	"8f6dccfb": "skipCipherExecution()",
+}
+
+// ExecutorContractBin is the compiled bytecode used for deploying new contracts.
+var ExecutorContractBin = "0x608060405234801561001057600080fd5b5060405161127e38038061127e83398101604081905261002f91610060565b600080546001600160a01b039384166001600160a01b031991821617909155600180549290931691161790556100b1565b60008060408385031215610072578182fd5b825161007d81610099565b602084015190925061008e81610099565b809150509250929050565b6001600160a01b03811681146100ae57600080fd5b50565b6111be806100c06000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806372654848146100675780638f6dccfb1461007c578063beb3b50e14610084578063bf66a182146100a2578063d57a29d0146100aa578063fa6385f4146100bd575b600080fd5b61007a610075366004610cd5565b6100d2565b005b61007a6104be565b61008c610633565b6040516100999190610fac565b60405180910390f35b61008c610642565b61007a6100b8366004610c7e565b610651565b6100c561086a565b60405161009991906110b2565b60018054600160a01b900416156100e857600080fd5b6001546002600160a01b9091046001600160401b031604610107610b10565b60005460405163700465b160e11b81526001600160a01b039091169063e008cb62906101379085906004016110b2565b60006040518083038186803b15801561014f57600080fd5b505afa158015610163573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261018b9190810190610d7d565b9050600081608001516001600160401b0316116101a757600080fd5b816001018160800151028160200151016001600160401b03164310156101cc57600080fd5b60015460405163643d7d4560e11b81526001600160a01b039091169063c87afa8a906101ff9085906000906004016110df565b60206040518083038186803b15801561021757600080fd5b505afa15801561022b573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061024f9190610cbd565b8a1461025a57600080fd5b60006102778261012001518361014001518460e001518d8d610880565b60608301519091506001600160401b031684101561029457600080fd5b8386146102a057600080fd5b6001546040516000916102c7916001600160a01b03909116908e908c908690602001610ee2565b60405160208183030381529060405280519060200120905060005b6001600160401b03811686111561043d573660008888846001600160401b031681811061030b57fe5b905060200281019061031d9190611106565b9150915060008b8b856001600160401b031681811061033857fe5b905060200201602081019061034d9190610ebf565b90506001600160401b03841615806103a257508b8b600186036001600160401b031681811061037857fe5b905060200201602081019061038d9190610ebf565b6001600160401b0316816001600160401b0316115b6103ab57600080fd5b60006103ed8685858080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152506109d792505050565b90508760400151826001600160401b03168151811061040857fe5b60200260200101516001600160a01b0316816001600160a01b03161461042d57600080fd5b5050600190920191506102e29050565b50600180546001600160401b03600160a01b808304821684018216810267ffffffffffffffff60a01b1990931692909217928390556040517f3d5ed901c456e33248250feaab56f76b579b96b1679d7866e5bed2b6e9c5619a936104a89390049091169085906110c6565b60405180910390a1505050505050505050505050565b60018054600160a01b900416156104d457600080fd5b6001546002600160a01b9091046001600160401b0316046104f3610b10565b60005460405163700465b160e11b81526001600160a01b039091169063e008cb62906105239085906004016110b2565b60006040518083038186803b15801561053b57600080fd5b505afa15801561054f573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526105779190810190610d7d565b9050600081608001516001600160401b03161161059357600080fd5b80610160015182600101826080015102826020015101016001600160401b03164310156105bf57600080fd5b600180546001600160401b03600160a01b808304821684018216810267ffffffffffffffff60a01b1990931692909217928390556040517fa43f7c79f47e7937048e7a80ce05ad2cf3da87b2b1bf1bd1122c22a6234d34be93610627939004909116906110b2565b60405180910390a15050565b6001546001600160a01b031681565b6000546001600160a01b031681565b60018054600160a01b900481161461066857600080fd5b6001546002600160a01b9091046001600160401b031604610687610b10565b60005460405163700465b160e11b81526001600160a01b039091169063e008cb62906106b79085906004016110b2565b60006040518083038186803b1580156106cf57600080fd5b505afa1580156106e3573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261070b9190810190610d7d565b9050600081608001516001600160401b03161161072457fe5b816001018160800151028160200151016001600160401b031643101561074657fe5b60006107638261012001518361014001518460e001518888610880565b6001805460405163643d7d4560e11b81529293506001600160a01b03169163c87afa8a91610796918791906004016110df565b60206040518083038186803b1580156107ae57600080fd5b505afa1580156107c2573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906107e69190610cbd565b81146107f157600080fd5b600180546001600160401b03600160a01b808304821684018216810267ffffffffffffffff60a01b1990931692909217928390556040517f3d5ed901c456e33248250feaab56f76b579b96b1679d7866e5bed2b6e9c5619a9361085b9390049091169084906110c6565b60405180910390a15050505050565b600154600160a01b90046001600160401b031681565b60008060005b6001600160401b0381168411156109cc576060878686846001600160401b03168181106108af57fe5b90506020028101906108c19190611106565b6040516024016108d2929190610f7d565b604051602081830303815290604052906001600160e01b0319166020820180516001600160e01b0383818316178352505050509050886001600160a01b0316876001600160401b0316826040516109299190610f26565b60006040518083038160008787f1925050503d8060008114610967576040519150601f19603f3d011682016040523d82523d6000602084013e61096c565b606091505b5050508585836001600160401b031681811061098457fe5b90506020028101906109969190611106565b846040516020016109a993929190610f11565b60408051601f198184030181529190528051602090910120925050600101610886565b509695505050505050565b60008151604114610a035760405162461bcd60e51b81526004016109fa90610ff7565b60405180910390fd5b60208201516040830151606084015160001a7f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0821115610a555760405162461bcd60e51b81526004016109fa9061102e565b8060ff16601b14158015610a6d57508060ff16601c14155b15610a8a5760405162461bcd60e51b81526004016109fa90611070565b600060018783868660405160008152602001604052604051610aaf9493929190610f5f565b6020604051602081039080840390855afa158015610ad1573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b038116610b045760405162461bcd60e51b81526004016109fa90610fc0565b93505050505b92915050565b604080516101808101825260008082526020820181905260609282018390529181018290526080810182905260a0810182905260c0810182905260e0810182905261010081018290526101208101829052610140810182905261016081019190915290565b80516001600160a01b0381168114610b0a57600080fd5b600082601f830112610b9c578081fd5b81516001600160401b03811115610bb1578182fd5b6020808202610bc182820161114a565b83815293508184018583018287018401881015610bdd57600080fd5b600092505b84831015610c0857610bf48882610b75565b825260019290920191908301908301610be2565b505050505092915050565b60008083601f840112610c24578081fd5b5081356001600160401b03811115610c3a578182fd5b6020830191508360208083028501011115610c5457600080fd5b9250929050565b80516001600160e01b031981168114610b0a57600080fd5b8051610b0a81611170565b60008060208385031215610c90578182fd5b82356001600160401b03811115610ca5578283fd5b610cb185828601610c13565b90969095509350505050565b600060208284031215610cce578081fd5b5051919050565b60008060008060008060008060a0898b031215610cf0578384fd5b8835975060208901356001600160401b0380821115610d0d578586fd5b610d198c838d01610c13565b909950975060408b0135965060608b0135915080821115610d38578586fd5b610d448c838d01610c13565b909650945060808b0135915080821115610d5c578384fd5b50610d698b828c01610c13565b999c989b5096995094979396929594505050565b600060208284031215610d8e578081fd5b81516001600160401b0380821115610da4578283fd5b8184019150610180808387031215610dba578384fd5b610dc38161114a565b9050610dcf8684610c73565b8152610dde8660208501610c73565b6020820152604083015182811115610df4578485fd5b610e0087828601610b8c565b604083015250610e138660608501610c73565b6060820152610e258660808501610c73565b6080820152610e378660a08501610c73565b60a0820152610e498660c08501610c73565b60c0820152610e5b8660e08501610c73565b60e08201526101009150610e7186838501610b75565b828201526101209150610e8686838501610b75565b828201526101409150610e9b86838501610c5b565b828201526101609150610eb086838501610c73565b91810191909152949350505050565b600060208284031215610ed0578081fd5b8135610edb81611170565b9392505050565b60609490941b6bffffffffffffffffffffffff1916845260148401929092526034830152605482015260740190565b60008385833750909101908152602001919050565b60008251815b81811015610f465760208186018101518583015201610f2c565b81811115610f545782828501525b509190910192915050565b93845260ff9290921660208401526040830152606082015260800190565b60006020825282602083015282846040840137818301604090810191909152601f909201601f19160101919050565b6001600160a01b0391909116815260200190565b60208082526018908201527f45434453413a20696e76616c6964207369676e61747572650000000000000000604082015260600190565b6020808252601f908201527f45434453413a20696e76616c6964207369676e6174757265206c656e67746800604082015260600190565b60208082526022908201527f45434453413a20696e76616c6964207369676e6174757265202773272076616c604082015261756560f01b606082015260800190565b60208082526022908201527f45434453413a20696e76616c6964207369676e6174757265202776272076616c604082015261756560f01b606082015260800190565b6001600160401b0391909116815260200190565b6001600160401b03929092168252602082015260400190565b6001600160401b038316815260408101600283106110f957fe5b8260208301529392505050565b6000808335601e1984360301811261111c578283fd5b8301803591506001600160401b03821115611135578283fd5b602001915036819003821315610c5457600080fd5b6040518181016001600160401b038111828210171561116857600080fd5b604052919050565b6001600160401b038116811461118557600080fd5b5056fea26469706673582212205e3fd72dc30376442fb53745e140b4b05ba974aaa6b16ee077e39e2f01d2efcd64736f6c63430007010033"
+
+// DeployExecutorContract deploys a new Ethereum contract, binding an instance of ExecutorContract to it.
+func DeployExecutorContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configContract common.Address, _batcherContract common.Address) (common.Address, *types.Transaction, *ExecutorContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(ExecutorContractABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(ExecutorContractBin), backend, _configContract, _batcherContract)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &ExecutorContract{ExecutorContractCaller: ExecutorContractCaller{contract: contract}, ExecutorContractTransactor: ExecutorContractTransactor{contract: contract}, ExecutorContractFilterer: ExecutorContractFilterer{contract: contract}}, nil
+}
+
+// ExecutorContract is an auto generated Go binding around an Ethereum contract.
+type ExecutorContract struct {
+	ExecutorContractCaller     // Read-only binding to the contract
+	ExecutorContractTransactor // Write-only binding to the contract
+	ExecutorContractFilterer   // Log filterer for contract events
+}
+
+// ExecutorContractCaller is an auto generated read-only Go binding around an Ethereum contract.
+type ExecutorContractCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ExecutorContractTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type ExecutorContractTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ExecutorContractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type ExecutorContractFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ExecutorContractSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type ExecutorContractSession struct {
+	Contract     *ExecutorContract // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// ExecutorContractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type ExecutorContractCallerSession struct {
+	Contract *ExecutorContractCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts           // Call options to use throughout this session
+}
+
+// ExecutorContractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type ExecutorContractTransactorSession struct {
+	Contract     *ExecutorContractTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts           // Transaction auth options to use throughout this session
+}
+
+// ExecutorContractRaw is an auto generated low-level Go binding around an Ethereum contract.
+type ExecutorContractRaw struct {
+	Contract *ExecutorContract // Generic contract binding to access the raw methods on
+}
+
+// ExecutorContractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type ExecutorContractCallerRaw struct {
+	Contract *ExecutorContractCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// ExecutorContractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type ExecutorContractTransactorRaw struct {
+	Contract *ExecutorContractTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewExecutorContract creates a new instance of ExecutorContract, bound to a specific deployed contract.
+func NewExecutorContract(address common.Address, backend bind.ContractBackend) (*ExecutorContract, error) {
+	contract, err := bindExecutorContract(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContract{ExecutorContractCaller: ExecutorContractCaller{contract: contract}, ExecutorContractTransactor: ExecutorContractTransactor{contract: contract}, ExecutorContractFilterer: ExecutorContractFilterer{contract: contract}}, nil
+}
+
+// NewExecutorContractCaller creates a new read-only instance of ExecutorContract, bound to a specific deployed contract.
+func NewExecutorContractCaller(address common.Address, caller bind.ContractCaller) (*ExecutorContractCaller, error) {
+	contract, err := bindExecutorContract(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContractCaller{contract: contract}, nil
+}
+
+// NewExecutorContractTransactor creates a new write-only instance of ExecutorContract, bound to a specific deployed contract.
+func NewExecutorContractTransactor(address common.Address, transactor bind.ContractTransactor) (*ExecutorContractTransactor, error) {
+	contract, err := bindExecutorContract(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContractTransactor{contract: contract}, nil
+}
+
+// NewExecutorContractFilterer creates a new log filterer instance of ExecutorContract, bound to a specific deployed contract.
+func NewExecutorContractFilterer(address common.Address, filterer bind.ContractFilterer) (*ExecutorContractFilterer, error) {
+	contract, err := bindExecutorContract(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContractFilterer{contract: contract}, nil
+}
+
+// bindExecutorContract binds a generic wrapper to an already deployed contract.
+func bindExecutorContract(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(ExecutorContractABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_ExecutorContract *ExecutorContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _ExecutorContract.Contract.ExecutorContractCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_ExecutorContract *ExecutorContractRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecutorContractTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_ExecutorContract *ExecutorContractRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecutorContractTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_ExecutorContract *ExecutorContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _ExecutorContract.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_ExecutorContract *ExecutorContractTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_ExecutorContract *ExecutorContractTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.contract.Transact(opts, method, params...)
+}
+
+// BatcherContract is a free data retrieval call binding the contract method 0xbeb3b50e.
+//
+// Solidity: function batcherContract() view returns(address)
+func (_ExecutorContract *ExecutorContractCaller) BatcherContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _ExecutorContract.contract.Call(opts, out, "batcherContract")
+	return *ret0, err
+}
+
+// BatcherContract is a free data retrieval call binding the contract method 0xbeb3b50e.
+//
+// Solidity: function batcherContract() view returns(address)
+func (_ExecutorContract *ExecutorContractSession) BatcherContract() (common.Address, error) {
+	return _ExecutorContract.Contract.BatcherContract(&_ExecutorContract.CallOpts)
+}
+
+// BatcherContract is a free data retrieval call binding the contract method 0xbeb3b50e.
+//
+// Solidity: function batcherContract() view returns(address)
+func (_ExecutorContract *ExecutorContractCallerSession) BatcherContract() (common.Address, error) {
+	return _ExecutorContract.Contract.BatcherContract(&_ExecutorContract.CallOpts)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_ExecutorContract *ExecutorContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _ExecutorContract.contract.Call(opts, out, "configContract")
+	return *ret0, err
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_ExecutorContract *ExecutorContractSession) ConfigContract() (common.Address, error) {
+	return _ExecutorContract.Contract.ConfigContract(&_ExecutorContract.CallOpts)
+}
+
+// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+//
+// Solidity: function configContract() view returns(address)
+func (_ExecutorContract *ExecutorContractCallerSession) ConfigContract() (common.Address, error) {
+	return _ExecutorContract.Contract.ConfigContract(&_ExecutorContract.CallOpts)
+}
+
+// NumExecutionHalfSteps is a free data retrieval call binding the contract method 0xfa6385f4.
+//
+// Solidity: function numExecutionHalfSteps() view returns(uint64)
+func (_ExecutorContract *ExecutorContractCaller) NumExecutionHalfSteps(opts *bind.CallOpts) (uint64, error) {
+	var (
+		ret0 = new(uint64)
+	)
+	out := ret0
+	err := _ExecutorContract.contract.Call(opts, out, "numExecutionHalfSteps")
+	return *ret0, err
+}
+
+// NumExecutionHalfSteps is a free data retrieval call binding the contract method 0xfa6385f4.
+//
+// Solidity: function numExecutionHalfSteps() view returns(uint64)
+func (_ExecutorContract *ExecutorContractSession) NumExecutionHalfSteps() (uint64, error) {
+	return _ExecutorContract.Contract.NumExecutionHalfSteps(&_ExecutorContract.CallOpts)
+}
+
+// NumExecutionHalfSteps is a free data retrieval call binding the contract method 0xfa6385f4.
+//
+// Solidity: function numExecutionHalfSteps() view returns(uint64)
+func (_ExecutorContract *ExecutorContractCallerSession) NumExecutionHalfSteps() (uint64, error) {
+	return _ExecutorContract.Contract.NumExecutionHalfSteps(&_ExecutorContract.CallOpts)
+}
+
+// ExecuteCipherBatch is a paid mutator transaction binding the contract method 0x72654848.
+//
+// Solidity: function executeCipherBatch(bytes32 _cipherBatchHash, bytes[] _transactions, bytes32 _decryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_ExecutorContract *ExecutorContractTransactor) ExecuteCipherBatch(opts *bind.TransactOpts, _cipherBatchHash [32]byte, _transactions [][]byte, _decryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.contract.Transact(opts, "executeCipherBatch", _cipherBatchHash, _transactions, _decryptionKey, _signerIndices, _signatures)
+}
+
+// ExecuteCipherBatch is a paid mutator transaction binding the contract method 0x72654848.
+//
+// Solidity: function executeCipherBatch(bytes32 _cipherBatchHash, bytes[] _transactions, bytes32 _decryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_ExecutorContract *ExecutorContractSession) ExecuteCipherBatch(_cipherBatchHash [32]byte, _transactions [][]byte, _decryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecuteCipherBatch(&_ExecutorContract.TransactOpts, _cipherBatchHash, _transactions, _decryptionKey, _signerIndices, _signatures)
+}
+
+// ExecuteCipherBatch is a paid mutator transaction binding the contract method 0x72654848.
+//
+// Solidity: function executeCipherBatch(bytes32 _cipherBatchHash, bytes[] _transactions, bytes32 _decryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
+func (_ExecutorContract *ExecutorContractTransactorSession) ExecuteCipherBatch(_cipherBatchHash [32]byte, _transactions [][]byte, _decryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecuteCipherBatch(&_ExecutorContract.TransactOpts, _cipherBatchHash, _transactions, _decryptionKey, _signerIndices, _signatures)
+}
+
+// ExecutePlainBatch is a paid mutator transaction binding the contract method 0xd57a29d0.
+//
+// Solidity: function executePlainBatch(bytes[] _transactions) returns()
+func (_ExecutorContract *ExecutorContractTransactor) ExecutePlainBatch(opts *bind.TransactOpts, _transactions [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.contract.Transact(opts, "executePlainBatch", _transactions)
+}
+
+// ExecutePlainBatch is a paid mutator transaction binding the contract method 0xd57a29d0.
+//
+// Solidity: function executePlainBatch(bytes[] _transactions) returns()
+func (_ExecutorContract *ExecutorContractSession) ExecutePlainBatch(_transactions [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecutePlainBatch(&_ExecutorContract.TransactOpts, _transactions)
+}
+
+// ExecutePlainBatch is a paid mutator transaction binding the contract method 0xd57a29d0.
+//
+// Solidity: function executePlainBatch(bytes[] _transactions) returns()
+func (_ExecutorContract *ExecutorContractTransactorSession) ExecutePlainBatch(_transactions [][]byte) (*types.Transaction, error) {
+	return _ExecutorContract.Contract.ExecutePlainBatch(&_ExecutorContract.TransactOpts, _transactions)
+}
+
+// SkipCipherExecution is a paid mutator transaction binding the contract method 0x8f6dccfb.
+//
+// Solidity: function skipCipherExecution() returns()
+func (_ExecutorContract *ExecutorContractTransactor) SkipCipherExecution(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ExecutorContract.contract.Transact(opts, "skipCipherExecution")
+}
+
+// SkipCipherExecution is a paid mutator transaction binding the contract method 0x8f6dccfb.
+//
+// Solidity: function skipCipherExecution() returns()
+func (_ExecutorContract *ExecutorContractSession) SkipCipherExecution() (*types.Transaction, error) {
+	return _ExecutorContract.Contract.SkipCipherExecution(&_ExecutorContract.TransactOpts)
+}
+
+// SkipCipherExecution is a paid mutator transaction binding the contract method 0x8f6dccfb.
+//
+// Solidity: function skipCipherExecution() returns()
+func (_ExecutorContract *ExecutorContractTransactorSession) SkipCipherExecution() (*types.Transaction, error) {
+	return _ExecutorContract.Contract.SkipCipherExecution(&_ExecutorContract.TransactOpts)
+}
+
+// ExecutorContractBatchExecutedIterator is returned from FilterBatchExecuted and is used to iterate over the raw logs and unpacked data for BatchExecuted events raised by the ExecutorContract contract.
+type ExecutorContractBatchExecutedIterator struct {
+	Event *ExecutorContractBatchExecuted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ExecutorContractBatchExecutedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ExecutorContractBatchExecuted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ExecutorContractBatchExecuted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ExecutorContractBatchExecutedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ExecutorContractBatchExecutedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ExecutorContractBatchExecuted represents a BatchExecuted event raised by the ExecutorContract contract.
+type ExecutorContractBatchExecuted struct {
+	NumExecutionHalfSteps uint64
+	BatchHash             [32]byte
+	Raw                   types.Log // Blockchain specific contextual infos
+}
+
+// FilterBatchExecuted is a free log retrieval operation binding the contract event 0x3d5ed901c456e33248250feaab56f76b579b96b1679d7866e5bed2b6e9c5619a.
+//
+// Solidity: event BatchExecuted(uint64 numExecutionHalfSteps, bytes32 batchHash)
+func (_ExecutorContract *ExecutorContractFilterer) FilterBatchExecuted(opts *bind.FilterOpts) (*ExecutorContractBatchExecutedIterator, error) {
+
+	logs, sub, err := _ExecutorContract.contract.FilterLogs(opts, "BatchExecuted")
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContractBatchExecutedIterator{contract: _ExecutorContract.contract, event: "BatchExecuted", logs: logs, sub: sub}, nil
+}
+
+// WatchBatchExecuted is a free log subscription operation binding the contract event 0x3d5ed901c456e33248250feaab56f76b579b96b1679d7866e5bed2b6e9c5619a.
+//
+// Solidity: event BatchExecuted(uint64 numExecutionHalfSteps, bytes32 batchHash)
+func (_ExecutorContract *ExecutorContractFilterer) WatchBatchExecuted(opts *bind.WatchOpts, sink chan<- *ExecutorContractBatchExecuted) (event.Subscription, error) {
+
+	logs, sub, err := _ExecutorContract.contract.WatchLogs(opts, "BatchExecuted")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ExecutorContractBatchExecuted)
+				if err := _ExecutorContract.contract.UnpackLog(event, "BatchExecuted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseBatchExecuted is a log parse operation binding the contract event 0x3d5ed901c456e33248250feaab56f76b579b96b1679d7866e5bed2b6e9c5619a.
+//
+// Solidity: event BatchExecuted(uint64 numExecutionHalfSteps, bytes32 batchHash)
+func (_ExecutorContract *ExecutorContractFilterer) ParseBatchExecuted(log types.Log) (*ExecutorContractBatchExecuted, error) {
+	event := new(ExecutorContractBatchExecuted)
+	if err := _ExecutorContract.contract.UnpackLog(event, "BatchExecuted", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// ExecutorContractCipherExecutionSkippedIterator is returned from FilterCipherExecutionSkipped and is used to iterate over the raw logs and unpacked data for CipherExecutionSkipped events raised by the ExecutorContract contract.
+type ExecutorContractCipherExecutionSkippedIterator struct {
+	Event *ExecutorContractCipherExecutionSkipped // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ExecutorContractCipherExecutionSkippedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ExecutorContractCipherExecutionSkipped)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ExecutorContractCipherExecutionSkipped)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ExecutorContractCipherExecutionSkippedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ExecutorContractCipherExecutionSkippedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ExecutorContractCipherExecutionSkipped represents a CipherExecutionSkipped event raised by the ExecutorContract contract.
+type ExecutorContractCipherExecutionSkipped struct {
+	NumExecutionHalfSteps uint64
+	Raw                   types.Log // Blockchain specific contextual infos
+}
+
+// FilterCipherExecutionSkipped is a free log retrieval operation binding the contract event 0xa43f7c79f47e7937048e7a80ce05ad2cf3da87b2b1bf1bd1122c22a6234d34be.
+//
+// Solidity: event CipherExecutionSkipped(uint64 numExecutionHalfSteps)
+func (_ExecutorContract *ExecutorContractFilterer) FilterCipherExecutionSkipped(opts *bind.FilterOpts) (*ExecutorContractCipherExecutionSkippedIterator, error) {
+
+	logs, sub, err := _ExecutorContract.contract.FilterLogs(opts, "CipherExecutionSkipped")
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutorContractCipherExecutionSkippedIterator{contract: _ExecutorContract.contract, event: "CipherExecutionSkipped", logs: logs, sub: sub}, nil
+}
+
+// WatchCipherExecutionSkipped is a free log subscription operation binding the contract event 0xa43f7c79f47e7937048e7a80ce05ad2cf3da87b2b1bf1bd1122c22a6234d34be.
+//
+// Solidity: event CipherExecutionSkipped(uint64 numExecutionHalfSteps)
+func (_ExecutorContract *ExecutorContractFilterer) WatchCipherExecutionSkipped(opts *bind.WatchOpts, sink chan<- *ExecutorContractCipherExecutionSkipped) (event.Subscription, error) {
+
+	logs, sub, err := _ExecutorContract.contract.WatchLogs(opts, "CipherExecutionSkipped")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ExecutorContractCipherExecutionSkipped)
+				if err := _ExecutorContract.contract.UnpackLog(event, "CipherExecutionSkipped", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCipherExecutionSkipped is a log parse operation binding the contract event 0xa43f7c79f47e7937048e7a80ce05ad2cf3da87b2b1bf1bd1122c22a6234d34be.
+//
+// Solidity: event CipherExecutionSkipped(uint64 numExecutionHalfSteps)
+func (_ExecutorContract *ExecutorContractFilterer) ParseCipherExecutionSkipped(log types.Log) (*ExecutorContractCipherExecutionSkipped, error) {
+	event := new(ExecutorContractCipherExecutionSkipped)
+	if err := _ExecutorContract.contract.UnpackLog(event, "CipherExecutionSkipped", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // FeeBankContractABI is the input ABI used to generate the binding from.
 const FeeBankContractABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"depositor\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"amount\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"totalAmount\",\"type\":\"uint64\"}],\"name\":\"DepositEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"receiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"amount\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"totalAmount\",\"type\":\"uint64\"}],\"name\":\"WithdrawEvent\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"deposits\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_receiver\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"_amount\",\"type\":\"uint64\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 

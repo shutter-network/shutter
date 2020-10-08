@@ -7,3 +7,4 @@ import "./ConfigContract.sol";
 import "./KeyBroadcastContract.sol";
 import "./BatcherContract.sol";
 import "./FeeBankContract.sol";
+import "./ExecutorContract.sol";

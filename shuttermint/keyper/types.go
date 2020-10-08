@@ -51,6 +51,7 @@ type KeyperConfig struct {
 	ConfigContractAddress       common.Address
 	BatcherContractAddress      common.Address
 	KeyBroadcastContractAddress common.Address
+	ExecutorContractAddress     common.Address
 }
 
 // Keyper is used to run the keyper key generation
@@ -64,6 +65,7 @@ type Keyper struct {
 	configContract       *contract.ConfigContract
 	keyBroadcastContract *contract.KeyBroadcastContract
 	batcherContract      *contract.BatcherContract
+	executorContract     *contract.ExecutorContract
 
 	batchConfigs map[uint64]contract.BatchConfig
 	batches      map[uint64]*BatchState
@@ -159,6 +161,7 @@ type ContractCaller struct {
 
 	KeyBroadcastContract *contract.KeyBroadcastContract
 	BatcherContract      *contract.BatcherContract
+	ExecutorContract     *contract.ExecutorContract
 }
 
 // NewContractCaller creates a new ContractCaller.
@@ -167,6 +170,7 @@ func NewContractCaller(
 	signingKey *ecdsa.PrivateKey,
 	keyBroadcastContract *contract.KeyBroadcastContract,
 	batcherContract *contract.BatcherContract,
+	executorContract *contract.ExecutorContract,
 ) ContractCaller {
 	return ContractCaller{
 		client:     client,
@@ -174,5 +178,6 @@ func NewContractCaller(
 
 		KeyBroadcastContract: keyBroadcastContract,
 		BatcherContract:      batcherContract,
+		ExecutorContract:     executorContract,
 	}
 }

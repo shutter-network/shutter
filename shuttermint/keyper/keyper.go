@@ -122,6 +122,12 @@ func (kpr *Keyper) init() error {
 	}
 	kpr.batcherContract = bc
 
+	ec, err := contract.NewExecutorContract(kpr.Config.ExecutorContractAddress, kpr.ethcl)
+	if err != nil {
+		return err
+	}
+	kpr.executorContract = ec
+
 	return nil
 }
 
@@ -619,6 +625,7 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 		kpr.Config.SigningKey,
 		kpr.keyBroadcastContract,
 		kpr.batcherContract,
+		kpr.executorContract,
 	)
 	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc)
 

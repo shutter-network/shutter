@@ -23,6 +23,7 @@ type RawKeyperConfig struct {
 	ConfigContract       string
 	BatcherContract      string
 	KeyBroadcastContract string
+	ExecutorContract     string
 }
 
 // keyperCmd represents the keyper command
@@ -48,6 +49,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ConfigContract")
 	viper.BindEnv("BatcherContract")
 	viper.BindEnv("KeyBroadcastContract")
+	viper.BindEnv("ExecutorContract")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
 	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
@@ -117,6 +119,13 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		)
 	}
 
+	executorContractAddress := common.HexToAddress(r.ExecutorContract)
+	if r.ExecutorContract != executorContractAddress.Hex() {
+		return emptyConfig, fmt.Errorf(
+			"ExecutorContract must be a valid checksummed address",
+		)
+	}
+
 	return keyper.KeyperConfig{
 		ShuttermintURL:              r.ShuttermintURL,
 		EthereumURL:                 r.EthereumURL,
@@ -125,6 +134,7 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		ConfigContractAddress:       configContractAddress,
 		BatcherContractAddress:      batcherContractAddress,
 		KeyBroadcastContractAddress: keyBroadcastContractAddress,
+		ExecutorContractAddress:     executorContractAddress,
 	}, nil
 }
 
