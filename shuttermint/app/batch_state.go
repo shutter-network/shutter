@@ -118,7 +118,6 @@ func (bs *BatchState) AddEncryptionKeyAttestation(a EncryptionKeyAttestation) er
 			bs.Config.ConfigContractAddress.Hex(),
 		)
 	}
-	// TODO: consider verifying the config contract address here
 
 	if !bs.Config.IsKeyper(a.Sender) {
 		return errors.New("not a keyper")

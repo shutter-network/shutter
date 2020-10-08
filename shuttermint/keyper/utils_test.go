@@ -3,7 +3,6 @@ package keyper
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -66,7 +65,6 @@ func TestComputeCipherDecryptionSigning(t *testing.T) {
 	expectedSignature, _ := hex.DecodeString("bc0af048df027eb11893647d1833d0b4a2e27df6a4fe1c8bf5a0fc16f77912d37282ac5c0a5e24288c9365007982199106cf308150c85253b76623457ff9d7f41b")
 
 	signature, err := ComputeCipherDecryptionSignature(signingKey, batcherContractAddress, cipherBatchHash, decryptionKey, batchHash)
-	fmt.Printf("%x %d\n", signature, len(signature))
 	require.Nil(t, err)
 	require.Equal(t, signature, expectedSignature)
 }
