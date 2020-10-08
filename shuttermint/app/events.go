@@ -87,6 +87,19 @@ func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []co
 	}
 }
 
+// MakeDecryptionSignatureEvent creates a 'shutter.decryption-signature' event.
+func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, signature []byte) abcitypes.Event {
+	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
+	return abcitypes.Event{
+		Type: "shutter.decryption-signature",
+		Attributes: []kv.Pair{
+			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
+			{Key: []byte("Sender"), Value: []byte(sender.Hex())},
+			{Key: []byte("Signature"), Value: []byte(encodedSignature)},
+		},
+	}
+}
+
 // encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
 	var hex []string

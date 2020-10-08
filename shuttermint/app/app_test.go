@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/base64"
 	"testing"
 	"unicode/utf8"
 
@@ -249,6 +250,7 @@ func TestAddDecryptionSignature(t *testing.T) {
 		addresses[3],
 	)
 	require.True(t, res1.IsErr())
+	require.Empty(t, res1.Events)
 
 	// accept signature from keyper
 	res2 := app.deliverDecryptionSignature(
@@ -259,6 +261,17 @@ func TestAddDecryptionSignature(t *testing.T) {
 		keypers[0],
 	)
 	require.True(t, res2.IsOK())
+	require.Equal(t, 1, len(res2.Events))
+
+	ev := res2.Events[0]
+	require.Equal(t, "shutter.decryption-signature", ev.Type)
+	require.Equal(t, []byte("BatchIndex"), ev.Attributes[0].Key)
+	require.Equal(t, []byte("200"), ev.Attributes[0].Value)
+	require.Equal(t, []byte("Sender"), ev.Attributes[1].Key)
+	require.Equal(t, []byte(keypers[0].Hex()), ev.Attributes[1].Value)
+	require.Equal(t, []byte("Signature"), ev.Attributes[2].Key)
+	decodedSignature, _ := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	require.Equal(t, []byte("signature"), decodedSignature)
 
 	// don't accept another signature
 	res3 := app.deliverDecryptionSignature(
@@ -269,4 +282,5 @@ func TestAddDecryptionSignature(t *testing.T) {
 		keypers[0],
 	)
 	require.True(t, res3.IsErr())
+	require.Empty(t, res1.Events)
 }
