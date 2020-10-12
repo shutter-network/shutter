@@ -8,3 +8,5 @@ import "./KeyBroadcastContract.sol";
 import "./BatcherContract.sol";
 import "./FeeBankContract.sol";
 import "./ExecutorContract.sol";
+
+import "./MockBatcherContract.sol";

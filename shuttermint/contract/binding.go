@@ -3836,6 +3836,221 @@ func (_KeyBroadcastContract *KeyBroadcastContractFilterer) ParseEncryptionKeyBro
 	return event, nil
 }
 
+// MockBatcherContractABI is the input ABI used to generate the binding from.
+const MockBatcherContractABI = "[{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"},{\"internalType\":\"enumMockBatcherContract.TransactionType\",\"name\":\"\",\"type\":\"uint8\"}],\"name\":\"batchHashes\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"},{\"internalType\":\"enumMockBatcherContract.TransactionType\",\"name\":\"_type\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"_hash\",\"type\":\"bytes32\"}],\"name\":\"setBatchHash\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+
+// MockBatcherContractFuncSigs maps the 4-byte function signature to its string representation.
+var MockBatcherContractFuncSigs = map[string]string{
+	"c87afa8a": "batchHashes(uint64,uint8)",
+	"ad15b6c5": "setBatchHash(uint64,uint8,bytes32)",
+}
+
+// MockBatcherContractBin is the compiled bytecode used for deploying new contracts.
+var MockBatcherContractBin = "0x608060405234801561001057600080fd5b506101b8806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063ad15b6c51461003b578063c87afa8a14610050575b600080fd5b61004e61004936600461013c565b610079565b005b61006361005e366004610108565b6100c1565b6040516100709190610179565b60405180910390f35b67ffffffffffffffff8316600090815260208190526040812082918460018111156100a057fe5b60018111156100ab57fe5b8152602081019190915260400160002055505050565b600060208181529281526040808220909352908152205481565b8035600281106100ea57600080fd5b92915050565b803567ffffffffffffffff811681146100ea57600080fd5b6000806040838503121561011a578182fd5b61012484846100f0565b915061013384602085016100db565b90509250929050565b600080600060608486031215610150578081fd5b61015a85856100f0565b925061016985602086016100db565b9150604084013590509250925092565b9081526020019056fea2646970667358221220dd6c6a767ab357b82797aad57c7e54ca1c8ce88631a858955b0caf0425267cc264736f6c63430007010033"
+
+// DeployMockBatcherContract deploys a new Ethereum contract, binding an instance of MockBatcherContract to it.
+func DeployMockBatcherContract(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *MockBatcherContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(MockBatcherContractABI))
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(MockBatcherContractBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &MockBatcherContract{MockBatcherContractCaller: MockBatcherContractCaller{contract: contract}, MockBatcherContractTransactor: MockBatcherContractTransactor{contract: contract}, MockBatcherContractFilterer: MockBatcherContractFilterer{contract: contract}}, nil
+}
+
+// MockBatcherContract is an auto generated Go binding around an Ethereum contract.
+type MockBatcherContract struct {
+	MockBatcherContractCaller     // Read-only binding to the contract
+	MockBatcherContractTransactor // Write-only binding to the contract
+	MockBatcherContractFilterer   // Log filterer for contract events
+}
+
+// MockBatcherContractCaller is an auto generated read-only Go binding around an Ethereum contract.
+type MockBatcherContractCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// MockBatcherContractTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type MockBatcherContractTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// MockBatcherContractFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type MockBatcherContractFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// MockBatcherContractSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type MockBatcherContractSession struct {
+	Contract     *MockBatcherContract // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts        // Call options to use throughout this session
+	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
+}
+
+// MockBatcherContractCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type MockBatcherContractCallerSession struct {
+	Contract *MockBatcherContractCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts              // Call options to use throughout this session
+}
+
+// MockBatcherContractTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type MockBatcherContractTransactorSession struct {
+	Contract     *MockBatcherContractTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts              // Transaction auth options to use throughout this session
+}
+
+// MockBatcherContractRaw is an auto generated low-level Go binding around an Ethereum contract.
+type MockBatcherContractRaw struct {
+	Contract *MockBatcherContract // Generic contract binding to access the raw methods on
+}
+
+// MockBatcherContractCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type MockBatcherContractCallerRaw struct {
+	Contract *MockBatcherContractCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// MockBatcherContractTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type MockBatcherContractTransactorRaw struct {
+	Contract *MockBatcherContractTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewMockBatcherContract creates a new instance of MockBatcherContract, bound to a specific deployed contract.
+func NewMockBatcherContract(address common.Address, backend bind.ContractBackend) (*MockBatcherContract, error) {
+	contract, err := bindMockBatcherContract(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &MockBatcherContract{MockBatcherContractCaller: MockBatcherContractCaller{contract: contract}, MockBatcherContractTransactor: MockBatcherContractTransactor{contract: contract}, MockBatcherContractFilterer: MockBatcherContractFilterer{contract: contract}}, nil
+}
+
+// NewMockBatcherContractCaller creates a new read-only instance of MockBatcherContract, bound to a specific deployed contract.
+func NewMockBatcherContractCaller(address common.Address, caller bind.ContractCaller) (*MockBatcherContractCaller, error) {
+	contract, err := bindMockBatcherContract(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &MockBatcherContractCaller{contract: contract}, nil
+}
+
+// NewMockBatcherContractTransactor creates a new write-only instance of MockBatcherContract, bound to a specific deployed contract.
+func NewMockBatcherContractTransactor(address common.Address, transactor bind.ContractTransactor) (*MockBatcherContractTransactor, error) {
+	contract, err := bindMockBatcherContract(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &MockBatcherContractTransactor{contract: contract}, nil
+}
+
+// NewMockBatcherContractFilterer creates a new log filterer instance of MockBatcherContract, bound to a specific deployed contract.
+func NewMockBatcherContractFilterer(address common.Address, filterer bind.ContractFilterer) (*MockBatcherContractFilterer, error) {
+	contract, err := bindMockBatcherContract(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &MockBatcherContractFilterer{contract: contract}, nil
+}
+
+// bindMockBatcherContract binds a generic wrapper to an already deployed contract.
+func bindMockBatcherContract(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(MockBatcherContractABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_MockBatcherContract *MockBatcherContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _MockBatcherContract.Contract.MockBatcherContractCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_MockBatcherContract *MockBatcherContractRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.MockBatcherContractTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_MockBatcherContract *MockBatcherContractRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.MockBatcherContractTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_MockBatcherContract *MockBatcherContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _MockBatcherContract.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_MockBatcherContract *MockBatcherContractTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_MockBatcherContract *MockBatcherContractTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.contract.Transact(opts, method, params...)
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_MockBatcherContract *MockBatcherContractCaller) BatchHashes(opts *bind.CallOpts, arg0 uint64, arg1 uint8) ([32]byte, error) {
+	var (
+		ret0 = new([32]byte)
+	)
+	out := ret0
+	err := _MockBatcherContract.contract.Call(opts, out, "batchHashes", arg0, arg1)
+	return *ret0, err
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_MockBatcherContract *MockBatcherContractSession) BatchHashes(arg0 uint64, arg1 uint8) ([32]byte, error) {
+	return _MockBatcherContract.Contract.BatchHashes(&_MockBatcherContract.CallOpts, arg0, arg1)
+}
+
+// BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
+//
+// Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
+func (_MockBatcherContract *MockBatcherContractCallerSession) BatchHashes(arg0 uint64, arg1 uint8) ([32]byte, error) {
+	return _MockBatcherContract.Contract.BatchHashes(&_MockBatcherContract.CallOpts, arg0, arg1)
+}
+
+// SetBatchHash is a paid mutator transaction binding the contract method 0xad15b6c5.
+//
+// Solidity: function setBatchHash(uint64 _batchIndex, uint8 _type, bytes32 _hash) returns()
+func (_MockBatcherContract *MockBatcherContractTransactor) SetBatchHash(opts *bind.TransactOpts, _batchIndex uint64, _type uint8, _hash [32]byte) (*types.Transaction, error) {
+	return _MockBatcherContract.contract.Transact(opts, "setBatchHash", _batchIndex, _type, _hash)
+}
+
+// SetBatchHash is a paid mutator transaction binding the contract method 0xad15b6c5.
+//
+// Solidity: function setBatchHash(uint64 _batchIndex, uint8 _type, bytes32 _hash) returns()
+func (_MockBatcherContract *MockBatcherContractSession) SetBatchHash(_batchIndex uint64, _type uint8, _hash [32]byte) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.SetBatchHash(&_MockBatcherContract.TransactOpts, _batchIndex, _type, _hash)
+}
+
+// SetBatchHash is a paid mutator transaction binding the contract method 0xad15b6c5.
+//
+// Solidity: function setBatchHash(uint64 _batchIndex, uint8 _type, bytes32 _hash) returns()
+func (_MockBatcherContract *MockBatcherContractTransactorSession) SetBatchHash(_batchIndex uint64, _type uint8, _hash [32]byte) (*types.Transaction, error) {
+	return _MockBatcherContract.Contract.SetBatchHash(&_MockBatcherContract.TransactOpts, _batchIndex, _type, _hash)
+}
+
 // OwnableABI is the input ABI used to generate the binding from.
 const OwnableABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
