@@ -67,9 +67,12 @@ func (ex *Executor) executeCipherBatch(p CipherExecutionParams) error {
 	if err != nil {
 		return err
 	}
-	err = ex.waitForBlock(kickOffBlock)
+	blockReached, err := ex.waitForBlockOrHalfStep(kickOffBlock, p.CipherHalfStep()+1)
 	if err != nil {
 		return err
+	}
+	if !blockReached {
+		return nil
 	}
 
 	// check if we're (still) at the right half step. If not, someone else has probably executed
@@ -92,12 +95,12 @@ func (ex *Executor) executeCipherBatch(p CipherExecutionParams) error {
 // soon as immediate progress cannot be made. Otherwise, it will wait.
 func (ex *Executor) fastForward(lastBatchIndex uint64, wait bool) error {
 	for {
-		initialNumHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
+		numHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
 		if err != nil {
 			return err
 		}
-		isCipher := initialNumHalfSteps%2 == 0
-		batchIndex := initialNumHalfSteps / 2
+		isCipher := numHalfSteps%2 == 0
+		batchIndex := numHalfSteps / 2
 
 		if batchIndex > lastBatchIndex {
 			return nil
@@ -113,21 +116,17 @@ func (ex *Executor) fastForward(lastBatchIndex uint64, wait bool) error {
 			return err
 		}
 
-		kickOffBlockReached, err := ex.maybeWaitForBlock(kickOffBlock, wait)
+		var blockReached bool
+		if !wait {
+			blockReached, err = ex.isBlockReached(kickOffBlock)
+		} else {
+			blockReached, err = ex.waitForBlockOrHalfStep(kickOffBlock, numHalfSteps+1)
+		}
 		if err != nil {
 			return err
 		}
-		if !kickOffBlockReached { // i.e., wait is false
+		if !blockReached {
 			return nil
-		}
-
-		// we don't have to do anything if someone else executed the step in the meantime
-		numHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
-		if err != nil {
-			return err
-		}
-		if numHalfSteps != initialNumHalfSteps {
-			continue
 		}
 
 		if isCipher {
@@ -157,9 +156,8 @@ func (ex *Executor) executePlainHalfStep(batchIndex uint64) error {
 	if receipt != nil {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to execute plain half step", tx.Hash().Hex())
-		} else {
-			log.Printf("Plain batch execution tx for batch #%d successful", batchIndex)
 		}
+		log.Printf("Plain batch execution tx for batch #%d successful", batchIndex)
 	} else {
 		log.Printf("Plain batch execution tx for batch #%d potentially redundant", batchIndex)
 	}
@@ -183,9 +181,8 @@ func (ex *Executor) skipCipherHalfStep(batchIndex uint64) error {
 	if receipt != nil {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to skip cipher half step", tx.Hash().Hex())
-		} else {
-			log.Printf("cipher half step successfully skipped in tx %s", tx.Hash().Hex())
 		}
+		log.Printf("cipher half step successfully skipped in tx %s", tx.Hash().Hex())
 	} else {
 		log.Printf("cipher half step skipped by another keyper")
 	}
@@ -216,9 +213,8 @@ func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
 	if receipt != nil {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to execute cipher half step", tx.Hash().Hex())
-		} else {
-			log.Printf("cipher half step successfully executed in tx %s", tx.Hash().Hex())
 		}
+		log.Printf("cipher half step successfully executed in tx %s", tx.Hash().Hex())
 	} else {
 		log.Printf("cipher half step executed by another keyper")
 	}
@@ -271,50 +267,47 @@ func (ex *Executor) watchOpts(blockNumber *big.Int) *bind.WatchOpts {
 	}
 }
 
-// waitForBlock waits until the given block number is reached.
-func (ex *Executor) waitForBlock(n uint64) error {
-	blockNumber, err := ex.client.BlockNumber(ex.ctx)
-	if err != nil {
-		return err
-	}
-	if blockNumber >= n {
-		return nil
-	}
-
+// headerChannel creates a channel to which the current and all future block headers will be sent.
+func (ex *Executor) headerChannel(ctx context.Context) (<-chan *types.Header, <-chan error) {
 	headers := make(chan *types.Header)
-	sub, err := ex.client.SubscribeNewHead(ex.ctx, headers)
-	if err != nil {
-		return err
-	}
+	errors := make(chan error)
 
-	for {
-		select {
-		case <-ex.ctx.Done():
-			return ex.ctx.Err()
-		case err := <-sub.Err():
-			return err
-		case header := <-headers:
-			if header.Number.Uint64() >= n {
-				return nil
+	go func() {
+		defer close(headers)
+		defer close(errors)
+
+		sub, err := ex.client.SubscribeNewHead(ctx, headers)
+		if err != nil {
+			errors <- err
+			return
+		}
+		defer sub.Unsubscribe()
+
+		firstHeader, err := ex.client.HeaderByNumber(ctx, nil)
+		if err != nil {
+			errors <- err
+			return
+		}
+		headers <- firstHeader
+
+		for {
+			select {
+			case <-ctx.Done():
+				errors <- ctx.Err()
+				return
+			case err := <-sub.Err():
+				errors <- err
+				return
+			case header := <-headers:
+				if header.Hash() == firstHeader.Hash() {
+					continue
+				}
+				headers <- header
 			}
 		}
-	}
-}
+	}()
 
-// maybeWaitForBlock checks if the given block number is already reached. If it is, true is
-// returned. If not, the behavior depends on the wait flag: If it is not set, simply false is
-// returned. Otherwise, the function will block until the target block is reached and eventually
-// return true eventually.
-func (ex *Executor) maybeWaitForBlock(targetBlockNumber uint64, wait bool) (bool, error) {
-	if wait {
-		return true, ex.waitForBlock(targetBlockNumber)
-	} else {
-		currentBlockNumber, err := ex.client.BlockNumber(ex.ctx)
-		if err != nil {
-			return false, err
-		}
-		return currentBlockNumber >= targetBlockNumber, nil
-	}
+	return headers, errors
 }
 
 // receiptChannel creates a channel to which the receipt for the given tx will be sent when it
@@ -443,4 +436,41 @@ func (ex *Executor) waitForReceiptOrHalfStep(tx *types.Transaction, n uint64) (*
 			}
 		}
 	}
+}
+
+// waitForBlockOrHalfStep waits for the given block number or the given half step, whichever comes
+// first. It returns true if the block is reached first and false if the half step is reached
+// first.
+func (ex *Executor) waitForBlockOrHalfStep(blockNumber uint64, halfStep uint64) (bool, error) {
+	ctx, cancel := context.WithCancel(ex.ctx)
+	defer cancel()
+
+	headers, headerErrors := ex.headerChannel(ctx)
+	halfSteps, halfStepErrors := ex.halfStepChannel(ctx)
+
+	for {
+		select {
+		case h := <-headers:
+			if h.Number.Uint64() >= blockNumber {
+				return true, nil
+			}
+		case s := <-halfSteps:
+			if s >= halfStep {
+				return false, nil
+			}
+		case err := <-halfStepErrors:
+			return false, err
+		case err := <-headerErrors:
+			return false, err
+		}
+	}
+}
+
+// isBlockReached checks if the current block number is greater than or equal to the given one.
+func (ex *Executor) isBlockReached(blockNumber uint64) (bool, error) {
+	b, err := ex.client.BlockNumber(ex.ctx)
+	if err != nil {
+		return false, err
+	}
+	return b >= blockNumber, nil
 }
