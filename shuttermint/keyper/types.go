@@ -34,6 +34,7 @@ type BatchState struct {
 	privkeyGenerated              chan PrivkeyGeneratedEvent
 	encryptionKeySignatureAdded   chan EncryptionKeySignatureAddedEvent
 	decryptionSignatureAdded      chan DecryptionSignatureEvent
+	cipherExecutionParams         chan CipherExecutionParams
 	startBlockSeen                chan struct{}
 	endBlockSeen                  chan struct{}
 	executionTimeoutBlockSeen     chan struct{}
@@ -67,15 +68,17 @@ type Keyper struct {
 	batcherContract      *contract.BatcherContract
 	executorContract     *contract.ExecutorContract
 
-	batchConfigs map[uint64]contract.BatchConfig
-	batches      map[uint64]*BatchState
-	startBlock   *big.Int
-	checkedIn    bool
-	txs          <-chan coretypes.ResultEvent
-	ctx          context.Context
-	newHeaders   chan *types.Header // start new batches when new block headers arrive
-	group        *errgroup.Group
-	ms           *MessageSender
+	batchConfigs          map[uint64]contract.BatchConfig
+	batches               map[uint64]*BatchState
+	startBlock            *big.Int
+	checkedIn             bool
+	txs                   <-chan coretypes.ResultEvent
+	ctx                   context.Context
+	newHeaders            chan *types.Header // start new batches when new block headers arrive
+	group                 *errgroup.Group
+	ms                    *MessageSender
+	executor              Executor
+	cipherExecutionParams chan CipherExecutionParams
 }
 
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint
@@ -159,6 +162,7 @@ type ContractCaller struct {
 	client     *ethclient.Client
 	signingKey *ecdsa.PrivateKey
 
+	ConfigContract       *contract.ConfigContract
 	KeyBroadcastContract *contract.KeyBroadcastContract
 	BatcherContract      *contract.BatcherContract
 	ExecutorContract     *contract.ExecutorContract
@@ -168,6 +172,7 @@ type ContractCaller struct {
 func NewContractCaller(
 	client *ethclient.Client,
 	signingKey *ecdsa.PrivateKey,
+	configContract *contract.ConfigContract,
 	keyBroadcastContract *contract.KeyBroadcastContract,
 	batcherContract *contract.BatcherContract,
 	executorContract *contract.ExecutorContract,
@@ -176,8 +181,27 @@ func NewContractCaller(
 		client:     client,
 		signingKey: signingKey,
 
+		ConfigContract:       configContract,
 		KeyBroadcastContract: keyBroadcastContract,
 		BatcherContract:      batcherContract,
 		ExecutorContract:     executorContract,
 	}
+}
+
+// Executor is responsible for making sure batches are executed.
+type Executor struct {
+	ctx                   context.Context
+	client                *ethclient.Client
+	cc                    *ContractCaller
+	cipherExecutionParams <-chan CipherExecutionParams
+}
+
+// CipherExecutionParams is the set of parameters necessary to execute a batch.
+type CipherExecutionParams struct {
+	BatchIndex              uint64
+	CipherBatchHash         common.Hash
+	DecryptionKey           *ecdsa.PrivateKey
+	DecryptedTxs            [][]byte
+	DecryptionSignerIndices []uint64
+	DecryptionSignatures    [][]byte
 }

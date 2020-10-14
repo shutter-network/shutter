@@ -79,7 +79,13 @@ func NewDecryptionSignature(batchIndex uint64, signature []byte) *shmsg.Message 
 }
 
 // NewBatchState created a new BatchState object with the given parameters.
-func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *ContractCaller) BatchState {
+func NewBatchState(
+	bp BatchParams,
+	kc KeyperConfig,
+	ms *MessageSender,
+	cc *ContractCaller,
+	cipherExecutionParams chan CipherExecutionParams,
+) BatchState {
 	numKeypers := len(bp.BatchConfig.Keypers)
 	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
 	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
@@ -94,6 +100,7 @@ func NewBatchState(bp BatchParams, kc KeyperConfig, ms *MessageSender, cc *Contr
 		privkeyGenerated:            privkeyGenerated,
 		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
 		decryptionSignatureAdded:    decryptionSignatureAdded,
+		cipherExecutionParams:       cipherExecutionParams,
 		startBlockSeen:              make(chan struct{}),
 		endBlockSeen:                make(chan struct{}),
 		executionTimeoutBlockSeen:   make(chan struct{}),
@@ -162,7 +169,7 @@ func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
 
 func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
-	log.Print("Generated pubkey", batch.BatchParams)
+	log.Printf("Generated pubkey for batch #%d", batch.BatchParams.BatchIndex)
 	return batch.MessageSender.SendMessage(msg)
 }
 
@@ -278,7 +285,7 @@ func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 
 func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
 	msg := NewSecretShare(batch.BatchParams.BatchIndex, key)
-	log.Print("Generated privkey", batch.BatchParams)
+	log.Printf("Generated privkey for batch #%d", batch.BatchParams.BatchIndex)
 	return batch.MessageSender.SendMessage(msg)
 }
 
@@ -360,7 +367,7 @@ func (batch *BatchState) Run() {
 	}
 	log.Printf("Waiting for start block %d for batch #%d", batch.BatchParams.StartBlock, batch.BatchParams.BatchIndex)
 	batch.waitForStartBlock()
-	log.Print("Starting key generation process", batch.BatchParams)
+	log.Printf("Starting key generation process for batch #%d", batch.BatchParams.BatchIndex)
 
 	err = batch.sendPublicKeyCommitment(key)
 	if err != nil {
@@ -419,11 +426,41 @@ func (batch *BatchState) Run() {
 	decryptionSignatureEvents, err := batch.collectDecryptionSignatureEvents(cipherBatchHash, decryptionKey, batchHash)
 	if err != nil {
 		log.Printf("Error collecting decryption signatures: %s", err)
+		return
 	}
-	log.Printf("collected %d signatures", len(decryptionSignatureEvents))
+
+	decryptionSignerIndices, decryptionSignatures, err := batch.signerIndicesAndSignaturesFromEvents(decryptionSignatureEvents)
+	if err != nil {
+		log.Printf("Error processing decryption signature events: %s", err)
+		return
+	}
+	cipherExecutionParams := CipherExecutionParams{
+		BatchIndex:              batch.BatchParams.BatchIndex,
+		CipherBatchHash:         cipherBatchHash,
+		DecryptionKey:           decryptionKey,
+		DecryptedTxs:            decryptedTxs,
+		DecryptionSignerIndices: decryptionSignerIndices,
+		DecryptionSignatures:    decryptionSignatures,
+	}
+	batch.cipherExecutionParams <- cipherExecutionParams
 }
 
 // KeyperAddress returns the keyper's Ethereum address.
 func (batch *BatchState) KeyperAddress() common.Address {
 	return crypto.PubkeyToAddress(batch.KeyperConfig.SigningKey.PublicKey)
+}
+
+func (batch *BatchState) signerIndicesAndSignaturesFromEvents(events []DecryptionSignatureEvent) ([]uint64, [][]byte, error) {
+	signerIndices := []uint64{}
+	signatures := [][]byte{}
+	for _, ev := range events {
+		index, isKeyper := batch.BatchParams.BatchConfig.KeyperIndex(ev.Sender)
+		if !isKeyper {
+			return []uint64{}, [][]byte{}, fmt.Errorf("%s is not a keyper", ev.Sender.Hex())
+		}
+
+		signerIndices = append(signerIndices, index)
+		signatures = append(signatures, ev.Signature)
+	}
+	return signerIndices, signatures, nil
 }

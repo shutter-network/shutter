@@ -29,11 +29,12 @@ const newHeadersSize = 8
 // NewKeyper creates a new Keyper
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
-		Config:       kc,
-		batchConfigs: make(map[uint64]contract.BatchConfig),
-		batches:      make(map[uint64]*BatchState),
-		checkedIn:    false,
-		newHeaders:   make(chan *types.Header, newHeadersSize),
+		Config:                kc,
+		batchConfigs:          make(map[uint64]contract.BatchConfig),
+		batches:               make(map[uint64]*BatchState),
+		checkedIn:             false,
+		newHeaders:            make(chan *types.Header, newHeadersSize),
+		cipherExecutionParams: make(chan CipherExecutionParams),
 	}
 }
 
@@ -128,6 +129,22 @@ func (kpr *Keyper) init() error {
 	}
 	kpr.executorContract = ec
 
+	contractCaller := NewContractCaller(
+		kpr.ethcl,
+		kpr.Config.SigningKey,
+		kpr.configContract,
+		kpr.keyBroadcastContract,
+		kpr.batcherContract,
+		kpr.executorContract,
+	)
+	executor := Executor{
+		ctx:                   kpr.ctx,
+		client:                kpr.ethcl,
+		cc:                    &contractCaller,
+		cipherExecutionParams: kpr.cipherExecutionParams,
+	}
+	kpr.executor = executor
+
 	return nil
 }
 
@@ -167,6 +184,7 @@ func (kpr *Keyper) Run() error {
 	kpr.group.Go(kpr.startNewBatches)
 	kpr.group.Go(kpr.watchMainChainHeadBlock)
 	kpr.group.Go(kpr.watchMainChainLogs)
+	kpr.group.Go(kpr.executor.Run)
 	err = kpr.group.Wait()
 	return err
 }
@@ -623,11 +641,12 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 	cc := NewContractCaller(
 		kpr.ethcl,
 		kpr.Config.SigningKey,
+		kpr.configContract,
 		kpr.keyBroadcastContract,
 		kpr.batcherContract,
 		kpr.executorContract,
 	)
-	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc)
+	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc, kpr.cipherExecutionParams)
 
 	kpr.Lock()
 	defer kpr.Unlock()
@@ -667,19 +686,19 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	switch e := ev.(type) {
 	case PubkeyGeneratedEvent:
-		log.Printf("Dispatching PubkeyGenerated event for batch %d", e.BatchIndex)
+		log.Printf("Dispatching PubkeyGenerated event for batch #%d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case PrivkeyGeneratedEvent:
-		log.Printf("Dispatching PrivkeyGenerated event for batch %d", e.BatchIndex)
+		log.Printf("Dispatching PrivkeyGenerated event for batch #%d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case BatchConfigEvent:
 		log.Printf("Dropping BatchConfig event")
 		_ = e
 	case EncryptionKeySignatureAddedEvent:
-		log.Printf("Dispatching EncryptionKeySignatureAdded event for batch %d", e.BatchIndex)
+		log.Printf("Dispatching EncryptionKeySignatureAdded event for batch #%d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case DecryptionSignatureEvent:
-		log.Printf("Dispatching DecryptionSignature event for batch %d", e.BatchIndex)
+		log.Printf("Dispatching DecryptionSignature event for batch #%d", e.BatchIndex)
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	default:
 		panic("unknown event type")
