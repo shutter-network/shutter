@@ -28,14 +28,14 @@ import (
 const (
 	startBlockNumberOffset           = 30
 	defaultGasLimit                  = 5000000
-	defaultConfigChangeHeadsUpBlocks = 10
+	defaultConfigChangeHeadsUpBlocks = 20
 	ganacheKeyIdx                    = 9
 	numKeypers                       = 3
 	threshold                        = 2
 	dialDefaultTimeout               = 5 * time.Second
 	getconfigDefaultTimeout          = 10 * time.Second
-	deployDefaultTimeout             = 15 * time.Second
-	scheduleDefaultTimeout           = 15 * time.Second
+	deployDefaultTimeout             = 30 * time.Second
+	scheduleDefaultTimeout           = 60 * time.Second
 )
 
 var (
