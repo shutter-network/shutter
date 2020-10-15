@@ -90,9 +90,9 @@ func (ex *Executor) executeBatch(p CipherExecutionParams) error {
 }
 
 // fastForward skips all cipher batches that are skippable right now and executes all plain
-// batches. It will stop when lastBatchIndex has been handled. If wait is false, it will return as
-// soon as immediate progress cannot be made. Otherwise, it will wait.
-func (ex *Executor) fastForward(lastBatchIndex uint64, wait bool) error {
+// batches. It will stop when the last batch before untilBatchIndex has been handled. If wait is
+// false, it will return as soon as immediate progress cannot be made. Otherwise, it will wait.
+func (ex *Executor) fastForward(untilBatchIndex uint64, wait bool) error {
 	for {
 		numHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
 		if err != nil {
@@ -101,7 +101,7 @@ func (ex *Executor) fastForward(lastBatchIndex uint64, wait bool) error {
 		isCipher := numHalfSteps%2 == 0
 		batchIndex := numHalfSteps / 2
 
-		if batchIndex > lastBatchIndex {
+		if batchIndex >= untilBatchIndex {
 			return nil
 		}
 
