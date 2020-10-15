@@ -17,6 +17,7 @@ import (
 const (
 	skipCheckInterval    = 5 * time.Second
 	halfStepPollInterval = 1 * time.Second
+	kickOffBlockStagger  = 5
 )
 
 // CipherHalfStep returns the half step number of the cipher execution step.
@@ -39,15 +40,11 @@ func (ex *Executor) Run() error {
 				log.Printf("Error fast-forwarding to batch #%d: %s", p.BatchIndex, err)
 				continue
 			}
-			log.Printf("Fast-forwarded to batch #%d", p.BatchIndex)
 
-			// only execute cipher batch here, plain batch will be executed during next fast
-			// forward
-			err = ex.executeCipherBatch(p)
+			err = ex.executeBatch(p)
 			if err != nil {
 				log.Printf("Error executing batch #%d: %s", p.BatchIndex, err)
 			}
-			log.Printf("Executed cipher batch #%d", p.BatchIndex)
 
 		case <-time.After(skipCheckInterval):
 			err := ex.fastForward(math.MaxUint64, false)
@@ -61,8 +58,9 @@ func (ex *Executor) Run() error {
 	}
 }
 
-// executeBatch executes the current cipher batch using the given parameters.
-func (ex *Executor) executeCipherBatch(p CipherExecutionParams) error {
+// executeBatch executes the current batch (both cipher and plain parts) using the given
+// parameters.
+func (ex *Executor) executeBatch(p CipherExecutionParams) error {
 	kickOffBlock, err := ex.cipherExecutionKickOffBlock(p.BatchIndex)
 	if err != nil {
 		return err
@@ -72,22 +70,21 @@ func (ex *Executor) executeCipherBatch(p CipherExecutionParams) error {
 		return err
 	}
 	if !blockReached {
+		// block was not reached, so half step was reached, so someone else has executed the batch
 		return nil
 	}
 
-	// check if we're (still) at the right half step. If not, someone else has probably executed
-	// it while we were waiting for the kick off block.
-	numHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
+	err = ex.executeCipherHalfStep(p)
 	if err != nil {
 		return err
 	}
-	isCipher := numHalfSteps%2 == 0
-	batchIndex := numHalfSteps / 2
-	if !isCipher || batchIndex != p.BatchIndex {
-		return nil
+
+	err = ex.executePlainHalfStep(p.BatchIndex)
+	if err != nil {
+		return err
 	}
 
-	return ex.executeCipherHalfStep(p)
+	return nil
 }
 
 // fastForward skips all cipher batches that are skippable right now and executes all plain
@@ -222,6 +219,41 @@ func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
 	return nil
 }
 
+func (ex *Executor) kickOffDelay(batchParams BatchParams) (uint64, error) {
+	keyperIndex, ok := batchParams.BatchConfig.KeyperIndex(ex.cc.Address())
+	if !ok {
+		return 0, fmt.Errorf("not a keyper %s", ex.cc.Address().Hex())
+	}
+	place := (batchParams.BatchIndex + keyperIndex) % uint64(len(batchParams.BatchConfig.Keypers))
+	return place * kickOffBlockStagger, nil
+}
+
+// cipherExecutionKickOffBlock returns the block number at which the cipher half step should be
+// executed.
+func (ex *Executor) cipherExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
+	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
+	if err != nil {
+		return 0, err
+	}
+
+	kickOffDelay, err := ex.kickOffDelay(batchParams)
+	if err != nil {
+		return 0, err
+	}
+
+	return batchParams.EndBlock + kickOffDelay, nil
+}
+
+// plainExecutionKickOffBlock returns the block number at which the plain half step should be
+// executed.
+func (ex *Executor) plainExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
+	cipherKickOff, err := ex.cipherExecutionKickOffBlock(batchIndex)
+	if err != nil {
+		return 0, err
+	}
+	return cipherKickOff + 1, nil
+}
+
 // cipherSkipKickOffBlock returns the block number at which the cipher half step should be
 // skipped.
 func (ex *Executor) cipherSkipKickOffBlock(batchIndex uint64) (uint64, error) {
@@ -230,19 +262,12 @@ func (ex *Executor) cipherSkipKickOffBlock(batchIndex uint64) (uint64, error) {
 		return 0, err
 	}
 
-	return batchParams.ExecutionTimeoutBlock, nil
-}
+	kickOffDelay, err := ex.kickOffDelay(batchParams)
+	if err != nil {
+		return 0, err
+	}
 
-// plainExecutionKickOffBlock returns the block number at which the plain half step should be
-// executed.
-func (ex *Executor) plainExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
-	return 0, nil
-}
-
-// cipherExecutionKickOffBlock returns the block number at which the cipher half step should be
-// executed.
-func (ex *Executor) cipherExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
-	return 0, nil
+	return batchParams.ExecutionTimeoutBlock + kickOffDelay, nil
 }
 
 func (ex *Executor) callOpts(blockNumber *big.Int) *bind.CallOpts {
@@ -355,11 +380,7 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 		halfSteps <- startHalfStep
 
 		// subscribe to all events that change half step
-		startBlock := header.Number.Uint64()
-		watchOpts := &bind.WatchOpts{
-			Context: ctx,
-			Start:   &startBlock,
-		}
+		watchOpts := ex.watchOpts(header.Number)
 
 		batchExecutedEvents := make(chan *contract.ExecutorContractBatchExecuted)
 		batchExecutedSub, err := ex.cc.ExecutorContract.WatchBatchExecuted(watchOpts, batchExecutedEvents)
