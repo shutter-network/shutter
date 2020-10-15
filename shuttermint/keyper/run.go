@@ -113,25 +113,25 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 		select {
 		case batch.pubkeyGenerated <- e:
 		default:
-			// this should not happen
+			fmt.Printf("Unexpected error: pubkeyGenerated channel blocked")
 		}
 	case PrivkeyGeneratedEvent:
 		select {
 		case batch.privkeyGenerated <- e:
 		default:
-			// this should not happen
+			fmt.Printf("Unexpected error: privkeyGenerated channel blocked")
 		}
 	case EncryptionKeySignatureAddedEvent:
 		select {
 		case batch.encryptionKeySignatureAdded <- e:
 		default:
-			// this should not happen
+			fmt.Printf("Unexpected error: encryptionKeySignatureAdded channel blocked")
 		}
 	case DecryptionSignatureEvent:
 		select {
 		case batch.decryptionSignatureAdded <- e:
 		default:
-			// this should not happen
+			fmt.Printf("Unexpected error: decryptionSignatureAdded channel blocked")
 		}
 	default:
 		panic("unknown type")
@@ -144,7 +144,7 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
 	select {
 	case ev := <-batch.pubkeyGenerated:
-		log.Printf("Received PubkeyGenerated event")
+		log.Printf("Received PubkeyGenerated event for batch #%d", batch.BatchParams.BatchIndex)
 		return ev, nil
 	case <-batch.endBlockSeen:
 		log.Printf("Timeout while waiting for public key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
@@ -159,7 +159,7 @@ func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
 func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
 	select {
 	case ev := <-batch.privkeyGenerated:
-		log.Printf("Received PrivkeyGenerated event")
+		log.Printf("Received PrivkeyGenerated event for batch #%d", batch.BatchParams.BatchIndex)
 		return ev, nil
 	case <-batch.executionTimeoutBlockSeen:
 		log.Printf("Timeout while waiting for private key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
