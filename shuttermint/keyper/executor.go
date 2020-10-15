@@ -44,12 +44,14 @@ func (ex *Executor) Run() error {
 			err = ex.executeBatch(p)
 			if err != nil {
 				log.Printf("Error executing batch #%d: %s", p.BatchIndex, err)
+				continue
 			}
 
 		case <-time.After(skipCheckInterval):
 			err := ex.fastForward(math.MaxUint64, false)
 			if err != nil {
-				log.Printf("Error skipping batches: %s", err)
+				log.Printf("Error fast-forwarding: %s", err)
+				continue
 			}
 
 		case <-ex.ctx.Done():
@@ -94,7 +96,7 @@ func (ex *Executor) fastForward(lastBatchIndex uint64, wait bool) error {
 	for {
 		numHalfSteps, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(ex.callOpts(nil))
 		if err != nil {
-			return err
+			return fmt.Errorf("error querying current number of half steps: %w", err)
 		}
 		isCipher := numHalfSteps%2 == 0
 		batchIndex := numHalfSteps / 2
@@ -211,9 +213,9 @@ func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to execute cipher half step", tx.Hash().Hex())
 		}
-		log.Printf("cipher half step successfully executed in tx %s", tx.Hash().Hex())
+		log.Printf("Cipher half step successfully executed in tx %s", tx.Hash().Hex())
 	} else {
-		log.Printf("cipher half step executed by another keyper")
+		log.Printf("Cipher half step executed by another keyper")
 	}
 
 	return nil
@@ -233,7 +235,7 @@ func (ex *Executor) kickOffDelay(batchParams BatchParams) (uint64, error) {
 func (ex *Executor) cipherExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
 	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error querying batch params for batch %d: %w", batchIndex, err)
 	}
 
 	kickOffDelay, err := ex.kickOffDelay(batchParams)
@@ -259,7 +261,7 @@ func (ex *Executor) plainExecutionKickOffBlock(batchIndex uint64) (uint64, error
 func (ex *Executor) cipherSkipKickOffBlock(batchIndex uint64) (uint64, error) {
 	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error querying batch params for batch %d: %w", batchIndex, err)
 	}
 
 	kickOffDelay, err := ex.kickOffDelay(batchParams)
@@ -303,14 +305,14 @@ func (ex *Executor) headerChannel(ctx context.Context) (<-chan *types.Header, <-
 
 		sub, err := ex.client.SubscribeNewHead(ctx, headers)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error subscribing to new heads: %w", err)
 			return
 		}
 		defer sub.Unsubscribe()
 
 		firstHeader, err := ex.client.HeaderByNumber(ctx, nil)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error querying current head: %w", err)
 			return
 		}
 		headers <- firstHeader
@@ -321,7 +323,7 @@ func (ex *Executor) headerChannel(ctx context.Context) (<-chan *types.Header, <-
 				errors <- ctx.Err()
 				return
 			case err := <-sub.Err():
-				errors <- err
+				errors <- fmt.Errorf("error while listening to new heads: %w", err)
 				return
 			case header := <-headers:
 				if header.Hash() == firstHeader.Hash() {
@@ -347,7 +349,7 @@ func (ex *Executor) receiptChannel(ctx context.Context, tx *types.Transaction) (
 
 		receipt, err := bind.WaitMined(ctx, ex.client, tx)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error while waiting for receipt of tx %s: %w", tx.Hash().Hex(), err)
 		} else {
 			receipts <- receipt
 		}
@@ -369,7 +371,7 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 		// send current half step
 		header, err := ex.client.HeaderByNumber(ctx, nil)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error querying current head: %w", err)
 			return
 		}
 		callOpts := &bind.CallOpts{
@@ -385,7 +387,7 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 		batchExecutedEvents := make(chan *contract.ExecutorContractBatchExecuted)
 		batchExecutedSub, err := ex.cc.ExecutorContract.WatchBatchExecuted(watchOpts, batchExecutedEvents)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error subscribing to BatchExecuted events: %w", err)
 			return
 		}
 		defer batchExecutedSub.Unsubscribe()
@@ -393,7 +395,7 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 		cipherSkippedEvents := make(chan *contract.ExecutorContractCipherExecutionSkipped)
 		cipherSkippedSub, err := ex.cc.ExecutorContract.WatchCipherExecutionSkipped(watchOpts, cipherSkippedEvents)
 		if err != nil {
-			errors <- err
+			errors <- fmt.Errorf("error subscribing to CipherExecutionSkipped events: %w", err)
 			return
 		}
 		defer cipherSkippedSub.Unsubscribe()
@@ -405,10 +407,10 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 				errors <- ctx.Err()
 				return
 			case err := <-batchExecutedSub.Err():
-				errors <- err
+				errors <- fmt.Errorf("error while listening for BatchExecuted events: %w", err)
 				return
 			case err := <-cipherSkippedSub.Err():
-				errors <- err
+				errors <- fmt.Errorf("error while listening for CipherExecutionSkipped events: %w", err)
 				return
 			case event := <-batchExecutedEvents:
 				halfSteps <- event.NumExecutionHalfSteps
@@ -435,9 +437,9 @@ func (ex *Executor) waitForReceiptOrHalfStep(tx *types.Transaction, n uint64) (*
 		case <-ex.ctx.Done():
 			return nil, ex.ctx.Err()
 		case err := <-receiptErrors:
-			return nil, fmt.Errorf("error waiting for receipt: %w", err)
+			return nil, err
 		case err := <-halfStepErrors:
-			return nil, fmt.Errorf("error waiting for half step: %w", err)
+			return nil, err
 		case r := <-receipts:
 			return r, nil
 		case halfStep := <-halfSteps:
@@ -491,7 +493,7 @@ func (ex *Executor) waitForBlockOrHalfStep(blockNumber uint64, halfStep uint64) 
 func (ex *Executor) isBlockReached(blockNumber uint64) (bool, error) {
 	b, err := ex.client.BlockNumber(ex.ctx)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error querying current block number: %w", err)
 	}
 	return b >= blockNumber, nil
 }

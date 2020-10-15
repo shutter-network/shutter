@@ -147,7 +147,7 @@ func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
 		log.Printf("Received PubkeyGenerated event")
 		return ev, nil
 	case <-batch.endBlockSeen:
-		log.Print("Timeout while waiting for public key generation to finish", batch.BatchParams)
+		log.Printf("Timeout while waiting for public key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
 		return PubkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for public key generation to finish")
 	}
 }
@@ -162,7 +162,7 @@ func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
 		log.Printf("Received PrivkeyGenerated event")
 		return ev, nil
 	case <-batch.executionTimeoutBlockSeen:
-		log.Print("Timeout while waiting for private key generation to finish", batch.BatchParams)
+		log.Printf("Timeout while waiting for private key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
 		return PrivkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for private key generation to finish")
 	}
 }
