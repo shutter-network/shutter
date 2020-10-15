@@ -93,8 +93,12 @@ func RecoverDecryptionSignatureSigner(
 		decryptionKey,
 		batchHash,
 	)
-	copy(signature[64:], []byte{signature[64] - 27})
-	pubkey, err := crypto.SigToPub(hash, signature)
+
+	sig := make([]byte, 65)
+	copy(sig[:64], signature[:64])
+	copy(sig[64:], []byte{signature[64] - 27})
+
+	pubkey, err := crypto.SigToPub(hash, sig)
 	if err != nil {
 		return common.Address{}, err
 	}
