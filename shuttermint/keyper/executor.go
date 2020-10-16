@@ -181,9 +181,9 @@ func (ex *Executor) skipCipherHalfStep(batchIndex uint64) error {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to skip cipher half step", tx.Hash().Hex())
 		}
-		log.Printf("cipher half step successfully skipped in tx %s", tx.Hash().Hex())
+		log.Printf("Cipher half step of batch #%d successfully skipped in tx %s", batchIndex, tx.Hash().Hex())
 	} else {
-		log.Printf("cipher half step skipped by another keyper")
+		log.Printf("Cipher half step of batch #%d skipped by another keyper", batchIndex)
 	}
 
 	return nil
@@ -213,14 +213,15 @@ func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to execute cipher half step", tx.Hash().Hex())
 		}
-		log.Printf("Cipher half step successfully executed in tx %s", tx.Hash().Hex())
+		log.Printf("Cipher half step of batch #%d successfully executed in tx %s", p.BatchIndex, tx.Hash().Hex())
 	} else {
-		log.Printf("Cipher half step executed by another keyper")
+		log.Printf("Cipher half step of batch #%d executed by another keyper", p.BatchIndex)
 	}
 
 	return nil
 }
 
+// kickOffDelay returns the number of blocks to wait before sending a tx.
 func (ex *Executor) kickOffDelay(batchParams BatchParams) (uint64, error) {
 	keyperIndex, ok := batchParams.BatchConfig.KeyperIndex(ex.cc.Address())
 	if !ok {
