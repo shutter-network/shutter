@@ -63,7 +63,12 @@ func (ex *Executor) Run() error {
 // executeBatch executes the current batch (both cipher and plain parts) using the given
 // parameters.
 func (ex *Executor) executeBatch(p CipherExecutionParams) error {
-	kickOffBlock, err := ex.cipherExecutionKickOffBlock(p.BatchIndex)
+	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), p.BatchIndex)
+	if err != nil {
+		return fmt.Errorf("error querying batch params for batch %d: %w", p.BatchIndex, err)
+	}
+
+	kickOffBlock, err := ex.cipherExecutionKickOffBlock(batchParams)
 	if err != nil {
 		return err
 	}
@@ -81,7 +86,7 @@ func (ex *Executor) executeBatch(p CipherExecutionParams) error {
 		return err
 	}
 
-	err = ex.executePlainHalfStep(p.BatchIndex)
+	err = ex.executePlainHalfStep(batchParams)
 	if err != nil {
 		return err
 	}
@@ -105,11 +110,16 @@ func (ex *Executor) fastForward(untilBatchIndex uint64, wait bool) error {
 			return nil
 		}
 
+		batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
+		if err != nil {
+			return fmt.Errorf("error querying batch params for batch %d: %w", batchIndex, err)
+		}
+
 		var kickOffBlock uint64
 		if isCipher {
-			kickOffBlock, err = ex.cipherSkipKickOffBlock(batchIndex)
+			kickOffBlock, err = ex.cipherSkipKickOffBlock(batchParams)
 		} else {
-			kickOffBlock, err = ex.plainExecutionKickOffBlock(batchIndex)
+			kickOffBlock, err = ex.plainExecutionKickOffBlock(batchParams)
 		}
 		if err != nil {
 			return err
@@ -129,9 +139,9 @@ func (ex *Executor) fastForward(untilBatchIndex uint64, wait bool) error {
 		}
 
 		if isCipher {
-			err = ex.skipCipherHalfStep(batchIndex)
+			err = ex.skipCipherHalfStep(batchParams)
 		} else {
-			err = ex.executePlainHalfStep(batchIndex)
+			err = ex.executePlainHalfStep(batchParams)
 		}
 		if err != nil {
 			return err
@@ -141,14 +151,19 @@ func (ex *Executor) fastForward(untilBatchIndex uint64, wait bool) error {
 
 // executePlainHalfStep executes the plain portion of the current batch and returns when it's
 // done. It does not perform any prior checks.
-func (ex *Executor) executePlainHalfStep(batchIndex uint64) error {
-	tx, err := ex.cc.ExecutorContract.ExecutePlainBatch(ex.transactOpts(), [][]byte{})
+func (ex *Executor) executePlainHalfStep(batchParams BatchParams) error {
+	batch, err := ex.fetchPlainBatch(batchParams)
+	if err != nil {
+		return err
+	}
+
+	tx, err := ex.cc.ExecutorContract.ExecutePlainBatch(ex.transactOpts(), batch)
 	if err != nil {
 		return fmt.Errorf("error sending plain batch execution tx: %w", err)
 	}
-	log.Printf("Plain batch execution tx sent for batch #%d: %s", batchIndex, tx.Hash().Hex())
+	log.Printf("Plain batch execution tx sent for batch #%d with %d txs: %s", batchParams.BatchIndex, len(batch), tx.Hash().Hex())
 
-	receipt, err := ex.waitForReceiptOrHalfStep(tx, (batchIndex+1)*2)
+	receipt, err := ex.waitForReceiptOrHalfStep(tx, (batchParams.BatchIndex+1)*2)
 	if err != nil {
 		return fmt.Errorf("error waiting for receipt for tx %s: %w", tx.Hash().Hex(), err)
 	}
@@ -156,24 +171,50 @@ func (ex *Executor) executePlainHalfStep(batchIndex uint64) error {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to execute plain half step", tx.Hash().Hex())
 		}
-		log.Printf("Plain batch execution tx for batch #%d successful", batchIndex)
+		log.Printf("Plain batch execution tx for batch #%d successful", batchParams.BatchIndex)
 	} else {
-		log.Printf("Plain batch execution tx for batch #%d potentially redundant", batchIndex)
+		log.Printf("Plain batch execution tx for batch #%d potentially redundant", batchParams.BatchIndex)
 	}
 
 	return nil
 }
 
+// fetchPlainBatch downloads the plain txs for the given batch.
+// This method should only be called once the batching period is over, otherwise some
+// transactions might be missed.
+func (ex *Executor) fetchPlainBatch(batchParams BatchParams) ([][]byte, error) {
+	opts := ex.filterOpts(batchParams.StartBlock, &batchParams.EndBlock)
+	it, err := ex.cc.BatcherContract.FilterTransactionAdded(opts)
+	if err != nil {
+		return [][]byte{}, fmt.Errorf("error registering TransactionAdded filter to download plain batch: %w", err)
+	}
+
+	batch := [][]byte{}
+	for it.Next() {
+		event := it.Event
+		if event.TransactionType == contract.TransactionTypePlain {
+			batch = append(batch, event.Transaction)
+		}
+	}
+	it.Close()
+
+	if it.Error() != nil {
+		return [][]byte{}, fmt.Errorf("error fetching plain batch: %w", it.Error())
+	}
+
+	return batch, nil
+}
+
 // skipCipherHalfStep skips the current cipher half step and returns when it's done. It does not
 // perform any prior checks.
-func (ex *Executor) skipCipherHalfStep(batchIndex uint64) error {
+func (ex *Executor) skipCipherHalfStep(batchParams BatchParams) error {
 	tx, err := ex.cc.ExecutorContract.SkipCipherExecution(ex.transactOpts())
 	if err != nil {
 		return fmt.Errorf("error sending skip cipher execution tx: %w", err)
 	}
-	log.Printf("Cipher execution skip tx sent for batch #%d: %s", batchIndex, tx.Hash().Hex())
+	log.Printf("Cipher execution skip tx sent for batch #%d: %s", batchParams.BatchIndex, tx.Hash().Hex())
 
-	receipt, err := ex.waitForReceiptOrHalfStep(tx, batchIndex*2+1)
+	receipt, err := ex.waitForReceiptOrHalfStep(tx, batchParams.BatchIndex*2+1)
 	if err != nil {
 		return fmt.Errorf("error waiting for receipt for tx %s: %w", tx.Hash().Hex(), err)
 	}
@@ -181,9 +222,9 @@ func (ex *Executor) skipCipherHalfStep(batchIndex uint64) error {
 		if receipt.Status != types.ReceiptStatusSuccessful {
 			return fmt.Errorf("tx %s has failed to skip cipher half step", tx.Hash().Hex())
 		}
-		log.Printf("Cipher half step of batch #%d successfully skipped in tx %s", batchIndex, tx.Hash().Hex())
+		log.Printf("Cipher half step of batch #%d successfully skipped in tx %s", batchParams.BatchIndex, tx.Hash().Hex())
 	} else {
-		log.Printf("Cipher half step of batch #%d skipped by another keyper", batchIndex)
+		log.Printf("Cipher half step of batch #%d skipped by another keyper", batchParams.BatchIndex)
 	}
 
 	return nil
@@ -203,7 +244,7 @@ func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
 	if err != nil {
 		return fmt.Errorf("error sending cipher execution tx: %s", err)
 	}
-	log.Printf("Cipher batch execution tx sent for batch #%d: %s", p.BatchIndex, tx.Hash().Hex())
+	log.Printf("Cipher batch execution tx sent for batch #%d with %d txs: %s", p.BatchIndex, len(p.DecryptedTxs), tx.Hash().Hex())
 
 	receipt, err := ex.waitForReceiptOrHalfStep(tx, p.CipherHalfStep()+1)
 	if err != nil {
@@ -233,12 +274,7 @@ func (ex *Executor) kickOffDelay(batchParams BatchParams) (uint64, error) {
 
 // cipherExecutionKickOffBlock returns the block number at which the cipher half step should be
 // executed.
-func (ex *Executor) cipherExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
-	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
-	if err != nil {
-		return 0, fmt.Errorf("error querying batch params for batch %d: %w", batchIndex, err)
-	}
-
+func (ex *Executor) cipherExecutionKickOffBlock(batchParams BatchParams) (uint64, error) {
 	kickOffDelay, err := ex.kickOffDelay(batchParams)
 	if err != nil {
 		return 0, err
@@ -249,8 +285,8 @@ func (ex *Executor) cipherExecutionKickOffBlock(batchIndex uint64) (uint64, erro
 
 // plainExecutionKickOffBlock returns the block number at which the plain half step should be
 // executed.
-func (ex *Executor) plainExecutionKickOffBlock(batchIndex uint64) (uint64, error) {
-	cipherKickOff, err := ex.cipherExecutionKickOffBlock(batchIndex)
+func (ex *Executor) plainExecutionKickOffBlock(batchParams BatchParams) (uint64, error) {
+	cipherKickOff, err := ex.cipherExecutionKickOffBlock(batchParams)
 	if err != nil {
 		return 0, err
 	}
@@ -259,12 +295,7 @@ func (ex *Executor) plainExecutionKickOffBlock(batchIndex uint64) (uint64, error
 
 // cipherSkipKickOffBlock returns the block number at which the cipher half step should be
 // skipped.
-func (ex *Executor) cipherSkipKickOffBlock(batchIndex uint64) (uint64, error) {
-	batchParams, err := ex.cc.ConfigContract.QueryBatchParams(ex.callOpts(nil), batchIndex)
-	if err != nil {
-		return 0, fmt.Errorf("error querying batch params for batch %d: %w", batchIndex, err)
-	}
-
+func (ex *Executor) cipherSkipKickOffBlock(batchParams BatchParams) (uint64, error) {
 	kickOffDelay, err := ex.kickOffDelay(batchParams)
 	if err != nil {
 		return 0, err
@@ -292,6 +323,14 @@ func (ex *Executor) watchOpts(blockNumber *big.Int) *bind.WatchOpts {
 	return &bind.WatchOpts{
 		Context: ex.ctx,
 		Start:   &n,
+	}
+}
+
+func (ex *Executor) filterOpts(start uint64, end *uint64) *bind.FilterOpts {
+	return &bind.FilterOpts{
+		Context: ex.ctx,
+		Start:   start,
+		End:     end,
 	}
 }
 
