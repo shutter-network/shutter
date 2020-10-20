@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -451,16 +452,30 @@ func (batch *BatchState) KeyperAddress() common.Address {
 }
 
 func (batch *BatchState) signerIndicesAndSignaturesFromEvents(events []DecryptionSignatureEvent) ([]uint64, [][]byte, error) {
+	sliceIndices := []uint64{}
 	signerIndices := []uint64{}
 	signatures := [][]byte{}
-	for _, ev := range events {
+	for i, ev := range events {
 		index, isKeyper := batch.BatchParams.BatchConfig.KeyperIndex(ev.Sender)
 		if !isKeyper {
 			return []uint64{}, [][]byte{}, fmt.Errorf("%s is not a keyper", ev.Sender.Hex())
 		}
 
+		sliceIndices = append(sliceIndices, uint64(i))
 		signerIndices = append(signerIndices, index)
 		signatures = append(signatures, ev.Signature)
 	}
-	return signerIndices, signatures, nil
+
+	// sort by signer index
+	sort.Slice(sliceIndices, func(i, j int) bool {
+		return signerIndices[i] < signerIndices[j]
+	})
+	signerIndicesSorted := []uint64{}
+	signaturesSorted := [][]byte{}
+	for _, i := range sliceIndices {
+		signerIndicesSorted = append(signerIndicesSorted, signerIndices[i])
+		signaturesSorted = append(signaturesSorted, signatures[i])
+	}
+
+	return signerIndicesSorted, signaturesSorted, nil
 }
