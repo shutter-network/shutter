@@ -64,19 +64,19 @@ func TestNextBatchIndex(t *testing.T) {
 	}
 
 	var batchIndex uint64
-	for i := uint64(0); i < 1001; i++ {
+	for i := uint64(0); i < 1000; i++ {
 		batchIndex, err = cc.NextBatchIndex(i)
 		require.Nil(t, err)
 		require.Equal(t, uint64(0), batchIndex)
 	}
 
-	for i := uint64(1001); i < 1006; i++ {
+	for i := uint64(1000); i < 1005; i++ {
 		batchIndex, err = cc.NextBatchIndex(i)
 		require.Nil(t, err)
 		require.Equal(t, uint64(1), batchIndex)
 	}
 
-	batchIndex, err = cc.NextBatchIndex(1006)
+	batchIndex, err = cc.NextBatchIndex(1005)
 	require.Nil(t, err)
 	require.Equal(t, uint64(2), batchIndex)
 }

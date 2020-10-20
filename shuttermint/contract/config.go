@@ -92,7 +92,7 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 			if batchSpan == 0 {
 				return cfg.StartBatchIndex, nil
 			}
-			next := cfg.StartBatchIndex + (blockNumber-startBlockNumber+batchSpan-1)/batchSpan
+			next := cfg.StartBatchIndex + (blockNumber-startBlockNumber)/batchSpan + 1
 			return next, nil
 		}
 	}
