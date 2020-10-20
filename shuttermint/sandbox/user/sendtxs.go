@@ -6,12 +6,14 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 
@@ -23,7 +25,7 @@ const (
 	ganacheKeyIdx = 8
 
 	txSize     = 2
-	txInterval = 1000 * time.Millisecond
+	txInterval = 2000 * time.Millisecond
 
 	dialTimeout = 5 * time.Second
 )
@@ -112,33 +114,57 @@ func sendtxs() {
 	transactOpts.Context = ctx
 	transactOpts.GasLimit = 100000
 
-	for {
-		time.Sleep(txInterval)
+	lastTxTime := time.Now()
 
-		cipherTx := makeTxs()
+	for {
+		dt := time.Now().Sub(lastTxTime)
+		time.Sleep(dt)
+		lastTxTime = time.Now()
+
+		cipherTx := makeTx()
 
 		blockNumber, err := client.BlockNumber(ctx)
 		if err != nil {
 			log.Printf("failed to determine current block number: %s", err)
 			continue
 		}
-		batchIndex, err := configContract.NextBatchIndex(blockNumber)
+		nextBatchIndex, err := configContract.NextBatchIndex(blockNumber)
 		if err != nil {
 			log.Printf("failed to determine batch index for next tx: %v", err)
 			continue
 		}
+		if nextBatchIndex == 0 {
+			log.Printf("Waiting for first batch to start (block %d)", blockNumber)
+			time.Sleep(1)
+			continue
+		}
+		batchIndex := nextBatchIndex - 1
 
-		tx, err := batcherContract.AddTransaction(transactOpts, batchIndex, contract.TransactionTypeCipher, cipherTx)
+		txTypeBig, err := rand.Int(rand.Reader, big.NewInt(2))
+		if err != nil {
+			panic("failed to generate random number")
+		}
+		txType := uint8(txTypeBig.Uint64())
+
+		tx, err := batcherContract.AddTransaction(transactOpts, batchIndex, txType, cipherTx)
 		if err != nil {
 			log.Printf("failed to send tx: %v", err)
 			continue
 		}
+		log.Printf("Sent tx %s of type %d for batch %d in tx %s", hexutil.Encode(cipherTx), txType, batchIndex, tx.Hash().Hex())
 
-		log.Printf("Sent cipher tx %s for batch %d in tx %s", hexutil.Encode(cipherTx), batchIndex, tx.Hash().Hex())
+		receipt, err := bind.WaitMined(ctx, client, tx)
+		if err != nil {
+			log.Printf("failed to wait for receipt of tx %s: %v", tx.Hash().Hex(), err)
+			continue
+		}
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			log.Printf("tx failed")
+		}
 	}
 }
 
-func makeTxs() []byte {
+func makeTx() []byte {
 	b := make([]byte, txSize)
 	rand.Read(b)
 	return b
