@@ -24,7 +24,11 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-const newHeadersSize = 8
+const (
+	newHeadersSize       = 8
+	balanceCheckInterval = 10 * time.Second
+	warningGasThreshold  = 100 * 1000 * 1000
+)
 
 // NewKeyper creates a new Keyper
 func NewKeyper(kc KeyperConfig) Keyper {
@@ -184,6 +188,7 @@ func (kpr *Keyper) Run() error {
 	kpr.group.Go(kpr.startNewBatches)
 	kpr.group.Go(kpr.watchMainChainHeadBlock)
 	kpr.group.Go(kpr.watchMainChainLogs)
+	kpr.group.Go(kpr.watchBalance)
 	kpr.group.Go(kpr.executor.Run)
 	err = kpr.group.Wait()
 	return err
@@ -696,6 +701,38 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	default:
 		panic("unknown event type")
+	}
+}
+
+func (kpr *Keyper) watchBalance() error {
+	for {
+		balance, err := kpr.ethcl.BalanceAt(kpr.ctx, kpr.Config.Address(), nil)
+		if err != nil {
+			return fmt.Errorf("error checking keyper balance: %w", err)
+		}
+
+		gasPrice, err := kpr.ethcl.SuggestGasPrice(kpr.ctx)
+		if err != nil {
+			return fmt.Errorf("error checking current gas price: %w", err)
+		}
+
+		availableGas := new(big.Int).Div(balance, gasPrice)
+		if availableGas.Cmp(new(big.Int).SetUint64(warningGasThreshold)) < 0 {
+			balanceEth := new(big.Float).SetInt(balance)
+			balanceEth.Quo(balanceEth, new(big.Float).SetFloat64(1e18))
+			log.Printf(
+				"Warning: Balance of keyper account is running low, only %s ETH left at address %s",
+				balanceEth.String(),
+				kpr.Config.Address().Hex(),
+			)
+		}
+
+		select {
+		case <-kpr.ctx.Done():
+			return nil
+		case <-time.After(balanceCheckInterval):
+			continue
+		}
 	}
 }
 
