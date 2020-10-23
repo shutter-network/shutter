@@ -40,7 +40,7 @@ func (bc *BatchConfig) IsActive() bool {
 	return bc.BatchSpan > 0
 }
 
-func makeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
+func MakeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 	batchSpan := bc.BatchSpan
 	startBatchIndex := bc.StartBatchIndex
 	if batchIndex < startBatchIndex {
@@ -66,7 +66,7 @@ func (cc *ConfigContract) QueryBatchParams(opts *bind.CallOpts, batchIndex uint6
 	if err != nil {
 		return BatchParams{}, err
 	}
-	return makeBatchParams(&bc, batchIndex)
+	return MakeBatchParams(&bc, batchIndex)
 }
 
 // NextBatchIndex determines the next batch index to be started after the given block number.
