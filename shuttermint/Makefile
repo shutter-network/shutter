@@ -54,7 +54,8 @@ lint-changes:
 	golangci-lint run --new-from-rev origin/master
 
 abigen:
-	abigen --pkg contract --out contract/binding.go --sol ../contracts/contracts/binding.sol
+	solc --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout ../contracts/contracts/binding.sol > contract/combined.json
+	abigen --pkg contract --out contract/binding.go --combined-json contract/combined.json
 
 deploy-ganache:
 	go run ./sandbox/deploy/deploy.go deploy
