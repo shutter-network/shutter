@@ -33,6 +33,25 @@ commands:
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
 
+  install-node:
+    steps:
+      - run:
+          name: Install node
+          command: |
+            sudo mkdir -p /opt/
+            curl -sSL "https://nodejs.org/dist/v12.19.0/node-v12.19.0-linux-x64.tar.gz" | sudo tar -xz -C /opt/ ;
+      - run:
+          name: Add node to path
+          command: |
+            echo >${BASH_ENV} 'export PATH=/opt/node-v12.19.0-linux-x64/bin:${PATH}'
+
+  install-ganache:
+    steps:
+      - run:
+          name: Install ganache-cli
+          command: |
+            sudo env "PATH=$PATH" npm install -g ganache-cli@6.9.1
+
 executors:
   py37:
     docker:
@@ -149,11 +168,13 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v4-{{ checksum "go.sum" }}
+            - shuttermint-go-v5-{{ checksum "go.sum" }}
       - run: go get -t -v ./...
+      - install-node
+      - install-ganache
       - run: make build
       - save_cache:
-          key: shuttermint-go-v4-{{ checksum "go.sum" }}
+          key: shuttermint-go-v5-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
