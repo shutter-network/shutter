@@ -276,6 +276,9 @@ func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
 
 	// Check that we're not already checked in. If not, no need to check in.
 	checkedIn, err := queryCheckedIn(kpr.shmcl, kpr.Config.Address())
+	if err != nil {
+		return err
+	}
 	if checkedIn {
 		log.Println("already checked in")
 		kpr.checkedIn = true
