@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -130,4 +131,48 @@ type ShutterApp struct {
 	Identities      map[common.Address]ValidatorPubkey
 	StartedVotes    map[common.Address]bool
 	Validators      Powermap
+}
+
+// DKGInstance manages the state of one eon key generation instance.
+type DKGInstance struct {
+	sync.Mutex
+
+	Config BatchConfig
+
+	PolyEvalMsgs       map[common.Address]map[common.Address]PolyEvalMsg
+	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
+	AccusationMsgs     map[common.Address]map[common.Address]AccusationMsg
+	ApologyMsgs        map[common.Address]map[common.Address]ApologyMsg
+}
+
+type PolyEvalMsg struct {
+	Sender        common.Address
+	Eon           uint64
+	Receiver      common.Address
+	EncryptedEval []byte
+}
+
+type PolyCommitmentMsg struct {
+	Sender common.Address
+	Eon    uint64
+	Gammas [][]byte
+}
+
+type AccusationMsg struct {
+	Sender  common.Address
+	Eon     uint64
+	Accused common.Address
+}
+
+type ApologyMsg struct {
+	Sender   common.Address
+	Eon      uint64
+	Accuser  common.Address
+	polyEval []byte
+}
+
+type ESKShareMsg struct {
+	Sender   common.Address
+	Eon      uint64
+	ESKShare []byte
 }
