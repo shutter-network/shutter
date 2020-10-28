@@ -111,7 +111,7 @@ def mypy(session: Session) -> None:
 @nox.session
 def prettier(session: Session) -> None:
     install_prettier(session)
-    session.run("prettier", "--check", "contracts/contracts", external=True)
+    session.run("prettier", "--check", ".", external=True)
 
 
 @nox.session

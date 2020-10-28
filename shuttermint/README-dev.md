@@ -1,4 +1,5 @@
 # shuttermint
+
 ## Installation
 
 Make sure you have at least go version 1.14 installed. Make sure `PATH`
@@ -12,10 +13,13 @@ Run `make install-tools` to install additional tools for linting and
 compiling the protocol buffer files.
 
 ## Tests
+
 Run `make test` to run the tests
 
 ## Linting
+
 Run `make lint` to run `golangci-lint`.
 
 ## Running
+
 Run `make run` to start shuttermint.

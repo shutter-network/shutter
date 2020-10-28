@@ -1,0 +1,3 @@
+.mypy_cache/*
+.nox/*
+shuttermint/contract/combined.json
