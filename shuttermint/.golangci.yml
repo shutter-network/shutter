@@ -108,7 +108,6 @@ linters:
     - whitespace
     - maligned
 
-
   # don't enable:
   # - asciicheck
   # - gochecknoglobals
