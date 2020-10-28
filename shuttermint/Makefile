@@ -7,6 +7,7 @@ build:
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
+	protoc shmsg/shmsg_truth.proto --go_out=shmsg/
 
 ${TESTROOT}:
 	bin/shuttermint init --root ${TESTROOT}

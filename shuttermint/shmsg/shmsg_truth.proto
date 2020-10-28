@@ -1,0 +1,32 @@
+syntax = "proto3";
+package shmsg;
+
+option go_package = ".;shmsg";
+
+message PolyEvalMsg {
+        uint64 eon = 1;
+        bytes receiver = 2;
+        bytes encryptedEval = 3;
+}
+
+message PolyCommitmentMsg {
+        uint64 eon = 1;
+        repeated bytes gammas = 2;
+}
+
+message AccusationMsg {
+        uint64 eon = 1;
+        bytes accused = 2;
+}
+
+message ApologyMsg {
+        uint64 eon = 1;
+        bytes accuser = 2;
+        bytes polyEval = 3;
+}
+
+message ESKShareMsg {
+        uint64 eon = 1;
+        uint64 epoch = 2;
+        bytes eskShare = 3;
+}
