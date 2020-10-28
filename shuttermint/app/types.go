@@ -145,6 +145,7 @@ type DKGInstance struct {
 	ApologyMsgs        map[common.Address]map[common.Address]ApologyMsg
 }
 
+// PolyEvalMsg represents an encrypted polynomial evaluation message from one keyper to another.
 type PolyEvalMsg struct {
 	Sender        common.Address
 	Eon           uint64
@@ -152,18 +153,21 @@ type PolyEvalMsg struct {
 	EncryptedEval []byte
 }
 
+// PolyCommitmentMsg represents a broadcasted polynomial commitment message.
 type PolyCommitmentMsg struct {
 	Sender common.Address
 	Eon    uint64
 	Gammas [][]byte
 }
 
+// AccusationMsg represents a broadcasted accusation message against a keyper.
 type AccusationMsg struct {
 	Sender  common.Address
 	Eon     uint64
 	Accused common.Address
 }
 
+// ApologyMsg represents an apology broadcasted in response to a prior accusation.
 type ApologyMsg struct {
 	Sender   common.Address
 	Eon      uint64
@@ -171,6 +175,7 @@ type ApologyMsg struct {
 	polyEval []byte
 }
 
+// ESKShareMsg represents a message containing an epoch secret key.
 type ESKShareMsg struct {
 	Sender   common.Address
 	Eon      uint64
