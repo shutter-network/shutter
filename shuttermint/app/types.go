@@ -143,6 +143,10 @@ type DKGInstance struct {
 	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
 	AccusationMsgs     map[common.Address]map[common.Address]AccusationMsg
 	ApologyMsgs        map[common.Address]map[common.Address]ApologyMsg
+
+	SubmissionsClosed bool
+	AccusationsClosed bool
+	ApologiesClosed   bool
 }
 
 // PolyEvalMsg represents an encrypted polynomial evaluation message from one keyper to another.

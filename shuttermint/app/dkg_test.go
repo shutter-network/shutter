@@ -192,3 +192,77 @@ func TestRegisterMsgs(t *testing.T) {
 		require.NotNil(t, err)
 	})
 }
+
+func TestClosing(t *testing.T) {
+	keypers := []common.Address{}
+	for i := 0; i < 3; i++ {
+		keypers = append(keypers, common.BigToAddress(big.NewInt(int64(i+10))))
+	}
+	config := BatchConfig{
+		Keypers: keypers,
+	}
+
+	t.Run("CloseSubmissions", func(t *testing.T) {
+		dkg := NewDKGInstance(config)
+		dkg.CloseSubmissions()
+
+		msg1 := PolyEvalMsg{
+			Sender:   keypers[0],
+			Receiver: keypers[1],
+		}
+		err := dkg.RegisterPolyEvalMsg(msg1)
+		require.NotNil(t, err)
+
+		msg2 := PolyCommitmentMsg{
+			Sender: keypers[0],
+		}
+		err = dkg.RegisterPolyCommitmentMsg(msg2)
+		require.NotNil(t, err)
+
+		// accusations and apologies still work
+		msg3 := AccusationMsg{
+			Sender:  keypers[0],
+			Accused: keypers[1],
+		}
+		err = dkg.RegisterAccusationMsg(msg3)
+		require.Nil(t, err)
+		msg4 := ApologyMsg{
+			Sender:  keypers[0],
+			Accuser: keypers[1],
+		}
+		err = dkg.RegisterApologyMsg(msg4)
+		require.Nil(t, err)
+	})
+
+	t.Run("CloseAccusations", func(t *testing.T) {
+		dkg := NewDKGInstance(config)
+		dkg.CloseAccusations()
+
+		msg := AccusationMsg{
+			Sender:  keypers[0],
+			Accused: keypers[1],
+		}
+		err := dkg.RegisterAccusationMsg(msg)
+		require.NotNil(t, err)
+
+		// Apologies still work
+		msg2 := ApologyMsg{
+			Sender:  keypers[0],
+			Accuser: keypers[1],
+		}
+		err = dkg.RegisterApologyMsg(msg2)
+		require.Nil(t, err)
+	})
+
+	t.Run("CloseApologies", func(t *testing.T) {
+		dkg := NewDKGInstance(config)
+		dkg.CloseApologies()
+
+		msg := ApologyMsg{
+			Sender:  keypers[0],
+			Accuser: keypers[1],
+		}
+		err := dkg.RegisterApologyMsg(msg)
+		require.NotNil(t, err)
+	})
+}

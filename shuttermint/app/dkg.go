@@ -31,6 +31,9 @@ func NewDKGInstance(config BatchConfig) DKGInstance {
 
 // RegisterPolyEvalMsg adds a polynomial evaluation message to the instance.
 func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
+	if dkg.SubmissionsClosed {
+		return fmt.Errorf("submissions are already closed")
+	}
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
@@ -54,6 +57,9 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
 
 // RegisterPolyCommitmentMsg adds a polynomial commitment message to the instance.
 func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
+	if dkg.SubmissionsClosed {
+		return fmt.Errorf("submissions are already closed")
+	}
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
@@ -71,6 +77,9 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
 
 // RegisterAccusationMsg adds an accusation message to the instance.
 func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
+	if dkg.AccusationsClosed {
+		return fmt.Errorf("accusations are already closed")
+	}
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
@@ -94,6 +103,9 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
 
 // RegisterApologyMsg adds an apology message to the instance.
 func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
+	if dkg.ApologiesClosed {
+		return fmt.Errorf("apologies are already closed")
+	}
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
@@ -113,4 +125,19 @@ func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
 	dkg.ApologyMsgs[msg.Sender][msg.Accuser] = msg
 
 	return nil
+}
+
+// CloseSubmissions prevents new polynomial evaluations or commitments from being registered.
+func (dkg *DKGInstance) CloseSubmissions() {
+	dkg.SubmissionsClosed = true
+}
+
+// CloseAccusations prevents new accusations from being registered.
+func (dkg *DKGInstance) CloseAccusations() {
+	dkg.AccusationsClosed = true
+}
+
+// CloseApologies prevents new apologies from being registered.
+func (dkg *DKGInstance) CloseApologies() {
+	dkg.ApologiesClosed = true
 }
