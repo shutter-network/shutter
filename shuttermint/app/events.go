@@ -10,6 +10,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,38 +18,6 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 )
-
-// encodePubkeyForEvent encodes the PublicKey as a string suitable for putting it into a tendermint
-// event, i.e. an utf-8 compatible string
-func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
-	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
-}
-
-// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
-// operation of encodePubkeyForEvent )
-func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
-	data, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.UnmarshalPubkey(data)
-}
-
-// encodePrivkeyForEvent encodes the given PrivateKey as a string suitable for putting it into a
-// tendermint event
-func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
-	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
-}
-
-// DecodePrivkeyFromEvent decodes a private key from a tendermint event (this is the reverse
-// operation of encodePrivkeyForEvent)
-func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
-	data, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.ToECDSA(data)
-}
 
 // MakePubkeyGeneratedEvent creates a 'shutter.pubkey-generated' tendermint event.  The given
 // BatchIndex and PublicKey are encoded as attributes of the event.
@@ -100,6 +69,133 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	}
 }
 
+// MakeEncryptionKeySignatureAddedEvent creates a 'shutter.encryption-key-signature-added'
+// Tendermint event.
+func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64, encryptionKey []byte, signature []byte) abcitypes.Event {
+	encodedKeyperIndex := []byte(fmt.Sprintf("%d", keyperIndex))
+	encodedBatchIndex := []byte(fmt.Sprintf("%d", batchIndex))
+	encodedKey := []byte(base64.RawURLEncoding.EncodeToString(encryptionKey))
+	encodedSignature := []byte(base64.RawURLEncoding.EncodeToString(signature))
+	return abcitypes.Event{
+		Type: "shutter.encryption-key-signature-added",
+		Attributes: []kv.Pair{
+			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex},
+			{Key: []byte("BatchIndex"), Value: encodedBatchIndex},
+			{Key: []byte("EncryptionKey"), Value: encodedKey},
+			{Key: []byte("Signature"), Value: encodedSignature},
+		},
+	}
+}
+
+// MakePolyEvalRegisteredEvent creates a new event to be emitted whenever a PolyEval message is
+// registered.
+func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.poly-eval-registered",
+		Attributes: []kv.Pair{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newAddressPair("Receiver", msg.Receiver),
+			newBytesPair("EncryptedEval", msg.EncryptedEval),
+		},
+	}
+}
+
+// MakePolyCommitmentRegisteredEvent creates a new event to be emitted whenever a PolyCommitment
+// message is registered.
+func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
+	// TODO: add gammas
+	return abcitypes.Event{
+		Type: "shutter.poly-commitment-registered",
+		Attributes: []kv.Pair{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+		},
+	}
+}
+
+// MakeAccusationRegisteredEvent creates a new event to be emitted whenever an Accusation message
+// is registered.
+func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.accusation-registered",
+		Attributes: []kv.Pair{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newAddressPair("Accused", msg.Accused),
+		},
+	}
+}
+
+// MakeApologyRegisteredEvent creates a new event to be emitted whenever an Apology message
+// is registered.
+func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.apology-registered",
+		Attributes: []kv.Pair{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newAddressPair("Accuser", msg.Accuser),
+			newBytesPair("PolyEval", msg.PolyEval),
+		},
+	}
+}
+
+//
+// Encoding/decoding helpers
+//
+
+func newBytesPair(key string, value []byte) kv.Pair {
+	return kv.Pair{
+		Key:   []byte(key),
+		Value: value,
+	}
+}
+
+func newStringPair(key string, value string) kv.Pair {
+	return newBytesPair(key, []byte(value))
+}
+
+func newAddressPair(key string, value common.Address) kv.Pair {
+	return newStringPair(key, value.Hex())
+}
+
+func newUintPair(key string, value uint64) kv.Pair {
+	return newStringPair(key, strconv.FormatUint(value, 10))
+}
+
+// encodePubkeyForEvent encodes the PublicKey as a string suitable for putting it into a tendermint
+// event, i.e. an utf-8 compatible string
+func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
+	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
+}
+
+// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
+// operation of encodePubkeyForEvent )
+func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
+	data, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.UnmarshalPubkey(data)
+}
+
+// encodePrivkeyForEvent encodes the given PrivateKey as a string suitable for putting it into a
+// tendermint event
+func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
+	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
+}
+
+// DecodePrivkeyFromEvent decodes a private key from a tendermint event (this is the reverse
+// operation of encodePrivkeyForEvent)
+func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
+	data, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.ToECDSA(data)
+}
+
 // encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
 	var hex []string
@@ -117,22 +213,4 @@ func DecodeAddressesFromEvent(s string) []common.Address {
 		res = append(res, common.HexToAddress(a))
 	}
 	return res
-}
-
-// MakeEncryptionKeySignatureAddedEvent creates a 'shutter.encryption-key-signature-added'
-// Tendermint event.
-func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64, encryptionKey []byte, signature []byte) abcitypes.Event {
-	encodedKeyperIndex := []byte(fmt.Sprintf("%d", keyperIndex))
-	encodedBatchIndex := []byte(fmt.Sprintf("%d", batchIndex))
-	encodedKey := []byte(base64.RawURLEncoding.EncodeToString(encryptionKey))
-	encodedSignature := []byte(base64.RawURLEncoding.EncodeToString(signature))
-	return abcitypes.Event{
-		Type: "shutter.encryption-key-signature-added",
-		Attributes: []kv.Pair{
-			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex},
-			{Key: []byte("BatchIndex"), Value: encodedBatchIndex},
-			{Key: []byte("EncryptionKey"), Value: encodedKey},
-			{Key: []byte("Signature"), Value: encodedSignature},
-		},
-	}
 }
