@@ -25,8 +25,8 @@ message ApologyMsg {
         bytes polyEval = 3;
 }
 
-message ESKShareMsg {
+message EpochSKShareMsg {
         uint64 eon = 1;
         uint64 epoch = 2;
-        bytes eskShare = 3;
+        bytes epochSKShare = 3;
 }
