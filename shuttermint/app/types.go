@@ -176,12 +176,13 @@ type ApologyMsg struct {
 	Sender   common.Address
 	Eon      uint64
 	Accuser  common.Address
-	polyEval []byte
+	PolyEval []byte
 }
 
-// ESKShareMsg represents a message containing an epoch secret key.
-type ESKShareMsg struct {
-	Sender   common.Address
-	Eon      uint64
-	ESKShare []byte
+// EpochSKShareMsg represents a message containing an epoch secret key.
+type EpochSKShareMsg struct {
+	Sender       common.Address
+	Eon          uint64
+	Epoch        uint64
+	EpochSKShare []byte
 }

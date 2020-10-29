@@ -1,6 +1,8 @@
 syntax = "proto3";
 package shmsg;
 
+import "shmsg/shmsg_truth.proto";
+
 option go_package = ".;shmsg";
 
 message PublicKeyCommitment {
@@ -59,5 +61,11 @@ message Message {
                 BatchConfigStarted batch_config_started = 6;
                 CheckIn check_in = 7;
                 DecryptionSignature decryption_signature = 8;
+
+                // DKG messages
+                PolyEvalMsg poly_eval_msg = 9;
+                PolyCommitmentMsg poly_commitment_msg = 10;
+                AccusationMsg accusation_msg = 11;
+                ApologyMsg apology_msg = 12;
         }
 }
