@@ -9,6 +9,7 @@ import (
 )
 
 func TestRegisterMsgs(t *testing.T) {
+	eon := uint64(10)
 	keypers := []common.Address{}
 	for i := 0; i < 3; i++ {
 		keypers = append(keypers, common.BigToAddress(big.NewInt(int64(i+10))))
@@ -19,21 +20,34 @@ func TestRegisterMsgs(t *testing.T) {
 	}
 
 	t.Run("RegisterPolyEvalMsg", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 
-		// fail if sender is not a keyper
+		// fail if wrong eon
 		msg := PolyEvalMsg{
-			Sender:   nonKeyper,
-			Receiver: keypers[0],
+			Sender:   keypers[0],
+			Eon:      eon + 1,
+			Receiver: keypers[1],
 		}
 		err := dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
 		_, ok := dkg.PolyEvalMsgs[nonKeyper][nonKeyper]
 		require.False(t, ok)
 
+		// fail if sender is not a keyper
+		msg = PolyEvalMsg{
+			Sender:   nonKeyper,
+			Eon:      eon,
+			Receiver: keypers[0],
+		}
+		err = dkg.RegisterPolyEvalMsg(msg)
+		require.NotNil(t, err)
+		_, ok = dkg.PolyEvalMsgs[nonKeyper][nonKeyper]
+		require.False(t, ok)
+
 		// fail if receiver is not a keyper
 		msg = PolyEvalMsg{
 			Sender:   keypers[0],
+			Eon:      eon,
 			Receiver: nonKeyper,
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
@@ -44,6 +58,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// fail if sender and receiver are equal
 		msg = PolyEvalMsg{
 			Sender:   keypers[0],
+			Eon:      eon,
 			Receiver: keypers[0],
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
@@ -54,6 +69,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// adding should work
 		msg = PolyEvalMsg{
 			Sender:   keypers[0],
+			Eon:      eon,
 			Receiver: keypers[1],
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
@@ -63,25 +79,43 @@ func TestRegisterMsgs(t *testing.T) {
 		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
-		msg = PolyEvalMsg{Sender: keypers[0]}
+		msg = PolyEvalMsg{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Receiver: keypers[1],
+		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
 	})
 
 	t.Run("RegisterPolyCommitmentMsg", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 
-		// fail if sender is not a keyper
+		// fail if wrong eon
 		msg := PolyCommitmentMsg{
-			Sender: nonKeyper,
+			Sender: keypers[0],
+			Eon:    eon + 1,
 		}
 		err := dkg.RegisterPolyCommitmentMsg(msg)
 		require.NotNil(t, err)
 		_, ok := dkg.PolyCommitmentMsgs[nonKeyper]
 		require.False(t, ok)
 
+		// fail if sender is not a keyper
+		msg = PolyCommitmentMsg{
+			Sender: nonKeyper,
+			Eon:    eon,
+		}
+		err = dkg.RegisterPolyCommitmentMsg(msg)
+		require.NotNil(t, err)
+		_, ok = dkg.PolyCommitmentMsgs[nonKeyper]
+		require.False(t, ok)
+
 		// adding should work
-		msg = PolyCommitmentMsg{Sender: keypers[0]}
+		msg = PolyCommitmentMsg{
+			Sender: keypers[0],
+			Eon:    eon,
+		}
 		err = dkg.RegisterPolyCommitmentMsg(msg)
 		require.Nil(t, err)
 		storedMsg, ok := dkg.PolyCommitmentMsgs[keypers[0]]
@@ -89,27 +123,43 @@ func TestRegisterMsgs(t *testing.T) {
 		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
-		msg = PolyCommitmentMsg{Sender: keypers[0]}
+		msg = PolyCommitmentMsg{
+			Sender: keypers[0],
+			Eon:    eon,
+		}
 		err = dkg.RegisterPolyCommitmentMsg(msg)
 		require.NotNil(t, err)
 	})
 
 	t.Run("RegisterAccusationMsg", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 
-		// fail if sender is not a keyper
+		// fail if wrong eon
 		msg := AccusationMsg{
-			Sender:  nonKeyper,
-			Accused: keypers[0],
+			Sender:  keypers[0],
+			Eon:     eon + 1,
+			Accused: keypers[1],
 		}
 		err := dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
 		_, ok := dkg.AccusationMsgs[nonKeyper][nonKeyper]
 		require.False(t, ok)
 
+		// fail if sender is not a keyper
+		msg = AccusationMsg{
+			Sender:  nonKeyper,
+			Eon:     eon,
+			Accused: keypers[0],
+		}
+		err = dkg.RegisterAccusationMsg(msg)
+		require.NotNil(t, err)
+		_, ok = dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		require.False(t, ok)
+
 		// fail if accused is not a keyper
 		msg = AccusationMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accused: nonKeyper,
 		}
 		err = dkg.RegisterAccusationMsg(msg)
@@ -120,6 +170,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// fail if sender and accused are equal
 		msg = AccusationMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accused: keypers[0],
 		}
 		err = dkg.RegisterAccusationMsg(msg)
@@ -130,6 +181,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// adding should work
 		msg = AccusationMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accused: keypers[1],
 		}
 		err = dkg.RegisterAccusationMsg(msg)
@@ -138,27 +190,44 @@ func TestRegisterMsgs(t *testing.T) {
 		require.True(t, ok)
 
 		// adding twice should fail
-		msg = AccusationMsg{Sender: keypers[0]}
+		msg = AccusationMsg{
+			Sender:  keypers[0],
+			Eon:     eon,
+			Accused: keypers[1],
+		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
 	})
 
 	t.Run("RegisterApologyMsg", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 
-		// fail if sender is not a keyper
+		// fail if wrong eon
 		msg := ApologyMsg{
-			Sender:  nonKeyper,
-			Accuser: keypers[0],
+			Sender:  keypers[0],
+			Eon:     eon + 1,
+			Accuser: keypers[1],
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
 		_, ok := dkg.AccusationMsgs[nonKeyper][nonKeyper]
 		require.False(t, ok)
 
+		// fail if sender is not a keyper
+		msg = ApologyMsg{
+			Sender:  nonKeyper,
+			Eon:     eon,
+			Accuser: keypers[0],
+		}
+		err = dkg.RegisterApologyMsg(msg)
+		require.NotNil(t, err)
+		_, ok = dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		require.False(t, ok)
+
 		// fail if accuser is not a keyper
 		msg = ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: nonKeyper,
 		}
 		err = dkg.RegisterApologyMsg(msg)
@@ -169,6 +238,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// fail if sender and accused are equal
 		msg = ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: keypers[0],
 		}
 		err = dkg.RegisterApologyMsg(msg)
@@ -179,6 +249,7 @@ func TestRegisterMsgs(t *testing.T) {
 		// adding should work
 		msg = ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: keypers[1],
 		}
 		err = dkg.RegisterApologyMsg(msg)
@@ -187,7 +258,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.True(t, ok)
 
 		// adding twice should fail
-		msg = ApologyMsg{Sender: keypers[0]}
+		msg = ApologyMsg{
+			Sender:  keypers[0],
+			Eon:     eon,
+			Accuser: keypers[1],
+		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
 	})
@@ -198,16 +273,18 @@ func TestClosing(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		keypers = append(keypers, common.BigToAddress(big.NewInt(int64(i+10))))
 	}
+	eon := uint64(10)
 	config := BatchConfig{
 		Keypers: keypers,
 	}
 
 	t.Run("CloseSubmissions", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 		dkg.CloseSubmissions()
 
 		msg1 := PolyEvalMsg{
 			Sender:   keypers[0],
+			Eon:      eon,
 			Receiver: keypers[1],
 		}
 		err := dkg.RegisterPolyEvalMsg(msg1)
@@ -215,6 +292,7 @@ func TestClosing(t *testing.T) {
 
 		msg2 := PolyCommitmentMsg{
 			Sender: keypers[0],
+			Eon:    eon,
 		}
 		err = dkg.RegisterPolyCommitmentMsg(msg2)
 		require.NotNil(t, err)
@@ -222,12 +300,14 @@ func TestClosing(t *testing.T) {
 		// accusations and apologies still work
 		msg3 := AccusationMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accused: keypers[1],
 		}
 		err = dkg.RegisterAccusationMsg(msg3)
 		require.Nil(t, err)
 		msg4 := ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: keypers[1],
 		}
 		err = dkg.RegisterApologyMsg(msg4)
@@ -235,11 +315,12 @@ func TestClosing(t *testing.T) {
 	})
 
 	t.Run("CloseAccusations", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 		dkg.CloseAccusations()
 
 		msg := AccusationMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accused: keypers[1],
 		}
 		err := dkg.RegisterAccusationMsg(msg)
@@ -248,6 +329,7 @@ func TestClosing(t *testing.T) {
 		// Apologies still work
 		msg2 := ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: keypers[1],
 		}
 		err = dkg.RegisterApologyMsg(msg2)
@@ -255,11 +337,12 @@ func TestClosing(t *testing.T) {
 	})
 
 	t.Run("CloseApologies", func(t *testing.T) {
-		dkg := NewDKGInstance(config)
+		dkg := NewDKGInstance(config, eon)
 		dkg.CloseApologies()
 
 		msg := ApologyMsg{
 			Sender:  keypers[0],
+			Eon:     eon,
 			Accuser: keypers[1],
 		}
 		err := dkg.RegisterApologyMsg(msg)

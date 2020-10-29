@@ -139,6 +139,7 @@ type DKGInstance struct {
 	sync.Mutex
 
 	Config BatchConfig
+	Eon    uint64
 
 	PolyEvalMsgs       map[common.Address]map[common.Address]PolyEvalMsg
 	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg

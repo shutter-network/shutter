@@ -7,7 +7,7 @@ import (
 )
 
 // NewDKGInstance creates a new DKGInstance.
-func NewDKGInstance(config BatchConfig) DKGInstance {
+func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
 	polyEvalMsgs := make(map[common.Address]map[common.Address]PolyEvalMsg)
 	polyCommitmentMsgs := make(map[common.Address]PolyCommitmentMsg)
 	accusationMsgs := make(map[common.Address]map[common.Address]AccusationMsg)
@@ -21,6 +21,7 @@ func NewDKGInstance(config BatchConfig) DKGInstance {
 
 	return DKGInstance{
 		Config: config,
+		Eon:    eon,
 
 		PolyEvalMsgs:       polyEvalMsgs,
 		PolyCommitmentMsgs: polyCommitmentMsgs,
@@ -31,6 +32,9 @@ func NewDKGInstance(config BatchConfig) DKGInstance {
 
 // RegisterPolyEvalMsg adds a polynomial evaluation message to the instance.
 func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
+	if msg.Eon != dkg.Eon {
+		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
+	}
 	if dkg.SubmissionsClosed {
 		return fmt.Errorf("submissions are already closed")
 	}
@@ -57,6 +61,9 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
 
 // RegisterPolyCommitmentMsg adds a polynomial commitment message to the instance.
 func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
+	if msg.Eon != dkg.Eon {
+		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
+	}
 	if dkg.SubmissionsClosed {
 		return fmt.Errorf("submissions are already closed")
 	}
@@ -77,6 +84,9 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
 
 // RegisterAccusationMsg adds an accusation message to the instance.
 func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
+	if msg.Eon != dkg.Eon {
+		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
+	}
 	if dkg.AccusationsClosed {
 		return fmt.Errorf("accusations are already closed")
 	}
@@ -103,6 +113,9 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
 
 // RegisterApologyMsg adds an apology message to the instance.
 func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
+	if msg.Eon != dkg.Eon {
+		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
+	}
 	if dkg.ApologiesClosed {
 		return fmt.Errorf("apologies are already closed")
 	}
