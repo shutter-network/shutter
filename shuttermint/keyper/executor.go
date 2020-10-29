@@ -343,7 +343,8 @@ func (ex *Executor) headerChannel(ctx context.Context) (<-chan *types.Header, <-
 		defer close(headers)
 		defer close(errors)
 
-		sub, err := ex.client.SubscribeNewHead(ctx, headers)
+		headersIn := make(chan *types.Header)
+		sub, err := ex.client.SubscribeNewHead(ctx, headersIn)
 		if err != nil {
 			errors <- fmt.Errorf("error subscribing to new heads: %w", err)
 			return
@@ -365,7 +366,7 @@ func (ex *Executor) headerChannel(ctx context.Context) (<-chan *types.Header, <-
 			case err := <-sub.Err():
 				errors <- fmt.Errorf("error while listening to new heads: %w", err)
 				return
-			case header := <-headers:
+			case header := <-headersIn:
 				if header.Hash() == firstHeader.Hash() {
 					continue
 				}
