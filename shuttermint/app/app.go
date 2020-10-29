@@ -450,6 +450,118 @@ func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature
 	}
 }
 
+func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+	if app.DKG == nil {
+		msg := "Error: Received PolyEval message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	appMsg, err := ParsePolyEvalMsg(msg, sender)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to parse PolyEval message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = app.DKG.RegisterPolyEvalMsg(*appMsg)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to register PolyEval message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	event := MakePolyEvalRegisteredEvent(appMsg)
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{event},
+	}
+}
+
+func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+	if app.DKG == nil {
+		msg := "Error: Received PolyCommitment message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	appMsg, err := ParsePolyCommitmentMsg(msg, sender)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to parse PolyCommitment message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = app.DKG.RegisterPolyCommitmentMsg(*appMsg)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to register PolyCommitment message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	event := MakePolyCommitmentRegisteredEvent(appMsg)
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{event},
+	}
+}
+
+func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+	if app.DKG == nil {
+		msg := "Error: Received Accusation message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	appMsg, err := ParseAccusationMsg(msg, sender)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to parse Accusation message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = app.DKG.RegisterAccusationMsg(*appMsg)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to register Accusation message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	event := MakeAccusationRegisteredEvent(appMsg)
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{event},
+	}
+}
+
+func (app *ShutterApp) handleApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+	if app.DKG == nil {
+		msg := "Error: Received Apology message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	appMsg, err := ParseApologyMsg(msg, sender)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to parse Apology message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = app.DKG.RegisterApologyMsg(*appMsg)
+	if err != nil {
+		msg := fmt.Sprintf("Error: Failed to register Apology message: %s", err)
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	event := MakeApologyRegisteredEvent(appMsg)
+	return abcitypes.ResponseDeliverTx{
+		Code:   0,
+		Events: []abcitypes.Event{event},
+	}
+}
+
 func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address) abcitypes.ResponseDeliverTx {
 	if msg.GetPublicKeyCommitment() != nil {
 		return app.deliverPublicKeyCommitment(msg.GetPublicKeyCommitment(), sender)
@@ -471,6 +583,19 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetDecryptionSignature() != nil {
 		return app.deliverDecryptionSignature(msg.GetDecryptionSignature(), sender)
+	}
+
+	if msg.GetPolyEvalMsg() != nil {
+		return app.handlePolyEvalMsg(msg.GetPolyEvalMsg(), sender)
+	}
+	if msg.GetPolyCommitmentMsg() != nil {
+		return app.handlePolyCommitmentMsg(msg.GetPolyCommitmentMsg(), sender)
+	}
+	if msg.GetAccusationMsg() != nil {
+		return app.handleAccusationMsg(msg.GetAccusationMsg(), sender)
+	}
+	if msg.GetApologyMsg() != nil {
+		return app.handleApologyMsg(msg.GetApologyMsg(), sender)
 	}
 	log.Print("Error: cannot deliver messsage", msg)
 	return makeErrorResponse("cannot deliver message")
