@@ -70,9 +70,9 @@ func initKey() {
 }
 
 func initClient() {
-	ctx, _ := context.WithTimeout(context.Background(), dialTimeout)
-
+	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 	cl, err := ethclient.DialContext(ctx, "http://localhost:8545")
+	cancel()
 	if err != nil {
 		log.Fatal(err)
 	}
