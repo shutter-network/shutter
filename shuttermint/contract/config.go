@@ -157,8 +157,8 @@ func (cc *ConfigContract) CurrentAndFutureConfigs(opts *bind.CallOpts, blockNumb
 	}
 
 	configs := []BatchConfig{}
-	for i := numConfigs - 1; i >= 0; i-- {
-		config, err := cc.GetConfigByIndex(opts, i)
+	for i := numConfigs; i >= 1; i-- {
+		config, err := cc.GetConfigByIndex(opts, i-1)
 		if err != nil {
 			return emptyResult, err
 		}
