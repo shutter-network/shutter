@@ -252,7 +252,7 @@ func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*t
 	}
 
 	if len(failedTxs) > 0 {
-		return res, errors.New("Some txs have failed")
+		return res, errors.New("some txs have failed")
 	}
 
 	return res, nil

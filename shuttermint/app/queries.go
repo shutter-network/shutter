@@ -136,7 +136,7 @@ func (app *ShutterApp) queryVote(vs url.Values) abcitypes.ResponseQuery {
 // ParseCheckInQueryResponseValue interprets the response value of the checkin query
 func ParseCheckInQueryResponseValue(v []byte) (bool, error) {
 	if len(v) != 1 {
-		return false, fmt.Errorf("Check in response must be single byte, got %d", len(v))
+		return false, fmt.Errorf("check in response must be single byte, got %d", len(v))
 	}
 	switch v[0] {
 	case 0:
@@ -144,6 +144,6 @@ func ParseCheckInQueryResponseValue(v []byte) (bool, error) {
 	case 1:
 		return true, nil
 	default:
-		return false, fmt.Errorf("Check in response byte must be either 0 or 1, got %v", v[0])
+		return false, fmt.Errorf("check in response byte must be either 0 or 1, got %v", v[0])
 	}
 }
