@@ -277,7 +277,7 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 }
 
 func deploy(ctx context.Context) {
-	auth, err := makeAuth(ctx, client, sandbox.GanacheKey(ganacheKeyIdx))
+	auth, err := makeAuth(ctx, client, key)
 	if err != nil {
 		panic(err)
 	}
@@ -446,8 +446,7 @@ func printConfig(config contract.BatchConfig) {
 }
 
 func fund(ctx context.Context) {
-	privkey := sandbox.GanacheKey(ganacheKeyIdx)
-	fromAddress := crypto.PubkeyToAddress(privkey.PublicKey)
+	fromAddress := crypto.PubkeyToAddress(key.PublicKey)
 
 	var txs []*types.Transaction
 	var tx *types.Transaction
@@ -484,7 +483,7 @@ func fund(ctx context.Context) {
 		var data []byte
 		tx = types.NewTransaction(nonce, receiver, amount, gasLimit, gasPrice, data)
 
-		tx, err = types.SignTx(tx, signer, privkey)
+		tx, err = types.SignTx(tx, signer, key)
 		if err != nil {
 			panic(err)
 		}
