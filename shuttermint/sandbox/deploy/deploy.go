@@ -145,7 +145,10 @@ func initScheduleFlags() {
 		"",
 		"address of config contract",
 	)
-	scheduleCmd.MarkFlagRequired("config-contract")
+	err := scheduleCmd.MarkFlagRequired("config-contract")
+	if err != nil {
+		panic(err)
+	}
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.StartBatchIndex,
@@ -153,7 +156,10 @@ func initScheduleFlags() {
 		0,
 		"the start batch index",
 	)
-	scheduleCmd.MarkFlagRequired("batch-span")
+	err = scheduleCmd.MarkFlagRequired("batch-span")
+	if err != nil {
+		panic(err)
+	}
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.BatchSpan,
@@ -161,7 +167,10 @@ func initScheduleFlags() {
 		0,
 		"the batch span",
 	)
-	scheduleCmd.MarkFlagRequired("batch-span")
+	err = scheduleCmd.MarkFlagRequired("batch-span")
+	if err != nil {
+		panic(err)
+	}
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.StartBlockNumber,
@@ -169,7 +178,10 @@ func initScheduleFlags() {
 		0,
 		"the start block number",
 	)
-	scheduleCmd.MarkFlagRequired("start-block-number")
+	err = scheduleCmd.MarkFlagRequired("start-block-number")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initGetconfigFlags() {
