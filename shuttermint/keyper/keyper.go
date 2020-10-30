@@ -240,8 +240,8 @@ func (kpr *Keyper) initializeConfigs(opts *bind.CallOpts) error {
 		return err
 	}
 
-	for i := numConfigs - 1; i >= 0; i-- {
-		config, err := kpr.configContract.GetConfigByIndex(opts, i)
+	for i := numConfigs; i >= 1; i-- {
+		config, err := kpr.configContract.GetConfigByIndex(opts, i-1)
 		if err != nil {
 			return err
 		}
