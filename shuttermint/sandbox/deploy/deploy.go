@@ -32,6 +32,10 @@ const (
 	ganacheKeyIdx                    = 9
 	numKeypers                       = 3
 	threshold                        = 2
+	transactionSizeLimit             = 100
+	batchSizeLimit                   = 100 * 100
+	baseGasLimit                     = 21000
+	fundAmount                       = 1000000000000000000 // 1 eth
 	dialDefaultTimeout               = 5 * time.Second
 	getconfigDefaultTimeout          = 10 * time.Second
 	deployDefaultTimeout             = 30 * time.Second
@@ -382,10 +386,10 @@ func schedule(
 	tx, err = cc.NextConfigSetExecutionTimeout(auth, batchSpan)
 	addTx()
 
-	tx, err = cc.NextConfigSetTransactionSizeLimit(auth, 100)
+	tx, err = cc.NextConfigSetTransactionSizeLimit(auth, transactionSizeLimit)
 	addTx()
 
-	tx, err = cc.NextConfigSetBatchSizeLimit(auth, 100*100)
+	tx, err = cc.NextConfigSetBatchSizeLimit(auth, batchSizeLimit)
 	addTx()
 
 	header, err := client.HeaderByNumber(ctx, nil)
@@ -467,8 +471,8 @@ func fund(ctx context.Context) {
 		panic(err)
 	}
 
-	amount := big.NewInt(1000000000000000000) // 1 eth
-	gasLimit := uint64(21000)
+	amount := big.NewInt(fundAmount) // 1 eth
+	gasLimit := uint64(baseGasLimit)
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
 		panic(err)
