@@ -59,7 +59,10 @@ func initFlags() {
 		"",
 		"address of batcher contract",
 	)
-	sendtxsCmd.MarkFlagRequired("batcher-contract")
+	err := sendtxsCmd.MarkFlagRequired("batcher-contract")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func initKey() {
@@ -67,8 +70,7 @@ func initKey() {
 }
 
 func initClient() {
-	ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), dialTimeout)
 
 	cl, err := ethclient.DialContext(ctx, "http://localhost:8545")
 	if err != nil {
@@ -166,7 +168,10 @@ func sendtxs() {
 
 func makeTx() []byte {
 	b := make([]byte, txSize)
-	rand.Read(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return b
 }
 
