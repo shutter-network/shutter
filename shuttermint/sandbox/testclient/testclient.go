@@ -64,7 +64,10 @@ func main() {
 		panic(err)
 	}
 	pretty.Print("Status:", st)
-	defer cl.Stop()
+	defer func() {
+		err = cl.Stop()
+		panic(err)
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	query := "tx.height > 3"
