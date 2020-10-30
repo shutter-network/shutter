@@ -142,7 +142,7 @@ func sendtxs() {
 		}
 		batchIndex := nextBatchIndex - 1
 
-		txTypeBig, err := rand.Int(rand.Reader, big.NewInt(2))
+		txTypeBig, err := rand.Int(rand.Reader, big.NewInt(contract.TransactionTypePlain+1))
 		if err != nil {
 			panic("failed to generate random number")
 		}
