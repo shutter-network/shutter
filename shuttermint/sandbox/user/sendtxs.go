@@ -137,7 +137,7 @@ func sendtxs() {
 		}
 		if nextBatchIndex == 0 {
 			log.Printf("Waiting for first batch to start (block %d)", blockNumber)
-			time.Sleep(1)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		batchIndex := nextBatchIndex - 1
