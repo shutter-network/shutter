@@ -156,7 +156,7 @@ func initScheduleFlags() {
 		0,
 		"the start batch index",
 	)
-	err = scheduleCmd.MarkFlagRequired("batch-span")
+	err = scheduleCmd.MarkFlagRequired("start-batch-index")
 	if err != nil {
 		panic(err)
 	}
