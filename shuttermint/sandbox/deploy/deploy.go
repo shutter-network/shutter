@@ -192,7 +192,10 @@ func initGetconfigFlags() {
 		"",
 		"address of config contract",
 	)
-	getconfigCmd.MarkFlagRequired("config-contract")
+	err := getconfigCmd.MarkFlagRequired("config-contract")
+	if err != nil {
+		panic(err)
+	}
 
 	getconfigCmd.Flags().IntVarP(
 		&getconfigFlags.ConfigIndex,
@@ -201,7 +204,10 @@ func initGetconfigFlags() {
 		0,
 		"the config index",
 	)
-	getconfigCmd.MarkFlagRequired("config-index")
+	err = getconfigCmd.MarkFlagRequired("config-index")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
