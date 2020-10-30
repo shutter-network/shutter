@@ -117,7 +117,7 @@ func sendtxs() {
 	lastTxTime := time.Now()
 
 	for {
-		dt := time.Now().Sub(lastTxTime)
+		dt := txInterval - time.Now().Sub(lastTxTime)
 		time.Sleep(dt)
 		lastTxTime = time.Now()
 
