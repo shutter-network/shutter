@@ -3,15 +3,19 @@ module github.com/brainbot-com/shutter/shuttermint
 go 1.14
 
 require (
-	github.com/ethereum/go-ethereum v1.9.22
+	github.com/dlclark/regexp2 v1.2.1 // indirect
+	github.com/ethereum/go-ethereum v1.9.23
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/golang/protobuf v1.4.2
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
+	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/golangci/golangci-lint v1.31.0
 	github.com/gostaticanalysis/analysisutil v0.0.4 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/kr/pretty v0.2.0
+	github.com/kyoh86/exportloopref v0.1.8 // indirect
 	github.com/magiconair/properties v1.8.4 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/minio/highwayhash v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
@@ -32,6 +36,7 @@ require (
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/text v0.3.4 // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	mvdan.cc/gofumpt v0.0.0-20200802201014-ab5a8192947d

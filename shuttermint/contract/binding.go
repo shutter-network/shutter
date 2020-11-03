@@ -170,7 +170,7 @@ func bindBatcherContract(address common.Address, caller bind.ContractCaller, tra
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BatcherContract *BatcherContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BatcherContract *BatcherContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BatcherContract.Contract.BatcherContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -189,7 +189,7 @@ func (_BatcherContract *BatcherContractRaw) Transact(opts *bind.TransactOpts, me
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BatcherContract *BatcherContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BatcherContract *BatcherContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BatcherContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -208,12 +208,17 @@ func (_BatcherContract *BatcherContractTransactorRaw) Transact(opts *bind.Transa
 //
 // Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
 func (_BatcherContract *BatcherContractCaller) BatchHashes(opts *bind.CallOpts, arg0 uint64, arg1 uint8) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "batchHashes", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "batchHashes", arg0, arg1)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
@@ -234,12 +239,17 @@ func (_BatcherContract *BatcherContractCallerSession) BatchHashes(arg0 uint64, a
 //
 // Solidity: function batchSizes(uint64 ) view returns(uint64)
 func (_BatcherContract *BatcherContractCaller) BatchSizes(opts *bind.CallOpts, arg0 uint64) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "batchSizes", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "batchSizes", arg0)
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // BatchSizes is a free data retrieval call binding the contract method 0xbfd260ca.
@@ -260,12 +270,17 @@ func (_BatcherContract *BatcherContractCallerSession) BatchSizes(arg0 uint64) (u
 //
 // Solidity: function configContract() view returns(address)
 func (_BatcherContract *BatcherContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "configContract")
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "configContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
@@ -286,12 +301,17 @@ func (_BatcherContract *BatcherContractCallerSession) ConfigContract() (common.A
 //
 // Solidity: function feeBankContract() view returns(address)
 func (_BatcherContract *BatcherContractCaller) FeeBankContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "feeBankContract")
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "feeBankContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // FeeBankContract is a free data retrieval call binding the contract method 0x36e1290d.
@@ -312,12 +332,17 @@ func (_BatcherContract *BatcherContractCallerSession) FeeBankContract() (common.
 //
 // Solidity: function minFee() view returns(uint64)
 func (_BatcherContract *BatcherContractCaller) MinFee(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "minFee")
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "minFee")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // MinFee is a free data retrieval call binding the contract method 0x24ec7590.
@@ -338,12 +363,17 @@ func (_BatcherContract *BatcherContractCallerSession) MinFee() (uint64, error) {
 //
 // Solidity: function owner() view returns(address)
 func (_BatcherContract *BatcherContractCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BatcherContract.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _BatcherContract.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -860,7 +890,7 @@ func bindConfigContract(address common.Address, caller bind.ContractCaller, tran
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ConfigContract *ConfigContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ConfigContract *ConfigContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ConfigContract.Contract.ConfigContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -879,7 +909,7 @@ func (_ConfigContract *ConfigContractRaw) Transact(opts *bind.TransactOpts, meth
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ConfigContract *ConfigContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ConfigContract *ConfigContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ConfigContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -898,12 +928,17 @@ func (_ConfigContract *ConfigContractTransactorRaw) Transact(opts *bind.Transact
 //
 // Solidity: function configChangeHeadsUpBlocks() view returns(uint64)
 func (_ConfigContract *ConfigContractCaller) ConfigChangeHeadsUpBlocks(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "configChangeHeadsUpBlocks")
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "configChangeHeadsUpBlocks")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // ConfigChangeHeadsUpBlocks is a free data retrieval call binding the contract method 0xcd21aee7.
@@ -924,12 +959,17 @@ func (_ConfigContract *ConfigContractCallerSession) ConfigChangeHeadsUpBlocks() 
 //
 // Solidity: function configKeypers(uint64 _configIndex, uint64 _keyperIndex) view returns(address)
 func (_ConfigContract *ConfigContractCaller) ConfigKeypers(opts *bind.CallOpts, _configIndex uint64, _keyperIndex uint64) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "configKeypers", _configIndex, _keyperIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "configKeypers", _configIndex, _keyperIndex)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ConfigKeypers is a free data retrieval call binding the contract method 0xfa84ea02.
@@ -950,12 +990,17 @@ func (_ConfigContract *ConfigContractCallerSession) ConfigKeypers(_configIndex u
 //
 // Solidity: function configNumKeypers(uint64 _configIndex) view returns(uint64)
 func (_ConfigContract *ConfigContractCaller) ConfigNumKeypers(opts *bind.CallOpts, _configIndex uint64) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "configNumKeypers", _configIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "configNumKeypers", _configIndex)
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // ConfigNumKeypers is a free data retrieval call binding the contract method 0xd9a58f24.
@@ -988,7 +1033,10 @@ func (_ConfigContract *ConfigContractCaller) Configs(opts *bind.CallOpts, arg0 *
 	TargetFunctionSelector [4]byte
 	ExecutionTimeout       uint64
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "configs", arg0)
+
+	outstruct := new(struct {
 		StartBatchIndex        uint64
 		StartBlockNumber       uint64
 		Threshold              uint64
@@ -1001,9 +1049,21 @@ func (_ConfigContract *ConfigContractCaller) Configs(opts *bind.CallOpts, arg0 *
 		TargetFunctionSelector [4]byte
 		ExecutionTimeout       uint64
 	})
-	out := ret
-	err := _ConfigContract.contract.Call(opts, out, "configs", arg0)
-	return *ret, err
+
+	outstruct.StartBatchIndex = out[0].(uint64)
+	outstruct.StartBlockNumber = out[1].(uint64)
+	outstruct.Threshold = out[2].(uint64)
+	outstruct.BatchSpan = out[3].(uint64)
+	outstruct.BatchSizeLimit = out[4].(uint64)
+	outstruct.TransactionSizeLimit = out[5].(uint64)
+	outstruct.TransactionGasLimit = out[6].(uint64)
+	outstruct.FeeReceiver = out[7].(common.Address)
+	outstruct.TargetAddress = out[8].(common.Address)
+	outstruct.TargetFunctionSelector = out[9].([4]byte)
+	outstruct.ExecutionTimeout = out[10].(uint64)
+
+	return *outstruct, err
+
 }
 
 // Configs is a free data retrieval call binding the contract method 0x0098fa22.
@@ -1048,12 +1108,17 @@ func (_ConfigContract *ConfigContractCallerSession) Configs(arg0 *big.Int) (stru
 //
 // Solidity: function getConfig(uint64 _batchIndex) view returns((uint64,uint64,address[],uint64,uint64,uint64,uint64,uint64,address,address,bytes4,uint64))
 func (_ConfigContract *ConfigContractCaller) GetConfig(opts *bind.CallOpts, _batchIndex uint64) (BatchConfig, error) {
-	var (
-		ret0 = new(BatchConfig)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "getConfig", _batchIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "getConfig", _batchIndex)
+
+	if err != nil {
+		return *new(BatchConfig), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(BatchConfig)).(*BatchConfig)
+
+	return out0, err
+
 }
 
 // GetConfig is a free data retrieval call binding the contract method 0xe008cb62.
@@ -1086,7 +1151,10 @@ func (_ConfigContract *ConfigContractCaller) NextConfig(opts *bind.CallOpts) (st
 	TargetFunctionSelector [4]byte
 	ExecutionTimeout       uint64
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "nextConfig")
+
+	outstruct := new(struct {
 		StartBatchIndex        uint64
 		StartBlockNumber       uint64
 		Threshold              uint64
@@ -1099,9 +1167,21 @@ func (_ConfigContract *ConfigContractCaller) NextConfig(opts *bind.CallOpts) (st
 		TargetFunctionSelector [4]byte
 		ExecutionTimeout       uint64
 	})
-	out := ret
-	err := _ConfigContract.contract.Call(opts, out, "nextConfig")
-	return *ret, err
+
+	outstruct.StartBatchIndex = out[0].(uint64)
+	outstruct.StartBlockNumber = out[1].(uint64)
+	outstruct.Threshold = out[2].(uint64)
+	outstruct.BatchSpan = out[3].(uint64)
+	outstruct.BatchSizeLimit = out[4].(uint64)
+	outstruct.TransactionSizeLimit = out[5].(uint64)
+	outstruct.TransactionGasLimit = out[6].(uint64)
+	outstruct.FeeReceiver = out[7].(common.Address)
+	outstruct.TargetAddress = out[8].(common.Address)
+	outstruct.TargetFunctionSelector = out[9].([4]byte)
+	outstruct.ExecutionTimeout = out[10].(uint64)
+
+	return *outstruct, err
+
 }
 
 // NextConfig is a free data retrieval call binding the contract method 0x64e9f671.
@@ -1146,12 +1226,17 @@ func (_ConfigContract *ConfigContractCallerSession) NextConfig() (struct {
 //
 // Solidity: function nextConfigKeypers(uint64 _index) view returns(address)
 func (_ConfigContract *ConfigContractCaller) NextConfigKeypers(opts *bind.CallOpts, _index uint64) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "nextConfigKeypers", _index)
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "nextConfigKeypers", _index)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // NextConfigKeypers is a free data retrieval call binding the contract method 0x660744dc.
@@ -1172,12 +1257,17 @@ func (_ConfigContract *ConfigContractCallerSession) NextConfigKeypers(_index uin
 //
 // Solidity: function nextConfigNumKeypers() view returns(uint64)
 func (_ConfigContract *ConfigContractCaller) NextConfigNumKeypers(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "nextConfigNumKeypers")
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "nextConfigNumKeypers")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // NextConfigNumKeypers is a free data retrieval call binding the contract method 0x287447c4.
@@ -1198,12 +1288,17 @@ func (_ConfigContract *ConfigContractCallerSession) NextConfigNumKeypers() (uint
 //
 // Solidity: function numConfigs() view returns(uint64)
 func (_ConfigContract *ConfigContractCaller) NumConfigs(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "numConfigs")
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "numConfigs")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // NumConfigs is a free data retrieval call binding the contract method 0x0f0aae6f.
@@ -1224,12 +1319,17 @@ func (_ConfigContract *ConfigContractCallerSession) NumConfigs() (uint64, error)
 //
 // Solidity: function owner() view returns(address)
 func (_ConfigContract *ConfigContractCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ConfigContract.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _ConfigContract.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -2132,7 +2232,7 @@ func bindContext(address common.Address, caller bind.ContractCaller, transactor 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Context *ContextRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Context *ContextRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Context.Contract.ContextCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -2151,7 +2251,7 @@ func (_Context *ContextRaw) Transact(opts *bind.TransactOpts, method string, par
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Context *ContextCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Context *ContextCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Context.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -2294,7 +2394,7 @@ func bindECDSA(address common.Address, caller bind.ContractCaller, transactor bi
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ECDSA *ECDSARaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ECDSA *ECDSARaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ECDSA.Contract.ECDSACaller.contract.Call(opts, result, method, params...)
 }
 
@@ -2313,7 +2413,7 @@ func (_ECDSA *ECDSARaw) Transact(opts *bind.TransactOpts, method string, params 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ECDSA *ECDSACallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ECDSA *ECDSACallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ECDSA.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -2456,7 +2556,7 @@ func bindExecutorContract(address common.Address, caller bind.ContractCaller, tr
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ExecutorContract *ExecutorContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ExecutorContract *ExecutorContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ExecutorContract.Contract.ExecutorContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -2475,7 +2575,7 @@ func (_ExecutorContract *ExecutorContractRaw) Transact(opts *bind.TransactOpts, 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ExecutorContract *ExecutorContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ExecutorContract *ExecutorContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ExecutorContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -2494,12 +2594,17 @@ func (_ExecutorContract *ExecutorContractTransactorRaw) Transact(opts *bind.Tran
 //
 // Solidity: function batcherContract() view returns(address)
 func (_ExecutorContract *ExecutorContractCaller) BatcherContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ExecutorContract.contract.Call(opts, out, "batcherContract")
-	return *ret0, err
+	var out []interface{}
+	err := _ExecutorContract.contract.Call(opts, &out, "batcherContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // BatcherContract is a free data retrieval call binding the contract method 0xbeb3b50e.
@@ -2520,12 +2625,17 @@ func (_ExecutorContract *ExecutorContractCallerSession) BatcherContract() (commo
 //
 // Solidity: function configContract() view returns(address)
 func (_ExecutorContract *ExecutorContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ExecutorContract.contract.Call(opts, out, "configContract")
-	return *ret0, err
+	var out []interface{}
+	err := _ExecutorContract.contract.Call(opts, &out, "configContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
@@ -2546,12 +2656,17 @@ func (_ExecutorContract *ExecutorContractCallerSession) ConfigContract() (common
 //
 // Solidity: function numExecutionHalfSteps() view returns(uint64)
 func (_ExecutorContract *ExecutorContractCaller) NumExecutionHalfSteps(opts *bind.CallOpts) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _ExecutorContract.contract.Call(opts, out, "numExecutionHalfSteps")
-	return *ret0, err
+	var out []interface{}
+	err := _ExecutorContract.contract.Call(opts, &out, "numExecutionHalfSteps")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // NumExecutionHalfSteps is a free data retrieval call binding the contract method 0xfa6385f4.
@@ -3026,7 +3141,7 @@ func bindFeeBankContract(address common.Address, caller bind.ContractCaller, tra
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_FeeBankContract *FeeBankContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_FeeBankContract *FeeBankContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _FeeBankContract.Contract.FeeBankContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -3045,7 +3160,7 @@ func (_FeeBankContract *FeeBankContractRaw) Transact(opts *bind.TransactOpts, me
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_FeeBankContract *FeeBankContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_FeeBankContract *FeeBankContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _FeeBankContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -3064,12 +3179,17 @@ func (_FeeBankContract *FeeBankContractTransactorRaw) Transact(opts *bind.Transa
 //
 // Solidity: function deposits(address ) view returns(uint64)
 func (_FeeBankContract *FeeBankContractCaller) Deposits(opts *bind.CallOpts, arg0 common.Address) (uint64, error) {
-	var (
-		ret0 = new(uint64)
-	)
-	out := ret0
-	err := _FeeBankContract.contract.Call(opts, out, "deposits", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _FeeBankContract.contract.Call(opts, &out, "deposits", arg0)
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
 // Deposits is a free data retrieval call binding the contract method 0xfc7e286d.
@@ -3549,7 +3669,7 @@ func bindKeyBroadcastContract(address common.Address, caller bind.ContractCaller
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeyBroadcastContract *KeyBroadcastContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeyBroadcastContract *KeyBroadcastContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeyBroadcastContract.Contract.KeyBroadcastContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -3568,7 +3688,7 @@ func (_KeyBroadcastContract *KeyBroadcastContractRaw) Transact(opts *bind.Transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeyBroadcastContract *KeyBroadcastContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeyBroadcastContract *KeyBroadcastContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeyBroadcastContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -3587,12 +3707,17 @@ func (_KeyBroadcastContract *KeyBroadcastContractTransactorRaw) Transact(opts *b
 //
 // Solidity: function configContract() view returns(address)
 func (_KeyBroadcastContract *KeyBroadcastContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeyBroadcastContract.contract.Call(opts, out, "configContract")
-	return *ret0, err
+	var out []interface{}
+	err := _KeyBroadcastContract.contract.Call(opts, &out, "configContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
@@ -3895,7 +4020,7 @@ func bindMockBatcherContract(address common.Address, caller bind.ContractCaller,
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_MockBatcherContract *MockBatcherContractRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_MockBatcherContract *MockBatcherContractRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _MockBatcherContract.Contract.MockBatcherContractCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -3914,7 +4039,7 @@ func (_MockBatcherContract *MockBatcherContractRaw) Transact(opts *bind.Transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_MockBatcherContract *MockBatcherContractCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_MockBatcherContract *MockBatcherContractCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _MockBatcherContract.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -3933,12 +4058,17 @@ func (_MockBatcherContract *MockBatcherContractTransactorRaw) Transact(opts *bin
 //
 // Solidity: function batchHashes(uint64 , uint8 ) view returns(bytes32)
 func (_MockBatcherContract *MockBatcherContractCaller) BatchHashes(opts *bind.CallOpts, arg0 uint64, arg1 uint8) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _MockBatcherContract.contract.Call(opts, out, "batchHashes", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _MockBatcherContract.contract.Call(opts, &out, "batchHashes", arg0, arg1)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // BatchHashes is a free data retrieval call binding the contract method 0xc87afa8a.
@@ -4087,7 +4217,7 @@ func bindOwnable(address common.Address, caller bind.ContractCaller, transactor 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Ownable *OwnableRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Ownable *OwnableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Ownable.Contract.OwnableCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -4106,7 +4236,7 @@ func (_Ownable *OwnableRaw) Transact(opts *bind.TransactOpts, method string, par
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Ownable *OwnableCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Ownable *OwnableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Ownable.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -4125,12 +4255,17 @@ func (_Ownable *OwnableTransactorRaw) Transact(opts *bind.TransactOpts, method s
 //
 // Solidity: function owner() view returns(address)
 func (_Ownable *OwnableCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Ownable.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _Ownable.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
