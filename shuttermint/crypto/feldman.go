@@ -33,7 +33,7 @@ func NewPolynomial(coefficients []*big.Int) (*Polynomial, error) {
 		return nil, fmt.Errorf("no coefficients given")
 	}
 	for i, v := range coefficients {
-		if v.Cmp(big.NewInt(0)) < 0 {
+		if v.Sign() < 0 {
 			return nil, fmt.Errorf("coefficient %d is negative (%d)", i, v)
 		}
 		if v.Cmp(bn256.Order) >= 0 {
