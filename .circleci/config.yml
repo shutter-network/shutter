@@ -33,24 +33,12 @@ commands:
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
 
-  install-node:
-    steps:
-      - run:
-          name: Install node
-          command: |
-            sudo mkdir -p /opt/
-            curl -sSL "https://nodejs.org/dist/v12.19.0/node-v12.19.0-linux-x64.tar.gz" | sudo tar -xz -C /opt/ ;
-      - run:
-          name: Add node to path
-          command: |
-            echo >${BASH_ENV} 'export PATH=/opt/node-v12.19.0-linux-x64/bin:${PATH}'
-
   install-ganache:
     steps:
       - run:
           name: Install ganache-cli
           command: |
-            sudo env "PATH=$PATH" npm install -g ganache-cli@6.9.1
+            sudo npm install -g ganache-cli@6.12.1
 
 executors:
   py37:
@@ -58,7 +46,7 @@ executors:
       - image: cimg/python:3.7
   go:
     docker:
-      - image: cimg/go:1.15
+      - image: cimg/go:1.15-node
         environment:
           GO111MODULE: "on"
 jobs:
@@ -149,13 +137,13 @@ jobs:
       - install-nox
       - restore_cache:
           keys:
-            - test-contracts-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+            - test-contracts-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
       - run:
           name: "Run tests"
           command: |
             nox -s test_contracts
       - save_cache:
-          key: test-contracts-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: test-contracts-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
             - ~/shutter/.mypy_cache
@@ -170,7 +158,6 @@ jobs:
           keys:
             - shuttermint-go-v5-{{ checksum "go.sum" }}
       - run: go get -t -v ./...
-      - install-node
       - install-ganache
       - run: make build
       - save_cache:

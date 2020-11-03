@@ -11,7 +11,7 @@ import nox
 from nox.sessions import Session
 
 
-NODE_VERSION = "12.18.0"
+NODE_VERSION = "12.19.0"
 
 
 nox.options.sessions = ["black", "flake8", "mypy", "test_contracts"]
@@ -48,7 +48,7 @@ def install_ganache(session: Session) -> None:
             str(bindir.joinpath("npm")),
             "install",
             "-g",
-            "ganache-cli@6.9.1",
+            "ganache-cli@6.12.1",
             silent=True,
             external=True,
         )
