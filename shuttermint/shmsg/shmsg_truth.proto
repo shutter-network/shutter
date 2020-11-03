@@ -3,6 +3,18 @@ package shmsg;
 
 option go_package = ".;shmsg";
 
+message G1 {
+        bytes g1bytes = 1; // Unmarshal with new(G1).Unmarshal(msg.g1bytes)
+}
+
+message G2 {
+        bytes g2bytes = 1; // Unmarshal with new(G2).Unmarshal(msg.g2bytes)
+}
+
+message GT {
+        bytes gtbytes =1; // Unmarshal with new(GT).Unmarshal(msg.g2bytes)
+}
+
 message PolyEvalMsg {
         uint64 eon = 1;
         bytes receiver = 2;

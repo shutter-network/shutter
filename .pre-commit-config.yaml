@@ -65,4 +65,4 @@ repos:
         types: [go]
         args: ["-w", "-local", "github.com/brainbot-com/shutter"]
         pass_filenames: True
-        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/shmsg\.pb\.go$
+        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/.*\.pb\.go$
