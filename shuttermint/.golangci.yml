@@ -32,6 +32,9 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
+      - paramTypeCombine
+      - hugeParam
+      - unnamedResult
   gocyclo:
     min-complexity: 15
   goimports:
@@ -73,7 +76,6 @@ linters:
     - deadcode
     - depguard
     - dogsled
-    - dupl
     - errcheck
     - exhaustive
     - funlen
@@ -122,6 +124,9 @@ linters:
   # - wsl
 
 issues:
+  exclude:
+    - "Error return value of `.*MarkPersistentFlagRequired` is not checked"
+    - "Error return value of `viper.BindEnv` is not checked"
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     - path: _test\.go
