@@ -87,6 +87,17 @@ func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64,
 	}
 }
 
+// MakeNewDKGInstanceEvent creates a new event to be emitted whenever a new dkg process is kicked
+// off.
+func MakeNewDKGInstanceEvent(eon uint64) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.new-dkg-instance",
+		Attributes: []kv.Pair{
+			newUintPair("Eon", eon),
+		},
+	}
+}
+
 // MakePolyEvalRegisteredEvent creates a new event to be emitted whenever a PolyEval message is
 // registered.
 func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {

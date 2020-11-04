@@ -157,6 +157,29 @@ func MakeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignatureEvent,
 	}, nil
 }
 
+// MakeNewDKGInstanceEvent creates a NewDKGInstanceEvent from the given tendermint event of type
+// "shutter.new-dkg-instance".
+func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
+	if ev.Type != "shutter.new-dkg-instance" {
+		return NewDKGInstanceEvent{}, fmt.Errorf("expected event type shutter.new-dkg-instance, got %s", ev.Type)
+	}
+	if len(ev.Attributes) < 1 {
+		return NewDKGInstanceEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
+	}
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("Eon")) {
+		return NewDKGInstanceEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
+	}
+
+	eon, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	if err != nil {
+		return NewDKGInstanceEvent{}, err
+	}
+
+	return NewDKGInstanceEvent{
+		Eon: uint64(eon),
+	}, nil
+}
+
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {

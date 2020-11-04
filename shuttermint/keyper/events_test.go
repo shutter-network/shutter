@@ -64,3 +64,14 @@ func TestMakeEventEncryptionSignatureAddedEvent(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, ev, expectedEvent)
 }
+
+func TestMakeNewDKGInstanceEvent(t *testing.T) {
+	var eon uint64 = 10
+	appEv := app.MakeNewDKGInstanceEvent(eon)
+	ev, err := MakeEvent(appEv)
+	expectedEv := NewDKGInstanceEvent{
+		Eon: eon,
+	}
+	require.Nil(t, err)
+	require.Equal(t, expectedEv, ev)
+}

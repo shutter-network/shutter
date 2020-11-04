@@ -14,6 +14,14 @@ func TestEvents(t *testing.T) {
 	anotherAddress := common.BigToAddress(new(big.Int).SetUint64(456))
 	data := []byte("some data")
 
+	t.Run("MakeNewDKGInstanceEvent", func(t *testing.T) {
+		ev := MakeNewDKGInstanceEvent(uint64(10))
+		require.Equal(t, "shutter.new-dkg-instance", ev.Type)
+		require.Equal(t, 1, len(ev.Attributes))
+		require.Equal(t, []byte("Eon"), ev.Attributes[0].Key)
+		require.Equal(t, []byte("10"), ev.Attributes[0].Value)
+	})
+
 	t.Run("MakePolyEvalRegisteredEvent", func(t *testing.T) {
 		msg := &PolyEvalMsg{
 			Sender:        sender,
