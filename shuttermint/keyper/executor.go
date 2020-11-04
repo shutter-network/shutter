@@ -420,6 +420,10 @@ func (ex *Executor) halfStepChannel(ctx context.Context) (<-chan uint64, <-chan 
 			BlockNumber: header.Number,
 		}
 		startHalfStep, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(callOpts)
+		if err != nil {
+			errors <- fmt.Errorf("error calling NumExecutionHalfSteps: %w", err)
+			return
+		}
 		halfSteps <- startHalfStep
 
 		// subscribe to all events that change half step

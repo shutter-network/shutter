@@ -92,9 +92,13 @@ func TestGammas(t *testing.T) {
 
 func TestVerifyPolyEval(t *testing.T) {
 	threshold := uint64(2)
+
 	p1, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(100))
+	require.Nil(t, err)
+
 	p2, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(200))
 	require.Nil(t, err)
+
 	for i := 0; i < 10; i++ {
 		xi := KeyperX(i)
 		vi1 := p1.Eval(xi)
