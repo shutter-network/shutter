@@ -39,12 +39,12 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 // This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
 // deployed on the main chain.
 type BatchConfig struct {
-	StartBatchIndex uint64
 	Keypers         []common.Address
+	StartBatchIndex uint64
 	Threshold       uint64
 
-	ConfigContractAddress common.Address
 	ConfigIndex           uint64
+	ConfigContractAddress common.Address
 
 	Started           bool
 	ValidatorsUpdated bool
@@ -135,10 +135,10 @@ type DKGInstance struct {
 
 // PolyEvalMsg represents an encrypted polynomial evaluation message from one keyper to another.
 type PolyEvalMsg struct {
-	Sender        common.Address
-	Eon           uint64
-	Receiver      common.Address
 	EncryptedEval []byte
+	Eon           uint64
+	Sender        common.Address
+	Receiver      common.Address
 }
 
 // PolyCommitmentMsg represents a broadcasted polynomial commitment message.
@@ -150,17 +150,17 @@ type PolyCommitmentMsg struct {
 
 // AccusationMsg represents a broadcasted accusation message against a keyper.
 type AccusationMsg struct {
-	Sender  common.Address
 	Eon     uint64
+	Sender  common.Address
 	Accused common.Address
 }
 
 // ApologyMsg represents an apology broadcasted in response to a prior accusation.
 type ApologyMsg struct {
-	Sender   common.Address
-	Eon      uint64
-	Accuser  common.Address
 	PolyEval []byte
+	Eon      uint64
+	Sender   common.Address
+	Accuser  common.Address
 }
 
 // EpochSKShareMsg represents a message containing an epoch secret key.
