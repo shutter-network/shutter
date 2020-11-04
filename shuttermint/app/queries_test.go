@@ -149,10 +149,10 @@ func TestQueryCheckedIn(t *testing.T) {
 }
 
 func TestCheckInQueryResponseValueParsing(t *testing.T) {
-	b, err := ParseCheckInQueryResponseValue([]byte{})
+	_, err := ParseCheckInQueryResponseValue([]byte{})
 	require.NotNil(t, err)
 
-	b, err = ParseCheckInQueryResponseValue([]byte{0})
+	b, err := ParseCheckInQueryResponseValue([]byte{0})
 	require.Nil(t, err)
 	require.False(t, b)
 
@@ -160,7 +160,7 @@ func TestCheckInQueryResponseValueParsing(t *testing.T) {
 	require.Nil(t, err)
 	require.True(t, b)
 
-	b, err = ParseCheckInQueryResponseValue([]byte{2})
+	_, err = ParseCheckInQueryResponseValue([]byte{2})
 	require.NotNil(t, err)
 }
 
@@ -190,14 +190,15 @@ func TestQueryVote(t *testing.T) {
 	config := BatchConfig{
 		StartBatchIndex: 100,
 	}
-	app.Voting.AddVote(address, config)
+	err := app.Voting.AddVote(address, config)
+	require.Nil(t, err)
 	req = abcitypes.RequestQuery{
 		Path: fmt.Sprintf("/vote?address=%s", address.Hex()),
 	}
 	res = app.Query(req)
 	require.Equal(t, uint32(0), res.Code)
 	msg := shmsg.Message{}
-	err := proto.Unmarshal(res.Value, &msg)
+	err = proto.Unmarshal(res.Value, &msg)
 	require.Nil(t, err)
 	batchConfigMsg := msg.GetBatchConfig()
 	require.NotNil(t, batchConfigMsg)
