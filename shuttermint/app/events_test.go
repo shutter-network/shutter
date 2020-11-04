@@ -15,11 +15,13 @@ func TestEvents(t *testing.T) {
 	data := []byte("some data")
 
 	t.Run("MakeNewDKGInstanceEvent", func(t *testing.T) {
-		ev := MakeNewDKGInstanceEvent(uint64(10))
+		ev := MakeNewDKGInstanceEvent(uint64(10), uint64(20))
 		require.Equal(t, "shutter.new-dkg-instance", ev.Type)
-		require.Equal(t, 1, len(ev.Attributes))
+		require.Equal(t, 2, len(ev.Attributes))
 		require.Equal(t, []byte("Eon"), ev.Attributes[0].Key)
 		require.Equal(t, []byte("10"), ev.Attributes[0].Value)
+		require.Equal(t, []byte("ConfigIndex"), ev.Attributes[1].Key)
+		require.Equal(t, []byte("20"), ev.Attributes[1].Value)
 	})
 
 	t.Run("MakePolyEvalRegisteredEvent", func(t *testing.T) {

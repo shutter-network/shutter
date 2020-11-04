@@ -67,10 +67,12 @@ func TestMakeEventEncryptionSignatureAddedEvent(t *testing.T) {
 
 func TestMakeNewDKGInstanceEvent(t *testing.T) {
 	var eon uint64 = 10
-	appEv := app.MakeNewDKGInstanceEvent(eon)
+	var configIndex uint64 = 20
+	appEv := app.MakeNewDKGInstanceEvent(eon, configIndex)
 	ev, err := MakeEvent(appEv)
 	expectedEv := NewDKGInstanceEvent{
-		Eon: eon,
+		Eon:         eon,
+		ConfigIndex: configIndex,
 	}
 	require.Nil(t, err)
 	require.Equal(t, expectedEv, ev)

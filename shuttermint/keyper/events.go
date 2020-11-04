@@ -12,6 +12,29 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/app"
 )
 
+func getBytesAttribute(ev abcitypes.Event, index int, key string) ([]byte, error) {
+	if len(ev.Attributes) <= index {
+		return []byte{}, fmt.Errorf("event does not have enough attributes")
+	}
+	attr := ev.Attributes[index]
+	if string(attr.Key) != key {
+		return []byte{}, fmt.Errorf("expected attribute key %s at index %d, got %s", key, index, attr.Key)
+	}
+	return attr.Value, nil
+}
+
+func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, error) {
+	attr, err := getBytesAttribute(ev, index, name)
+	if err != nil {
+		return 0, err
+	}
+	v, err := strconv.Atoi(string(attr))
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse event: %w", err)
+	}
+	return uint64(v), nil
+}
+
 // MakePrivkeyGeneratedEvent creates a PrivkeyGeneratedEvent from the given tendermint event of
 // type "shutter.privkey-generated"
 func MakePrivkeyGeneratedEvent(ev abcitypes.Event) (PrivkeyGeneratedEvent, error) {
@@ -163,20 +186,19 @@ func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
 	if ev.Type != "shutter.new-dkg-instance" {
 		return NewDKGInstanceEvent{}, fmt.Errorf("expected event type shutter.new-dkg-instance, got %s", ev.Type)
 	}
-	if len(ev.Attributes) < 1 {
-		return NewDKGInstanceEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("Eon")) {
-		return NewDKGInstanceEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
 
-	eon, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	eon, err := getUint64Attribute(ev, 0, "Eon")
+	if err != nil {
+		return NewDKGInstanceEvent{}, err
+	}
+	configIndex, err := getUint64Attribute(ev, 1, "ConfigIndex")
 	if err != nil {
 		return NewDKGInstanceEvent{}, err
 	}
 
 	return NewDKGInstanceEvent{
-		Eon: uint64(eon),
+		Eon:         eon,
+		ConfigIndex: configIndex,
 	}, nil
 }
 
