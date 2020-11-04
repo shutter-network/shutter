@@ -256,46 +256,19 @@ func notAKeyper(sender common.Address) abcitypes.ResponseDeliverTx {
 }
 
 func (app *ShutterApp) deliverPublicKeyCommitment(pkc *shmsg.PublicKeyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
-	bs := app.getBatchState(pkc.BatchIndex)
-	publicKeyBefore := bs.PublicKey
-	err := bs.AddPublicKeyCommitment(PublicKeyCommitment{Sender: sender, Pubkey: pkc.Commitment})
-	if err != nil {
-		msg := fmt.Sprintf("Error: cannot deliver public key commitment: %s", err)
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-	app.BatchStates[pkc.BatchIndex] = bs
-
-	var events []abcitypes.Event
-	if publicKeyBefore == nil && bs.PublicKey != nil {
-		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, MakePubkeyGeneratedEvent(pkc.BatchIndex, bs.PublicKey))
-	}
-	return abcitypes.ResponseDeliverTx{
-		Code:   0,
-		Events: events,
-	}
+	_ = pkc
+	_ = sender
+	msg := "received obsolete PublicKeyCommitment"
+	log.Print(msg)
+	return makeErrorResponse(msg)
 }
 
 func (app *ShutterApp) deliverSecretShare(ss *shmsg.SecretShare, sender common.Address) abcitypes.ResponseDeliverTx {
-	bs := app.getBatchState(ss.BatchIndex)
-	privateKeyBefore := bs.PrivateKey
-	err := bs.AddSecretShare(SecretShare{Sender: sender, Privkey: ss.Privkey})
-	if err != nil {
-		msg := fmt.Sprintf("Error: cannot add secret share: %s", err)
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-	app.BatchStates[ss.BatchIndex] = bs
-	var events []abcitypes.Event
-	if privateKeyBefore == nil && bs.PrivateKey != nil {
-		// we have generated a public key with this PublicKeyCommitment
-		events = append(events, MakePrivkeyGeneratedEvent(ss.BatchIndex, bs.PrivateKey))
-	}
-	return abcitypes.ResponseDeliverTx{
-		Code:   0,
-		Events: events,
-	}
+	_ = ss
+	_ = sender
+	msg := "received obsolete SecretShare"
+	log.Print(msg)
+	return makeErrorResponse(msg)
 }
 
 func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool {

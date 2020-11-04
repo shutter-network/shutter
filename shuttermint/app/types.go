@@ -1,7 +1,6 @@
 package app
 
 import (
-	"crypto/ecdsa"
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
@@ -58,19 +57,6 @@ type ConfigVoting struct {
 	Votes      map[common.Address]int
 }
 
-// PublicKeyCommitment from one of the keypers. Since we only implement our 'fake' key generation
-// this already holds the public key
-type PublicKeyCommitment struct {
-	Sender common.Address
-	Pubkey []byte
-}
-
-// SecretShare stores a private key from one of the keypers.
-type SecretShare struct {
-	Sender  common.Address
-	Privkey []byte
-}
-
 // EncryptionKeyAttestation stores an attestation to an encryption key signed by one of the keypers.
 type EncryptionKeyAttestation struct {
 	EncryptionKey         []byte
@@ -90,10 +76,6 @@ type DecryptionSignature struct {
 type BatchState struct {
 	BatchIndex                uint64
 	Config                    *BatchConfig
-	Commitments               []PublicKeyCommitment
-	SecretShares              []SecretShare
-	PublicKey                 *ecdsa.PublicKey
-	PrivateKey                *ecdsa.PrivateKey
 	EncryptionKeyAttestations []EncryptionKeyAttestation
 	DecryptionSignatures      []DecryptionSignature
 }

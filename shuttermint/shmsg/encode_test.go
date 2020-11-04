@@ -28,7 +28,6 @@ func TestEncodeDecode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got error while decoding: %s", err)
 	}
-	t.Logf("decoded share=%+v", msg.GetPublicKeyShare())
 	t.Logf("decoded commitment: %+v", msg.GetPublicKeyCommitment())
 
 	if msg.GetPublicKeyCommitment() == nil {
