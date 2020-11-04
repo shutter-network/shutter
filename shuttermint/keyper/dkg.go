@@ -12,13 +12,13 @@ type DKGInstance struct {
 	Eon    uint64
 	Config contract.BatchConfig
 
-	ms *MessageSender
+	ms MessageSender
 
 	Polynomial *crypto.Polynomial
 }
 
 // NewDKGInstance creates a new dkg instance with initialized local random values.
-func NewDKGInstance(eon uint64, config contract.BatchConfig, ms *MessageSender) (*DKGInstance, error) {
+func NewDKGInstance(eon uint64, config contract.BatchConfig, ms MessageSender) (*DKGInstance, error) {
 	polyBase, err := crypto.RandomPolynomialBase(rand.Reader)
 	if err != nil {
 		return nil, err

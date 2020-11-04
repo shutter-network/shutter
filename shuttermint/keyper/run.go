@@ -83,7 +83,7 @@ func NewDecryptionSignature(batchIndex uint64, signature []byte) *shmsg.Message 
 func NewBatchState(
 	bp BatchParams,
 	kc KeyperConfig,
-	ms *MessageSender,
+	ms MessageSender,
 	cc *ContractCaller,
 	cipherExecutionParams chan CipherExecutionParams,
 ) BatchState {

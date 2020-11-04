@@ -103,7 +103,7 @@ func (kpr *Keyper) init() error {
 	}
 	kpr.shmcl = shmcl
 
-	ms := NewMessageSender(kpr.shmcl, kpr.Config.SigningKey)
+	ms := NewRPCMessageSender(kpr.shmcl, kpr.Config.SigningKey)
 	kpr.ms = &ms
 
 	group, ctx := errgroup.WithContext(context.Background())
