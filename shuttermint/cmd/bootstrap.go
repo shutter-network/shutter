@@ -125,7 +125,7 @@ func bootstrap() {
 		log.Fatalf("Failed to fetch keyper set: %s", err)
 	}
 
-	ms := keyper.NewMessageSender(shmcl, signingKey)
+	ms := keyper.NewRPCMessageSender(shmcl, signingKey)
 	batchConfigMsg := keyper.NewBatchConfig(
 		bc.StartBatchIndex,
 		keypers,
