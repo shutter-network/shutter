@@ -79,6 +79,8 @@ type Keyper struct {
 	ms                    *MessageSender
 	executor              Executor
 	cipherExecutionParams chan CipherExecutionParams
+
+	dkg *DKGInstance
 }
 
 // MessageSender can be used to sign shmsg.Message's and send them to shuttermint

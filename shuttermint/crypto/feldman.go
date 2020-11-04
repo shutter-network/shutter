@@ -129,3 +129,8 @@ func RandomPolynomial(r io.Reader, degree uint64, base *big.Int) (*Polynomial, e
 	}
 	return NewPolynomial(coefficients)
 }
+
+// RandomPolynomialBase generates a random zero point for a polynomial.
+func RandomPolynomialBase(r io.Reader) (*big.Int, error) {
+	return rand.Int(r, bn256.Order)
+}

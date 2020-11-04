@@ -39,6 +39,7 @@ func NewKeyper(kc KeyperConfig) Keyper {
 		checkedIn:             false,
 		newHeaders:            make(chan *types.Header, newHeadersSize),
 		cipherExecutionParams: make(chan CipherExecutionParams),
+		dkg:                   nil,
 	}
 }
 
@@ -702,9 +703,26 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case DecryptionSignatureEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
+	case NewDKGInstanceEvent:
+		kpr.startNewDKGInstance(e)
 	default:
 		panic("unknown event type")
 	}
+}
+
+func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
+	if kpr.dkg == nil {
+		log.Printf("Starting DKG for eon %d", ev.Eon)
+	} else {
+		log.Printf("Aborting DKG for eon %d to start DKG for eon %d", kpr.dkg.Eon, ev.Eon)
+		kpr.dkg = nil
+	}
+
+	dkg, err := NewDKGInstance(ev.Eon)
+	if err != nil {
+		log.Printf("Error starting DKG instance: %s", err)
+	}
+	kpr.dkg = dkg
 }
 
 func (kpr *Keyper) watchBalance() error {

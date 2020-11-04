@@ -218,5 +218,12 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 		}
 		return res, nil
 	}
+	if ev.Type == "shutter.new-dkg-instance" {
+		res, err := MakeNewDKGInstanceEvent(ev)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
 	return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 }
