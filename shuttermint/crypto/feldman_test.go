@@ -68,6 +68,16 @@ func TestEval(t *testing.T) {
 	require.Zero(t, p3.Eval(new(big.Int).Mul(bn256.Order, big.NewInt(5))).Cmp(big.NewInt(0)))
 }
 
+func TestEvalForKeyper(t *testing.T) {
+	p, err := NewPolynomial([]*big.Int{big.NewInt(10), big.NewInt(20), big.NewInt(30)})
+	require.Nil(t, err)
+	v0 := p.EvalForKeyper(0)
+	v1 := p.EvalForKeyper(1)
+	require.Zero(t, v0.Cmp(p.Eval(KeyperX(0))))
+	require.Zero(t, v1.Cmp(p.Eval(KeyperX(1))))
+	require.NotZero(t, v0.Cmp(v1))
+}
+
 func TestRandomPolynomial(t *testing.T) {
 	p, err := RandomPolynomial(rand.Reader, uint64(5), big.NewInt(100))
 	require.Nil(t, err)

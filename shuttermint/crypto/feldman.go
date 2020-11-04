@@ -66,6 +66,12 @@ func (p *Polynomial) Eval(x *big.Int) *big.Int {
 	return res
 }
 
+// EvalForKeyper evaluates the polynomial at the position designated for the given keyper.
+func (p *Polynomial) EvalForKeyper(keyperIndex int) *big.Int {
+	x := KeyperX(keyperIndex)
+	return p.Eval(x)
+}
+
 // Gammas computes the gamma values for a given polynomial.
 func (p *Polynomial) Gammas() *Gammas {
 	gammas := Gammas{}
