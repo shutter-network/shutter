@@ -718,7 +718,13 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 		kpr.dkg = nil
 	}
 
-	dkg, err := NewDKGInstance(ev.Eon)
+	config, err := kpr.configContract.GetConfigByIndex(nil, ev.ConfigIndex)
+	if err != nil {
+		log.Printf("Failed to fetch config from main chain to start DKG: %v", err)
+		return
+	}
+
+	dkg, err := NewDKGInstance(ev.Eon, config, kpr.ms)
 	if err != nil {
 		log.Printf("Error starting DKG instance: %s", err)
 	}
