@@ -11,7 +11,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// NewRPCMessageSender creates a new MessageSender
+// NewRPCMessageSender creates a new RPCMessageSender
 func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMessageSender {
 	return RPCMessageSender{cl, signingKey}
 }
@@ -30,5 +30,17 @@ func (ms RPCMessageSender) SendMessage(msg *shmsg.Message) error {
 	if res.DeliverTx.Code != 0 {
 		return fmt.Errorf("send message: %s", res.DeliverTx.Log)
 	}
+	return nil
+}
+
+// NewMockMessageSender creates a new MockMessageSender
+func NewMockMessageSender() MockMessageSender {
+	return MockMessageSender{
+		Msgs: make(chan *shmsg.Message),
+	}
+}
+
+func (ms MockMessageSender) SendMessage(msg *shmsg.Message) error {
+	ms.Msgs <- msg
 	return nil
 }
