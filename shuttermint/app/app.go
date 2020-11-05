@@ -308,6 +308,9 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		}
 
 		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
+		// TODO only start the dkg if the threshold or keypers changed
+		dkg := app.StartDKG(bc)
+		events = append(events, MakeNewDKGInstanceEvent(dkg.Eon, uint64(len(app.Configs)-1)))
 	}
 
 	return abcitypes.ResponseDeliverTx{
@@ -572,6 +575,13 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	log.Print("Error: cannot deliver messsage", msg)
 	return makeErrorResponse("cannot deliver message")
+}
+
+func (app *ShutterApp) StartDKG(config BatchConfig) *DKGInstance {
+	app.EONCounter++
+	dkg := NewDKGInstance(config, app.EONCounter)
+	app.DKG = &dkg
+	return &dkg
 }
 
 // LastConfig returns the config with the highest known index.
