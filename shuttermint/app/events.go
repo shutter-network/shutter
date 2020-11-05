@@ -19,18 +19,6 @@ import (
 	"github.com/tendermint/tendermint/libs/kv"
 )
 
-// MakePrivkeyGeneratedEvent creates a 'shutter.privkey-generated' tendermint event. The given
-// BatchIndex and PrivateKey are encoded as attributes of the event
-func MakePrivkeyGeneratedEvent(batchIndex uint64, privkey *ecdsa.PrivateKey) abcitypes.Event {
-	return abcitypes.Event{
-		Type: "shutter.privkey-generated",
-		Attributes: []kv.Pair{
-			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
-			{Key: []byte("Privkey"), Value: []byte(encodePrivkeyForEvent(privkey))},
-		},
-	}
-}
-
 // MakeBatchConfigEvent creates a 'shutter.batch-config' tendermint event. The given
 // startBatchIndex, threshold and list of keyper addresses are encoded as attributes of the event.
 func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []common.Address) abcitypes.Event {

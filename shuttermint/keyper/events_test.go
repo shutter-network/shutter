@@ -5,20 +5,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
 )
-
-func TestMakeEventPrivkeyGenerated(t *testing.T) {
-	privkey, err := crypto.GenerateKey()
-	require.Nil(t, err)
-	appEvent := app.MakePrivkeyGeneratedEvent(111, privkey)
-	ev, err := MakeEvent(appEvent)
-	require.Nil(t, err)
-	require.Equal(t, PrivkeyGeneratedEvent{BatchIndex: 111, Privkey: privkey}, ev)
-}
 
 func TestMakeEventBatchConfig(t *testing.T) {
 	var addresses []common.Address = []common.Address{
