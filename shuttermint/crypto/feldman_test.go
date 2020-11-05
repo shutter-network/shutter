@@ -121,3 +121,21 @@ func TestVerifyPolyEval(t *testing.T) {
 		require.False(t, VerifyPolyEval(i+1, vi2, p2.Gammas(), threshold))
 	}
 }
+
+func TestMu(t *testing.T) {
+	g1 := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
+	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(3))
+	g3 := new(bn256.G2).ScalarBaseMult(big.NewInt(5))
+	gammas := Gammas([]*bn256.G2{g1, g2, g3})
+
+	mu1 := gammas.Mu(big.NewInt(1))
+	mu2 := gammas.Mu(big.NewInt(2))
+
+	mu1Exp := new(bn256.G2).Add(g1, g2)
+	mu1Exp = mu1Exp.Add(mu1Exp, g3)
+	mu2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
+	mu2Exp = mu2Exp.Add(mu2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
+
+	require.True(t, EqualG2(mu1, mu1Exp))
+	require.True(t, EqualG2(mu2, mu2Exp))
+}

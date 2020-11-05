@@ -82,28 +82,23 @@ func (p *Polynomial) Gammas() *Gammas {
 	return &gammas
 }
 
-// KeyperX computes the x value assigned to the keyper identified by its index.
-func KeyperX(keyperIndex int) *big.Int {
-	keyperIndexBig := big.NewInt(int64(keyperIndex))
-	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
-}
-
-func polyEvalVerificationRHS(polyEval *big.Int) *bn256.G2 {
-	return new(bn256.G2).ScalarBaseMult(polyEval)
-}
-
-func polyEvalVerificationLHS(keyperIndex int, gammas *Gammas) *bn256.G2 {
-	xi := KeyperX(keyperIndex)
+// Mu computes the mu value at the given x coordinate.
+func (g *Gammas) Mu(xi *big.Int) *bn256.G2 {
 	xiToJ := big.NewInt(1)
-
 	res := new(bn256.G2).Set(zeroG2)
-	for i := 0; i < int(gammas.Degree())+1; i++ {
-		p := new(bn256.G2).ScalarMult((*gammas)[i], xiToJ)
+	for _, gamma := range *g {
+		p := new(bn256.G2).ScalarMult(gamma, xiToJ)
 		res = res.Add(res, p)
 		xiToJ.Mul(xiToJ, xi)
 		xiToJ.Mod(xiToJ, bn256.Order)
 	}
 	return res
+}
+
+// KeyperX computes the x value assigned to the keyper identified by its index.
+func KeyperX(keyperIndex int) *big.Int {
+	keyperIndexBig := big.NewInt(int64(keyperIndex))
+	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
 }
 
 // EqualG2 checks if two points on G2 are requal.
@@ -118,8 +113,8 @@ func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshol
 	if gammas.Degree() != threshold {
 		return false
 	}
-	rhs := polyEvalVerificationRHS(polyEval)
-	lhs := polyEvalVerificationLHS(keyperIndex, gammas)
+	rhs := new(bn256.G2).ScalarBaseMult(polyEval)
+	lhs := gammas.Mu(KeyperX(keyperIndex))
 	return EqualG2(lhs, rhs)
 }
 
