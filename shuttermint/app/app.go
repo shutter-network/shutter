@@ -63,6 +63,7 @@ func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
 		Configs:      []*BatchConfig{{}},
 		BatchStates:  make(map[uint64]BatchState),
+		DKGMap:       make(map[uint64]*DKGInstance),
 		Voting:       NewConfigVoting(),
 		Identities:   make(map[common.Address]ValidatorPubkey),
 		StartedVotes: make(map[common.Address]bool),
@@ -427,12 +428,6 @@ func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature
 }
 
 func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) abcitypes.ResponseDeliverTx {
-	if app.DKG == nil {
-		msg := "Error: Received PolyEval message while DKG is not active"
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-
 	appMsg, err := ParsePolyEvalMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse PolyEval message: %s", err)
@@ -440,7 +435,14 @@ func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.A
 		return makeErrorResponse(msg)
 	}
 
-	err = app.DKG.RegisterPolyEvalMsg(*appMsg)
+	dkg := app.DKGMap[appMsg.Eon]
+	if dkg == nil {
+		msg := "Error: Received PolyEval message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = dkg.RegisterPolyEvalMsg(*appMsg)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to register PolyEval message: %s", err)
 		log.Print(msg)
@@ -455,12 +457,6 @@ func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.A
 }
 
 func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address) abcitypes.ResponseDeliverTx {
-	if app.DKG == nil {
-		msg := "Error: Received PolyCommitment message while DKG is not active"
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-
 	appMsg, err := ParsePolyCommitmentMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse PolyCommitment message: %s", err)
@@ -468,7 +464,14 @@ func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sen
 		return makeErrorResponse(msg)
 	}
 
-	err = app.DKG.RegisterPolyCommitmentMsg(*appMsg)
+	dkg := app.DKGMap[appMsg.Eon]
+	if dkg == nil {
+		msg := "Error: Received PolyCommitment message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = dkg.RegisterPolyCommitmentMsg(*appMsg)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to register PolyCommitment message: %s", err)
 		log.Print(msg)
@@ -483,12 +486,6 @@ func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sen
 }
 
 func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) abcitypes.ResponseDeliverTx {
-	if app.DKG == nil {
-		msg := "Error: Received Accusation message while DKG is not active"
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-
 	appMsg, err := ParseAccusationMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse Accusation message: %s", err)
@@ -496,7 +493,14 @@ func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender comm
 		return makeErrorResponse(msg)
 	}
 
-	err = app.DKG.RegisterAccusationMsg(*appMsg)
+	dkg := app.DKGMap[appMsg.Eon]
+	if dkg == nil {
+		msg := "Error: Received Accusation message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = dkg.RegisterAccusationMsg(*appMsg)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to register Accusation message: %s", err)
 		log.Print(msg)
@@ -511,12 +515,6 @@ func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender comm
 }
 
 func (app *ShutterApp) handleApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) abcitypes.ResponseDeliverTx {
-	if app.DKG == nil {
-		msg := "Error: Received Apology message while DKG is not active"
-		log.Print(msg)
-		return makeErrorResponse(msg)
-	}
-
 	appMsg, err := ParseApologyMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse Apology message: %s", err)
@@ -524,7 +522,14 @@ func (app *ShutterApp) handleApologyMsg(msg *shmsg.ApologyMsg, sender common.Add
 		return makeErrorResponse(msg)
 	}
 
-	err = app.DKG.RegisterApologyMsg(*appMsg)
+	dkg := app.DKGMap[appMsg.Eon]
+	if dkg == nil {
+		msg := "Error: Received Apology message while DKG is not active"
+		log.Print(msg)
+		return makeErrorResponse(msg)
+	}
+
+	err = dkg.RegisterApologyMsg(*appMsg)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to register Apology message: %s", err)
 		log.Print(msg)
@@ -580,7 +585,7 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 func (app *ShutterApp) StartDKG(config BatchConfig) *DKGInstance {
 	app.EONCounter++
 	dkg := NewDKGInstance(config, app.EONCounter)
-	app.DKG = &dkg
+	app.DKGMap[dkg.Eon] = &dkg
 	return &dkg
 }
 

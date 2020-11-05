@@ -106,7 +106,7 @@ func NewValidatorPubkey(pubkey []byte) (ValidatorPubkey, error) {
 type ShutterApp struct {
 	Configs         []*BatchConfig
 	BatchStates     map[uint64]BatchState
-	DKG             *DKGInstance
+	DKGMap          map[uint64]*DKGInstance
 	Voting          ConfigVoting
 	Gobpath         string
 	LastSaved       time.Time
