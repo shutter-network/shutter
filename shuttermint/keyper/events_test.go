@@ -20,15 +20,6 @@ func TestMakeEventPrivkeyGenerated(t *testing.T) {
 	require.Equal(t, PrivkeyGeneratedEvent{BatchIndex: 111, Privkey: privkey}, ev)
 }
 
-func TestMakeEventPubkeyGenerated(t *testing.T) {
-	privkey, err := crypto.GenerateKey()
-	require.Nil(t, err)
-	appEvent := app.MakePubkeyGeneratedEvent(111, &privkey.PublicKey)
-	ev, err := MakeEvent(appEvent)
-	require.Nil(t, err)
-	require.Equal(t, PubkeyGeneratedEvent{BatchIndex: 111, Pubkey: &privkey.PublicKey}, ev)
-}
-
 func TestMakeEventBatchConfig(t *testing.T) {
 	var addresses []common.Address = []common.Address{
 		common.BigToAddress(big.NewInt(1)),
