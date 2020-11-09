@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -119,8 +118,6 @@ type ShutterApp struct {
 
 // DKGInstance manages the state of one eon key generation instance.
 type DKGInstance struct {
-	sync.Mutex
-
 	Config BatchConfig
 	Eon    uint64
 

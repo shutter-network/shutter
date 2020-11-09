@@ -48,9 +48,6 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
 		return fmt.Errorf("sender and receiver are both %s", msg.Sender.Hex())
 	}
 
-	dkg.Lock()
-	defer dkg.Unlock()
-
 	if _, ok := dkg.PolyEvalMsgs[msg.Sender][msg.Receiver]; ok {
 		return fmt.Errorf("polynomial evaluation from keyper %s for keyper %s already present", msg.Sender.Hex(), msg.Receiver.Hex())
 	}
@@ -70,9 +67,6 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
-
-	dkg.Lock()
-	defer dkg.Unlock()
 
 	if _, ok := dkg.PolyCommitmentMsgs[msg.Sender]; ok {
 		return fmt.Errorf("polynomial commitment from keyper %s already present", msg.Sender.Hex())
@@ -100,9 +94,6 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
 		return fmt.Errorf("sender and accused are both %s", msg.Sender.Hex())
 	}
 
-	dkg.Lock()
-	defer dkg.Unlock()
-
 	if _, ok := dkg.AccusationMsgs[msg.Sender][msg.Accused]; ok {
 		return fmt.Errorf("accusation from keyper %s against %s already present", msg.Sender.Hex(), msg.Accused.Hex())
 	}
@@ -128,9 +119,6 @@ func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
 	if msg.Sender == msg.Accuser {
 		return fmt.Errorf("sender and accuser are both %s", msg.Sender.Hex())
 	}
-
-	dkg.Lock()
-	defer dkg.Unlock()
 
 	if _, ok := dkg.ApologyMsgs[msg.Sender][msg.Accuser]; ok {
 		return fmt.Errorf("apology from keyper %s against apology of %s already present", msg.Sender.Hex(), msg.Accuser.Hex())
