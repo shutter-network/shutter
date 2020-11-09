@@ -1,7 +1,9 @@
 package app
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/gob"
 	"testing"
 	"unicode/utf8"
 
@@ -155,4 +157,52 @@ func TestAddDecryptionSignature(t *testing.T) {
 	)
 	require.True(t, res3.IsErr())
 	require.Empty(t, res1.Events)
+}
+
+func ensureGobable(t *testing.T, obj interface{}) {
+	buff := bytes.Buffer{}
+	enc := gob.NewEncoder(&buff)
+	err := enc.Encode(obj)
+	require.Nil(t, err)
+}
+
+func TestGobDKG(t *testing.T) {
+	var eon uint64 = 201
+	var err error
+	keypers := addr
+	dkg := NewDKGInstance(BatchConfig{
+		ConfigIndex:     1,
+		StartBatchIndex: 100,
+		Threshold:       1,
+		Keypers:         keypers,
+	}, eon)
+
+	err = dkg.RegisterAccusationMsg(AccusationMsg{
+		Sender:  keypers[0],
+		Eon:     eon,
+		Accused: keypers[1],
+	})
+	require.Nil(t, err)
+
+	err = dkg.RegisterApologyMsg(ApologyMsg{
+		Sender:  keypers[0],
+		Eon:     eon,
+		Accuser: keypers[1],
+	})
+	require.Nil(t, err)
+
+	err = dkg.RegisterPolyCommitmentMsg(PolyCommitmentMsg{
+		Sender: keypers[0],
+		Eon:    eon,
+	})
+	require.Nil(t, err)
+
+	err = dkg.RegisterPolyEvalMsg(PolyEvalMsg{
+		Sender:   keypers[0],
+		Eon:      eon,
+		Receiver: keypers[1],
+	})
+	require.Nil(t, err)
+
+	ensureGobable(t, dkg)
 }
