@@ -53,7 +53,9 @@ func ComputeEonPKShare(keyperIndex int, gammas []*Gammas) *EonPKShare {
 func ComputeEonPK(pkShares []*EonPKShare) *EonPK {
 	g2 := new(bn256.G2).Set(zeroG2)
 	for _, share := range pkShares {
-		g2 = g2.Add(g2, (*bn256.G2)(share))
+		tmp := new(bn256.G2)
+		tmp.Add(g2, (*bn256.G2)(share))
+		g2 = tmp
 	}
 	epk := EonPK(*g2)
 	return &epk
