@@ -14,6 +14,11 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
+var multikFlags struct {
+	ShuttermintURL string
+	EthereumURL    string
+}
+
 // multikCmd represents the multik command
 var multikCmd = &cobra.Command{
 	Use:   "multik",
@@ -25,14 +30,28 @@ var multikCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(multikCmd)
+	multikCmd.PersistentFlags().StringVarP(
+		&multikFlags.ShuttermintURL,
+		"shuttermint-url",
+		"s",
+		"http://localhost:26657",
+		"Shuttermint RPC URL",
+	)
+	multikCmd.PersistentFlags().StringVarP(
+		&multikFlags.EthereumURL,
+		"ethereum-url",
+		"e",
+		"ws://localhost:8545/websocket",
+		"Ethereum RPC URL",
+	)
 }
 
 func multikMain() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	log.Printf("Starting multik version %s", version)
 	baseConfig := keyper.KeyperConfig{
-		ShuttermintURL:              "http://localhost:26657",
-		EthereumURL:                 "ws://localhost:8545",
+		ShuttermintURL:              multikFlags.ShuttermintURL,
+		EthereumURL:                 multikFlags.EthereumURL,
 		ConfigContractAddress:       common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
 		KeyBroadcastContractAddress: common.HexToAddress("0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e"),
 		BatcherContractAddress:      common.HexToAddress("0x27D44c7337ce4D67b7cd573e9c36bDEED2b2162a"),
