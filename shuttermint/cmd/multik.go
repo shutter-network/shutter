@@ -48,7 +48,7 @@ func multikMain() {
 		keypers[i] = crypto.PubkeyToAddress(k.PublicKey)
 
 		validatorSeed := make([]byte, 32)
-		copy(keypers[i].Bytes(), validatorSeed)
+		copy(validatorSeed, keypers[i].Bytes())
 		validatorKeys[i] = ed25519.NewKeyFromSeed(validatorSeed)
 	}
 
