@@ -85,8 +85,8 @@ func LoadShutterAppFromFile(gobpath string) (ShutterApp, error) {
 		if err != nil {
 			return shapp, err
 		}
-		log.Printf("Loaded shutter app from file %s, last saved %s, block height %d",
-			gobpath, shapp.LastSaved, shapp.LastBlockHeight)
+		log.Printf("Loaded shutter app from file %s, last saved %s, block height %d, devmode=%t",
+			gobpath, shapp.LastSaved, shapp.LastBlockHeight, shapp.DevMode)
 	}
 
 	shapp.Gobpath = gobpath
@@ -670,12 +670,21 @@ func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Respons
 	validatorUpdates := DiffPowermaps(app.Validators, newValidators).ValidatorUpdates()
 	app.Validators = newValidators
 	app.LastBlockHeight = req.Height
+	if app.DevMode {
+		if len(validatorUpdates) > 0 {
+			log.Printf("Ignoring %d validator updates in dev mode", len(validatorUpdates))
+		}
+		return abcitypes.ResponseEndBlock{}
+	}
+	if len(validatorUpdates) > 0 {
+		log.Printf("Applyimg %d validator updates", len(validatorUpdates))
+	}
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
 
 // persistToDisk stores the ShutterApp on disk. This method first writes to a temporary file and
 // renames the file later. Most probably this will not work on windows!
-func (app *ShutterApp) persistToDisk() error {
+func (app *ShutterApp) PersistToDisk() error {
 	log.Printf("Persisting state to disk, height=%d", app.LastBlockHeight)
 	tmppath := app.Gobpath + ".tmp"
 	file, err := os.Create(tmppath)
@@ -711,7 +720,7 @@ func (app *ShutterApp) maybePersistToDisk() error {
 	if time.Since(app.LastSaved) <= PersistMinDuration {
 		return nil
 	}
-	return app.persistToDisk()
+	return app.PersistToDisk()
 }
 
 func (app *ShutterApp) Commit() abcitypes.ResponseCommit {

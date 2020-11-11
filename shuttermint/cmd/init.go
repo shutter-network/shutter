@@ -28,6 +28,7 @@ import (
 var (
 	logger  = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	rootDir = ""
+	devMode = false
 )
 
 var initCmd = &cobra.Command{
@@ -39,6 +40,7 @@ var initCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.PersistentFlags().StringVar(&rootDir, "root", "", "root directory")
+	initCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "turn on devmode (disables validator set changes)")
 	initCmd.MarkPersistentFlagRequired("root")
 }
 
@@ -118,6 +120,13 @@ func initFilesWithConfig(config *cfg.Config, appState app.GenesisAppState) error
 			return err
 		}
 		logger.Info("Generated genesis file", "path", genFile)
+	}
+	a := app.NewShutterApp()
+	a.Gobpath = filepath.Join(config.BaseConfig.DBDir(), "shutter.gob")
+	a.DevMode = devMode
+	err := a.PersistToDisk()
+	if err != nil {
+		return err
 	}
 
 	return nil

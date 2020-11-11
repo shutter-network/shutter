@@ -114,6 +114,7 @@ type ShutterApp struct {
 	StartedVotes    map[common.Address]bool
 	Validators      Powermap
 	EONCounter      uint64
+	DevMode         bool
 }
 
 // DKGInstance manages the state of one eon key generation instance.

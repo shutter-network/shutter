@@ -10,7 +10,7 @@ protoc:
 	protoc shmsg/shmsg_truth.proto --go_out=shmsg/
 
 ${TESTROOT}:
-	bin/shuttermint init --root ${TESTROOT}
+	bin/shuttermint init --dev --root ${TESTROOT}
 
 init: ${TESTROOT}
 
