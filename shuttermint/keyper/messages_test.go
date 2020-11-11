@@ -15,7 +15,7 @@ import (
 func TestNewPolyCommitmentMsg(t *testing.T) {
 	eon := uint64(10)
 	threshold := uint64(5)
-	poly, err := crypto.RandomPolynomial(rand.Reader, threshold, big.NewInt(123))
+	poly, err := crypto.RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
 	gammas := poly.Gammas()
 

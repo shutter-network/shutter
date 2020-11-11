@@ -43,7 +43,7 @@ func ComputeEonPKShare(keyperIndex int, gammas []*Gammas) *EonPKShare {
 	keyperX := KeyperX(keyperIndex)
 	for _, gs := range gammas {
 		mu := gs.Mu(keyperX)
-		g2 = g2.Add(g2, mu)
+		g2 = new(bn256.G2).Add(g2, mu)
 	}
 	epk := EonPKShare(*g2)
 	return &epk
@@ -76,9 +76,12 @@ func ComputeEpochID(epochIndex uint64) *EpochID {
 }
 
 // ComputeEpochSK computes the epoch secret key from a set of shares.
-func ComputeEpochSK(keyperIndices []int, epochSKShares []*EpochSKShare) (*EpochSK, error) {
+func ComputeEpochSK(keyperIndices []int, epochSKShares []*EpochSKShare, threshold uint64) (*EpochSK, error) {
 	if len(keyperIndices) != len(epochSKShares) {
 		return nil, fmt.Errorf("got %d keyper indices, but %d secret shares", len(keyperIndices), len(epochSKShares))
+	}
+	if uint64(len(keyperIndices)) != threshold {
+		return nil, fmt.Errorf("got %d shares, but threshold is %d", len(keyperIndices), threshold)
 	}
 
 	skG1 := new(bn256.G1).Set(zeroG1)
@@ -88,7 +91,7 @@ func ComputeEpochSK(keyperIndices []int, epochSKShares []*EpochSKShare) (*EpochS
 
 		lambda := lagrangeCoefficient(keyperIndex, keyperIndices)
 		qTimesLambda := new(bn256.G1).ScalarMult((*bn256.G1)(share), lambda)
-		skG1 = skG1.Add(skG1, qTimesLambda)
+		skG1 = new(bn256.G1).Add(skG1, qTimesLambda)
 	}
 	sk := EpochSK(*skG1)
 	return &sk, nil

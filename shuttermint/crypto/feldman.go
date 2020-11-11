@@ -88,7 +88,7 @@ func (g *Gammas) Mu(xi *big.Int) *bn256.G2 {
 	res := new(bn256.G2).Set(zeroG2)
 	for _, gamma := range *g {
 		p := new(bn256.G2).ScalarMult(gamma, xiToJ)
-		res = res.Add(res, p)
+		res = new(bn256.G2).Add(res, p)
 		xiToJ.Mul(xiToJ, xi)
 		xiToJ.Mod(xiToJ, bn256.Order)
 	}
@@ -101,16 +101,23 @@ func KeyperX(keyperIndex int) *big.Int {
 	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
 }
 
+// EqualG1 checks if two points on G1 are requal.
+func EqualG1(p1, p2 *bn256.G1) bool {
+	p1Bytes := new(bn256.G1).Set(p1).Marshal()
+	p2Bytes := new(bn256.G1).Set(p2).Marshal()
+	return bytes.Equal(p1Bytes, p2Bytes)
+}
+
 // EqualG2 checks if two points on G2 are requal.
 func EqualG2(p1, p2 *bn256.G2) bool {
-	p1Bytes := p1.Marshal()
-	p2Bytes := p2.Marshal()
+	p1Bytes := new(bn256.G2).Set(p1).Marshal()
+	p2Bytes := new(bn256.G2).Set(p2).Marshal()
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
 
 // VerifyPolyEval checks that the evaluation of a polynomial is consistent with the public gammas.
 func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshold uint64) bool {
-	if gammas.Degree() != threshold {
+	if gammas.Degree() != threshold-1 {
 		return false
 	}
 	rhs := new(bn256.G2).ScalarBaseMult(polyEval)
@@ -118,10 +125,10 @@ func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshol
 	return EqualG2(lhs, rhs)
 }
 
-// RandomPolynomial generates a random polynomial of given degree and value at x=0.
-func RandomPolynomial(r io.Reader, degree uint64, base *big.Int) (*Polynomial, error) {
-	coefficients := []*big.Int{base}
-	for i := uint64(1); i < degree+1; i++ {
+// RandomPolynomial generates a random polynomial of given degree.
+func RandomPolynomial(r io.Reader, degree uint64) (*Polynomial, error) {
+	coefficients := []*big.Int{}
+	for i := uint64(0); i < degree+1; i++ {
 		c, err := rand.Int(r, bn256.Order)
 		if err != nil {
 			return nil, err
@@ -129,9 +136,4 @@ func RandomPolynomial(r io.Reader, degree uint64, base *big.Int) (*Polynomial, e
 		coefficients = append(coefficients, c)
 	}
 	return NewPolynomial(coefficients)
-}
-
-// RandomPolynomialBase generates a random zero point for a polynomial.
-func RandomPolynomialBase(r io.Reader) (*big.Int, error) {
-	return rand.Int(r, bn256.Order)
 }

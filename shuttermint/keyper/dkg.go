@@ -19,11 +19,7 @@ type DKGInstance struct {
 
 // NewDKGInstance creates a new dkg instance with initialized local random values.
 func NewDKGInstance(eon uint64, config contract.BatchConfig, ms MessageSender) (*DKGInstance, error) {
-	polyBase, err := crypto.RandomPolynomialBase(rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-	polynomial, err := crypto.RandomPolynomial(rand.Reader, config.Threshold, polyBase)
+	polynomial, err := crypto.RandomPolynomial(rand.Reader, config.Threshold)
 	if err != nil {
 		return nil, err
 	}

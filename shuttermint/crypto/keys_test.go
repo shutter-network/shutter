@@ -78,11 +78,11 @@ func TestEonPKShare(t *testing.T) {
 
 func TestEonSharesMatch(t *testing.T) {
 	threshold := uint64(2)
-	p1, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(10))
+	p1, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
-	p2, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(20))
+	p2, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
-	p3, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(30))
+	p3, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
 
 	x1 := KeyperX(0)
@@ -149,11 +149,11 @@ func TestEonPK(t *testing.T) {
 
 func TestEonPKMatchesSK(t *testing.T) {
 	threshold := uint64(2)
-	p1, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(10))
+	p1, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
-	p2, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(20))
+	p2, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
-	p3, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(30))
+	p3, err := RandomPolynomial(rand.Reader, threshold)
 	require.Nil(t, err)
 
 	esk := big.NewInt(0)
@@ -259,7 +259,7 @@ func TestLagrangeCoefficients(t *testing.T) {
 }
 
 func TestLagrangeReconstruct(t *testing.T) {
-	p, err := RandomPolynomial(rand.Reader, uint64(2), big.NewInt(10))
+	p, err := RandomPolynomial(rand.Reader, uint64(2))
 	require.Nil(t, err)
 
 	l1 := lagrangeCoefficient(0, []int{0, 1, 2})
@@ -280,7 +280,7 @@ func TestLagrangeReconstruct(t *testing.T) {
 	y.Add(y, y3)
 	y.Mod(y, bn256.Order)
 
-	require.Equal(t, big.NewInt(10), y)
+	require.Equal(t, p.Eval(big.NewInt(0)), y)
 }
 
 func TestComputeEpochSKShare(t *testing.T) {
@@ -294,11 +294,11 @@ func TestComputeEpochSKShare(t *testing.T) {
 func TestVerifyEpochSKShare(t *testing.T) {
 	threshold := uint64(2)
 	epochID := ComputeEpochID(uint64(10))
-	p1, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(10))
+	p1, err := RandomPolynomial(rand.Reader, threshold-1)
 	require.Nil(t, err)
-	p2, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(20))
+	p2, err := RandomPolynomial(rand.Reader, threshold-1)
 	require.Nil(t, err)
-	p3, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(30))
+	p3, err := RandomPolynomial(rand.Reader, threshold-1)
 	require.Nil(t, err)
 
 	gammas := []*Gammas{
@@ -326,64 +326,105 @@ func TestVerifyEpochSKShare(t *testing.T) {
 	require.False(t, VerifyEpochSKShare(epsk1, epk1, ComputeEpochID(uint64(11))))
 }
 
-func TestFull(t *testing.T) {
+func TestComputeEpochSK(t *testing.T) {
+	n := 3
 	threshold := uint64(2)
+	epochID := ComputeEpochID(uint64(10))
 
-	b1, err := RandomPolynomialBase(rand.Reader)
+	ps := []*Polynomial{}
+	for i := 0; i < n; i++ {
+		p, err := RandomPolynomial(rand.Reader, threshold-1)
+		require.Nil(t, err)
+		ps = append(ps, p)
+	}
+
+	eonSKShares := []*EonSKShare{}
+	epochSKShares := []*EpochSKShare{}
+	for i := 0; i < n; i++ {
+		vs := []*big.Int{}
+		for _, p := range ps {
+			vs = append(vs, p.EvalForKeyper(i))
+		}
+		eonSKShare := ComputeEonSKShare(vs)
+		epochSKShare := ComputeEpochSKShare(eonSKShare, epochID)
+
+		eonSKShares = append(eonSKShares, eonSKShare)
+		epochSKShares = append(epochSKShares, epochSKShare)
+	}
+
+	var err error
+	_, err = ComputeEpochSK([]int{0}, epochSKShares[:1], threshold)
+	require.NotNil(t, err)
+	_, err = ComputeEpochSK([]int{0, 1, 2}, epochSKShares[:2], threshold)
+	require.NotNil(t, err)
+	_, err = ComputeEpochSK([]int{0, 1}, epochSKShares[:1], threshold)
+	require.NotNil(t, err)
+	_, err = ComputeEpochSK([]int{0}, epochSKShares[:2], threshold)
+	require.NotNil(t, err)
+
+	epochSK12, err := ComputeEpochSK([]int{0, 1}, []*EpochSKShare{epochSKShares[0], epochSKShares[1]}, threshold)
 	require.Nil(t, err)
-	b2, err := RandomPolynomialBase(rand.Reader)
+	epochSK13, err := ComputeEpochSK([]int{0, 2}, []*EpochSKShare{epochSKShares[0], epochSKShares[2]}, threshold)
 	require.Nil(t, err)
-	b3, err := RandomPolynomialBase(rand.Reader)
-	require.Nil(t, err)
-
-	p1, err := RandomPolynomial(rand.Reader, threshold, b1)
-	require.Nil(t, err)
-	p2, err := RandomPolynomial(rand.Reader, threshold, b2)
-	require.Nil(t, err)
-	p3, err := RandomPolynomial(rand.Reader, threshold, b3)
+	epochSK23, err := ComputeEpochSK([]int{1, 2}, []*EpochSKShare{epochSKShares[1], epochSKShares[2]}, threshold)
 	require.Nil(t, err)
 
-	gamma1 := p1.Gammas()
-	gamma2 := p2.Gammas()
-	gamma3 := p3.Gammas()
+	require.True(t, EqualG1((*bn256.G1)(epochSK12), (*bn256.G1)(epochSK13)))
+	require.True(t, EqualG1((*bn256.G1)(epochSK12), (*bn256.G1)(epochSK23)))
+}
 
-	v11 := p1.EvalForKeyper(0)
-	v21 := p2.EvalForKeyper(0)
-	v31 := p3.EvalForKeyper(0)
-	v12 := p1.EvalForKeyper(1)
-	v22 := p2.EvalForKeyper(1)
-	v32 := p3.EvalForKeyper(1)
-	v13 := p1.EvalForKeyper(2)
-	v23 := p2.EvalForKeyper(2)
-	v33 := p3.EvalForKeyper(2)
+func TestFull(t *testing.T) {
+	n := 3
+	threshold := uint64(2)
+	epochID := ComputeEpochID(uint64(10))
 
-	require.True(t, VerifyPolyEval(0, v11, gamma1, threshold))
-	require.True(t, VerifyPolyEval(0, v21, gamma2, threshold))
-	require.True(t, VerifyPolyEval(0, v31, gamma3, threshold))
-	require.True(t, VerifyPolyEval(1, v12, gamma1, threshold))
-	require.True(t, VerifyPolyEval(1, v22, gamma2, threshold))
-	require.True(t, VerifyPolyEval(1, v32, gamma3, threshold))
-	require.True(t, VerifyPolyEval(2, v13, gamma1, threshold))
-	require.True(t, VerifyPolyEval(2, v23, gamma2, threshold))
-	require.True(t, VerifyPolyEval(2, v33, gamma3, threshold))
+	ps := []*Polynomial{}
+	gammas := []*Gammas{}
+	for i := 0; i < n; i++ {
+		p, err := RandomPolynomial(rand.Reader, threshold-1)
+		require.Nil(t, err)
+		ps = append(ps, p)
+		gammas = append(gammas, p.Gammas())
+	}
 
-	eonSK1 := ComputeEonSKShare([]*big.Int{v11, v21, v31})
-	eonSK2 := ComputeEonSKShare([]*big.Int{v12, v22, v32})
-	eonSK3 := ComputeEonSKShare([]*big.Int{v13, v23, v33})
+	eonSKShares := []*EonSKShare{}
+	for i := 0; i < n; i++ {
+		vs := []*big.Int{}
+		for j := 0; j < n; j++ {
+			v := ps[j].EvalForKeyper(i)
+			vs = append(vs, v)
+		}
+		eonSKShare := ComputeEonSKShare(vs)
+		eonSKShares = append(eonSKShares, eonSKShare)
+	}
 
-	gammas := []*Gammas{gamma1, gamma2, gamma3}
-	eonPK1 := ComputeEonPKShare(0, gammas)
-	eonPK2 := ComputeEonPKShare(1, gammas)
-	eonPK3 := ComputeEonPKShare(2, gammas)
+	eonPKShares := []*EonPKShare{}
+	for i := 0; i < n; i++ {
+		eonPKShare := ComputeEonPKShare(i, gammas)
+		eonPKShares = append(eonPKShares, eonPKShare)
+	}
+	_ = ComputeEonPK(eonPKShares)
 
-	epochID := ComputeEpochID(123)
-	epochSK1 := ComputeEpochSKShare(eonSK1, epochID)
-	epochSK2 := ComputeEpochSKShare(eonSK2, epochID)
-	epochSK3 := ComputeEpochSKShare(eonSK3, epochID)
+	epochSKShares := []*EpochSKShare{}
+	for i := 0; i < n; i++ {
+		epochSKShare := ComputeEpochSKShare(eonSKShares[i], epochID)
+		epochSKShares = append(epochSKShares, epochSKShare)
+	}
 
-	require.True(t, VerifyEpochSKShare(epochSK1, eonPK1, epochID))
-	require.True(t, VerifyEpochSKShare(epochSK2, eonPK2, epochID))
-	require.True(t, VerifyEpochSKShare(epochSK3, eonPK3, epochID))
+	// verify (published) epoch sk shares
+	for i := 0; i < n; i++ {
+		require.True(t, VerifyEpochSKShare(epochSKShares[i], eonPKShares[i], epochID))
+	}
+
+	epochSK, err := ComputeEpochSK([]int{0, 1}, []*EpochSKShare{epochSKShares[0], epochSKShares[1]}, threshold)
+	require.Nil(t, err)
+
+	epochSK13, err := ComputeEpochSK([]int{0, 2}, []*EpochSKShare{epochSKShares[0], epochSKShares[2]}, threshold)
+	require.Nil(t, err)
+	epochSK23, err := ComputeEpochSK([]int{1, 2}, []*EpochSKShare{epochSKShares[1], epochSKShares[2]}, threshold)
+	require.Nil(t, err)
+	require.True(t, EqualG1((*bn256.G1)(epochSK), (*bn256.G1)(epochSK13)))
+	require.True(t, EqualG1((*bn256.G1)(epochSK), (*bn256.G1)(epochSK23)))
 
 	// TODO: add encryption/decryption when implemented
 }

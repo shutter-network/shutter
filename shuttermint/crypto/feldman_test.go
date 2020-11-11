@@ -79,10 +79,9 @@ func TestEvalForKeyper(t *testing.T) {
 }
 
 func TestRandomPolynomial(t *testing.T) {
-	p, err := RandomPolynomial(rand.Reader, uint64(5), big.NewInt(100))
+	p, err := RandomPolynomial(rand.Reader, uint64(5))
 	require.Nil(t, err)
 	require.Equal(t, p.Degree(), uint64(5))
-	require.Equal(t, p.Eval(big.NewInt(0)), big.NewInt(100))
 }
 
 func TestGammas(t *testing.T) {
@@ -103,10 +102,10 @@ func TestGammas(t *testing.T) {
 func TestVerifyPolyEval(t *testing.T) {
 	threshold := uint64(2)
 
-	p1, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(100))
+	p1, err := RandomPolynomial(rand.Reader, threshold-1)
 	require.Nil(t, err)
 
-	p2, err := RandomPolynomial(rand.Reader, threshold, big.NewInt(200))
+	p2, err := RandomPolynomial(rand.Reader, threshold-1)
 	require.Nil(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -132,9 +131,9 @@ func TestMu(t *testing.T) {
 	mu2 := gammas.Mu(big.NewInt(2))
 
 	mu1Exp := new(bn256.G2).Add(g1, g2)
-	mu1Exp = mu1Exp.Add(mu1Exp, g3)
+	mu1Exp = new(bn256.G2).Add(mu1Exp, g3)
 	mu2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
-	mu2Exp = mu2Exp.Add(mu2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
+	mu2Exp = new(bn256.G2).Add(mu2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
 
 	require.True(t, EqualG2(mu1, mu1Exp))
 	require.True(t, EqualG2(mu2, mu2Exp))
