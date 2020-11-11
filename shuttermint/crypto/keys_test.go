@@ -343,7 +343,8 @@ func TestComputeEpochSK(t *testing.T) {
 	for i := 0; i < n; i++ {
 		vs := []*big.Int{}
 		for _, p := range ps {
-			vs = append(vs, p.EvalForKeyper(i))
+			v := p.EvalForKeyper(i)
+			vs = append(vs, v)
 		}
 		eonSKShare := ComputeEonSKShare(vs)
 		epochSKShare := ComputeEpochSKShare(eonSKShare, epochID)
@@ -403,7 +404,6 @@ func TestFull(t *testing.T) {
 		eonPKShare := ComputeEonPKShare(i, gammas)
 		eonPKShares = append(eonPKShares, eonPKShare)
 	}
-	_ = ComputeEonPK(eonPKShares)
 
 	epochSKShares := []*EpochSKShare{}
 	for i := 0; i < n; i++ {
