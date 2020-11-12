@@ -2,6 +2,10 @@ package keyper
 
 import (
 	"crypto/rand"
+	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
@@ -9,26 +13,36 @@ import (
 
 // DKGInstance represents the state of a single keyper participating in a DKG process.
 type DKGInstance struct {
-	Eon    uint64
-	Config contract.BatchConfig
+	Eon          uint64
+	BatchConfig  contract.BatchConfig
+	KeyperConfig KeyperConfig
 
-	ms MessageSender
+	ms                   MessageSender
+	keyperEncryptionKeys map[common.Address]*ecies.PublicKey
 
 	Polynomial *crypto.Polynomial
 }
 
 // NewDKGInstance creates a new dkg instance with initialized local random values.
-func NewDKGInstance(eon uint64, config contract.BatchConfig, ms MessageSender) (*DKGInstance, error) {
-	polynomial, err := crypto.RandomPolynomial(rand.Reader, config.Threshold)
+func NewDKGInstance(
+	eon uint64,
+	batchConfig contract.BatchConfig,
+	keyperConfig KeyperConfig,
+	ms MessageSender,
+	keyperEncryptionKeys map[common.Address]*ecies.PublicKey,
+) (*DKGInstance, error) {
+	polynomial, err := crypto.RandomPolynomial(rand.Reader, batchConfig.Threshold)
 	if err != nil {
 		return nil, err
 	}
 
 	dkg := DKGInstance{
-		Eon:    eon,
-		Config: config,
+		Eon:          eon,
+		BatchConfig:  batchConfig,
+		KeyperConfig: keyperConfig,
 
-		ms: ms,
+		ms:                   ms,
+		keyperEncryptionKeys: keyperEncryptionKeys,
 
 		Polynomial: polynomial,
 	}
@@ -57,11 +71,21 @@ func (dkg *DKGInstance) sendGammas() error {
 
 // sendPolyEvals sends the corresponding polynomial evaluation to each keyper, including ourselves.
 func (dkg *DKGInstance) sendPolyEvals() error {
-	for i, keyper := range dkg.Config.Keypers {
+	for i, keyper := range dkg.BatchConfig.Keypers {
+		encryptionKey, ok := dkg.keyperEncryptionKeys[keyper]
+		if !ok {
+			continue // don't send them a message if there encryption public key is unknown
+		}
+
 		eval := dkg.Polynomial.EvalForKeyper(i)
-		encryptedEval := eval.Bytes() // TODO: encrypt, maybe with Tendermint key?
+		evalBytes := eval.Bytes()
+		encryptedEval, err := ecies.Encrypt(rand.Reader, encryptionKey, evalBytes, nil, nil)
+		if err != nil {
+			return fmt.Errorf("failed to encrypt message: %w", err)
+		}
+
 		msg := NewPolyEvalMsg(dkg.Eon, keyper, encryptedEval)
-		err := dkg.ms.SendMessage(msg)
+		err = dkg.ms.SendMessage(msg)
 		if err != nil {
 			return err
 		}

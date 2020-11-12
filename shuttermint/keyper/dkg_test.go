@@ -1,10 +1,13 @@
 package keyper
 
 import (
-	"math/big"
+	"bytes"
+	"crypto/ecdsa"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -13,17 +16,38 @@ import (
 func TestDKGInstance(t *testing.T) {
 	eon := uint64(10)
 	threshold := uint64(2)
-	keypers := []common.Address{
-		common.BigToAddress(big.NewInt(0xaa)),
-		common.BigToAddress(big.NewInt(0xbb)),
-		common.BigToAddress(big.NewInt(0xcc)),
+	n := 3
+	keypers := []common.Address{}
+	keyperSigningKeys := make(map[common.Address]*ecdsa.PrivateKey)
+	keyperEncryptionPrivateKeys := make(map[common.Address]*ecies.PrivateKey)
+	keyperEncryptionPublicKeys := make(map[common.Address]*ecies.PublicKey)
+	for i := 0; i < n; i++ {
+		privateKey, err := crypto.GenerateKey()
+		require.Nil(t, err)
+		address := crypto.PubkeyToAddress(privateKey.PublicKey)
+
+		encryptionPrivateKeyECDSA, err := crypto.GenerateKey()
+		require.Nil(t, err)
+		encryptionPrivateKey := ecies.ImportECDSA(encryptionPrivateKeyECDSA)
+
+		keypers = append(keypers, address)
+		keyperSigningKeys[address] = privateKey
+		keyperEncryptionPrivateKeys[address] = encryptionPrivateKey
+		keyperEncryptionPublicKeys[address] = &encryptionPrivateKey.PublicKey
 	}
-	config := contract.BatchConfig{
+
+	keyperIndex := 1
+	address := keypers[keyperIndex]
+	batchConfig := contract.BatchConfig{
 		Threshold: threshold,
 		Keypers:   keypers,
 	}
+	keyperConfig := KeyperConfig{
+		SigningKey:    keyperSigningKeys[address],
+		EncryptionKey: keyperEncryptionPrivateKeys[address],
+	}
 	ms := NewMockMessageSender()
-	dkg, err := NewDKGInstance(eon, config, ms)
+	dkg, err := NewDKGInstance(eon, batchConfig, keyperConfig, ms, keyperEncryptionPublicKeys)
 	require.Nil(t, err)
 	require.Equal(t, eon, dkg.Eon)
 	require.NotNil(t, dkg.Polynomial)
@@ -50,7 +74,9 @@ func TestDKGInstance(t *testing.T) {
 			require.Equal(t, eon, msg.Eon)
 			require.Equal(t, receiver.Bytes(), msg.Receiver)
 			polyEval := dkg.Polynomial.EvalForKeyper(i)
-			require.Equal(t, polyEval.Bytes(), msg.EncryptedEval)
+			decryptedEval, err := keyperEncryptionPrivateKeys[receiver].Decrypt(msg.EncryptedEval, nil, nil)
+			require.Nil(t, err)
+			require.True(t, bytes.Equal(polyEval.Bytes(), decryptedEval))
 		}
 	})
 }

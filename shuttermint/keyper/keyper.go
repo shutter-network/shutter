@@ -731,7 +731,13 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 		return
 	}
 
-	dkg, err := NewDKGInstance(ev.Eon, config, kpr.ms)
+	// copy keyper encryption keys to avoid concurrent access
+	keyperEncryptionKeys := make(map[common.Address]*ecies.PublicKey)
+	for k, v := range kpr.keyperEncryptionKeys {
+		keyperEncryptionKeys[k] = v
+	}
+
+	dkg, err := NewDKGInstance(ev.Eon, config, kpr.Config, kpr.ms, keyperEncryptionKeys)
 	if err != nil {
 		log.Printf("Error starting DKG instance: %s", err)
 	}
