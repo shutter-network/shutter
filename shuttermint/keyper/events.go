@@ -2,11 +2,13 @@ package keyper
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
@@ -33,6 +35,69 @@ func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, err
 		return 0, fmt.Errorf("failed to parse event: %w", err)
 	}
 	return uint64(v), nil
+}
+
+func getStringAttribute(ev abcitypes.Event, index int, key string) (string, error) {
+	b, err := getBytesAttribute(ev, index, key)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func getAddressAttribute(ev abcitypes.Event, index int, key string) (common.Address, error) {
+	s, err := getStringAttribute(ev, index, key)
+	if err != nil {
+		return common.Address{}, err
+	}
+	a := common.HexToAddress(s)
+	if a.Hex() != s {
+		return common.Address{}, fmt.Errorf("invalid address %s", s)
+	}
+	return a, nil
+}
+
+func getPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*ecdsa.PublicKey, error) {
+	s, err := getStringAttribute(ev, index, key)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey, err := app.DecodePubkeyFromEvent(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return publicKey, nil
+}
+
+func getECIESPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*ecies.PublicKey, error) {
+	publicKeyECDSA, err := getPublicKeyAttribute(ev, index, key)
+	if err != nil {
+		return nil, err
+	}
+	return ecies.ImportECDSAPublic(publicKeyECDSA), nil
+}
+
+// MakeCheckInEvent creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
+func MakeCheckInEvent(ev abcitypes.Event) (CheckInEvent, error) {
+	if ev.Type != "shutter.check-in" {
+		return CheckInEvent{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return CheckInEvent{}, err
+	}
+	publicKey, err := getECIESPublicKeyAttribute(ev, 1, "EncryptionPublicKey")
+	if err != nil {
+		return CheckInEvent{}, err
+	}
+
+	return CheckInEvent{
+		Sender:              sender,
+		EncryptionPublicKey: publicKey,
+	}, nil
 }
 
 // MakePrivkeyGeneratedEvent creates a PrivkeyGeneratedEvent from the given tendermint event of
@@ -205,6 +270,13 @@ func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
+	if ev.Type == "shutter.check-in" {
+		res, err := MakeCheckInEvent(ev)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
 	if ev.Type == "shutter.privkey-generated" {
 		res, err := MakePrivkeyGeneratedEvent(ev)
 		if err != nil {

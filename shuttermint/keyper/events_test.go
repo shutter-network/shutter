@@ -4,11 +4,28 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/crypto/ecies"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
 )
+
+func TestCheckInEvent(t *testing.T) {
+	sender := common.BigToAddress(big.NewInt(1))
+	privateKeyECDSA, err := crypto.GenerateKey()
+	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
+	require.Nil(t, err)
+	appEv := app.MakeCheckInEvent(sender, publicKey)
+	evInt, err := MakeEvent(appEv)
+	require.Nil(t, err)
+	ev, ok := evInt.(CheckInEvent)
+	require.True(t, ok)
+	require.Equal(t, sender, ev.Sender)
+	require.True(t, ev.EncryptionPublicKey.ExportECDSA().Equal(&privateKeyECDSA.PublicKey))
+}
 
 func TestMakeEventBatchConfig(t *testing.T) {
 	var addresses []common.Address = []common.Address{

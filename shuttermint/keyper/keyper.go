@@ -694,6 +694,7 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	switch e := ev.(type) {
+	case CheckInEvent:
 	case PubkeyGeneratedEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case PrivkeyGeneratedEvent:

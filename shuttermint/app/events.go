@@ -15,9 +15,22 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/kv"
 )
+
+// MakeCheckInEvent creates a shutter.check-in event, to be raised whenever a new keyper sends
+// their check in message.
+func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKey) abcitypes.Event {
+	return abcitypes.Event{
+		Type: "shutter.check-in",
+		Attributes: []kv.Pair{
+			newAddressPair("Sender", sender),
+			newStringPair("EncryptionPublicKey", encodePubkeyForEvent(encryptionPublicKey.ExportECDSA())),
+		},
+	}
+}
 
 // MakeBatchConfigEvent creates a 'shutter.batch-config' tendermint event. The given
 // startBatchIndex, threshold and list of keyper addresses are encoded as attributes of the event.
