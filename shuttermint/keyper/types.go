@@ -47,6 +47,7 @@ type KeyperConfig struct {
 	EthereumURL                 string
 	SigningKey                  *ecdsa.PrivateKey
 	ValidatorKey                ed25519.PrivateKey
+	EncryptionKey               *ecies.PrivateKey
 	ConfigContractAddress       common.Address
 	BatcherContractAddress      common.Address
 	KeyBroadcastContractAddress common.Address

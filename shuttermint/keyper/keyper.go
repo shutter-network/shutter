@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -80,11 +81,13 @@ func NewBatchConfigStarted(configIndex uint64) *shmsg.Message {
 }
 
 // NewCheckIn creates a new CheckIn message
-func NewCheckIn(publicKey []byte) *shmsg.Message {
+func NewCheckIn(validatorPublicKey []byte, encryptionKey *ecies.PublicKey) *shmsg.Message {
+	encryptionKeyECDSA := encryptionKey.ExportECDSA()
 	return &shmsg.Message{
 		Payload: &shmsg.Message_CheckIn{
 			CheckIn: &shmsg.CheckIn{
-				Pubkey: publicKey,
+				ValidatorPublicKey:  validatorPublicKey,
+				EncryptionPublicKey: crypto.CompressPubkey(encryptionKeyECDSA),
 			},
 		},
 	}
@@ -535,11 +538,12 @@ func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 }
 
 func (kpr *Keyper) sendCheckIn() error {
-	publicKey, ok := kpr.Config.ValidatorKey.Public().(ed25519.PublicKey)
+	validatorPublicKey, ok := kpr.Config.ValidatorKey.Public().(ed25519.PublicKey)
 	if !ok {
 		panic("Failed to assert type")
 	}
-	msg := NewCheckIn([]byte(publicKey))
+
+	msg := NewCheckIn([]byte(validatorPublicKey), &kpr.Config.EncryptionKey.PublicKey)
 	err := kpr.ms.SendMessage(msg)
 	if err != nil {
 		return err

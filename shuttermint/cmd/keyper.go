@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -20,6 +21,7 @@ type RawKeyperConfig struct {
 	EthereumURL          string
 	SigningKey           string
 	ValidatorSeed        string
+	EncryptionKey        string
 	ConfigContract       string
 	BatcherContract      string
 	KeyBroadcastContract string
@@ -46,6 +48,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("EthereumURL")
 	viper.BindEnv("SigningKey")
 	viper.BindEnv("ValidatorSeed")
+	viper.BindEnv("EncryptionKey")
 	viper.BindEnv("ConfigContract")
 	viper.BindEnv("BatcherContract")
 	viper.BindEnv("KeyBroadcastContract")
@@ -98,6 +101,12 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 	}
 	validatorKey := ed25519.NewKeyFromSeed(validatorSeed)
 
+	encryptionKeyECDSA, err := crypto.HexToECDSA(r.EncryptionKey)
+	if err != nil {
+		return emptyConfig, fmt.Errorf("bad encryption key: %w", err)
+	}
+	encryptionKey := ecies.ImportECDSA(encryptionKeyECDSA)
+
 	if !keyper.IsWebsocketURL(r.EthereumURL) {
 		return emptyConfig, fmt.Errorf("EthereumURL must start with ws:// or wss://")
 	}
@@ -131,6 +140,7 @@ func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		EthereumURL:                 r.EthereumURL,
 		SigningKey:                  signingKey,
 		ValidatorKey:                validatorKey,
+		EncryptionKey:               encryptionKey,
 		ConfigContractAddress:       configContractAddress,
 		BatcherContractAddress:      batcherContractAddress,
 		KeyBroadcastContractAddress: keyBroadcastContractAddress,

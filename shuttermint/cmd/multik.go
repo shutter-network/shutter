@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
@@ -60,6 +61,7 @@ func multikMain() {
 
 	var signingKeys [3]*ecdsa.PrivateKey
 	var validatorKeys [3]ed25519.PrivateKey
+	var encryptionKeys [3]*ecies.PrivateKey
 	var keypers [3]common.Address
 	for i := 0; i < 3; i++ {
 		k := sandbox.GanacheKey(i)
@@ -69,20 +71,24 @@ func multikMain() {
 		validatorSeed := make([]byte, 32)
 		copy(validatorSeed, keypers[i].Bytes())
 		validatorKeys[i] = ed25519.NewKeyFromSeed(validatorSeed)
+
+		// reusing the signing key is fine for tests
+		encryptionKeys[i] = ecies.ImportECDSA(k)
 	}
 
 	for i := 0; i < 3; i++ {
-		go func(signingKey *ecdsa.PrivateKey, validatorKey ed25519.PrivateKey) {
+		go func(signingKey *ecdsa.PrivateKey, validatorKey ed25519.PrivateKey, encryptionKey *ecies.PrivateKey) {
 			config := baseConfig
 			config.SigningKey = signingKey
 			config.ValidatorKey = validatorKey
+			config.EncryptionKey = encryptionKey
 
 			kpr := keyper.NewKeyper(config)
 			err := kpr.Run()
 			if err != nil {
 				panic(err)
 			}
-		}(signingKeys[i], validatorKeys[i])
+		}(signingKeys[i], validatorKeys[i], encryptionKeys[i])
 	}
 	time.Sleep(time.Hour)
 }

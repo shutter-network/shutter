@@ -40,7 +40,8 @@ message BatchConfigStarted {
 
 
 message CheckIn {
-        bytes pubkey = 1;  // 32 byte ed25519 public key
+        bytes validator_public_key = 1;  // 32 byte ed25519 public key
+        bytes encryption_public_key = 2;  // compressed ecies public key
 }
 
 message DecryptionSignature {

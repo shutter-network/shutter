@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto/ecies"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/tendermint/go-amino"
@@ -373,15 +375,24 @@ func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address)
 		return notAKeyper(sender)
 	}
 
-	pk, err := NewValidatorPubkey(msg.Pubkey)
+	validatorPublicKey, err := NewValidatorPubkey(msg.ValidatorPublicKey)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf(
-			"malformed pubkey: %s", err))
+			"malformed validator public key: %s", err))
 	}
-	app.Identities[sender] = pk
+	encryptionPublicKeyECDSA, err := crypto.DecompressPubkey(msg.EncryptionPublicKey)
+	if err != nil {
+		return makeErrorResponse(fmt.Sprintf("malformed encryption public key: %s", err))
+	}
+	encryptionPublicKey := ecies.ImportECDSAPublic(encryptionPublicKeyECDSA)
+
+	app.Identities[sender] = validatorPublicKey
+
 	return abcitypes.ResponseDeliverTx{
-		Code:   0,
-		Events: []abcitypes.Event{},
+		Code: 0,
+		Events: []abcitypes.Event{
+			MakeCheckInEvent(sender, encryptionPublicKey),
+		},
 	}
 }
 
