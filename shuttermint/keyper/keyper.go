@@ -40,6 +40,7 @@ func NewKeyper(kc KeyperConfig) Keyper {
 		checkedIn:             false,
 		newHeaders:            make(chan *types.Header, newHeadersSize),
 		cipherExecutionParams: make(chan CipherExecutionParams),
+		keyperEncryptionKeys:  make(map[common.Address]*ecies.PublicKey),
 		dkg:                   nil,
 	}
 }
@@ -699,6 +700,7 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	switch e := ev.(type) {
 	case CheckInEvent:
+		kpr.handleCheckInEvent(e)
 	case PubkeyGeneratedEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case PrivkeyGeneratedEvent:
@@ -734,6 +736,12 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 		log.Printf("Error starting DKG instance: %s", err)
 	}
 	kpr.dkg = dkg
+}
+
+func (kpr *Keyper) handleCheckInEvent(ev CheckInEvent) {
+	kpr.Lock()
+	defer kpr.Unlock()
+	kpr.keyperEncryptionKeys[ev.Sender] = ev.EncryptionPublicKey
 }
 
 func (kpr *Keyper) watchBalance() error {

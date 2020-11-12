@@ -78,6 +78,7 @@ type Keyper struct {
 	ms                    MessageSender
 	executor              Executor
 	cipherExecutionParams chan CipherExecutionParams
+	keyperEncryptionKeys  map[common.Address]*ecies.PublicKey
 
 	dkg *DKGInstance
 }
