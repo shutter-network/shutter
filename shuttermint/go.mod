@@ -17,11 +17,9 @@ require (
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
-	github.com/minio/highwayhash v1.0.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/procfs v0.0.11 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/shirou/gopsutil v2.20.9+incompatible // indirect
 	github.com/sourcegraph/go-diff v0.6.1 // indirect
@@ -30,11 +28,10 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tendermint/go-amino v0.14.1
-	github.com/tendermint/tendermint v0.33.8
+	github.com/tendermint/tendermint v0.34.0-rc6
 	github.com/tetafro/godot v0.4.9 // indirect
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/text v0.3.4 // indirect
 	google.golang.org/protobuf v1.25.0

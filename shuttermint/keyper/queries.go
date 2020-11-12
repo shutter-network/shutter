@@ -1,6 +1,7 @@
 package keyper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,7 +15,7 @@ import (
 
 func queryConfig(cl client.Client, path string) (app.BatchConfig, error) {
 	data := tmbytes.HexBytes([]byte{})
-	res, err := cl.ABCIQuery(path, data)
+	res, err := cl.ABCIQuery(context.TODO(), path, data)
 	if err != nil {
 		return app.BatchConfig{}, err
 	}
@@ -52,7 +53,7 @@ func queryLastBatchConfig(cl client.Client) (app.BatchConfig, error) {
 
 func queryCheckedIn(cl client.Client, address common.Address) (bool, error) {
 	path := fmt.Sprintf("/checkedIn?address=%s", address.Hex())
-	res, err := cl.ABCIQuery(path, []byte{})
+	res, err := cl.ABCIQuery(context.TODO(), path, []byte{})
 	if err != nil {
 		return false, err
 	}
@@ -64,7 +65,7 @@ func queryCheckedIn(cl client.Client, address common.Address) (bool, error) {
 
 func queryVote(cl client.Client, address common.Address) (app.BatchConfig, bool, error) {
 	path := fmt.Sprintf("/vote?address=%s", address.Hex())
-	res, err := cl.ABCIQuery(path, []byte{})
+	res, err := cl.ABCIQuery(context.TODO(), path, []byte{})
 	if err != nil {
 		return app.BatchConfig{}, false, err
 	}

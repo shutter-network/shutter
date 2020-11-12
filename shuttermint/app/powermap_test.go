@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func makeKey(n int) []byte {
@@ -28,7 +29,10 @@ func TestMakePowermapEmpty(t *testing.T) {
 
 func TestMakePowermapBadType(t *testing.T) {
 	_, err := MakePowermap([]abcitypes.ValidatorUpdate{
-		{Power: 10, PubKey: abcitypes.PubKey{Type: "xxx", Data: makeKey(1)}},
+		{
+			Power:  10,
+			PubKey: tmcrypto.PublicKey{Sum: &tmcrypto.PublicKey_Ed25519{Ed25519: []byte("xxx")}},
+		},
 	})
 	require.NotNil(t, err)
 }
@@ -36,7 +40,7 @@ func TestMakePowermapBadType(t *testing.T) {
 func TestMakePowermap(t *testing.T) {
 	var power int64 = 42
 	pm, err := MakePowermap([]abcitypes.ValidatorUpdate{
-		{Power: power, PubKey: abcitypes.PubKey{Type: "ed25519", Data: makeKey(1)}},
+		{Power: power, PubKey: tmcrypto.PublicKey{Sum: &tmcrypto.PublicKey_Ed25519{Ed25519: makeKey(1)}}},
 	})
 	require.Nil(t, err)
 	require.Equal(t, 1, len(pm))

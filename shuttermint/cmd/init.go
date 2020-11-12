@@ -46,7 +46,6 @@ func init() {
 
 func initFiles(cmd *cobra.Command, args []string) error {
 	config := cfg.DefaultConfig()
-	config.TxIndex.IndexAllKeys = true
 	config.SetRoot(rootDir)
 	if err := config.ValidateBasic(); err != nil {
 		return fmt.Errorf("error in config file: %v", err)

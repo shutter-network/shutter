@@ -6,16 +6,18 @@ import (
 	"sort"
 
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 // MakePowermap creates a new Powermap with voting powers as specified in validators
 func MakePowermap(validators []abcitypes.ValidatorUpdate) (Powermap, error) {
 	res := make(Powermap)
 	for _, v := range validators {
-		if v.PubKey.Type != "ed25519" {
-			return res, fmt.Errorf("cannot handle key type %s", v.PubKey.Type)
+		data := v.PubKey.GetEd25519()
+		if data == nil {
+			return res, fmt.Errorf("cannot handle key %s", v.PubKey)
 		}
-		pk, err := NewValidatorPubkey(v.PubKey.Data)
+		pk, err := NewValidatorPubkey(data)
 		if err != nil {
 			return res, err
 		}
@@ -28,7 +30,7 @@ func MakePowermap(validators []abcitypes.ValidatorUpdate) (Powermap, error) {
 // validators in tendermint
 func SortValidators(validators []abcitypes.ValidatorUpdate) {
 	sort.Slice(validators, func(i, j int) bool {
-		return bytes.Compare(validators[i].PubKey.Data, validators[j].PubKey.Data) < 0
+		return bytes.Compare(validators[i].PubKey.GetEd25519(), validators[j].PubKey.GetEd25519()) < 0
 	})
 }
 
@@ -60,11 +62,8 @@ func (pm Powermap) ValidatorUpdates() []abcitypes.ValidatorUpdate {
 	var res []abcitypes.ValidatorUpdate
 	for k, p := range pm {
 		res = append(res, abcitypes.ValidatorUpdate{
-			Power: p,
-			PubKey: abcitypes.PubKey{
-				Type: "ed25519",
-				Data: []byte(k.Ed25519pubkey),
-			},
+			Power:  p,
+			PubKey: tmcrypto.PublicKey{Sum: &tmcrypto.PublicKey_Ed25519{Ed25519: []byte(k.Ed25519pubkey)}},
 		})
 	}
 	SortValidators(res)

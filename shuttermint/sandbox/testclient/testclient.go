@@ -44,7 +44,9 @@ func printEvents(events []abcitypes.Event) {
 
 func txsearch(cl client.Client) {
 	query := "shutter.batch-config.StartBatchIndex>=0"
-	res, err := cl.TxSearch(query, false, 0, 50, "")
+	page := 1
+	perPage := 50
+	res, err := cl.TxSearch(context.Background(), query, false, &page, &perPage, "")
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +58,7 @@ func txsearch(cl client.Client) {
 }
 
 func status(cl client.StatusClient) {
-	st, err := cl.Status()
+	st, err := cl.Status(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -93,7 +95,7 @@ func subscribe(cl client.Client) {
 	}
 
 	var tx types.Tx = types.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
-	res, err := cl.BroadcastTxCommit(tx)
+	res, err := cl.BroadcastTxCommit(context.Background(), tx)
 
 	fmt.Println("Msg:", base64.RawURLEncoding.EncodeToString(signedMessage))
 

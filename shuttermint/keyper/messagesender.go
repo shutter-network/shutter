@@ -1,6 +1,7 @@
 package keyper
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"encoding/base64"
 	"fmt"
@@ -23,7 +24,7 @@ func (ms RPCMessageSender) SendMessage(msg *shmsg.Message) error {
 		return err
 	}
 	var tx tmtypes.Tx = tmtypes.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
-	res, err := ms.rpcclient.BroadcastTxCommit(tx)
+	res, err := ms.rpcclient.BroadcastTxCommit(context.TODO(), tx)
 	if err != nil {
 		return err
 	}

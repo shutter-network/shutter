@@ -45,11 +45,6 @@ func init() {
 	}
 }
 
-// ABCIPubkey returns an abcitypes.PubKey struct suitable for updating the shuttermint validators
-func (vp ValidatorPubkey) ABCIPubkey() abcitypes.PubKey {
-	return abcitypes.PubKey{Type: "ed25519", Data: []byte(vp.Ed25519pubkey)}
-}
-
 // Visit https://github.com/tendermint/spec/blob/master/spec/abci/abci.md for more information on
 // the application interface we're implementing here.
 // https://docs.tendermint.com/master/spec/abci/apps.html also provides some useful information
@@ -159,6 +154,22 @@ func (app *ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
 		LastBlockHeight:  app.LastBlockHeight,
 		LastBlockAppHash: []byte(""),
 	}
+}
+
+func (ShutterApp) ListSnapshots(abcitypes.RequestListSnapshots) abcitypes.ResponseListSnapshots {
+	return abcitypes.ResponseListSnapshots{}
+}
+
+func (ShutterApp) LoadSnapshotChunk(abcitypes.RequestLoadSnapshotChunk) abcitypes.ResponseLoadSnapshotChunk {
+	return abcitypes.ResponseLoadSnapshotChunk{}
+}
+
+func (ShutterApp) ApplySnapshotChunk(abcitypes.RequestApplySnapshotChunk) abcitypes.ResponseApplySnapshotChunk {
+	return abcitypes.ResponseApplySnapshotChunk{}
+}
+
+func (ShutterApp) OfferSnapshot(abcitypes.RequestOfferSnapshot) abcitypes.ResponseOfferSnapshot {
+	return abcitypes.ResponseOfferSnapshot{}
 }
 
 func (ShutterApp) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {

@@ -17,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/kv"
 )
 
 // MakeCheckInEvent creates a shutter.check-in event, to be raised whenever a new keyper sends
@@ -25,7 +24,7 @@ import (
 func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKey) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.check-in",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", sender),
 			newStringPair("EncryptionPublicKey", encodePubkeyForEvent(encryptionPublicKey.ExportECDSA())),
 		},
@@ -37,10 +36,20 @@ func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKe
 func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []common.Address) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.batch-config",
-		Attributes: []kv.Pair{
-			{Key: []byte("StartBatchIndex"), Value: []byte(fmt.Sprintf("%d", startBatchIndex))},
-			{Key: []byte("Threshold"), Value: []byte(fmt.Sprintf("%d", threshold))},
-			{Key: []byte("Keypers"), Value: []byte(encodeAddressesForEvent(keypers))},
+		Attributes: []abcitypes.EventAttribute{
+			{
+				Key:   []byte("StartBatchIndex"),
+				Value: []byte(fmt.Sprintf("%d", startBatchIndex)),
+				Index: true,
+			},
+			{
+				Key:   []byte("Threshold"),
+				Value: []byte(fmt.Sprintf("%d", threshold)),
+			},
+			{
+				Key:   []byte("Keypers"),
+				Value: []byte(encodeAddressesForEvent(keypers)),
+			},
 		},
 	}
 }
@@ -50,10 +59,21 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
 	return abcitypes.Event{
 		Type: "shutter.decryption-signature",
-		Attributes: []kv.Pair{
-			{Key: []byte("BatchIndex"), Value: []byte(fmt.Sprintf("%d", batchIndex))},
-			{Key: []byte("Sender"), Value: []byte(sender.Hex())},
-			{Key: []byte("Signature"), Value: []byte(encodedSignature)},
+		Attributes: []abcitypes.EventAttribute{
+			{
+				Key:   []byte("BatchIndex"),
+				Value: []byte(fmt.Sprintf("%d", batchIndex)),
+				Index: true,
+			},
+			{
+				Key:   []byte("Sender"),
+				Value: []byte(sender.Hex()),
+				Index: true,
+			},
+			{
+				Key:   []byte("Signature"),
+				Value: []byte(encodedSignature),
+			},
 		},
 	}
 }
@@ -67,9 +87,9 @@ func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64,
 	encodedSignature := []byte(base64.RawURLEncoding.EncodeToString(signature))
 	return abcitypes.Event{
 		Type: "shutter.encryption-key-signature-added",
-		Attributes: []kv.Pair{
-			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex},
-			{Key: []byte("BatchIndex"), Value: encodedBatchIndex},
+		Attributes: []abcitypes.EventAttribute{
+			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex, Index: true},
+			{Key: []byte("BatchIndex"), Value: encodedBatchIndex, Index: true},
 			{Key: []byte("EncryptionKey"), Value: encodedKey},
 			{Key: []byte("Signature"), Value: encodedSignature},
 		},
@@ -81,7 +101,7 @@ func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64,
 func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.new-dkg-instance",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newUintPair("Eon", eon),
 			newUintPair("ConfigIndex", configIndex),
 		},
@@ -93,7 +113,7 @@ func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {
 func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.poly-eval-registered",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
 			newAddressPair("Receiver", msg.Receiver),
@@ -108,7 +128,7 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 	// TODO: add gammas
 	return abcitypes.Event{
 		Type: "shutter.poly-commitment-registered",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
 		},
@@ -120,7 +140,7 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.accusation-registered",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
 			newAddressPair("Accused", msg.Accused),
@@ -133,7 +153,7 @@ func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
 func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
 	return abcitypes.Event{
 		Type: "shutter.apology-registered",
-		Attributes: []kv.Pair{
+		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
 			newAddressPair("Accuser", msg.Accuser),
@@ -146,23 +166,27 @@ func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
 // Encoding/decoding helpers
 //
 
-func newBytesPair(key string, value []byte) kv.Pair {
-	return kv.Pair{
+func newBytesPair(key string, value []byte) abcitypes.EventAttribute {
+	return abcitypes.EventAttribute{
 		Key:   []byte(key),
 		Value: value,
 	}
 }
 
-func newStringPair(key string, value string) kv.Pair {
+func newStringPair(key string, value string) abcitypes.EventAttribute {
 	return newBytesPair(key, []byte(value))
 }
 
-func newAddressPair(key string, value common.Address) kv.Pair {
-	return newStringPair(key, value.Hex())
+func newAddressPair(key string, value common.Address) abcitypes.EventAttribute {
+	p := newStringPair(key, value.Hex())
+	p.Index = true
+	return p
 }
 
-func newUintPair(key string, value uint64) kv.Pair {
-	return newStringPair(key, strconv.FormatUint(value, 10))
+func newUintPair(key string, value uint64) abcitypes.EventAttribute {
+	p := newStringPair(key, strconv.FormatUint(value, 10))
+	p.Index = true
+	return p
 }
 
 // encodePubkeyForEvent encodes the PublicKey as a string suitable for putting it into a tendermint
