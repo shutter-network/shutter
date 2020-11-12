@@ -37,37 +37,33 @@ func printEvents(events []abcitypes.Event) {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			pretty.Println(x)
+			pretty.Println(ev.Type, "=>", x)
 		}
 	}
 }
 
-func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	log.Printf("Starting testclient version %s", version)
-
-	var cl client.Client
-	cl, err := http.New("http://localhost:26657", "/websocket")
+func txsearch(cl client.Client) {
+	query := "shutter.batch-config.StartBatchIndex>=0"
+	res, err := cl.TxSearch(query, false, 0, 50, "")
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("got a client:", cl)
-	err = cl.Start()
-
-	if err != nil {
-		panic(err)
+	fmt.Println("transaction count", res.TotalCount)
+	for _, tx := range res.Txs {
+		fmt.Printf("=== tx height=%d\n", tx.Height)
+		printEvents(tx.TxResult.GetEvents())
 	}
+}
 
+func status(cl client.StatusClient) {
 	st, err := cl.Status()
 	if err != nil {
 		panic(err)
 	}
-	pretty.Print("Status:", st)
-	defer func() {
-		err = cl.Stop()
-		panic(err)
-	}()
+	pretty.Println("Status:", st)
+}
+
+func subscribe(cl client.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	query := "tx.height > 3"
@@ -105,4 +101,30 @@ func main() {
 		panic(err)
 	}
 	pretty.Println("Res", res)
+}
+
+func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
+	log.Printf("Starting testclient version %s", version)
+
+	var cl client.Client
+	cl, err := http.New("http://localhost:26657", "/websocket")
+	if err != nil {
+		panic(err)
+	}
+	err = cl.Start()
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		err = cl.Stop()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	status(cl)
+	txsearch(cl)
+	subscribe(cl)
 }
