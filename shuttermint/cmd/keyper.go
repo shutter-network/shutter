@@ -84,7 +84,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	return rkc, err
 }
 
-func validateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
+func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 	emptyConfig := keyper.KeyperConfig{}
 
 	signingKey, err := crypto.HexToECDSA(r.SigningKey)
@@ -155,7 +155,7 @@ func keyperMain() {
 		log.Fatalf("Error reading the configuration file: %s\nPlease check your configuration.", err)
 	}
 
-	kc, err := validateKeyperConfig(rkc)
+	kc, err := ValidateKeyperConfig(rkc)
 	if err != nil {
 		log.Fatalf("Error: %s\nPlease check your configuration", err)
 	}
