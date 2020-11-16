@@ -734,6 +734,17 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 	}
 }
 
+func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev IEvent) {
+	kpr.Lock()
+	defer kpr.Unlock()
+
+	// we should probably maintain a map of eon -> dkg
+	if kpr.dkg == nil || kpr.dkg.Eon != eon {
+		log.Printf("dkg is not active, cannot dispatch %+v", ev)
+	}
+	kpr.dkg.dispatchShuttermintEvent(ev)
+}
+
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	switch e := ev.(type) {
 	case CheckInEvent:
@@ -749,6 +760,8 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case NewDKGInstanceEvent:
 		kpr.startNewDKGInstance(e)
+	case PolyCommitmentRegisteredEvent:
+		kpr.dispatchEventToDKG(e.Eon, e)
 	default:
 		panic("unknown event type")
 	}

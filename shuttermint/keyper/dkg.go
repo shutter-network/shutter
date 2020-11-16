@@ -22,6 +22,7 @@ type DKGInstance struct {
 	keyperEncryptionKeys map[common.Address]*ecies.PublicKey
 
 	Polynomial *crypto.Polynomial
+	Commitment map[common.Address]crypto.Gammas
 }
 
 // NewDKGInstance creates a new dkg instance with initialized local random values.
@@ -46,6 +47,7 @@ func NewDKGInstance(
 		keyperEncryptionKeys: keyperEncryptionKeys,
 
 		Polynomial: polynomial,
+		Commitment: make(map[common.Address]crypto.Gammas),
 	}
 	return &dkg, nil
 }
@@ -92,4 +94,15 @@ func (dkg *DKGInstance) sendPolyEvals() error {
 		}
 	}
 	return nil
+}
+
+func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
+	switch e := ev.(type) {
+	case PolyCommitmentRegisteredEvent:
+		// XXX we should store the gammas in the commitment field, but the event currently
+		// doesn't have that field.
+		_ = e
+	default:
+		panic("unknown event type, cannot dispatch")
+	}
 }
