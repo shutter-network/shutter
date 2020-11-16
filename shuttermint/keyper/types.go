@@ -147,6 +147,12 @@ type NewDKGInstanceEvent struct {
 	ConfigIndex uint64
 }
 
+// PolyCommitmentRegisteredEvent
+type PolyCommitmentRegisteredEvent struct {
+	Eon    uint64
+	Sender common.Address
+}
+
 // IEvent is an interface for the event types declared above (PubkeyGeneratedEvent,
 // PrivkeyGeneratedEvent, BatchConfigEvent, EncryptionkeySignatureAddedEvent)
 type IEvent interface {
@@ -160,6 +166,7 @@ func (BatchConfigEvent) IEvent()                 {}
 func (EncryptionKeySignatureAddedEvent) IEvent() {}
 func (DecryptionSignatureEvent) IEvent()         {}
 func (NewDKGInstanceEvent) IEvent()              {}
+func (PolyCommitmentRegisteredEvent) IEvent()    {}
 
 // ContractCaller interacts with the contracts on Ethereum.
 type ContractCaller struct {

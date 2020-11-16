@@ -267,6 +267,27 @@ func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
 	}, nil
 }
 
+func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegisteredEvent, error) {
+	res := PolyCommitmentRegisteredEvent{}
+	if ev.Type != "shutter.poly-commitment-registered" {
+		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return res, err
+	}
+	res.Sender = sender
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return res, err
+	}
+	res.Eon = eon
+
+	return res, nil
+}
+
 // MakeEvent creates an Event from the given tendermint event. It will return a
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
@@ -314,6 +335,13 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	}
 	if ev.Type == "shutter.new-dkg-instance" {
 		res, err := MakeNewDKGInstanceEvent(ev)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	}
+	if ev.Type == "shutter.poly-commitment-registered" {
+		res, err := MakePolyCommitmentRegisteredEvent(ev)
 		if err != nil {
 			return nil, err
 		}

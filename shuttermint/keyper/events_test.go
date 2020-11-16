@@ -75,3 +75,20 @@ func TestMakeNewDKGInstanceEvent(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, expectedEv, ev)
 }
+
+func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
+	var eon uint64 = 10
+	sender := common.BytesToAddress([]byte("foo"))
+
+	appEv := app.MakePolyCommitmentRegisteredEvent(&app.PolyCommitmentMsg{
+		Sender: sender,
+		Eon:    eon,
+	})
+	ev, err := MakeEvent(appEv)
+	expectedEv := PolyCommitmentRegisteredEvent{
+		Eon:    eon,
+		Sender: sender,
+	}
+	require.Nil(t, err)
+	require.Equal(t, expectedEv, ev)
+}
