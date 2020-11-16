@@ -292,60 +292,28 @@ func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 // PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	if ev.Type == "shutter.check-in" {
-		res, err := MakeCheckInEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakeCheckInEvent(ev)
 	}
 	if ev.Type == "shutter.privkey-generated" {
-		res, err := MakePrivkeyGeneratedEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakePrivkeyGeneratedEvent(ev)
 	}
 	if ev.Type == "shutter.pubkey-generated" {
-		res, err := MakePubkeyGeneratedEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakePubkeyGeneratedEvent(ev)
 	}
 	if ev.Type == "shutter.batch-config" {
-		res, err := MakeBatchConfigEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakeBatchConfigEvent(ev)
 	}
 	if ev.Type == "shutter.encryption-key-signature-added" {
-		res, err := MakeEncryptionKeySignatureAddedEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakeEncryptionKeySignatureAddedEvent(ev)
 	}
 	if ev.Type == "shutter.decryption-signature" {
-		res, err := MakeDecryptionSignatureEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakeDecryptionSignatureEvent(ev)
 	}
 	if ev.Type == "shutter.new-dkg-instance" {
-		res, err := MakeNewDKGInstanceEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakeNewDKGInstanceEvent(ev)
 	}
 	if ev.Type == "shutter.poly-commitment-registered" {
-		res, err := MakePolyCommitmentRegisteredEvent(ev)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
+		return MakePolyCommitmentRegisteredEvent(ev)
 	}
 	return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 }
