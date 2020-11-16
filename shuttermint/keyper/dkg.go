@@ -1,6 +1,7 @@
 package keyper
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 
@@ -50,7 +51,7 @@ func NewDKGInstance(
 }
 
 // Run everything.
-func (dkg *DKGInstance) Run() error {
+func (dkg *DKGInstance) Run(ctx context.Context) error {
 	err := dkg.sendGammas()
 	if err != nil {
 		return err

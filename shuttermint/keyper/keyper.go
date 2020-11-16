@@ -183,6 +183,11 @@ func (kpr *Keyper) Run() error {
 		return err
 	}
 
+	err = kpr.fetchCurrentDKG(kpr.ctx)
+	if err != nil {
+		return err
+	}
+
 	startBlock, err := kpr.startUp()
 	if err != nil {
 		return err
@@ -197,6 +202,38 @@ func (kpr *Keyper) Run() error {
 	kpr.group.Go(kpr.executor.Run)
 	err = kpr.group.Wait()
 	return err
+}
+
+// queries the current DKG Status and may start a new DKG process
+func (kpr *Keyper) fetchCurrentDKG(ctx context.Context) error {
+	page := 1
+	perPage := 50
+	res, err := kpr.shmcl.TxSearch(ctx, "shutter.new-dkg-instance.Eon EXISTS", false, &page, &perPage, "desc")
+	if err != nil {
+		return nil
+	}
+
+	for _, tx := range res.Txs {
+		fmt.Printf("=== tx height=%d\n", tx.Height)
+		events := tx.TxResult.GetEvents()
+		for _, rawEvent := range events {
+			e, err := MakeEvent(rawEvent)
+			if err != nil {
+				return err
+			}
+			switch event := e.(type) {
+			case NewDKGInstanceEvent:
+				// XXX Unconditionally starting the DKG for this eon is certainly
+				// wrong. We need a way to decided if we should start it. For the
+				// moment it helps me get a first version working.
+				kpr.startNewDKGInstance(event)
+			default:
+				// even though we only ask for shutter.new-dk-instance events the transactions will also contain other events.
+				// Let's ignore them
+			}
+		}
+	}
+	return nil
 }
 
 // IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
@@ -742,6 +779,11 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 		log.Printf("Error starting DKG instance: %s", err)
 	}
 	kpr.dkg = dkg
+	ctx, cancel := context.WithCancel(kpr.ctx)
+	go func() {
+		defer cancel()
+		dkg.Run(ctx)
+	}()
 }
 
 func (kpr *Keyper) handleCheckInEvent(ev CheckInEvent) {

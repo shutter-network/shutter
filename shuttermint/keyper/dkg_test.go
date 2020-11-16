@@ -2,6 +2,7 @@ package keyper
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"testing"
 
@@ -52,7 +53,7 @@ func TestDKGInstance(t *testing.T) {
 	require.Equal(t, eon, dkg.Eon)
 	require.NotNil(t, dkg.Polynomial)
 
-	go dkg.Run() // TODO: add context to stop DKG
+	go dkg.Run(context.Background())
 
 	t.Run("SendGammas", func(t *testing.T) {
 		msgContainer := <-ms.Msgs
