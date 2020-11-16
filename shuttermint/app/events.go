@@ -9,6 +9,7 @@ package app
 import (
 	"crypto/ecdsa"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -131,6 +132,7 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
+			newGammas("Gammas", msg.Gammas),
 		},
 	}
 }
@@ -187,6 +189,17 @@ func newUintPair(key string, value uint64) abcitypes.EventAttribute {
 	p := newStringPair(key, strconv.FormatUint(value, 10))
 	p.Index = true
 	return p
+}
+
+func newGammas(key string, gammas [][]byte) abcitypes.EventAttribute {
+	var encoded []string
+	for _, i := range gammas {
+		encoded = append(encoded, hex.EncodeToString(i))
+	}
+	return abcitypes.EventAttribute{
+		Key:   []byte(key),
+		Value: []byte(strings.Join(encoded, ",")),
+	}
 }
 
 // encodePubkeyForEvent encodes the PublicKey as a string suitable for putting it into a tendermint
