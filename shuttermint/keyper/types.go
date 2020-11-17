@@ -85,7 +85,7 @@ type Keyper struct {
 
 // MessageSender defines the interface of sending messages to shuttermint.
 type MessageSender interface {
-	SendMessage(*shmsg.Message) error
+	SendMessage(context.Context, *shmsg.Message) error
 }
 
 // RPCMessageSender signs messages and sends them via RPC to shuttermint.
@@ -94,10 +94,14 @@ type RPCMessageSender struct {
 	signingKey *ecdsa.PrivateKey
 }
 
+var _ MessageSender = RPCMessageSender{}
+
 // MockMessageSender sends all messages to a channel so that they can be checked for testing.
 type MockMessageSender struct {
 	Msgs chan *shmsg.Message
 }
+
+var _ MessageSender = MockMessageSender{}
 
 // CheckInEvent is emitted by shuttermint when a keyper sends their check in message.
 type CheckInEvent struct {

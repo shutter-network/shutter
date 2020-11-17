@@ -171,7 +171,7 @@ func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
 func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
 	log.Printf("Generated pubkey for batch #%d", batch.BatchParams.BatchIndex)
-	return batch.MessageSender.SendMessage(msg)
+	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 
 func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicKey) error {
@@ -191,7 +191,7 @@ func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicK
 		batch.KeyperConfig.ConfigContractAddress,
 		sig,
 	)
-	return batch.MessageSender.SendMessage(msg)
+	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 
 func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]EncryptionKeySignatureAddedEvent, error) {
@@ -287,7 +287,7 @@ func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
 func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
 	msg := NewSecretShare(batch.BatchParams.BatchIndex, key)
 	log.Printf("Generated privkey for batch #%d", batch.BatchParams.BatchIndex)
-	return batch.MessageSender.SendMessage(msg)
+	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 
 func (batch *BatchState) downloadTransactions() ([][]byte, error) {
@@ -334,7 +334,7 @@ func (batch *BatchState) sendDecryptionSignature(cipherTxs [][]byte, decryptedTx
 	}
 
 	msg := NewDecryptionSignature(batch.BatchParams.BatchIndex, decryptionSignature)
-	return batch.MessageSender.SendMessage(msg)
+	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 
 // NewBlockHeader is called whenever a new block header arrives.

@@ -440,7 +440,7 @@ func (kpr *Keyper) sendConfigVote(configIndex uint64) error {
 		kpr.Config.ConfigContractAddress,
 		configIndex,
 	)
-	err := kpr.ms.SendMessage(msg)
+	err := kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -483,7 +483,7 @@ func (kpr *Keyper) maybeSendStartVote(blockNumber uint64) error {
 
 	// otherwise vote
 	msg := NewBatchConfigStarted(lastConfig.ConfigIndex)
-	err = kpr.ms.SendMessage(msg)
+	err = kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -550,7 +550,7 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		kpr.Config.ConfigContractAddress,
 		index,
 	)
-	err = kpr.ms.SendMessage(bc)
+	err = kpr.ms.SendMessage(kpr.ctx, bc)
 	if err != nil {
 		log.Printf("Failed to send batch config vote: %v", err)
 	}
@@ -582,7 +582,7 @@ func (kpr *Keyper) sendCheckIn() error {
 	}
 
 	msg := NewCheckIn([]byte(validatorPublicKey), &kpr.Config.EncryptionKey.PublicKey)
-	err := kpr.ms.SendMessage(msg)
+	err := kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		return err
 	}

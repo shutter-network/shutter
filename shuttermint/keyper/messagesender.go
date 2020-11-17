@@ -18,13 +18,13 @@ func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMess
 }
 
 // SendMessage signs the given shmsg.Message and sends the message to shuttermint
-func (ms RPCMessageSender) SendMessage(msg *shmsg.Message) error {
+func (ms RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) error {
 	signedMessage, err := shmsg.SignMessage(msg, ms.signingKey)
 	if err != nil {
 		return err
 	}
 	var tx tmtypes.Tx = tmtypes.Tx(base64.RawURLEncoding.EncodeToString(signedMessage))
-	res, err := ms.rpcclient.BroadcastTxCommit(context.TODO(), tx)
+	res, err := ms.rpcclient.BroadcastTxCommit(ctx, tx)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func NewMockMessageSender() MockMessageSender {
 	}
 }
 
-func (ms MockMessageSender) SendMessage(msg *shmsg.Message) error {
+func (ms MockMessageSender) SendMessage(_ context.Context, msg *shmsg.Message) error {
 	ms.Msgs <- msg
 	return nil
 }

@@ -54,11 +54,11 @@ func NewDKGInstance(
 
 // Run everything.
 func (dkg *DKGInstance) Run(ctx context.Context) error {
-	err := dkg.sendGammas()
+	err := dkg.sendGammas(ctx)
 	if err != nil {
 		return err
 	}
-	err = dkg.sendPolyEvals()
+	err = dkg.sendPolyEvals(ctx)
 	if err != nil {
 		return err
 	}
@@ -67,13 +67,13 @@ func (dkg *DKGInstance) Run(ctx context.Context) error {
 }
 
 // sendGammas broadcasts the gamma values.
-func (dkg *DKGInstance) sendGammas() error {
+func (dkg *DKGInstance) sendGammas(ctx context.Context) error {
 	msg := NewPolyCommitmentMsg(dkg.Eon, dkg.Polynomial.Gammas())
-	return dkg.ms.SendMessage(msg)
+	return dkg.ms.SendMessage(ctx, msg)
 }
 
 // sendPolyEvals sends the corresponding polynomial evaluation to each keyper, including ourselves.
-func (dkg *DKGInstance) sendPolyEvals() error {
+func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
 	for i, keyper := range dkg.BatchConfig.Keypers {
 		encryptionKey, ok := dkg.keyperEncryptionKeys[keyper]
 		if !ok {
@@ -88,7 +88,7 @@ func (dkg *DKGInstance) sendPolyEvals() error {
 		}
 
 		msg := NewPolyEvalMsg(dkg.Eon, keyper, encryptedEval)
-		err = dkg.ms.SendMessage(msg)
+		err = dkg.ms.SendMessage(ctx, msg)
 		if err != nil {
 			return err
 		}

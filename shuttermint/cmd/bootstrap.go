@@ -134,13 +134,13 @@ func bootstrap() {
 		uint64(bootstrapFlags.BatchConfigIndex),
 	)
 
-	err = ms.SendMessage(batchConfigMsg)
+	err = ms.SendMessage(context.Background(), batchConfigMsg)
 	if err != nil {
 		log.Fatalf("Failed to send batch config message: %v", err)
 	}
 
 	batchConfigStartedMsg := keyper.NewBatchConfigStarted(uint64(bootstrapFlags.BatchConfigIndex))
-	err = ms.SendMessage(batchConfigStartedMsg)
+	err = ms.SendMessage(context.Background(), batchConfigStartedMsg)
 	if err != nil {
 		log.Fatalf("Failed to send start message: %v", err)
 	}
