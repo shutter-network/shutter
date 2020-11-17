@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -155,6 +156,7 @@ type NewDKGInstanceEvent struct {
 type PolyCommitmentRegisteredEvent struct {
 	Eon    uint64
 	Sender common.Address
+	Gammas *crypto.Gammas
 }
 
 // IEvent is an interface for the event types declared above (PubkeyGeneratedEvent,

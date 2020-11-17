@@ -115,3 +115,18 @@ func TestDKGInstance(t *testing.T) {
 	err := group.Wait()
 	require.Nil(t, err)
 }
+
+func TestDispatchPolyCommitmentRegistered(t *testing.T) {
+	ti := setupTestInstance(t)
+	sender := ti.keypers[1]
+	ti.dkg.Polynomial.Gammas()
+	ev := PolyCommitmentRegisteredEvent{
+		Eon:    ti.eon,
+		Sender: sender,
+		Gammas: ti.dkg.Polynomial.Gammas(),
+	}
+	ti.dkg.dispatchShuttermintEvent(ev)
+	c, ok := ti.dkg.Commitment[sender]
+	require.True(t, ok)
+	require.Equal(t, *ev.Gammas, c)
+}

@@ -99,9 +99,8 @@ func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
 func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
 	switch e := ev.(type) {
 	case PolyCommitmentRegisteredEvent:
-		// XXX we should store the gammas in the commitment field, but the event currently
-		// doesn't have that field.
-		_ = e
+		// XXX we should handle the case where we already have a commitment
+		dkg.Commitment[e.Sender] = *e.Gammas
 	default:
 		panic("unknown event type, cannot dispatch")
 	}
