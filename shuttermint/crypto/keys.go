@@ -29,8 +29,8 @@ type EpochSK bn256.G1
 // other keypers.
 func ComputeEonSKShare(polyEvals []*big.Int) *EonSKShare {
 	res := big.NewInt(0)
-	for _, vi := range polyEvals {
-		res.Add(res, vi)
+	for _, si := range polyEvals {
+		res.Add(res, si)
 		res.Mod(res, bn256.Order)
 	}
 	share := EonSKShare(*res)
@@ -42,20 +42,19 @@ func ComputeEonPKShare(keyperIndex int, gammas []*Gammas) *EonPKShare {
 	g2 := new(bn256.G2).Set(zeroG2)
 	keyperX := KeyperX(keyperIndex)
 	for _, gs := range gammas {
-		mu := gs.Mu(keyperX)
-		g2 = new(bn256.G2).Add(g2, mu)
+		pi := gs.Pi(keyperX)
+		g2 = new(bn256.G2).Add(g2, pi)
 	}
 	epk := EonPKShare(*g2)
 	return &epk
 }
 
 // ComputeEonPK computes the combined eon public key from the set of eon public key shares.
-func ComputeEonPK(pkShares []*EonPKShare) *EonPK {
+func ComputeEonPK(gammas []*Gammas) *EonPK {
 	g2 := new(bn256.G2).Set(zeroG2)
-	for _, share := range pkShares {
-		tmp := new(bn256.G2)
-		tmp.Add(g2, (*bn256.G2)(share))
-		g2 = tmp
+	for _, gs := range gammas {
+		pi := gs.Pi(big.NewInt(0))
+		g2 = new(bn256.G2).Add(g2, pi)
 	}
 	epk := EonPK(*g2)
 	return &epk

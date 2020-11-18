@@ -121,20 +121,20 @@ func TestVerifyPolyEval(t *testing.T) {
 	}
 }
 
-func TestMu(t *testing.T) {
+func TestPi(t *testing.T) {
 	g1 := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
 	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(3))
 	g3 := new(bn256.G2).ScalarBaseMult(big.NewInt(5))
 	gammas := Gammas([]*bn256.G2{g1, g2, g3})
 
-	mu1 := gammas.Mu(big.NewInt(1))
-	mu2 := gammas.Mu(big.NewInt(2))
+	pi1 := gammas.Pi(big.NewInt(1))
+	pi2 := gammas.Pi(big.NewInt(2))
 
-	mu1Exp := new(bn256.G2).Add(g1, g2)
-	mu1Exp = new(bn256.G2).Add(mu1Exp, g3)
-	mu2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
-	mu2Exp = new(bn256.G2).Add(mu2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
+	pi1Exp := new(bn256.G2).Add(g1, g2)
+	pi1Exp = new(bn256.G2).Add(pi1Exp, g3)
+	pi2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
+	pi2Exp = new(bn256.G2).Add(pi2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
 
-	require.True(t, EqualG2(mu1, mu1Exp))
-	require.True(t, EqualG2(mu2, mu2Exp))
+	require.True(t, EqualG2(pi1, pi1Exp))
+	require.True(t, EqualG2(pi2, pi2Exp))
 }

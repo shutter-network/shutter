@@ -119,32 +119,23 @@ func TestEonSharesMatch(t *testing.T) {
 }
 
 func TestEonPK(t *testing.T) {
-	zeroEPK := ComputeEonPK([]*EonPKShare{})
+	zeroEPK := ComputeEonPK([]*Gammas{})
 	require.True(t, EqualG2((*bn256.G2)(zeroEPK), zeroG2))
 
-	p1 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
-	p2 := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
-	p3 := new(bn256.G2).ScalarBaseMult(big.NewInt(3))
-	epk1 := EonPKShare(*p1)
-	epk2 := EonPKShare(*p2)
-	epk3 := EonPKShare(*p3)
+	threshold := uint64(2)
+	p1, err := RandomPolynomial(rand.Reader, threshold)
+	require.Nil(t, err)
+	p2, err := RandomPolynomial(rand.Reader, threshold)
+	require.Nil(t, err)
+	p3, err := RandomPolynomial(rand.Reader, threshold)
+	require.Nil(t, err)
 
-	k1 := ComputeEonPK([]*EonPKShare{&epk1})
-	require.True(t, EqualG2((*bn256.G2)(k1), p1))
-	k2 := ComputeEonPK([]*EonPKShare{&epk2})
-	require.True(t, EqualG2((*bn256.G2)(k2), p2))
-	k3 := ComputeEonPK([]*EonPKShare{&epk3})
-	require.True(t, EqualG2((*bn256.G2)(k3), p3))
-
-	k12 := ComputeEonPK([]*EonPKShare{&epk1, &epk2})
-	require.True(t, EqualG2((*bn256.G2)(k12), new(bn256.G2).ScalarBaseMult(big.NewInt(3))))
-	k13 := ComputeEonPK([]*EonPKShare{&epk1, &epk3})
-	require.True(t, EqualG2((*bn256.G2)(k13), new(bn256.G2).ScalarBaseMult(big.NewInt(4))))
-	k23 := ComputeEonPK([]*EonPKShare{&epk2, &epk3})
-	require.True(t, EqualG2((*bn256.G2)(k23), new(bn256.G2).ScalarBaseMult(big.NewInt(5))))
-
-	k123 := ComputeEonPK([]*EonPKShare{&epk1, &epk2, &epk3})
-	require.True(t, EqualG2((*bn256.G2)(k123), new(bn256.G2).ScalarBaseMult(big.NewInt(6))))
+	k1 := ComputeEonPK([]*Gammas{p1.Gammas()})
+	require.True(t, EqualG2((*bn256.G2)(k1), ([]*bn256.G2)(*p1.Gammas())[0]))
+	k2 := ComputeEonPK([]*Gammas{p2.Gammas()})
+	require.True(t, EqualG2((*bn256.G2)(k2), ([]*bn256.G2)(*p2.Gammas())[0]))
+	k3 := ComputeEonPK([]*Gammas{p3.Gammas()})
+	require.True(t, EqualG2((*bn256.G2)(k3), ([]*bn256.G2)(*p3.Gammas())[0]))
 }
 
 func TestEonPKMatchesSK(t *testing.T) {
@@ -158,18 +149,12 @@ func TestEonPKMatchesSK(t *testing.T) {
 
 	esk := big.NewInt(0)
 	for _, p := range []*Polynomial{p1, p2, p3} {
-		for i := 0; i < 3; i++ {
-			esk = esk.Add(esk, p.EvalForKeyper(i))
-		}
+		esk = esk.Add(esk, p.Eval(big.NewInt(0)))
 	}
+	epkExp := new(bn256.G2).ScalarBaseMult(esk)
 
 	gammas := []*Gammas{p1.Gammas(), p2.Gammas(), p3.Gammas()}
-	epk1 := ComputeEonPKShare(0, gammas)
-	epk2 := ComputeEonPKShare(1, gammas)
-	epk3 := ComputeEonPKShare(2, gammas)
-
-	epk := ComputeEonPK([]*EonPKShare{epk1, epk2, epk3})
-	epkExp := new(bn256.G2).ScalarBaseMult(esk)
+	epk := ComputeEonPK(gammas)
 	require.True(t, EqualG2((*bn256.G2)(epk), epkExp))
 }
 

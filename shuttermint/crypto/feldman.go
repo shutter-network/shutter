@@ -82,8 +82,8 @@ func (p *Polynomial) Gammas() *Gammas {
 	return &gammas
 }
 
-// Mu computes the mu value at the given x coordinate.
-func (g *Gammas) Mu(xi *big.Int) *bn256.G2 {
+// Pi computes the pi value at the given x coordinate.
+func (g *Gammas) Pi(xi *big.Int) *bn256.G2 {
 	xiToJ := big.NewInt(1)
 	res := new(bn256.G2).Set(zeroG2)
 	for _, gamma := range *g {
@@ -121,7 +121,7 @@ func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshol
 		return false
 	}
 	rhs := new(bn256.G2).ScalarBaseMult(polyEval)
-	lhs := gammas.Mu(KeyperX(keyperIndex))
+	lhs := gammas.Pi(KeyperX(keyperIndex))
 	return EqualG2(lhs, rhs)
 }
 
