@@ -144,6 +144,9 @@ type PolyEvalMsg struct {
 type PolyCommitmentMsg struct {
 	Sender common.Address
 	Eon    uint64
+	// Gammas holds the marshaled crypto.Gammas. Currently we do not unmarshal this value,
+	// which means when we sent this out via events, those events may also contain illegal
+	// data.
 	Gammas [][]byte
 }
 

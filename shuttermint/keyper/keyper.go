@@ -601,6 +601,11 @@ func (kpr *Keyper) dispatchTxs() error {
 			d := tx.Data.(tmtypes.EventDataTx)
 			for _, ev := range d.TxResult.Result.Events {
 				x, err := MakeEvent(ev)
+				// XXX In case MakeEvent fails, returning with an error here, will
+				// abort the whole program. At the moment a malicious keyper is
+				// able to send a PolyCommitmentRegistered message with a malformed
+				// Gammas field to trigger an error here.
+				// We should fix that in shuttermint and/or ignore the error here.
 				if err != nil {
 					return err
 				}

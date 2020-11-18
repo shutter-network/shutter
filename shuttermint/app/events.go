@@ -126,7 +126,6 @@ func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
 // MakePolyCommitmentRegisteredEvent creates a new event to be emitted whenever a PolyCommitment
 // message is registered.
 func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
-	// TODO: add gammas
 	return abcitypes.Event{
 		Type: "shutter.poly-commitment-registered",
 		Attributes: []abcitypes.EventAttribute{
