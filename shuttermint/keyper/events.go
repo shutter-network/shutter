@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
 func getBytesAttribute(ev abcitypes.Event, index int, key string) ([]byte, error) {
@@ -35,6 +39,32 @@ func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, err
 		return 0, fmt.Errorf("failed to parse event: %w", err)
 	}
 	return uint64(v), nil
+}
+
+func decodeGammasFromEvent(eventValue []byte) (crypto.Gammas, error) {
+	parts := strings.Split(string(eventValue), ",")
+	var res crypto.Gammas
+	for _, p := range parts {
+		marshaledG2, err := hex.DecodeString(p)
+		if err != nil {
+			return crypto.Gammas{}, err
+		}
+		g := new(bn256.G2)
+		_, err = g.Unmarshal(marshaledG2)
+		if err != nil {
+			return crypto.Gammas{}, err
+		}
+		res = append(res, g)
+	}
+	return res, nil
+}
+
+func getGammasAttribute(ev abcitypes.Event, index int, name string) (crypto.Gammas, error) {
+	attr, err := getBytesAttribute(ev, index, name)
+	if err != nil {
+		return crypto.Gammas{}, err
+	}
+	return decodeGammasFromEvent(attr)
 }
 
 func getStringAttribute(ev abcitypes.Event, index int, key string) (string, error) {
@@ -284,6 +314,12 @@ func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 		return res, err
 	}
 	res.Eon = eon
+
+	gammas, err := getGammasAttribute(ev, 2, "Gammas")
+	if err != nil {
+		return res, err
+	}
+	res.Gammas = &gammas
 
 	return res, nil
 }
