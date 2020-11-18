@@ -677,7 +677,13 @@ type runScriptTemplateData struct {
 
 const runScriptTemplate = `#! /usr/bin/env bash
 set -euxo pipefail
+
+function getRPCURL() {
+	python -c "import configparser; f = '[_main]\n' + open('$1/config/config.toml').read(); c = configparser.ConfigParser(); c.read_string(f); print(c['rpc']['laddr'][7:-1])"
+}
+
 SESSION=shutter
+SHUTTERMINT_START_TIME=2
 
 # create shuttermint configs
 {{range $i, $d := $.KeyperDirs}}
@@ -690,19 +696,27 @@ cp {{index $.KeyperDirs 0}}/config/genesis.json {{$d}}/config/genesis.json{{end}
 # start first keyper in tmux session
 tmux new -s ${SESSION} -d
 tmux send-keys "{{$.ShuttermintCmd}} run --config {{index $.KeyperDirs 0}}/config/config.toml" C-m
-sleep 5
+sleep ${SHUTTERMINT_START_TIME}
 
 # query p2p address of keyper0 via RPC
-RPC_ADDR=$(python -c "import configparser; f = '[_main]\n' + open('{{index $.KeyperDirs 0}}/config/config.toml').read(); c = configparser.ConfigParser(); c.read_string(f); print(c['rpc']['laddr'][7:-1])")
-P2P_ADDR=$(curl "${RPC_ADDR}"/status | python -c "import json, sys; i = json.load(sys.stdin)['result']['node_info']; print(i['id'] + '@127.0.0.1:' + i['listen_addr'].split(':')[-1])")
+RPC_ADDR_0=$(getRPCURL {{index $.KeyperDirs 0}})
+P2P_ADDR_0=$(curl "${RPC_ADDR_0}"/status | python -c "import json, sys; i = json.load(sys.stdin)['result']['node_info']; print(i['id'] + '@127.0.0.1:' + i['listen_addr'].split(':')[-1])")
 
 # add keyper 0 as persistent peer for the other keypers
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
-sed -i "s/persistent_peers = \"\"/persistent_peers = \"${P2P_ADDR}\"/" {{$d}}/config/config.toml{{end}}{{end}}
+sed -i "s/persistent_peers = \"\"/persistent_peers = \"${P2P_ADDR_0}\"/" {{$d}}/config/config.toml{{end}}{{end}}
 
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
 tmux split-window -h
 tmux send-keys "{{$.ShuttermintCmd}} run --config {{$d}}/config/config.toml" C-m{{end}}{{end}}
+sleep ${SHUTTERMINT_START_TIME}
+
+# start keypers and make them connect to their assigned shuttermint node
+{{range $i, $d := $.KeyperDirs}}
+RPC_URL=$(getRPCURL {{$d}})
+sed -i "s/ShuttermintURL = \".*/ShuttermintURL = \"http:\/\/${RPC_URL}\"/" {{$d}}/config.toml
+tmux split-window -h
+tmux send-keys "{{$.ShuttermintCmd}} keyper --config {{$d}}/config.toml" C-m{{end}}
 
 tmux select-layout even-horizontal
 exec tmux attach -t ${SESSION}

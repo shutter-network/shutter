@@ -53,8 +53,8 @@ func init() {
 		&bootstrapFlags.BatchConfigIndex,
 		"index",
 		"i",
-		1,
-		"index of the batch config to bootstrap with",
+		-1,
+		"index of the batch config to bootstrap with (use latest if negative)",
 	)
 
 	bootstrapCmd.PersistentFlags().StringVarP(
@@ -111,16 +111,20 @@ func bootstrap() {
 		Context:     context.Background(),
 	}
 
-	if bootstrapFlags.BatchConfigIndex <= 0 {
-		log.Fatalf("Batch config index must be at least 1")
-	}
 	indexBig := big.NewInt(int64(bootstrapFlags.BatchConfigIndex))
+	if indexBig.Sign() < 0 {
+		numConfigs, err := configContract.NumConfigs(opts)
+		if err != nil {
+			log.Fatalf("Failed to fetch number of configs: %v", err)
+		}
+		indexBig.SetUint64(numConfigs - 1)
+	}
 	bc, err := configContract.Configs(opts, indexBig)
 	if err != nil {
-		log.Fatalf("Failed to fetch config at index %d: %v", bootstrapFlags.BatchConfigIndex, err)
+		log.Fatalf("Failed to fetch config at index %d: %v", indexBig, err)
 	}
 
-	keypers, err := configContract.GetConfigKeypers(opts, uint64(bootstrapFlags.BatchConfigIndex))
+	keypers, err := configContract.GetConfigKeypers(opts, indexBig.Uint64())
 	if err != nil {
 		log.Fatalf("Failed to fetch keyper set: %s", err)
 	}
