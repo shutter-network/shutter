@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -29,6 +31,7 @@ var (
 	logger  = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	rootDir = ""
 	devMode = false
+	index   = 0
 )
 
 var initCmd = &cobra.Command{
@@ -41,11 +44,28 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.PersistentFlags().StringVar(&rootDir, "root", "", "root directory")
 	initCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "turn on devmode (disables validator set changes)")
+	initCmd.PersistentFlags().IntVar(&index, "index", 0, "keyper index")
 	initCmd.MarkPersistentFlagRequired("root")
 }
 
 func initFiles(cmd *cobra.Command, args []string) error {
 	config := cfg.DefaultConfig()
+	keyper0RPCAddress := config.RPC.ListenAddress
+	rpcAddress, err := adjustPort(keyper0RPCAddress, index)
+	if err != nil {
+		return err
+	}
+	config.RPC.ListenAddress = rpcAddress
+
+	keyper0P2PAddress := config.P2P.ListenAddress
+	p2pAddress, err := adjustPort(keyper0P2PAddress, index)
+	if err != nil {
+		return err
+	}
+	config.P2P.ListenAddress = p2pAddress
+
+	config.P2P.AllowDuplicateIP = true
+
 	config.SetRoot(rootDir)
 	if err := config.ValidateBasic(); err != nil {
 		return fmt.Errorf("error in config file: %v", err)
@@ -62,6 +82,21 @@ func initFiles(cmd *cobra.Command, args []string) error {
 		1)
 
 	return initFilesWithConfig(config, appState)
+}
+
+func adjustPort(address string, keyperIndex int) (string, error) {
+	substrings := strings.Split(address, ":")
+	if len(substrings) < 2 {
+		return "", fmt.Errorf("address %s does not contain port", address)
+	}
+	portStr := substrings[len(substrings)-1]
+	portInt, err := strconv.Atoi(portStr)
+	if err != nil {
+		return "", fmt.Errorf("port %s is not an integer", portStr)
+	}
+	portIntAdjusted := portInt + keyperIndex*2
+	portStrAdjusted := strconv.Itoa(portIntAdjusted)
+	return strings.Join(substrings[:len(substrings)-1], ":") + ":" + portStrAdjusted, nil
 }
 
 func initFilesWithConfig(config *cfg.Config, appState app.GenesisAppState) error {

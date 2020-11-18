@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -64,7 +65,11 @@ var configCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if err := configs(); err != nil {
-			fmt.Printf("Error: %s\n", err)
+			fmt.Printf("Error creating configs: %s\n", err)
+			os.Exit(1)
+		}
+		if err := createRunScript(); err != nil {
+			fmt.Printf("Error creating run script: %s\n", err)
 			os.Exit(1)
 		}
 	},
@@ -555,7 +560,7 @@ func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc 
 	if numConfigs != 0 {
 		config, err := cc.GetConfigByIndex(callOpts, numConfigs-1)
 		if err != nil {
-			fmt.Errorf("failed to query config %d: %w", numConfigs-1, err)
+			return 0, 0, fmt.Errorf("failed to query config %d: %w", numConfigs-1, err)
 		}
 		batchSpan = config.BatchSpan
 		startBlockNumber = config.StartBlockNumber
@@ -622,3 +627,83 @@ func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*t
 
 	return res, nil
 }
+
+func createRunScript() error {
+	path := filepath.Join(configFlags.Dir, "run.sh")
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create run script file: %w", err)
+	}
+	err = os.Chmod(path, 0755)
+	if err != nil {
+		return fmt.Errorf("failed to make run script executable: %w", err)
+	}
+
+	configPaths, err := findConfigFiles(configFlags.Dir)
+	if err != nil {
+		return err
+	}
+	keyperDirs := []string{}
+	for _, path := range configPaths {
+		dir := filepath.Join("..", filepath.Dir(path))
+		keyperDirs = append(keyperDirs, dir)
+	}
+
+	t, err := template.New("script").Parse(runScriptTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to create template: %w", err)
+	}
+
+	d := runScriptTemplateData{
+		ShuttermintCmd: "../../../bin/shuttermint",
+		KeyperDirs:     keyperDirs,
+	}
+	err = t.Execute(file, d)
+	if err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	// err := ioutil.WriteFile(path, []byte(runScriptTemplate), 0755)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to write run script: %w", err)
+	// }
+	return nil
+}
+
+type runScriptTemplateData struct {
+	ShuttermintCmd string
+	KeyperDirs     []string
+}
+
+const runScriptTemplate = `#! /usr/bin/env bash
+set -euxo pipefail
+SESSION=shutter
+
+# create shuttermint configs
+{{range $i, $d := $.KeyperDirs}}
+{{$.ShuttermintCmd}} init --dev --root {{$d}} --index {{$i}}{{end}}
+
+# make all keypers use same genesis file
+{{range $i, $d := $.KeyperDirs}}{{if $i}}
+cp {{index $.KeyperDirs 0}}/config/genesis.json {{$d}}/config/genesis.json{{end}}{{end}}
+
+# start first keyper in tmux session
+tmux new -s ${SESSION} -d
+tmux send-keys "{{$.ShuttermintCmd}} run --config {{index $.KeyperDirs 0}}/config/config.toml" C-m
+sleep 5
+
+# query p2p address of keyper0 via RPC
+RPC_ADDR=$(python -c "import configparser; f = '[_main]\n' + open('{{index $.KeyperDirs 0}}/config/config.toml').read(); c = configparser.ConfigParser(); c.read_string(f); print(c['rpc']['laddr'][7:-1])")
+P2P_ADDR=$(curl "${RPC_ADDR}"/status | python -c "import json, sys; i = json.load(sys.stdin)['result']['node_info']; print(i['id'] + '@127.0.0.1:' + i['listen_addr'].split(':')[-1])")
+
+# add keyper 0 as persistent peer for the other keypers
+{{range $i, $d := $.KeyperDirs}}{{if $i}}
+sed -i "s/persistent_peers = \"\"/persistent_peers = \"${P2P_ADDR}\"/" {{$d}}/config/config.toml{{end}}{{end}}
+
+{{range $i, $d := $.KeyperDirs}}{{if $i}}
+tmux split-window -h
+tmux send-keys "{{$.ShuttermintCmd}} run --config {{$d}}/config/config.toml" C-m{{end}}{{end}}
+
+tmux select-layout even-horizontal
+exec tmux attach -t ${SESSION}
+`
