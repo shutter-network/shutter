@@ -678,8 +678,11 @@ type runScriptTemplateData struct {
 const runScriptTemplate = `#! /usr/bin/env bash
 set -euxo pipefail
 
+PARENT_PATH=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
+cd ${PARENT_PATH}
+
 function getRPCURL() {
-	python -c "import configparser; f = '[_main]\n' + open('$1/config/config.toml').read(); c = configparser.ConfigParser(); c.read_string(f); print(c['rpc']['laddr'][7:-1])"
+	python -c "import configparser; f = '[_main]\n' + open('$PARENT_PATH/$1/config/config.toml').read(); c = configparser.ConfigParser(); c.read_string(f); print(c['rpc']['laddr'][7:-1])"
 }
 
 SESSION=shutter
@@ -687,15 +690,15 @@ SHUTTERMINT_START_TIME=2
 
 # create shuttermint configs
 {{range $i, $d := $.KeyperDirs}}
-{{$.ShuttermintCmd}} init --dev --root {{$d}} --index {{$i}}{{end}}
+{{$.ShuttermintCmd}} init --dev --root ${PARENT_PATH}//{{$d}} --index {{$i}}{{end}}
 
 # make all keypers use same genesis file
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
-cp {{index $.KeyperDirs 0}}/config/genesis.json {{$d}}/config/genesis.json{{end}}{{end}}
+cp {{index $.KeyperDirs 0}}/config/genesis.json ${PARENT_PATH}//{{$d}}/config/genesis.json{{end}}{{end}}
 
 # start first keyper in tmux session
 tmux new -s ${SESSION} -d
-tmux send-keys "{{$.ShuttermintCmd}} run --config {{index $.KeyperDirs 0}}/config/config.toml" C-m
+tmux send-keys "{{$.ShuttermintCmd}} run --config ${PARENT_PATH}//{{index $.KeyperDirs 0}}/config/config.toml" C-m
 sleep ${SHUTTERMINT_START_TIME}
 
 # query p2p address of keyper0 via RPC
@@ -708,7 +711,7 @@ sed -i "s/persistent_peers = \"\"/persistent_peers = \"${P2P_ADDR_0}\"/" {{$d}}/
 
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
 tmux split-window -h
-tmux send-keys "{{$.ShuttermintCmd}} run --config {{$d}}/config/config.toml" C-m{{end}}{{end}}
+tmux send-keys "{{$.ShuttermintCmd}} run --config ${PARENT_PATH}//{{$d}}/config/config.toml" C-m{{end}}{{end}}
 sleep ${SHUTTERMINT_START_TIME}
 
 # start keypers and make them connect to their assigned shuttermint node
