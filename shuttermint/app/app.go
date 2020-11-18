@@ -297,6 +297,15 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
 	}
 
+	if reflect.DeepEqual(*app.LastConfig(), bc) {
+		// The config has already been accepted. So, let's just return success
+		// XXX We do not check if we're allowed to vote on config changes here
+		log.Printf("config %d already accepted", bc.ConfigIndex)
+		return abcitypes.ResponseDeliverTx{
+			Code: 0,
+		}
+	}
+
 	err = app.checkConfig(bc)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("checkConfig: %s", err))
