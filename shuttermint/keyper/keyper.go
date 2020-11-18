@@ -224,7 +224,7 @@ func (kpr *Keyper) fetchCurrentDKG(ctx context.Context) error {
 			switch event := e.(type) {
 			case NewDKGInstanceEvent:
 				// XXX Unconditionally starting the DKG for this eon is certainly
-				// wrong. We need a way to decided if we should start it. For the
+				// wrong. We need a way to decide if we should start it. For the
 				// moment it helps me get a first version working.
 				kpr.startNewDKGInstance(event)
 			default:

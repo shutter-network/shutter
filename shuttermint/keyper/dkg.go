@@ -81,7 +81,7 @@ func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
 		encryptionKey, ok := dkg.keyperEncryptionKeys[keyper]
 		if !ok {
 			log.Printf("no key available, cannot send message to keyper %s", keyper.Hex())
-			continue // don't send them a message if there encryption public key is unknown
+			continue // don't send them a message if their encryption public key is unknown
 		}
 
 		eval := dkg.Polynomial.EvalForKeyper(i)
