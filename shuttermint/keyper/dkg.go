@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -68,15 +69,18 @@ func (dkg *DKGInstance) Run(ctx context.Context) error {
 
 // sendGammas broadcasts the gamma values.
 func (dkg *DKGInstance) sendGammas(ctx context.Context) error {
+	log.Printf("Sending Gammas")
 	msg := NewPolyCommitmentMsg(dkg.Eon, dkg.Polynomial.Gammas())
 	return dkg.ms.SendMessage(ctx, msg)
 }
 
 // sendPolyEvals sends the corresponding polynomial evaluation to each keyper, including ourselves.
 func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
+	log.Printf("Sending PolyEvals to keypers")
 	for i, keyper := range dkg.BatchConfig.Keypers {
 		encryptionKey, ok := dkg.keyperEncryptionKeys[keyper]
 		if !ok {
+			log.Printf("no key available, cannot send message to keyper %s", keyper.Hex())
 			continue // don't send them a message if there encryption public key is unknown
 		}
 

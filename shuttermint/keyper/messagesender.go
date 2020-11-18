@@ -29,7 +29,7 @@ func (ms RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) 
 		return err
 	}
 	if res.DeliverTx.Code != 0 {
-		return fmt.Errorf("send message: %s", res.DeliverTx.Log)
+		return fmt.Errorf("remote error: %s", res.DeliverTx.Log)
 	}
 	return nil
 }

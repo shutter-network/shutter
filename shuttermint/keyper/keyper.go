@@ -800,7 +800,10 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 	ctx, cancel := context.WithCancel(kpr.ctx)
 	go func() {
 		defer cancel()
-		dkg.Run(ctx)
+		err = dkg.Run(ctx)
+		if err != nil {
+			log.Fatalf("DKG process for eon %d failed: %s", ev.Eon, err)
+		}
 	}()
 }
 
