@@ -2,6 +2,17 @@ default_language_version:
   python: python3
 
 repos:
+  - repo: local
+    hooks:
+      # This one replaces github.com/dnephin/pre-commit-golang's
+      # go-mod-tidy hook because it only works with top-level
+      # go.mod/go.sum file
+      - id: go-mod-tidy
+        name: go-mod-tidy
+        entry: tools/go-mod-tidy
+        files: '\.go$'
+        language: script
+
   - repo: git://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
@@ -22,7 +33,6 @@ repos:
     rev: master
     hooks:
       - id: go-fmt
-      - id: go-mod-tidy
 
   # CircleCI stop here
 
