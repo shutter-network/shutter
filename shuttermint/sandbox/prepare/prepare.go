@@ -41,6 +41,7 @@ var configFlags struct {
 	BatcherContractAddress      string
 	KeyBroadcastContractAddress string
 	ExecutorContractAddress     string
+	Bin                         string
 }
 
 var scheduleFlags struct {
@@ -165,6 +166,12 @@ func initConfigFlags() {
 		"0x5d18dED3c0A476fCbc9E67Fc1C613cfc5DD0d34B",
 		"address of the executor contract",
 	)
+	configCmd.Flags().StringVar(
+		&configFlags.Bin,
+		"bin",
+		"../../../bin/shuttermint",
+		"path to the shuttermint executable",
+	)
 }
 
 func initScheduleFlags() {
@@ -221,6 +228,9 @@ func validateConfigFlags() (string, error) {
 	}
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
 		return "dir", fmt.Errorf("output directory %s already exists", configFlags.Dir)
+	}
+	if _, err := os.Stat(configFlags.Bin); err != nil {
+		return "bin-dir", fmt.Errorf("shuttermint executable not found: %w", err)
 	}
 	return "", nil
 }
@@ -639,6 +649,11 @@ func createRunScript() error {
 		return fmt.Errorf("failed to make run script executable: %w", err)
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
 	configPaths, err := findConfigFiles(configFlags.Dir)
 	if err != nil {
 		return err
@@ -655,7 +670,7 @@ func createRunScript() error {
 	}
 
 	d := runScriptTemplateData{
-		ShuttermintCmd: "../../../bin/shuttermint",
+		ShuttermintCmd: filepath.Join(cwd, configFlags.Bin),
 		KeyperDirs:     keyperDirs,
 	}
 	err = t.Execute(file, d)
@@ -678,6 +693,8 @@ type runScriptTemplateData struct {
 const runScriptTemplate = `#! /usr/bin/env bash
 set -euxo pipefail
 
+SHUTTERMINT={{$.ShuttermintCmd}}
+
 PARENT_PATH=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 cd ${PARENT_PATH}
 
@@ -686,19 +703,19 @@ function getRPCURL() {
 }
 
 SESSION=shutter
-SHUTTERMINT_START_TIME=2
+SHUTTERMINT_START_TIME=5
 
 # create shuttermint configs
 {{range $i, $d := $.KeyperDirs}}
-{{$.ShuttermintCmd}} init --dev --root ${PARENT_PATH}//{{$d}} --index {{$i}}{{end}}
+${SHUTTERMINT} init --dev --root ${PARENT_PATH}/{{$d}} --index {{$i}}{{end}}
 
 # make all keypers use same genesis file
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
-cp {{index $.KeyperDirs 0}}/config/genesis.json ${PARENT_PATH}//{{$d}}/config/genesis.json{{end}}{{end}}
+cp {{index $.KeyperDirs 0}}/config/genesis.json ${PARENT_PATH}/{{$d}}/config/genesis.json{{end}}{{end}}
 
 # start first keyper in tmux session
 tmux new -s ${SESSION} -d
-tmux send-keys "{{$.ShuttermintCmd}} run --config ${PARENT_PATH}//{{index $.KeyperDirs 0}}/config/config.toml" C-m
+tmux send-keys "${SHUTTERMINT} run --config ${PARENT_PATH}/{{index $.KeyperDirs 0}}/config/config.toml" C-m
 sleep ${SHUTTERMINT_START_TIME}
 
 # query p2p address of keyper0 via RPC
@@ -711,7 +728,7 @@ sed -i "s/persistent_peers = \"\"/persistent_peers = \"${P2P_ADDR_0}\"/" {{$d}}/
 
 {{range $i, $d := $.KeyperDirs}}{{if $i}}
 tmux split-window -h
-tmux send-keys "{{$.ShuttermintCmd}} run --config ${PARENT_PATH}//{{$d}}/config/config.toml" C-m{{end}}{{end}}
+tmux send-keys "${SHUTTERMINT} run --config ${PARENT_PATH}/{{$d}}/config/config.toml" C-m{{end}}{{end}}
 sleep ${SHUTTERMINT_START_TIME}
 
 # start keypers and make them connect to their assigned shuttermint node
@@ -719,7 +736,7 @@ sleep ${SHUTTERMINT_START_TIME}
 RPC_URL=$(getRPCURL {{$d}})
 sed -i "s/ShuttermintURL = \".*/ShuttermintURL = \"http:\/\/${RPC_URL}\"/" {{$d}}/config.toml
 tmux split-window -h
-tmux send-keys "{{$.ShuttermintCmd}} keyper --config {{$d}}/config.toml" C-m{{end}}
+tmux send-keys "${SHUTTERMINT} keyper --config {{$d}}/config.toml" C-m{{end}}
 
 tmux select-layout even-horizontal
 exec tmux attach -t ${SESSION}
