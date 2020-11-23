@@ -5,6 +5,7 @@ package puredkg
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
@@ -66,7 +67,7 @@ type PureDKG struct {
 	Threshold   uint64
 	Keyper      KeyperIndex
 	Polynomial  *crypto.Polynomial
-	Commitment  []*crypto.Gammas
+	Commitments []*crypto.Gammas
 	Evals       []*big.Int
 	Accusations map[accusationKey]bool
 	Apologies   map[accusationKey]*big.Int
@@ -79,7 +80,7 @@ func NewPureDKG(eon uint64, numKeypers uint64, threshold uint64, keyper KeyperIn
 		NumKeypers:  numKeypers,
 		Threshold:   threshold,
 		Keyper:      keyper,
-		Commitment:  make([]*crypto.Gammas, numKeypers),
+		Commitments: make([]*crypto.Gammas, numKeypers),
 		Evals:       make([]*big.Int, numKeypers),
 		Accusations: make(map[accusationKey]bool),
 		Apologies:   make(map[accusationKey]*big.Int),
@@ -90,14 +91,40 @@ func (pure *PureDKG) setPhase(p phase) {
 	if p != pure.Phase+1 {
 		panic("wrong phase")
 	}
+	pure.Phase = p
+}
+
+func (pure *PureDKG) checkPhase(maxPhase phase) error {
+	if pure.Phase > maxPhase {
+		return fmt.Errorf("received msg for phase %d in phase %d", maxPhase, pure.Phase)
+	}
+	return nil
+}
+
+func (pure *PureDKG) checkEon(eon uint64) error {
+	if pure.Eon != eon {
+		return fmt.Errorf("received msg for eon %d instead of %d", eon, pure.Eon)
+	}
+	return nil
+}
+
+func (pure *PureDKG) checkEonAndPhase(eon uint64, maxPhase phase) error {
+	if err := pure.checkEon(eon); err != nil {
+		return err
+	}
+	if err := pure.checkPhase(maxPhase); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, error) {
-	polynomial, err := crypto.RandomPolynomial(rand.Reader, pure.Threshold)
+	pure.setPhase(dealing)
+	degree := crypto.DegreeFromThreshold(pure.Threshold)
+	polynomial, err := crypto.RandomPolynomial(rand.Reader, degree)
 	if err != nil {
 		return PolyCommitmentMsg{}, []PolyEvalMsg{}, err
 	}
-	pure.setPhase(dealing)
 	pure.Polynomial = polynomial
 
 	polyCommitmentMsg := PolyCommitmentMsg{
@@ -117,6 +144,8 @@ func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, err
 		})
 	}
 	return polyCommitmentMsg, polyEvalMsgs, nil
+
+	// XXX: should we self-send or rely on the owner to call HandleXXX?
 }
 
 func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
@@ -124,7 +153,7 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 	var accusations []AccusationMsg
 	var dealer KeyperIndex
 	for dealer = 0; dealer < pure.NumKeypers; dealer++ {
-		if !pure.verifyPolyEval(dealer) {
+		if pure.present(dealer) && !pure.verifyPolyEval(dealer) {
 			accusations = append(accusations, AccusationMsg{
 				Eon:     pure.Eon,
 				Accuser: pure.Keyper,
@@ -145,35 +174,83 @@ func (pure *PureDKG) Finalize() {
 	pure.setPhase(finalized)
 }
 
+func (pure *PureDKG) present(i KeyperIndex) bool {
+	return pure.Commitments[i] != nil
+}
+
 func (pure *PureDKG) verifyPolyEval(dealer KeyperIndex) bool {
-	if pure.Evals[dealer] == nil || pure.Commitment[dealer] == nil {
+	if pure.Evals[dealer] == nil || pure.Commitments[dealer] == nil {
 		return false
 	}
-	return crypto.VerifyPolyEval(int(dealer), pure.Evals[dealer], pure.Commitment[dealer], pure.Threshold)
+	return crypto.VerifyPolyEval(int(pure.Keyper), pure.Evals[dealer], pure.Commitments[dealer], pure.Threshold)
 }
 
 // HandlePolyCommitmentMsg
 func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
-	// XXX implement error handling
-	pure.Commitment[msg.Sender] = msg.Gammas
+	if err := pure.checkEonAndPhase(msg.Eon, dealing); err != nil {
+		return err
+	}
+	if pure.Commitments[msg.Sender] != nil {
+		return fmt.Errorf("received duplicate poly commitment msg")
+	}
+	if msg.Gammas.Degree() != crypto.DegreeFromThreshold(pure.Threshold) {
+		return fmt.Errorf(
+			"received poly commitment with unexpected degree %d instead of %d",
+			msg.Gammas.Degree(),
+			crypto.DegreeFromThreshold(pure.Threshold),
+		)
+	}
+
+	pure.Commitments[msg.Sender] = msg.Gammas
 	return nil
 }
 
 // HandlePolyEvalMsg
 func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
-	// XXX implement error handling
+	if err := pure.checkEonAndPhase(msg.Eon, dealing); err != nil {
+		return err
+	}
+	if msg.Receiver != pure.Keyper {
+		return fmt.Errorf("received poly eval msg for keyper %d instead of %d", msg.Receiver, pure.Keyper)
+	}
+	if pure.Evals[msg.Sender] != nil {
+		return fmt.Errorf("received duplicate poly eval msg")
+	}
+	if !crypto.ValidEval(msg.Eval) {
+		return fmt.Errorf("received invalid poly eval %d", msg.Eval)
+	}
+
 	pure.Evals[msg.Sender] = msg.Eval
 	return nil
 }
 
 // HandleAccusationMsg
 func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
-	pure.Accusations[accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}] = true
+	if err := pure.checkEonAndPhase(msg.Eon, accusing); err != nil {
+		return err
+	}
+	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
+	if _, ok := pure.Accusations[key]; ok {
+		return fmt.Errorf("received duplicate accusation")
+	}
+
+	pure.Accusations[key] = true
 	return nil
 }
 
 // HandleApologyMsg
 func (pure *PureDKG) HandleApologyMsg(msg ApologyMsg) error {
-	pure.Apologies[accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}] = msg.Eval
+	if err := pure.checkEonAndPhase(msg.Eon, apologizing); err != nil {
+		return err
+	}
+	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
+	if _, ok := pure.Apologies[key]; ok {
+		return fmt.Errorf("received duplicate apology")
+	}
+	if !crypto.ValidEval(msg.Eval) {
+		return fmt.Errorf("received apology with invalid poly eval %d", msg.Eval)
+	}
+
+	pure.Apologies[key] = msg.Eval
 	return nil
 }

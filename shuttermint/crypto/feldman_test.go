@@ -78,6 +78,28 @@ func TestEvalForKeyper(t *testing.T) {
 	require.NotZero(t, v0.Cmp(v1))
 }
 
+func TestValidEval(t *testing.T) {
+	valid := []*big.Int{
+		big.NewInt(0),
+		big.NewInt(1),
+		new(big.Int).Sub(bn256.Order, big.NewInt(2)),
+		new(big.Int).Sub(bn256.Order, big.NewInt(1)),
+	}
+
+	invalid := []*big.Int{
+		big.NewInt(-2),
+		big.NewInt(-1),
+		bn256.Order,
+		new(big.Int).Add(bn256.Order, big.NewInt(1)),
+	}
+	for _, v := range valid {
+		require.True(t, ValidEval(v))
+	}
+	for _, v := range invalid {
+		require.False(t, ValidEval(v))
+	}
+}
+
 func TestRandomPolynomial(t *testing.T) {
 	p, err := RandomPolynomial(rand.Reader, uint64(5))
 	require.Nil(t, err)

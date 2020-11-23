@@ -54,6 +54,11 @@ func (g *Gammas) Degree() uint64 {
 	return uint64(len(*g)) - 1
 }
 
+// DegreeFromThreshold returns the degree polynomials should have for the given threshold.
+func DegreeFromThreshold(threshold uint64) uint64 {
+	return threshold - 1
+}
+
 // Eval evaluates the polynomial at the given coordinate.
 func (p *Polynomial) Eval(x *big.Int) *big.Int {
 	// uses Horner's method
@@ -70,6 +75,17 @@ func (p *Polynomial) Eval(x *big.Int) *big.Int {
 func (p *Polynomial) EvalForKeyper(keyperIndex int) *big.Int {
 	x := KeyperX(keyperIndex)
 	return p.Eval(x)
+}
+
+// ValidEval checks if the given value is a valid polynomial evaluation, i.e., if it is in Z_q.
+func ValidEval(v *big.Int) bool {
+	if v.Sign() < 0 {
+		return false
+	}
+	if v.Cmp(bn256.Order) >= 0 {
+		return false
+	}
+	return true
 }
 
 // Gammas computes the gamma values for a given polynomial.
