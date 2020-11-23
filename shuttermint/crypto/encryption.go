@@ -7,13 +7,9 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
-
-// SymmetricKey is the key used to encrypt and decrypt messages.
-type SymmetricKey common.Hash
 
 // EncryptedMessage represents the full output of the encryption procedure.
 type EncryptedMessage struct {
