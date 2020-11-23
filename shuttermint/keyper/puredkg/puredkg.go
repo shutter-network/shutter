@@ -167,6 +167,16 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 func (pure *PureDKG) StartPhase3Apologizing() []ApologyMsg {
 	pure.setPhase(apologizing)
 	var apologies []ApologyMsg
+	for key := range pure.Accusations {
+		if key.Accused == pure.Keyper {
+			apologies = append(apologies, ApologyMsg{
+				Eon:     pure.Eon,
+				Accuser: key.Accuser,
+				Accused: key.Accused,
+				Eval:    pure.Polynomial.EvalForKeyper(int(key.Accuser)),
+			})
+		}
+	}
 	return apologies
 }
 
