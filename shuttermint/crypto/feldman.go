@@ -54,6 +54,16 @@ func (g *Gammas) Degree() uint64 {
 	return uint64(len(*g)) - 1
 }
 
+// ZeroGammas returns the zero value for gammas.
+func ZeroGammas(degree uint64) *Gammas {
+	points := []*bn256.G2{}
+	for i := uint64(0); i < degree+1; i++ {
+		points = append(points, new(bn256.G2).Set(zeroG2))
+	}
+	gammas := Gammas(points)
+	return &gammas
+}
+
 // DegreeFromThreshold returns the degree polynomials should have for the given threshold.
 func DegreeFromThreshold(threshold uint64) uint64 {
 	return threshold - 1

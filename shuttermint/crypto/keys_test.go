@@ -410,6 +410,4 @@ func TestFull(t *testing.T) {
 	require.Nil(t, err)
 	require.True(t, EqualG1((*bn256.G1)(epochSK), (*bn256.G1)(epochSK13)))
 	require.True(t, EqualG1((*bn256.G1)(epochSK), (*bn256.G1)(epochSK23)))
-
-	// TODO: add encryption/decryption when implemented
 }

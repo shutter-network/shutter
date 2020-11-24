@@ -195,6 +195,39 @@ func (pure *PureDKG) verifyPolyEval(dealer KeyperIndex) bool {
 	return crypto.VerifyPolyEval(int(pure.Keyper), pure.Evals[dealer], pure.Commitments[dealer], pure.Threshold)
 }
 
+// ComputeResult computes the eon secret key share and public key output of the DKG process. An
+// error is returned if this is called before finalization or if too few keypers participated.
+func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) {
+	if pure.Phase < finalized {
+		return nil, nil, fmt.Errorf("dkg is not finalized yet")
+	}
+
+	numParticipants := 0
+	commitments := []*crypto.Gammas{}
+	evals := []*big.Int{}
+	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
+		var c *crypto.Gammas
+		var eval *big.Int
+		if pure.verifyPolyEval(dealer) {
+			numParticipants++
+			c = pure.Commitments[dealer]
+			eval = pure.Evals[dealer]
+		} else {
+			c = crypto.ZeroGammas(crypto.DegreeFromThreshold(pure.Threshold))
+			eval = big.NewInt(0)
+		}
+		commitments = append(commitments, c)
+		evals = append(evals, eval)
+	}
+
+	if uint64(numParticipants) < pure.Threshold {
+		return nil, nil, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
+	}
+	eonSKShare := crypto.ComputeEonSKShare(evals)
+	eonPK := crypto.ComputeEonPK(commitments)
+	return eonSKShare, eonPK, nil
+}
+
 // HandlePolyCommitmentMsg
 func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 	if err := pure.checkEonAndPhase(msg.Eon, dealing); err != nil {

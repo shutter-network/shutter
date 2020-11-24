@@ -121,6 +121,14 @@ func TestGammas(t *testing.T) {
 	require.Equal(t, new(bn256.G2).ScalarBaseMult(big.NewInt(20)), (*gammas)[2])
 }
 
+func TestZeroGammas(t *testing.T) {
+	g := ZeroGammas(uint64(3))
+	require.Equal(t, 4, len(*g))
+	for _, p := range *g {
+		require.True(t, EqualG2(p, zeroG2))
+	}
+}
+
 func TestVerifyPolyEval(t *testing.T) {
 	threshold := uint64(2)
 

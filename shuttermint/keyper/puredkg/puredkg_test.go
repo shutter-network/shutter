@@ -3,6 +3,7 @@ package puredkg
 import (
 	"crypto/rand"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,18 @@ func TestPureDKGFull(t *testing.T) {
 	// finalize
 	for _, dkg := range dkgs {
 		dkg.Finalize()
+	}
+
+	skShares := []*crypto.EonSKShare{}
+	eonPKs := []*crypto.EonPK{}
+	for _, dkg := range dkgs {
+		skShare, eonPK, err := dkg.ComputeResult()
+		require.Nil(t, err)
+		skShares = append(skShares, skShare)
+		eonPKs = append(eonPKs, eonPK)
+	}
+	for _, eonPK := range eonPKs {
+		require.True(t, reflect.DeepEqual(eonPK, eonPKs[0]))
 	}
 }
 
@@ -321,4 +334,22 @@ func TestInvalidApologyHandling(t *testing.T) {
 	m4 := makeApologyMsg()
 	m4.Accuser = uint64(0)
 	require.NotNil(t, dkg.HandleApologyMsg(m4))
+}
+
+func TestGetResultErrors(t *testing.T) {
+	dkg := NewPureDKG(uint64(5), uint64(3), uint64(2), 1)
+	_, _, err := dkg.ComputeResult()
+	require.NotNil(t, err)
+	dkg.StartPhase1Dealing()
+	_, _, err = dkg.ComputeResult()
+	require.NotNil(t, err)
+	dkg.StartPhase2Accusing()
+	_, _, err = dkg.ComputeResult()
+	require.NotNil(t, err)
+	dkg.StartPhase3Apologizing()
+	_, _, err = dkg.ComputeResult()
+	require.NotNil(t, err)
+	dkg.Finalize()
+	_, _, err = dkg.ComputeResult()
+	require.NotNil(t, err)
 }
