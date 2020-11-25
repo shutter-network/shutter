@@ -343,37 +343,6 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	}
 }
 
-func (app *ShutterApp) deliverEncryptionKeyAttestation(
-	msg *shmsg.EncryptionKeyAttestation,
-	sender common.Address,
-) abcitypes.ResponseDeliverTx {
-	bs := app.getBatchState(msg.BatchIndex)
-	att := EncryptionKeyAttestation{
-		Sender:                sender,
-		EncryptionKey:         msg.Key,
-		BatchIndex:            msg.BatchIndex,
-		ConfigContractAddress: common.BytesToAddress(msg.ConfigContractAddress),
-		Signature:             msg.Signature,
-	}
-	err := bs.AddEncryptionKeyAttestation(att)
-	if err != nil {
-		return makeErrorResponse(fmt.Sprintf("Error in AddEncryptionKeyAttestation: %s", err))
-	}
-	app.BatchStates[msg.BatchIndex] = bs
-
-	keyperIndex, ok := bs.Config.KeyperIndex(sender)
-	if !ok {
-		// this is already checked in AddEncryptionKeyAttestation, but no harm in handling it twice
-		return notAKeyper(sender)
-	}
-
-	event := MakeEncryptionKeySignatureAddedEvent(keyperIndex, msg.BatchIndex, msg.Key, msg.Signature)
-	return abcitypes.ResponseDeliverTx{
-		Code:   0,
-		Events: []abcitypes.Event{event},
-	}
-}
-
 // isKeyper checks if the given address is a keyper in any config (current and previous ones)
 func (app *ShutterApp) isKeyper(a common.Address) bool {
 	for _, cfg := range app.Configs {
@@ -584,9 +553,6 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetBatchConfig() != nil {
 		return app.deliverBatchConfig(msg.GetBatchConfig(), sender)
-	}
-	if msg.GetEncryptionKeyAttestation() != nil {
-		return app.deliverEncryptionKeyAttestation(msg.GetEncryptionKeyAttestation(), sender)
 	}
 	if msg.GetBatchConfigStarted() != nil {
 		return app.deliverBatchConfigStarted(msg.GetBatchConfigStarted(), sender)

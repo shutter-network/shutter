@@ -66,23 +66,6 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		ev)
 }
 
-func TestMakeEventEncryptionSignatureAddedEvent(t *testing.T) {
-	var keyperIndex uint64 = 3
-	var batchIndex uint64 = 111
-	key := []byte("key")
-	sig := []byte("sig")
-	appEvent := app.MakeEncryptionKeySignatureAddedEvent(keyperIndex, batchIndex, key, sig)
-	ev, err := MakeEvent(appEvent)
-	expectedEvent := EncryptionKeySignatureAddedEvent{
-		KeyperIndex:   keyperIndex,
-		BatchIndex:    batchIndex,
-		EncryptionKey: key,
-		Signature:     sig,
-	}
-	require.Nil(t, err)
-	require.Equal(t, ev, expectedEvent)
-}
-
 func TestMakeNewDKGInstanceEvent(t *testing.T) {
 	var eon uint64 = 10
 	var configIndex uint64 = 20

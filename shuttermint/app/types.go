@@ -56,15 +56,6 @@ type ConfigVoting struct {
 	Votes      map[common.Address]int
 }
 
-// EncryptionKeyAttestation stores an attestation to an encryption key signed by one of the keypers.
-type EncryptionKeyAttestation struct {
-	EncryptionKey         []byte
-	Signature             []byte
-	BatchIndex            uint64
-	Sender                common.Address
-	ConfigContractAddress common.Address
-}
-
 // DecryptionSignature stores the decryption key signature created by one of the keypers.
 type DecryptionSignature struct {
 	Sender    common.Address
@@ -73,10 +64,9 @@ type DecryptionSignature struct {
 
 // The BatchState structure is used to manage the key generation process for a certain batch
 type BatchState struct {
-	BatchIndex                uint64
-	Config                    *BatchConfig
-	EncryptionKeyAttestations []EncryptionKeyAttestation
-	DecryptionSignatures      []DecryptionSignature
+	BatchIndex           uint64
+	Config               *BatchConfig
+	DecryptionSignatures []DecryptionSignature
 }
 
 // ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key

@@ -152,28 +152,6 @@ func MakePrivkeyGeneratedEvent(ev abcitypes.Event) (PrivkeyGeneratedEvent, error
 	return PrivkeyGeneratedEvent{uint64(b), privkey}, nil
 }
 
-// MakePubkeyGeneratedEvent creates a PubkeyGeneratedEvent from the given tendermint event of type
-// type "shutter.pubkey-generated"
-func MakePubkeyGeneratedEvent(ev abcitypes.Event) (PubkeyGeneratedEvent, error) {
-	if len(ev.Attributes) < 2 {
-		return PubkeyGeneratedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) || !bytes.Equal(ev.Attributes[1].Key, []byte("Pubkey")) {
-		return PubkeyGeneratedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
-
-	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
-	if err != nil {
-		return PubkeyGeneratedEvent{}, err
-	}
-	pubkey, err := app.DecodePubkeyFromEvent(string(ev.Attributes[1].Value))
-	if err != nil {
-		return PubkeyGeneratedEvent{}, err
-	}
-
-	return PubkeyGeneratedEvent{uint64(b), pubkey}, nil
-}
-
 // MakeBatchConfigEvent creates a BatchConfigEvent from the given tendermint event of type
 // "shutter.batch-config"
 func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
@@ -197,47 +175,6 @@ func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
 	}
 	keypers := app.DecodeAddressesFromEvent(string(ev.Attributes[2].Value))
 	return BatchConfigEvent{uint64(b), uint64(threshold), keypers}, nil
-}
-
-// MakeEncryptionKeySignatureAddedEvent creates a EncryptionKeySignatureAddedEvent from the given
-// tendermint event of type "shutter.encryption-key-signature-added"
-func MakeEncryptionKeySignatureAddedEvent(ev abcitypes.Event) (EncryptionKeySignatureAddedEvent, error) {
-	if len(ev.Attributes) < 4 {
-		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("KeyperIndex")) ||
-		!bytes.Equal(ev.Attributes[1].Key, []byte("BatchIndex")) ||
-		!bytes.Equal(ev.Attributes[2].Key, []byte("EncryptionKey")) ||
-		!bytes.Equal(ev.Attributes[3].Key, []byte("Signature")) {
-		return EncryptionKeySignatureAddedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
-
-	keyperIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
-	if err != nil {
-		return EncryptionKeySignatureAddedEvent{}, err
-	}
-
-	batchIndex, err := strconv.Atoi(string(ev.Attributes[1].Value))
-	if err != nil {
-		return EncryptionKeySignatureAddedEvent{}, err
-	}
-
-	key, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
-	if err != nil {
-		return EncryptionKeySignatureAddedEvent{}, err
-	}
-
-	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[3].Value))
-	if err != nil {
-		return EncryptionKeySignatureAddedEvent{}, err
-	}
-
-	return EncryptionKeySignatureAddedEvent{
-		KeyperIndex:   uint64(keyperIndex),
-		BatchIndex:    uint64(batchIndex),
-		EncryptionKey: key,
-		Signature:     signature,
-	}, nil
 }
 
 // MakeDecryptionSignatureEvent creates a DecryptionSignatureEvent from the given tendermint event
@@ -324,8 +261,7 @@ func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 	return res, nil
 }
 
-// MakeEvent creates an Event from the given tendermint event. It will return a
-// PubkeyGeneratedEvent, PrivkeyGeneratedEvent or BatchConfigEvent based on the event's type.
+// MakeEvent creates an Event from the given tendermint event.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	if ev.Type == "shutter.check-in" {
 		return MakeCheckInEvent(ev)
@@ -333,14 +269,8 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	if ev.Type == "shutter.privkey-generated" {
 		return MakePrivkeyGeneratedEvent(ev)
 	}
-	if ev.Type == "shutter.pubkey-generated" {
-		return MakePubkeyGeneratedEvent(ev)
-	}
 	if ev.Type == "shutter.batch-config" {
 		return MakeBatchConfigEvent(ev)
-	}
-	if ev.Type == "shutter.encryption-key-signature-added" {
-		return MakeEncryptionKeySignatureAddedEvent(ev)
 	}
 	if ev.Type == "shutter.decryption-signature" {
 		return MakeDecryptionSignatureEvent(ev)

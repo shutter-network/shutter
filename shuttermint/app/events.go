@@ -79,24 +79,6 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	}
 }
 
-// MakeEncryptionKeySignatureAddedEvent creates a 'shutter.encryption-key-signature-added'
-// Tendermint event.
-func MakeEncryptionKeySignatureAddedEvent(keyperIndex uint64, batchIndex uint64, encryptionKey []byte, signature []byte) abcitypes.Event {
-	encodedKeyperIndex := []byte(fmt.Sprintf("%d", keyperIndex))
-	encodedBatchIndex := []byte(fmt.Sprintf("%d", batchIndex))
-	encodedKey := []byte(base64.RawURLEncoding.EncodeToString(encryptionKey))
-	encodedSignature := []byte(base64.RawURLEncoding.EncodeToString(signature))
-	return abcitypes.Event{
-		Type: "shutter.encryption-key-signature-added",
-		Attributes: []abcitypes.EventAttribute{
-			{Key: []byte("KeyperIndex"), Value: encodedKeyperIndex, Index: true},
-			{Key: []byte("BatchIndex"), Value: encodedBatchIndex, Index: true},
-			{Key: []byte("EncryptionKey"), Value: encodedKey},
-			{Key: []byte("Signature"), Value: encodedSignature},
-		},
-	}
-}
-
 // MakeNewDKGInstanceEvent creates a new event to be emitted whenever a new dkg process is kicked
 // off.
 func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {

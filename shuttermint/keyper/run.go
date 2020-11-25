@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -30,26 +29,6 @@ func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg
 			PublicKeyCommitment: &shmsg.PublicKeyCommitment{
 				BatchIndex: batchIndex,
 				Commitment: crypto.FromECDSAPub(&privkey.PublicKey),
-			},
-		},
-	}
-}
-
-// NewEncryptionKeyAttestation creates a new EncryptionKeyAttestation with the given values wrapped
-// in a shmsg.Message
-func NewEncryptionKeyAttestation(
-	batchIndex uint64,
-	encryptionKey *ecdsa.PublicKey,
-	configContractAddress common.Address,
-	signature []byte,
-) *shmsg.Message {
-	return &shmsg.Message{
-		Payload: &shmsg.Message_EncryptionKeyAttestation{
-			EncryptionKeyAttestation: &shmsg.EncryptionKeyAttestation{
-				BatchIndex:            batchIndex,
-				Key:                   crypto.FromECDSAPub(encryptionKey),
-				ConfigContractAddress: configContractAddress.Bytes(),
-				Signature:             signature,
 			},
 		},
 	}
@@ -88,45 +67,29 @@ func NewBatchState(
 	cipherExecutionParams chan CipherExecutionParams,
 ) BatchState {
 	numKeypers := len(bp.BatchConfig.Keypers)
-	pubkeyGenerated := make(chan PubkeyGeneratedEvent, 1)
 	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
-	encryptionKeySignatureAdded := make(chan EncryptionKeySignatureAddedEvent, numKeypers)
 	decryptionSignatureAdded := make(chan DecryptionSignatureEvent, numKeypers)
 	return BatchState{
-		BatchParams:                 bp,
-		KeyperConfig:                kc,
-		MessageSender:               ms,
-		ContractCaller:              cc,
-		pubkeyGenerated:             pubkeyGenerated,
-		privkeyGenerated:            privkeyGenerated,
-		encryptionKeySignatureAdded: encryptionKeySignatureAdded,
-		decryptionSignatureAdded:    decryptionSignatureAdded,
-		cipherExecutionParams:       cipherExecutionParams,
-		startBlockSeen:              make(chan struct{}),
-		endBlockSeen:                make(chan struct{}),
-		executionTimeoutBlockSeen:   make(chan struct{}),
+		BatchParams:               bp,
+		KeyperConfig:              kc,
+		MessageSender:             ms,
+		ContractCaller:            cc,
+		privkeyGenerated:          privkeyGenerated,
+		decryptionSignatureAdded:  decryptionSignatureAdded,
+		cipherExecutionParams:     cipherExecutionParams,
+		startBlockSeen:            make(chan struct{}),
+		endBlockSeen:              make(chan struct{}),
+		executionTimeoutBlockSeen: make(chan struct{}),
 	}
 }
 
 func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 	switch e := ev.(type) {
-	case PubkeyGeneratedEvent:
-		select {
-		case batch.pubkeyGenerated <- e:
-		default:
-			fmt.Printf("Unexpected error: pubkeyGenerated channel blocked")
-		}
 	case PrivkeyGeneratedEvent:
 		select {
 		case batch.privkeyGenerated <- e:
 		default:
 			fmt.Printf("Unexpected error: privkeyGenerated channel blocked")
-		}
-	case EncryptionKeySignatureAddedEvent:
-		select {
-		case batch.encryptionKeySignatureAdded <- e:
-		default:
-			fmt.Printf("Unexpected error: encryptionKeySignatureAdded channel blocked")
 		}
 	case DecryptionSignatureEvent:
 		select {
@@ -136,20 +99,6 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 		}
 	default:
 		panic("unknown type")
-	}
-}
-
-// waitPubkeyGenerated waits for a PubkeyGeneratedEvent to be put into the pubkeyGenerated channel.
-// We do expect exactly one instance to be put there via a call to dispatchShuttermintEvent by the
-// keyper from a different goroutine.
-func (batch *BatchState) waitPubkeyGenerated() (PubkeyGeneratedEvent, error) {
-	select {
-	case ev := <-batch.pubkeyGenerated:
-		log.Printf("Received PubkeyGenerated event for batch #%d", batch.BatchParams.BatchIndex)
-		return ev, nil
-	case <-batch.endBlockSeen:
-		log.Printf("Timeout while waiting for public key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
-		return PubkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for public key generation to finish")
 	}
 }
 
@@ -172,41 +121,6 @@ func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
 	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
 	log.Printf("Generated pubkey for batch #%d", batch.BatchParams.BatchIndex)
 	return batch.MessageSender.SendMessage(context.TODO(), msg)
-}
-
-func (batch *BatchState) sendEncryptionKeySignature(encryptionKey *ecdsa.PublicKey) error {
-	preimage := app.EncryptionKeyPreimage(
-		crypto.FromECDSAPub(encryptionKey),
-		batch.BatchParams.BatchIndex,
-		batch.KeyperConfig.ConfigContractAddress,
-	)
-	hash := crypto.Keccak256Hash(preimage)
-	sig, err := crypto.Sign(hash.Bytes(), batch.KeyperConfig.SigningKey)
-	if err != nil {
-		return err
-	}
-	msg := NewEncryptionKeyAttestation(
-		batch.BatchParams.BatchIndex,
-		encryptionKey,
-		batch.KeyperConfig.ConfigContractAddress,
-		sig,
-	)
-	return batch.MessageSender.SendMessage(context.TODO(), msg)
-}
-
-func (batch *BatchState) collectEncryptionKeySignatureAddedEvents() ([]EncryptionKeySignatureAddedEvent, error) {
-	events := []EncryptionKeySignatureAddedEvent{}
-	for {
-		select {
-		case ev := <-batch.encryptionKeySignatureAdded:
-			events = append(events, ev)
-			if len(events) >= int(batch.BatchParams.BatchConfig.Threshold) {
-				return events, nil
-			}
-		case <-batch.endBlockSeen:
-			return events, fmt.Errorf("timeout while waiting for encryption key signatures")
-		}
-	}
 }
 
 func (batch *BatchState) collectDecryptionSignatureEvents(
@@ -242,46 +156,6 @@ func (batch *BatchState) collectDecryptionSignatureEvents(
 			return events, fmt.Errorf("timeout while waiting for decryption signatures")
 		}
 	}
-}
-
-func (batch *BatchState) broadcastEncryptionKey(key *ecdsa.PrivateKey) error {
-	encryptionKey := crypto.FromECDSAPub(&key.PublicKey)
-	bp := batch.BatchParams
-	keyperIndex, ok := bp.BatchConfig.KeyperIndex(batch.KeyperAddress())
-	if !ok {
-		return fmt.Errorf("not a keyper") // XXX we really should lookup our address earlier!
-	}
-
-	events, err := batch.collectEncryptionKeySignatureAddedEvents()
-	if err != nil {
-		return err
-	}
-	indices := []uint64{}
-	sigs := [][]byte{}
-	for _, ev := range events {
-		sigs = append(sigs, ev.Signature)
-		indices = append(indices, ev.KeyperIndex)
-	}
-
-	auth, err := batch.ContractCaller.Auth()
-	if err != nil {
-		return err
-	}
-	auth.GasLimit = 100000
-	tx, err := batch.ContractCaller.KeyBroadcastContract.BroadcastEncryptionKey2(
-		auth,
-		keyperIndex,
-		batch.BatchParams.BatchIndex,
-		encryptionKey,
-		indices,
-		sigs,
-	)
-	if err != nil {
-		return err
-	}
-	log.Printf("Encryption key broadcasted with tx %s", tx.Hash().Hex())
-
-	return nil
 }
 
 func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
@@ -373,24 +247,6 @@ func (batch *BatchState) Run() {
 	err = batch.sendPublicKeyCommitment(key)
 	if err != nil {
 		log.Printf("Error while trying to send message: %s", err)
-		return
-	}
-
-	ev, err := batch.waitPubkeyGenerated()
-	if err != nil {
-		log.Printf("Error while waiting for public key generation: %s", err)
-		return
-	}
-
-	err = batch.sendEncryptionKeySignature(ev.Pubkey)
-	if err != nil {
-		log.Printf("Error while trying to send encryption key signature: %s", err)
-		return
-	}
-
-	err = batch.broadcastEncryptionKey(key)
-	if err != nil {
-		log.Printf("Error while trying to broadcast encryption key: %s", err)
 		return
 	}
 
