@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -22,10 +23,10 @@ var version string = "(unknown)"
 
 func makeMessage() *shmsg.Message {
 	return &shmsg.Message{
-		Payload: &shmsg.Message_PublicKeyCommitment{
-			PublicKeyCommitment: &shmsg.PublicKeyCommitment{
-				BatchIndex: 1,
-				Commitment: []byte("foobar"),
+		Payload: &shmsg.Message_CheckIn{
+			CheckIn: &shmsg.CheckIn{
+				ValidatorPublicKey:  bytes.Repeat([]byte("x"), 32),
+				EncryptionPublicKey: bytes.Repeat([]byte("y"), 33),
 			},
 		},
 	}

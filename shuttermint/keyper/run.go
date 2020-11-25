@@ -22,30 +22,6 @@ func SleepUntil(t time.Time) {
 	time.Sleep(time.Until(t))
 }
 
-// NewPublicKeyCommitment creates a new PublicKeyCommitment with the given values wrapped in a shmsg.Message
-func NewPublicKeyCommitment(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
-	return &shmsg.Message{
-		Payload: &shmsg.Message_PublicKeyCommitment{
-			PublicKeyCommitment: &shmsg.PublicKeyCommitment{
-				BatchIndex: batchIndex,
-				Commitment: crypto.FromECDSAPub(&privkey.PublicKey),
-			},
-		},
-	}
-}
-
-// NewSecretShare creates a new SecretShare with the given values wrapped in a shmsg.Message
-func NewSecretShare(batchIndex uint64, privkey *ecdsa.PrivateKey) *shmsg.Message {
-	return &shmsg.Message{
-		Payload: &shmsg.Message_SecretShare{
-			SecretShare: &shmsg.SecretShare{
-				BatchIndex: batchIndex,
-				Privkey:    crypto.FromECDSA(privkey),
-			},
-		},
-	}
-}
-
 // NewDecryptionSignature creates a new DecryptionSignature message.
 func NewDecryptionSignature(batchIndex uint64, signature []byte) *shmsg.Message {
 	return &shmsg.Message{
@@ -117,12 +93,6 @@ func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
 	}
 }
 
-func (batch *BatchState) sendPublicKeyCommitment(key *ecdsa.PrivateKey) error {
-	msg := NewPublicKeyCommitment(batch.BatchParams.BatchIndex, key)
-	log.Printf("Generated pubkey for batch #%d", batch.BatchParams.BatchIndex)
-	return batch.MessageSender.SendMessage(context.TODO(), msg)
-}
-
 func (batch *BatchState) collectDecryptionSignatureEvents(
 	cipherBatchHash common.Hash,
 	decryptionKey *ecdsa.PrivateKey,
@@ -156,12 +126,6 @@ func (batch *BatchState) collectDecryptionSignatureEvents(
 			return events, fmt.Errorf("timeout while waiting for decryption signatures")
 		}
 	}
-}
-
-func (batch *BatchState) sendSecretShare(key *ecdsa.PrivateKey) error {
-	msg := NewSecretShare(batch.BatchParams.BatchIndex, key)
-	log.Printf("Generated privkey for batch #%d", batch.BatchParams.BatchIndex)
-	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 
 func (batch *BatchState) downloadTransactions() ([][]byte, error) {
@@ -235,28 +199,11 @@ func (batch *BatchState) waitForEndBlock() {
 
 // Run runs the key generation for the given batch
 func (batch *BatchState) Run() {
-	key, err := crypto.GenerateKey()
-	if err != nil {
-		log.Printf("Error while generating key: %s", err)
-		return
-	}
 	log.Printf("Waiting for start block %d for batch #%d", batch.BatchParams.StartBlock, batch.BatchParams.BatchIndex)
 	batch.waitForStartBlock()
 	log.Printf("Starting key generation process for batch #%d", batch.BatchParams.BatchIndex)
 
-	err = batch.sendPublicKeyCommitment(key)
-	if err != nil {
-		log.Printf("Error while trying to send message: %s", err)
-		return
-	}
-
 	batch.waitForEndBlock()
-
-	err = batch.sendSecretShare(key)
-	if err != nil {
-		log.Printf("Error while trying to send secret share: %s", err)
-		return
-	}
 
 	privkeyGeneratedEvent, err := batch.waitPrivkeyGenerated()
 	if err != nil {

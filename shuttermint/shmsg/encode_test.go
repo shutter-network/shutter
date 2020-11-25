@@ -1,6 +1,7 @@
 package shmsg
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -9,10 +10,10 @@ import (
 
 func makeMessage() *Message {
 	return &Message{
-		Payload: &Message_PublicKeyCommitment{
-			PublicKeyCommitment: &PublicKeyCommitment{
-				BatchIndex: 1,
-				Commitment: []byte("foobar"),
+		Payload: &Message_CheckIn{
+			CheckIn: &CheckIn{
+				ValidatorPublicKey:  bytes.Repeat([]byte("x"), 32),
+				EncryptionPublicKey: bytes.Repeat([]byte("y"), 33),
 			},
 		},
 	}
@@ -28,9 +29,9 @@ func TestEncodeDecode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got error while decoding: %s", err)
 	}
-	t.Logf("decoded commitment: %+v", msg.GetPublicKeyCommitment())
+	t.Logf("decoded check in: %+v", msg.GetCheckIn())
 
-	if msg.GetPublicKeyCommitment() == nil {
+	if msg.GetCheckIn() == nil {
 		t.Fatal("got no public key commitment")
 	}
 }
@@ -56,7 +57,7 @@ func TestSignMessage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get message: %s", err)
 	}
-	if msg.GetPublicKeyCommitment() == nil {
-		t.Fatal("got no public key commitment")
+	if msg.GetCheckIn() == nil {
+		t.Fatal("got no check in")
 	}
 }

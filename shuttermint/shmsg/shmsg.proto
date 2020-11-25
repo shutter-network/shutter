@@ -5,18 +5,6 @@ import "shmsg/shmsg_truth.proto";
 
 option go_package = ".;shmsg";
 
-/* obsolete, will be removed */
-message PublicKeyCommitment {
-        uint64 batchIndex = 1;
-        bytes commitment = 2;
-}
-
-/* obsolete, will be removed */
-message SecretShare {
-        uint64 batchIndex = 1;
-        bytes privkey = 2;
-}
-
 message BatchConfig {
         uint64 start_batch_index = 1;
         repeated bytes keypers = 2;
@@ -25,13 +13,6 @@ message BatchConfig {
         uint64 config_index = 5;
         bool started = 6;
         bool validatorsUpdated = 7;
-}
-
-message EncryptionKeyAttestation {
-        uint64 batchIndex = 1;
-        bytes key = 2;
-        bytes configContractAddress = 3;
-        bytes signature = 4;
 }
 
 message BatchConfigStarted {
@@ -51,10 +32,7 @@ message DecryptionSignature {
 
 message Message {
         oneof payload {
-                PublicKeyCommitment public_key_commitment = 1;
-                SecretShare secret_share = 3;
                 BatchConfig batch_config = 4;
-                EncryptionKeyAttestation encryption_key_attestation = 5;
                 BatchConfigStarted batch_config_started = 6;
                 CheckIn check_in = 7;
                 DecryptionSignature decryption_signature = 8;
