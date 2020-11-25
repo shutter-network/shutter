@@ -130,28 +130,6 @@ func MakeCheckInEvent(ev abcitypes.Event) (CheckInEvent, error) {
 	}, nil
 }
 
-// MakePrivkeyGeneratedEvent creates a PrivkeyGeneratedEvent from the given tendermint event of
-// type "shutter.privkey-generated"
-func MakePrivkeyGeneratedEvent(ev abcitypes.Event) (PrivkeyGeneratedEvent, error) {
-	if len(ev.Attributes) < 2 {
-		return PrivkeyGeneratedEvent{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) || !bytes.Equal(ev.Attributes[1].Key, []byte("Privkey")) {
-		return PrivkeyGeneratedEvent{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
-
-	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
-	if err != nil {
-		return PrivkeyGeneratedEvent{}, err
-	}
-	privkey, err := app.DecodePrivkeyFromEvent(string(ev.Attributes[1].Value))
-	if err != nil {
-		return PrivkeyGeneratedEvent{}, err
-	}
-
-	return PrivkeyGeneratedEvent{uint64(b), privkey}, nil
-}
-
 // MakeBatchConfigEvent creates a BatchConfigEvent from the given tendermint event of type
 // "shutter.batch-config"
 func MakeBatchConfigEvent(ev abcitypes.Event) (BatchConfigEvent, error) {
@@ -265,9 +243,6 @@ func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	if ev.Type == "shutter.check-in" {
 		return MakeCheckInEvent(ev)
-	}
-	if ev.Type == "shutter.privkey-generated" {
-		return MakePrivkeyGeneratedEvent(ev)
 	}
 	if ev.Type == "shutter.batch-config" {
 		return MakeBatchConfigEvent(ev)

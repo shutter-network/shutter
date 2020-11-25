@@ -43,14 +43,12 @@ func NewBatchState(
 	cipherExecutionParams chan CipherExecutionParams,
 ) BatchState {
 	numKeypers := len(bp.BatchConfig.Keypers)
-	privkeyGenerated := make(chan PrivkeyGeneratedEvent, 1)
 	decryptionSignatureAdded := make(chan DecryptionSignatureEvent, numKeypers)
 	return BatchState{
 		BatchParams:               bp,
 		KeyperConfig:              kc,
 		MessageSender:             ms,
 		ContractCaller:            cc,
-		privkeyGenerated:          privkeyGenerated,
 		decryptionSignatureAdded:  decryptionSignatureAdded,
 		cipherExecutionParams:     cipherExecutionParams,
 		startBlockSeen:            make(chan struct{}),
@@ -61,12 +59,6 @@ func NewBatchState(
 
 func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 	switch e := ev.(type) {
-	case PrivkeyGeneratedEvent:
-		select {
-		case batch.privkeyGenerated <- e:
-		default:
-			fmt.Printf("Unexpected error: privkeyGenerated channel blocked")
-		}
 	case DecryptionSignatureEvent:
 		select {
 		case batch.decryptionSignatureAdded <- e:
@@ -75,21 +67,6 @@ func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
 		}
 	default:
 		panic("unknown type")
-	}
-}
-
-// waitPrivkeyGenerated waits for a PrivkeyGeneratedEvent to be put into the privkeyGenerated
-// channel. We do expect exactly one instance to be put there via a call to
-// dispatchShuttermintEvent by the keyper from a different goroutine. The call times out when with
-// the execution timeout.
-func (batch *BatchState) waitPrivkeyGenerated() (PrivkeyGeneratedEvent, error) {
-	select {
-	case ev := <-batch.privkeyGenerated:
-		log.Printf("Received PrivkeyGenerated event for batch #%d", batch.BatchParams.BatchIndex)
-		return ev, nil
-	case <-batch.executionTimeoutBlockSeen:
-		log.Printf("Timeout while waiting for private key generation of batch #%d to finish", batch.BatchParams.BatchIndex)
-		return PrivkeyGeneratedEvent{}, fmt.Errorf("timeout while waiting for private key generation to finish")
 	}
 }
 
@@ -205,18 +182,17 @@ func (batch *BatchState) Run() {
 
 	batch.waitForEndBlock()
 
-	privkeyGeneratedEvent, err := batch.waitPrivkeyGenerated()
-	if err != nil {
-		log.Printf("Error while waiting for decryption key generation: %s", err)
-		return
-	}
-	decryptionKey := privkeyGeneratedEvent.Privkey
-
 	cipherTxs, err := batch.downloadTransactions()
 	cipherBatchHash := ComputeBatchHash(cipherTxs)
 	if err != nil {
 		log.Printf("Error while downloading transactions: %s", err)
 		return
+	}
+
+	// XXX use random key for decryption until proper key generation is implemented
+	decryptionKey, err := crypto.GenerateKey()
+	if err != nil {
+		log.Printf("Error generating decryption key")
 	}
 
 	decryptedTxs := DecryptTransactions(decryptionKey, cipherTxs)

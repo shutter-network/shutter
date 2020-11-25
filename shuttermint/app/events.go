@@ -199,22 +199,6 @@ func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	return crypto.UnmarshalPubkey(data)
 }
 
-// encodePrivkeyForEvent encodes the given PrivateKey as a string suitable for putting it into a
-// tendermint event
-func encodePrivkeyForEvent(privkey *ecdsa.PrivateKey) string {
-	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSA(privkey))
-}
-
-// DecodePrivkeyFromEvent decodes a private key from a tendermint event (this is the reverse
-// operation of encodePrivkeyForEvent)
-func DecodePrivkeyFromEvent(s string) (*ecdsa.PrivateKey, error) {
-	data, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.ToECDSA(data)
-}
-
 // encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
 	var hex []string
