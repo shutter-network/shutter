@@ -52,6 +52,13 @@ func init() {
 // CheckTx checks if a transaction is valid. If return Code != 0, it will be rejected from the
 // mempool and hence not broadcasted to other peers and not included in a proposal block.
 func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+	signer, msg, err := app.decodeTx(req.Tx)
+	if err != nil {
+		return abcitypes.ResponseCheckTx{Code: 1}
+	}
+	if !app.CheckTxState.AddTx(signer, msg) {
+		return abcitypes.ResponseCheckTx{Code: 1}
+	}
 	return abcitypes.ResponseCheckTx{Code: 0, GasWanted: 1}
 }
 
@@ -64,6 +71,7 @@ func NewShutterApp() *ShutterApp {
 		Voting:       NewConfigVoting(),
 		Identities:   make(map[common.Address]ValidatorPubkey),
 		StartedVotes: make(map[common.Address]bool),
+		CheckTxState: NewCheckTxState(),
 	}
 }
 
@@ -132,7 +140,20 @@ func (app *ShutterApp) addConfig(cfg BatchConfig) error {
 	}
 	log.Printf("adding config %d", cfg.ConfigIndex)
 	app.Configs = append(app.Configs, &cfg)
+	app.updateCheckTxMembers()
 	return nil
+}
+
+// updateCheckTxMembers sets the member set of the check tx state to the set of known keypers.
+// This should be called whenever a new config is added.
+func (app *ShutterApp) updateCheckTxMembers() {
+	// This potentially double counts some keypers, but that's ok as CheckTxState.SetMembers
+	// ignores duplicates.
+	members := []common.Address{}
+	for _, c := range app.Configs {
+		members = append(members, c.Keypers...)
+	}
+	app.CheckTxState.SetMembers(members)
 }
 
 // getBatchState returns the BatchState for the given batchIndex
@@ -215,6 +236,9 @@ func (app *ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.Respo
 		}
 		app.Validators = validators
 		app.Configs = []*BatchConfig{&bc}
+
+		app.CheckTxState = NewCheckTxState()
+		app.updateCheckTxMembers()
 	} else if !reflect.DeepEqual(bc, *app.Configs[0]) {
 		log.Fatalf("Mismatch between stored app state and initial app state, stored=%+v initial=%+v", app.Configs[0], bc)
 	}
@@ -227,9 +251,9 @@ func (ShutterApp) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Response
 
 // decodeTx decodes the given transaction.  It's kind of strange that we have do URL decode the
 // message outselves instead of tendermint doing it for us.
-func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Address, msg *shmsg.Message, err error) {
+func (ShutterApp) decodeTx(tx []byte) (signer common.Address, msg *shmsg.Message, err error) {
 	var signedMsg []byte
-	signedMsg, err = base64.RawURLEncoding.DecodeString(string(req.Tx))
+	signedMsg, err = base64.RawURLEncoding.DecodeString(string(tx))
 	if err != nil {
 		return
 	}
@@ -247,7 +271,7 @@ func (ShutterApp) decodeTx(req abcitypes.RequestDeliverTx) (signer common.Addres
 }
 
 func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	signer, msg, err := app.decodeTx(req)
+	signer, msg, err := app.decodeTx(req.Tx)
 	if err != nil {
 		msg := fmt.Sprintf("Error while decoding transaction: %s", err)
 		log.Print(msg)
@@ -699,6 +723,8 @@ func (app *ShutterApp) maybePersistToDisk() error {
 }
 
 func (app *ShutterApp) Commit() abcitypes.ResponseCommit {
+	app.CheckTxState.Reset()
+
 	err := app.maybePersistToDisk()
 	if err != nil {
 		log.Printf("Error: cannot persist state to disk: %s", err)

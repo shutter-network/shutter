@@ -105,6 +105,13 @@ type ShutterApp struct {
 	Validators      Powermap
 	EONCounter      uint64
 	DevMode         bool
+	CheckTxState    *CheckTxState
+}
+
+// CheckTxState is a part of the state used by CheckTx calls that is reset at every commit.
+type CheckTxState struct {
+	Members  map[common.Address]bool
+	TxCounts map[common.Address]int
 }
 
 // DKGInstance manages the state of one eon key generation instance.
