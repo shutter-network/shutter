@@ -7,6 +7,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
@@ -180,14 +181,14 @@ func TestGobDKG(t *testing.T) {
 	err = dkg.RegisterAccusationMsg(AccusationMsg{
 		Sender:  keypers[0],
 		Eon:     eon,
-		Accused: keypers[1],
+		Accused: []common.Address{keypers[1]},
 	})
 	require.Nil(t, err)
 
 	err = dkg.RegisterApologyMsg(ApologyMsg{
-		Sender:  keypers[0],
-		Eon:     eon,
-		Accuser: keypers[1],
+		Sender:   keypers[0],
+		Eon:      eon,
+		Accusers: []common.Address{keypers[1]},
 	})
 	require.Nil(t, err)
 
@@ -198,9 +199,10 @@ func TestGobDKG(t *testing.T) {
 	require.Nil(t, err)
 
 	err = dkg.RegisterPolyEvalMsg(PolyEvalMsg{
-		Sender:   keypers[0],
-		Eon:      eon,
-		Receiver: keypers[1],
+		Sender:         keypers[0],
+		Eon:            eon,
+		Receivers:      []common.Address{keypers[1]},
+		EncryptedEvals: [][]byte{[]byte{}},
 	})
 	require.Nil(t, err)
 

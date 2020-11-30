@@ -21,22 +21,22 @@ func TestMessageParsing(t *testing.T) {
 
 	t.Run("ParsePolyEvalMsg", func(t *testing.T) {
 		smsg := shmsg.PolyEvalMsg{
-			Eon:           eon,
-			Receiver:      anotherAddressBytes,
-			EncryptedEval: data,
+			Eon:            eon,
+			Receivers:      [][]byte{anotherAddressBytes},
+			EncryptedEvals: [][]byte{data},
 		}
 		msg, err := ParsePolyEvalMsg(&smsg, sender)
 		require.Nil(t, err)
 		require.Equal(t, sender, msg.Sender)
 		require.Equal(t, eon, msg.Eon)
-		require.Equal(t, anotherAddress, msg.Receiver)
-		require.Equal(t, data, msg.EncryptedEval)
+		require.Equal(t, anotherAddress, msg.Receivers[0])
+		require.Equal(t, data, msg.EncryptedEvals[0])
 
 		// invalid receiver
 		smsg = shmsg.PolyEvalMsg{
-			Eon:           eon,
-			Receiver:      badAddressBytes,
-			EncryptedEval: data,
+			Eon:            eon,
+			Receivers:      [][]byte{badAddressBytes},
+			EncryptedEvals: [][]byte{data},
 		}
 		_, err = ParsePolyEvalMsg(&smsg, sender)
 		require.NotNil(t, err)
@@ -56,18 +56,18 @@ func TestMessageParsing(t *testing.T) {
 	t.Run("ParseAccusationMsg", func(t *testing.T) {
 		smsg := shmsg.AccusationMsg{
 			Eon:     eon,
-			Accused: anotherAddressBytes,
+			Accused: [][]byte{anotherAddressBytes},
 		}
 		msg, err := ParseAccusationMsg(&smsg, sender)
 		require.Nil(t, err)
 		require.Equal(t, sender, msg.Sender)
 		require.Equal(t, eon, msg.Eon)
-		require.Equal(t, anotherAddress, msg.Accused)
+		require.Equal(t, anotherAddress, msg.Accused[0])
 
 		// invalid accused
 		smsg = shmsg.AccusationMsg{
 			Eon:     eon,
-			Accused: badAddressBytes,
+			Accused: [][]byte{badAddressBytes},
 		}
 		_, err = ParseAccusationMsg(&smsg, sender)
 		require.NotNil(t, err)
@@ -75,21 +75,21 @@ func TestMessageParsing(t *testing.T) {
 
 	t.Run("ParseApologyMsg", func(t *testing.T) {
 		smsg := shmsg.ApologyMsg{
-			Eon:      eon,
-			Accuser:  anotherAddressBytes,
-			PolyEval: []byte{},
+			Eon:       eon,
+			Accusers:  [][]byte{anotherAddressBytes},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		msg, err := ParseApologyMsg(&smsg, sender)
 		require.Nil(t, err)
 		require.Equal(t, sender, msg.Sender)
 		require.Equal(t, eon, msg.Eon)
-		require.Equal(t, anotherAddress, msg.Accuser)
+		require.Equal(t, anotherAddress, msg.Accusers[0])
 
 		// invalid accuser
 		smsg = shmsg.ApologyMsg{
-			Eon:      eon,
-			Accuser:  badAddressBytes,
-			PolyEval: []byte{},
+			Eon:       eon,
+			Accusers:  [][]byte{badAddressBytes},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		_, err = ParseApologyMsg(&smsg, sender)
 		require.NotNil(t, err)

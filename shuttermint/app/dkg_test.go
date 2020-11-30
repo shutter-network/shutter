@@ -24,65 +24,71 @@ func TestRegisterMsgs(t *testing.T) {
 
 		// fail if wrong eon
 		msg := PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon + 1,
-			Receiver: keypers[1],
+			Sender:         keypers[0],
+			Eon:            eon + 1,
+			Receivers:      []common.Address{keypers[1]},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err := dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.PolyEvalMsgs[nonKeyper][nonKeyper]
+		_, ok := dkg.PolyEvalMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
 		msg = PolyEvalMsg{
-			Sender:   nonKeyper,
-			Eon:      eon,
-			Receiver: keypers[0],
+			Sender:         nonKeyper,
+			Eon:            eon,
+			Receivers:      []common.Address{keypers[0]},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[nonKeyper][nonKeyper]
+		_, ok = dkg.PolyEvalMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if receiver is not a keyper
 		msg = PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon,
-			Receiver: nonKeyper,
+			Sender:         keypers[0],
+			Eon:            eon,
+			Receivers:      []common.Address{nonKeyper},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[keypers[0]][nonKeyper]
+		_, ok = dkg.PolyEvalMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// fail if sender and receiver are equal
 		msg = PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon,
-			Receiver: keypers[0],
+			Sender:         keypers[0],
+			Eon:            eon,
+			Receivers:      []common.Address{keypers[0]},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[keypers[0]][keypers[0]]
+		_, ok = dkg.PolyEvalMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// adding should work
 		msg = PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon,
-			Receiver: keypers[1],
+			Sender:         keypers[0],
+			Eon:            eon,
+			Receivers:      []common.Address{keypers[1]},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.Nil(t, err)
-		storedMsg, ok := dkg.PolyEvalMsgs[keypers[0]][keypers[1]]
+		storedMsg, ok := dkg.PolyEvalMsgs[keypers[0]]
 		require.True(t, ok)
 		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
 		msg = PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon,
-			Receiver: keypers[1],
+			Sender:         keypers[0],
+			Eon:            eon,
+			Receivers:      []common.Address{keypers[1]},
+			EncryptedEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
@@ -138,51 +144,51 @@ func TestRegisterMsgs(t *testing.T) {
 		msg := AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon + 1,
-			Accused: keypers[1],
+			Accused: []common.Address{keypers[1]},
 		}
 		err := dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		_, ok := dkg.AccusationMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
 		msg = AccusationMsg{
 			Sender:  nonKeyper,
 			Eon:     eon,
-			Accused: keypers[0],
+			Accused: []common.Address{keypers[0]},
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		_, ok = dkg.AccusationMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if accused is not a keyper
 		msg = AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: nonKeyper,
+			Accused: []common.Address{nonKeyper},
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[keypers[0]][nonKeyper]
+		_, ok = dkg.AccusationMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
 		msg = AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: keypers[0],
+			Accused: []common.Address{keypers[0]},
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[keypers[0]][keypers[0]]
+		_, ok = dkg.AccusationMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// adding should work
 		msg = AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: keypers[1],
+			Accused: []common.Address{keypers[1]},
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.Nil(t, err)
@@ -193,7 +199,7 @@ func TestRegisterMsgs(t *testing.T) {
 		msg = AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: keypers[1],
+			Accused: []common.Address{keypers[1]},
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
@@ -204,53 +210,58 @@ func TestRegisterMsgs(t *testing.T) {
 
 		// fail if wrong eon
 		msg := ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon + 1,
-			Accuser: keypers[1],
+			Sender:    keypers[0],
+			Eon:       eon + 1,
+			Accusers:  []common.Address{keypers[1]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		_, ok := dkg.AccusationMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
 		msg = ApologyMsg{
-			Sender:  nonKeyper,
-			Eon:     eon,
-			Accuser: keypers[0],
+			Sender:    nonKeyper,
+			Eon:       eon,
+			Accusers:  []common.Address{keypers[0]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[nonKeyper][nonKeyper]
+		_, ok = dkg.AccusationMsgs[nonKeyper]
 		require.False(t, ok)
 
 		// fail if accuser is not a keyper
 		msg = ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: nonKeyper,
+			Sender:    keypers[0],
+			Eon:       eon,
+			Accusers:  []common.Address{nonKeyper},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.ApologyMsgs[keypers[0]][nonKeyper]
+		_, ok = dkg.ApologyMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
 		msg = ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[0],
+			Sender:    keypers[0],
+			Eon:       eon,
+			Accusers:  []common.Address{keypers[0]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.ApologyMsgs[keypers[0]][keypers[0]]
+		_, ok = dkg.ApologyMsgs[keypers[0]]
 		require.False(t, ok)
 
 		// adding should work
 		msg = ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[1],
+			Sender:    keypers[0],
+			Eon:       eon,
+			Accusers:  []common.Address{keypers[1]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.Nil(t, err)
@@ -259,9 +270,10 @@ func TestRegisterMsgs(t *testing.T) {
 
 		// adding twice should fail
 		msg = ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[1],
+			Sender:    keypers[0],
+			Eon:       eon,
+			Accusers:  []common.Address{keypers[1]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -283,9 +295,10 @@ func TestClosing(t *testing.T) {
 		dkg.CloseSubmissions()
 
 		msg1 := PolyEvalMsg{
-			Sender:   keypers[0],
-			Eon:      eon,
-			Receiver: keypers[1],
+			Sender:         keypers[0],
+			Eon:            eon,
+			Receivers:      []common.Address{keypers[1]},
+			EncryptedEvals: [][]byte{},
 		}
 		err := dkg.RegisterPolyEvalMsg(msg1)
 		require.NotNil(t, err)
@@ -301,14 +314,14 @@ func TestClosing(t *testing.T) {
 		msg3 := AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: keypers[1],
+			Accused: []common.Address{keypers[1]},
 		}
 		err = dkg.RegisterAccusationMsg(msg3)
 		require.Nil(t, err)
 		msg4 := ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[1],
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[1]},
 		}
 		err = dkg.RegisterApologyMsg(msg4)
 		require.Nil(t, err)
@@ -321,16 +334,16 @@ func TestClosing(t *testing.T) {
 		msg := AccusationMsg{
 			Sender:  keypers[0],
 			Eon:     eon,
-			Accused: keypers[1],
+			Accused: []common.Address{keypers[1]},
 		}
 		err := dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
 
 		// Apologies still work
 		msg2 := ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[1],
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[1]},
 		}
 		err = dkg.RegisterApologyMsg(msg2)
 		require.Nil(t, err)
@@ -341,9 +354,10 @@ func TestClosing(t *testing.T) {
 		dkg.CloseApologies()
 
 		msg := ApologyMsg{
-			Sender:  keypers[0],
-			Eon:     eon,
-			Accuser: keypers[1],
+			Sender:    keypers[0],
+			Eon:       eon,
+			Accusers:  []common.Address{keypers[1]},
+			PolyEvals: [][]byte{[]byte{}},
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)

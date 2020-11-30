@@ -140,8 +140,8 @@ func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
-			newAddressesPair("Accuser", msg.Accusers),
-			newByteSequencePair("PolyEval", msg.PolyEvals),
+			newAddressesPair("Accusers", msg.Accusers),
+			newByteSequencePair("PolyEvals", msg.PolyEvals),
 		},
 	}
 }
