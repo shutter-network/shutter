@@ -8,16 +8,10 @@ import (
 
 // NewDKGInstance creates a new DKGInstance.
 func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
-	polyEvalMsgs := make(map[common.Address]map[common.Address]PolyEvalMsg)
+	polyEvalMsgs := make(map[common.Address]PolyEvalMsg)
 	polyCommitmentMsgs := make(map[common.Address]PolyCommitmentMsg)
-	accusationMsgs := make(map[common.Address]map[common.Address]AccusationMsg)
-	apologyMsgs := make(map[common.Address]map[common.Address]ApologyMsg)
-
-	for _, keyper := range config.Keypers {
-		polyEvalMsgs[keyper] = make(map[common.Address]PolyEvalMsg)
-		accusationMsgs[keyper] = make(map[common.Address]AccusationMsg)
-		apologyMsgs[keyper] = make(map[common.Address]ApologyMsg)
-	}
+	accusationMsgs := make(map[common.Address]AccusationMsg)
+	apologyMsgs := make(map[common.Address]ApologyMsg)
 
 	return DKGInstance{
 		Config: config,
@@ -41,17 +35,19 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
-	if !dkg.Config.IsKeyper(msg.Receiver) {
-		return fmt.Errorf("receiver %s is not a keyper", msg.Sender.Hex())
-	}
-	if msg.Sender == msg.Receiver {
-		return fmt.Errorf("sender and receiver are both %s", msg.Sender.Hex())
+	for _, receiver := range msg.Receivers {
+		if !dkg.Config.IsKeyper(receiver) {
+			return fmt.Errorf("receiver %s is not a keyper", msg.Sender.Hex())
+		}
+		if msg.Sender == receiver {
+			return fmt.Errorf("receiver %s is also the sender", msg.Sender.Hex())
+		}
 	}
 
-	if _, ok := dkg.PolyEvalMsgs[msg.Sender][msg.Receiver]; ok {
-		return fmt.Errorf("polynomial evaluation from keyper %s for keyper %s already present", msg.Sender.Hex(), msg.Receiver.Hex())
+	if _, ok := dkg.PolyEvalMsgs[msg.Sender]; ok {
+		return fmt.Errorf("polynomial evaluation from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.PolyEvalMsgs[msg.Sender][msg.Receiver] = msg
+	dkg.PolyEvalMsgs[msg.Sender] = msg
 
 	return nil
 }
@@ -87,17 +83,19 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
-	if !dkg.Config.IsKeyper(msg.Accused) {
-		return fmt.Errorf("accused %s is not a keyper", msg.Sender.Hex())
-	}
-	if msg.Sender == msg.Accused {
-		return fmt.Errorf("sender and accused are both %s", msg.Sender.Hex())
+	for _, accused := range msg.Accused {
+		if !dkg.Config.IsKeyper(accused) {
+			return fmt.Errorf("accused %s is not a keyper", accused.Hex())
+		}
+		if msg.Sender == accused {
+			return fmt.Errorf("sender %s is accusing themselves", msg.Sender.Hex())
+		}
 	}
 
-	if _, ok := dkg.AccusationMsgs[msg.Sender][msg.Accused]; ok {
-		return fmt.Errorf("accusation from keyper %s against %s already present", msg.Sender.Hex(), msg.Accused.Hex())
+	if _, ok := dkg.AccusationMsgs[msg.Sender]; ok {
+		return fmt.Errorf("accusation from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.AccusationMsgs[msg.Sender][msg.Accused] = msg
+	dkg.AccusationMsgs[msg.Sender] = msg
 
 	return nil
 }
@@ -113,17 +111,19 @@ func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
 	if !dkg.Config.IsKeyper(msg.Sender) {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
-	if !dkg.Config.IsKeyper(msg.Accuser) {
-		return fmt.Errorf("accuser %s is not a keyper", msg.Sender.Hex())
-	}
-	if msg.Sender == msg.Accuser {
-		return fmt.Errorf("sender and accuser are both %s", msg.Sender.Hex())
+	for _, accuser := range msg.Accusers {
+		if !dkg.Config.IsKeyper(accuser) {
+			return fmt.Errorf("accuser %s is not a keyper", msg.Sender.Hex())
+		}
+		if msg.Sender == accuser {
+			return fmt.Errorf("sender %s sends apology for accusation against themselves", msg.Sender.Hex())
+		}
 	}
 
-	if _, ok := dkg.ApologyMsgs[msg.Sender][msg.Accuser]; ok {
-		return fmt.Errorf("apology from keyper %s against apology of %s already present", msg.Sender.Hex(), msg.Accuser.Hex())
+	if _, ok := dkg.ApologyMsgs[msg.Sender]; ok {
+		return fmt.Errorf("apology from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.ApologyMsgs[msg.Sender][msg.Accuser] = msg
+	dkg.ApologyMsgs[msg.Sender] = msg
 
 	return nil
 }

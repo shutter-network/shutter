@@ -7,7 +7,7 @@ import (
 )
 
 // MaxTxsPerBlock is the maximum number of txs by a single sender per block
-const MaxTxsPerBlock = 500
+const MaxTxsPerBlock = 10
 
 // NewCheckTxState returns a new check tx state.
 func NewCheckTxState() *CheckTxState {

@@ -41,8 +41,8 @@ message DecryptionSignature {
 
 message PolyEvalMsg {
         uint64 eon = 1;
-        bytes receiver = 2;
-        bytes encryptedEval = 3;
+        repeated bytes receivers = 2;
+        repeated bytes encryptedEvals = 3;
 }
 
 message PolyCommitmentMsg {
@@ -52,13 +52,13 @@ message PolyCommitmentMsg {
 
 message AccusationMsg {
         uint64 eon = 1;
-        bytes accused = 2;
+        repeated bytes accused = 2;
 }
 
 message ApologyMsg {
         uint64 eon = 1;
-        bytes accuser = 2;
-        bytes polyEval = 3;
+        repeated bytes accusers = 2;
+        repeated bytes polyEvals = 3;
 }
 
 message EpochSKShareMsg {

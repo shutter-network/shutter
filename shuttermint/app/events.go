@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
@@ -99,8 +100,8 @@ func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
-			newAddressPair("Receiver", msg.Receiver),
-			newBytesPair("EncryptedEval", msg.EncryptedEval),
+			newAddressesPair("Receivers", msg.Receivers),
+			newByteSequencePair("EncryptedEvals", msg.EncryptedEvals),
 		},
 	}
 }
@@ -126,7 +127,7 @@ func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
-			newAddressPair("Accused", msg.Accused),
+			newAddressesPair("Accused", msg.Accused),
 		},
 	}
 }
@@ -139,8 +140,8 @@ func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
-			newAddressPair("Accuser", msg.Accuser),
-			newBytesPair("PolyEval", msg.PolyEval),
+			newAddressesPair("Accuser", msg.Accusers),
+			newByteSequencePair("PolyEval", msg.PolyEvals),
 		},
 	}
 }
@@ -164,6 +165,15 @@ func newAddressPair(key string, value common.Address) abcitypes.EventAttribute {
 	p := newStringPair(key, value.Hex())
 	p.Index = true
 	return p
+}
+
+func newAddressesPair(key string, value []common.Address) abcitypes.EventAttribute {
+	s := encodeAddressesForEvent(value)
+	return newStringPair(key, s)
+}
+
+func newByteSequencePair(key string, value [][]byte) abcitypes.EventAttribute {
+	return newStringPair(key, encodeByteSequenceForEvent(value))
 }
 
 func newUintPair(key string, value uint64) abcitypes.EventAttribute {
@@ -216,4 +226,25 @@ func DecodeAddressesFromEvent(s string) []common.Address {
 		res = append(res, common.HexToAddress(a))
 	}
 	return res
+}
+
+func encodeByteSequenceForEvent(v [][]byte) string {
+	var hex []string
+	for _, a := range v {
+		hex = append(hex, hexutil.Encode(a))
+	}
+	return strings.Join(hex, ",")
+}
+
+// DecodeByteSequenceFromEvent parses a list of hex encoded, comma-separated byte slices.
+func DecodeByteSequenceFromEvent(s string) ([][]byte, error) {
+	var res [][]byte
+	for _, v := range strings.Split(s, ",") {
+		bs, err := hexutil.Decode(v)
+		if err != nil {
+			return [][]byte{}, err
+		}
+		res = append(res, bs)
+	}
+	return res, nil
 }

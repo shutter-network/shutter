@@ -27,15 +27,20 @@ func NewPolyCommitmentMsg(eon uint64, gammas *crypto.Gammas) *shmsg.Message {
 // NewPolyEvalMsg creates a new poly eval message.
 func NewPolyEvalMsg(
 	eon uint64,
-	receiver common.Address,
-	encryptedEval []byte,
+	receivers []common.Address,
+	encryptedEvals [][]byte,
 ) *shmsg.Message {
+	rs := [][]byte{}
+	for _, receiver := range receivers {
+		rs = append(rs, receiver.Bytes())
+	}
+
 	return &shmsg.Message{
 		Payload: &shmsg.Message_PolyEvalMsg{
 			PolyEvalMsg: &shmsg.PolyEvalMsg{
-				Eon:           eon,
-				Receiver:      receiver.Bytes(),
-				EncryptedEval: encryptedEval,
+				Eon:            eon,
+				Receivers:      rs,
+				EncryptedEvals: encryptedEvals,
 			},
 		},
 	}

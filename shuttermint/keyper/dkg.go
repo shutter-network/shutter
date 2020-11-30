@@ -77,7 +77,13 @@ func (dkg *DKGInstance) sendGammas(ctx context.Context) error {
 // sendPolyEvals sends the corresponding polynomial evaluation to each keyper, including ourselves.
 func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
 	log.Printf("Sending PolyEvals to keypers")
+	receivers := []common.Address{}
+	evals := [][]byte{}
 	for i, keyper := range dkg.BatchConfig.Keypers {
+		if keyper == dkg.KeyperConfig.Address() {
+			continue
+		}
+
 		encryptionKey, ok := dkg.keyperEncryptionKeys[keyper]
 		if !ok {
 			log.Printf("no key available, cannot send message to keyper %s", keyper.Hex())
@@ -91,11 +97,13 @@ func (dkg *DKGInstance) sendPolyEvals(ctx context.Context) error {
 			return fmt.Errorf("failed to encrypt message: %w", err)
 		}
 
-		msg := NewPolyEvalMsg(dkg.Eon, keyper, encryptedEval)
-		err = dkg.ms.SendMessage(ctx, msg)
-		if err != nil {
-			return err
-		}
+		receivers = append(receivers, keyper)
+		evals = append(evals, encryptedEval)
+	}
+	msg := NewPolyEvalMsg(dkg.Eon, receivers, evals)
+	err := dkg.ms.SendMessage(ctx, msg)
+	if err != nil {
+		return err
 	}
 	return nil
 }

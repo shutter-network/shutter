@@ -22,15 +22,31 @@ func validateAddress(address []byte) (common.Address, error) {
 
 // ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg
 func ParsePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) (*PolyEvalMsg, error) {
-	receiver, err := validateAddress(msg.Receiver)
-	if err != nil {
-		return nil, err
+	if len(msg.Receivers) != len(msg.EncryptedEvals) {
+		return nil, fmt.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
 	}
+
+	receivers := []common.Address{}
+	receiverMap := make(map[common.Address]bool)
+	for _, receiver := range msg.Receivers {
+		address, err := validateAddress(receiver)
+		if err != nil {
+			return nil, err
+		}
+
+		if receiverMap[address] {
+			return nil, fmt.Errorf("duplicate receiver address %s", address.Hex())
+		}
+		receiverMap[address] = true
+
+		receivers = append(receivers, address)
+	}
+
 	return &PolyEvalMsg{
-		Sender:        sender,
-		Eon:           msg.Eon,
-		Receiver:      receiver,
-		EncryptedEval: msg.EncryptedEval,
+		Sender:         sender,
+		Eon:            msg.Eon,
+		Receivers:      receivers,
+		EncryptedEvals: msg.EncryptedEvals,
 	}, nil
 }
 
@@ -45,10 +61,22 @@ func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address)
 
 // ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg
 func ParseAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) (*AccusationMsg, error) {
-	accused, err := validateAddress(msg.Accused)
-	if err != nil {
-		return nil, err
+	accused := []common.Address{}
+	accusedMap := make(map[common.Address]bool)
+	for _, acc := range msg.Accused {
+		address, err := validateAddress(acc)
+		if err != nil {
+			return nil, err
+		}
+
+		if accusedMap[address] {
+			return nil, fmt.Errorf("duplicate accusation from %s against %s", sender.Hex(), address.Hex())
+		}
+		accusedMap[address] = true
+
+		accused = append(accused, address)
 	}
+
 	return &AccusationMsg{
 		Sender:  sender,
 		Eon:     msg.Eon,
@@ -58,15 +86,31 @@ func ParseAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) (*Accus
 
 // ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg
 func ParseApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) (*ApologyMsg, error) {
-	accuser, err := validateAddress(msg.Accuser)
-	if err != nil {
-		return nil, err
+	if len(msg.Accusers) != len(msg.PolyEvals) {
+		return nil, fmt.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
 	}
+
+	accusers := []common.Address{}
+	accuserMap := make(map[common.Address]bool)
+	for _, acc := range msg.Accusers {
+		accuser, err := validateAddress(acc)
+		if err != nil {
+			return nil, err
+		}
+
+		if accuserMap[accuser] {
+			return nil, fmt.Errorf("duplicate accuser %s", accuser.Hex())
+		}
+		accuserMap[accuser] = true
+
+		accusers = append(accusers, accuser)
+	}
+
 	return &ApologyMsg{
-		Sender:   sender,
-		Eon:      msg.Eon,
-		Accuser:  accuser,
-		PolyEval: msg.PolyEval,
+		Sender:    sender,
+		Eon:       msg.Eon,
+		Accusers:  accusers,
+		PolyEvals: msg.PolyEvals,
 	}, nil
 }
 
