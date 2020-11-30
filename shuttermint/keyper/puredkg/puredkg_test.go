@@ -147,7 +147,7 @@ func TestAccusing(t *testing.T) {
 	// third keyper misses eval
 	commitmentMsg2 := makeCommitmentMsg(2)
 	err = dkg.HandlePolyCommitmentMsg(commitmentMsg2)
-
+	require.Nil(t, err)
 	accusations := dkg.StartPhase2Accusing()
 	require.Equal(t, 2, len(accusations))
 	accDishonest := accusations[0]
@@ -340,7 +340,8 @@ func TestGetResultErrors(t *testing.T) {
 	dkg := NewPureDKG(uint64(5), uint64(3), uint64(2), 1)
 	_, _, err := dkg.ComputeResult()
 	require.NotNil(t, err)
-	dkg.StartPhase1Dealing()
+	_, _, err = dkg.StartPhase1Dealing()
+	require.Nil(t, err)
 	_, _, err = dkg.ComputeResult()
 	require.NotNil(t, err)
 	dkg.StartPhase2Accusing()
