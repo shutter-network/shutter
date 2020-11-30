@@ -36,10 +36,10 @@ func TestNewPolyEvalMsg(t *testing.T) {
 	receiver := common.BigToAddress(big.NewInt(0xaabbcc))
 	encryptedEval := []byte("secret")
 
-	msgContainer := NewPolyEvalMsg(eon, receiver, encryptedEval)
+	msgContainer := NewPolyEvalMsg(eon, []common.Address{receiver}, [][]byte{encryptedEval})
 	msg := msgContainer.GetPolyEvalMsg()
 	require.NotNil(t, msg)
 
 	require.Equal(t, eon, msg.Eon)
-	require.Equal(t, receiver.Bytes(), msg.Receiver)
+	require.Equal(t, receiver.Bytes(), msg.Receivers[0])
 }

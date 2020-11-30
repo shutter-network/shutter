@@ -49,7 +49,7 @@ func setupTestInstance(t *testing.T) testInstance {
 		keyperEncryptionPublicKeys[address] = &encryptionPrivateKey.PublicKey
 	}
 
-	keyperIndex := 1
+	keyperIndex := 2
 	address := keypers[keyperIndex]
 	batchConfig := contract.BatchConfig{
 		Threshold: threshold,
@@ -99,14 +99,18 @@ func TestDKGInstance(t *testing.T) {
 	})
 
 	t.Run("SendPolyEvals", func(t *testing.T) {
+		msgContainer := <-ti.ms.Msgs
+		msg := msgContainer.GetPolyEvalMsg()
+		require.NotNil(t, msg)
+		require.Equal(t, ti.eon, msg.Eon)
+		require.Equal(t, len(ti.keypers)-1, len(msg.Receivers))
 		for i, receiver := range ti.keypers {
-			msgContainer := <-ti.ms.Msgs
-			msg := msgContainer.GetPolyEvalMsg()
-			require.NotNil(t, msg)
-			require.Equal(t, ti.eon, msg.Eon)
-			require.Equal(t, receiver.Bytes(), msg.Receiver)
+			if i == 2 {
+				continue
+			}
+			require.Equal(t, receiver.Bytes(), msg.Receivers[i])
 			polyEval := ti.dkg.Polynomial.EvalForKeyper(i)
-			decryptedEval, err := ti.keyperEncryptionPrivateKeys[receiver].Decrypt(msg.EncryptedEval, nil, nil)
+			decryptedEval, err := ti.keyperEncryptionPrivateKeys[receiver].Decrypt(msg.EncryptedEvals[i], nil, nil)
 			require.Nil(t, err)
 			require.True(t, bytes.Equal(polyEval.Bytes(), decryptedEval))
 		}
