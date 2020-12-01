@@ -10,7 +10,8 @@ import (
 // NewConfigVoting creates a ConfigVoting struct
 func NewConfigVoting() ConfigVoting {
 	return ConfigVoting{
-		Votes: make(map[common.Address]int),
+		Voting:     NewVoting(),
+		Candidates: []BatchConfig{},
 	}
 }
 
@@ -24,27 +25,21 @@ func (cfgv *ConfigVoting) AddVote(sender common.Address, batchConfig BatchConfig
 
 	for i, bc := range cfgv.Candidates {
 		if reflect.DeepEqual(bc, batchConfig) {
-			cfgv.Votes[sender] = i
+			cfgv.AddVoteForIndex(sender, i)
 			return nil
 		}
 	}
 
 	cfgv.Candidates = append(cfgv.Candidates, batchConfig)
-	cfgv.Votes[sender] = len(cfgv.Candidates) - 1
+	cfgv.AddVoteForIndex(sender, len(cfgv.Candidates)-1)
 	return nil
 }
 
 // Outcome checks if one of the candidates has more than numRequiredVotes.
 func (cfgv *ConfigVoting) Outcome(numRequiredVotes int) (BatchConfig, bool) {
-	var numVotes []int = make([]int, len(cfgv.Candidates))
-
-	for _, vote := range cfgv.Votes {
-		numVotes[vote]++
+	outcomeIndex, success := cfgv.OutcomeIndex(numRequiredVotes)
+	if !success {
+		return BatchConfig{}, false
 	}
-	for i, v := range numVotes {
-		if v >= numRequiredVotes {
-			return cfgv.Candidates[i], true
-		}
-	}
-	return BatchConfig{}, false
+	return cfgv.Candidates[outcomeIndex], true
 }

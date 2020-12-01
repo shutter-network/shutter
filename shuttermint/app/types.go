@@ -49,11 +49,22 @@ type BatchConfig struct {
 	ValidatorsUpdated bool
 }
 
+// Voting is a struct storing votes for arbitrary indices.
+type Voting struct {
+	Votes map[common.Address]int
+}
+
 // ConfigVoting is used to let the keypers vote on new BatchConfigs to be added
 // Each keyper can vote exactly once
 type ConfigVoting struct {
+	Voting
 	Candidates []BatchConfig
-	Votes      map[common.Address]int
+}
+
+// EonStartVoting is used to vote on the batch index at which the next eon should be started.
+type EonStartVoting struct {
+	Voting
+	Candidates []uint64
 }
 
 // DecryptionSignature stores the decryption key signature created by one of the keypers.
@@ -96,7 +107,8 @@ type ShutterApp struct {
 	Configs         []*BatchConfig
 	BatchStates     map[uint64]BatchState
 	DKGMap          map[uint64]*DKGInstance
-	Voting          ConfigVoting
+	ConfigVoting    ConfigVoting
+	EonStartVoting  EonStartVoting
 	Gobpath         string
 	LastSaved       time.Time
 	LastBlockHeight int64

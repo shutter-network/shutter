@@ -112,7 +112,7 @@ func (app *ShutterApp) queryVote(vs url.Values) abcitypes.ResponseQuery {
 		return makeQueryErrorResponse("invalid address")
 	}
 
-	index, voted := app.Voting.Votes[address]
+	index, voted := app.ConfigVoting.Votes[address]
 	if !voted {
 		return abcitypes.ResponseQuery{
 			Code:  0,
@@ -120,7 +120,7 @@ func (app *ShutterApp) queryVote(vs url.Values) abcitypes.ResponseQuery {
 		}
 	}
 
-	config := app.Voting.Candidates[index]
+	config := app.ConfigVoting.Candidates[index]
 	configMsg := config.Message()
 	configBytes, err := proto.Marshal(&configMsg)
 	if err != nil {

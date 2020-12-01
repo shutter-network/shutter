@@ -65,13 +65,14 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 // NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
-		Configs:      []*BatchConfig{{}},
-		BatchStates:  make(map[uint64]BatchState),
-		DKGMap:       make(map[uint64]*DKGInstance),
-		Voting:       NewConfigVoting(),
-		Identities:   make(map[common.Address]ValidatorPubkey),
-		StartedVotes: make(map[common.Address]bool),
-		CheckTxState: NewCheckTxState(),
+		Configs:        []*BatchConfig{{}},
+		BatchStates:    make(map[uint64]BatchState),
+		DKGMap:         make(map[uint64]*DKGInstance),
+		ConfigVoting:   NewConfigVoting(),
+		EonStartVoting: NewEonStartVoting(),
+		Identities:     make(map[common.Address]ValidatorPubkey),
+		StartedVotes:   make(map[common.Address]bool),
+		CheckTxState:   NewCheckTxState(),
 	}
 }
 
@@ -325,14 +326,14 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 
 	var events []abcitypes.Event
 
-	err = app.Voting.AddVote(sender, bc)
+	err = app.ConfigVoting.AddVote(sender, bc)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 	}
 
-	_, ok := app.Voting.Outcome(int(app.LastConfig().Threshold))
+	_, ok := app.ConfigVoting.Outcome(int(app.LastConfig().Threshold))
 	if ok {
-		app.Voting = NewConfigVoting()
+		app.ConfigVoting = NewConfigVoting()
 		err = app.addConfig(bc)
 		if err != nil {
 			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))

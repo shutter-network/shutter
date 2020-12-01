@@ -190,7 +190,7 @@ func TestQueryVote(t *testing.T) {
 	config := BatchConfig{
 		StartBatchIndex: 100,
 	}
-	err := app.Voting.AddVote(address, config)
+	err := app.ConfigVoting.AddVote(address, config)
 	require.Nil(t, err)
 	req = abcitypes.RequestQuery{
 		Path: fmt.Sprintf("/vote?address=%s", address.Hex()),
