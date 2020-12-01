@@ -342,7 +342,8 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
 		if app.ShouldStartDKG(bc) {
 			dkg := app.StartDKG(bc)
-			events = append(events, MakeNewDKGInstanceEvent(dkg.Eon, uint64(len(app.Configs)-1)))
+			batchIndex := app.LastConfig().StartBatchIndex
+			events = append(events, MakeEonStartedEvent(dkg.Eon, batchIndex))
 		}
 	}
 

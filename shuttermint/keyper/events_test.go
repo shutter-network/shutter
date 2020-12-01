@@ -66,14 +66,14 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		ev)
 }
 
-func TestMakeNewDKGInstanceEvent(t *testing.T) {
+func TestMakeEonStartedEvent(t *testing.T) {
 	var eon uint64 = 10
-	var configIndex uint64 = 20
-	appEv := app.MakeNewDKGInstanceEvent(eon, configIndex)
+	var batchIndex uint64 = 20
+	appEv := app.MakeEonStartedEvent(eon, batchIndex)
 	ev, err := MakeEvent(appEv)
-	expectedEv := NewDKGInstanceEvent{
-		Eon:         eon,
-		ConfigIndex: configIndex,
+	expectedEv := EonStartedEvent{
+		Eon:        eon,
+		BatchIndex: batchIndex,
 	}
 	require.Nil(t, err)
 	require.Equal(t, expectedEv, ev)

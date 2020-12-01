@@ -34,13 +34,13 @@ func TestEvents(t *testing.T) {
 		require.True(t, publicKeyECDSA.Equal(&privateKeyECDSA.PublicKey))
 	})
 
-	t.Run("MakeNewDKGInstanceEvent", func(t *testing.T) {
-		ev := MakeNewDKGInstanceEvent(uint64(10), uint64(20))
-		require.Equal(t, EventType.NewDkgInstance, ev.Type)
+	t.Run("MakeEonStartedEvent", func(t *testing.T) {
+		ev := MakeEonStartedEvent(uint64(10), uint64(20))
+		require.Equal(t, EventType.EonStarted, ev.Type)
 		require.Equal(t, 2, len(ev.Attributes))
 		require.Equal(t, []byte("Eon"), ev.Attributes[0].Key)
 		require.Equal(t, []byte("10"), ev.Attributes[0].Value)
-		require.Equal(t, []byte("ConfigIndex"), ev.Attributes[1].Key)
+		require.Equal(t, []byte("BatchIndex"), ev.Attributes[1].Key)
 		require.Equal(t, []byte("20"), ev.Attributes[1].Value)
 	})
 

@@ -222,7 +222,7 @@ func (kpr *Keyper) fetchCurrentDKG(ctx context.Context) error {
 				return err
 			}
 			switch event := e.(type) {
-			case NewDKGInstanceEvent:
+			case EonStartedEvent:
 				// XXX Unconditionally starting the DKG for this eon is certainly
 				// wrong. We need a way to decide if we should start it. For the
 				// moment it helps me get a first version working.
@@ -757,7 +757,7 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	case BatchConfigEvent:
 	case DecryptionSignatureEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
-	case NewDKGInstanceEvent:
+	case EonStartedEvent:
 		kpr.startNewDKGInstance(e)
 	case PolyCommitmentRegisteredEvent:
 		kpr.dispatchEventToDKG(e.Eon, e)
@@ -768,7 +768,7 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	}
 }
 
-func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
+func (kpr *Keyper) startNewDKGInstance(ev EonStartedEvent) {
 	if kpr.dkg == nil {
 		log.Printf("Starting DKG for eon %d", ev.Eon)
 	} else {
@@ -776,7 +776,7 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 		kpr.dkg = nil
 	}
 
-	config, err := kpr.configContract.GetConfigByIndex(nil, ev.ConfigIndex)
+	config, err := kpr.configContract.GetConfig(nil, ev.BatchIndex)
 	if err != nil {
 		log.Printf("Failed to fetch config from main chain to start DKG: %v", err)
 		return

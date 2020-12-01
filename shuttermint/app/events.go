@@ -28,7 +28,7 @@ var EventType = struct {
 	PolyEval            string
 	BatchConfig         string
 	DecryptionSignature string
-	NewDkgInstance      string
+	EonStarted          string
 	Accusation          string
 	Apology             string
 }{
@@ -37,7 +37,7 @@ var EventType = struct {
 	PolyEval:            "shutter.poly-eval-registered",
 	BatchConfig:         "shutter.batch-config",
 	DecryptionSignature: "shutter.decryption-signature",
-	NewDkgInstance:      "shutter.new-dkg-instance",
+	EonStarted:          "shutter.eon-started",
 	Accusation:          "shutter.accusation-registered",
 	Apology:             "shutter.apology-registered",
 }
@@ -101,14 +101,14 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	}
 }
 
-// MakeNewDKGInstanceEvent creates a new event to be emitted whenever a new dkg process is kicked
-// off.
-func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {
+// MakeEonStartEvent creates a new event to be emitted whenever a new eon is started. The batch
+// index identifies the first batch that belongs to that eon.
+func MakeEonStartedEvent(eon uint64, batchIndex uint64) abcitypes.Event {
 	return abcitypes.Event{
-		Type: EventType.NewDkgInstance,
+		Type: EventType.EonStarted,
 		Attributes: []abcitypes.EventAttribute{
 			newUintPair("Eon", eon),
-			newUintPair("ConfigIndex", configIndex),
+			newUintPair("BatchIndex", batchIndex),
 		},
 	}
 }

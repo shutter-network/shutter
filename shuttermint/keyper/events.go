@@ -192,25 +192,25 @@ func MakeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignatureEvent,
 	}, nil
 }
 
-// MakeNewDKGInstanceEvent creates a NewDKGInstanceEvent from the given tendermint event of type
-// "shutter.new-dkg-instance".
-func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
-	if ev.Type != EventType.NewDkgInstance {
-		return NewDKGInstanceEvent{}, fmt.Errorf("expected event type shutter.new-dkg-instance, got %s", ev.Type)
+// MakeEonStartedEvent creates a EonStartedEvent from the given tendermint event of type
+// "shutter.eon-started".
+func MakeEonStartedEvent(ev abcitypes.Event) (EonStartedEvent, error) {
+	if ev.Type != EventType.EonStarted {
+		return EonStartedEvent{}, fmt.Errorf("expected event type %s, got %s", EventType.EonStarted, ev.Type)
 	}
 
 	eon, err := getUint64Attribute(ev, 0, "Eon")
 	if err != nil {
-		return NewDKGInstanceEvent{}, err
+		return EonStartedEvent{}, err
 	}
-	configIndex, err := getUint64Attribute(ev, 1, "ConfigIndex")
+	batchIndex, err := getUint64Attribute(ev, 1, "BatchIndex")
 	if err != nil {
-		return NewDKGInstanceEvent{}, err
+		return EonStartedEvent{}, err
 	}
 
-	return NewDKGInstanceEvent{
-		Eon:         eon,
-		ConfigIndex: configIndex,
+	return EonStartedEvent{
+		Eon:        eon,
+		BatchIndex: batchIndex,
 	}, nil
 }
 
@@ -271,8 +271,8 @@ func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 		return MakeBatchConfigEvent(ev)
 	case EventType.DecryptionSignature:
 		return MakeDecryptionSignatureEvent(ev)
-	case EventType.NewDkgInstance:
-		return MakeNewDKGInstanceEvent(ev)
+	case EventType.EonStarted:
+		return MakeEonStartedEvent(ev)
 	case EventType.PolyCommitment:
 		return MakePolyCommitmentRegisteredEvent(ev)
 	case EventType.PolyEval:
