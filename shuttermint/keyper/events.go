@@ -18,6 +18,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
+var EventType = app.EventType
+
 func getBytesAttribute(ev abcitypes.Event, index int, key string) ([]byte, error) {
 	if len(ev.Attributes) <= index {
 		return []byte{}, fmt.Errorf("event does not have enough attributes")
@@ -111,7 +113,7 @@ func getECIESPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*eci
 
 // MakeCheckInEvent creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
 func MakeCheckInEvent(ev abcitypes.Event) (CheckInEvent, error) {
-	if ev.Type != "shutter.check-in" {
+	if ev.Type != EventType.CheckIn {
 		return CheckInEvent{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
 	}
 
@@ -193,7 +195,7 @@ func MakeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignatureEvent,
 // MakeNewDKGInstanceEvent creates a NewDKGInstanceEvent from the given tendermint event of type
 // "shutter.new-dkg-instance".
 func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
-	if ev.Type != "shutter.new-dkg-instance" {
+	if ev.Type != EventType.NewDkgInstance {
 		return NewDKGInstanceEvent{}, fmt.Errorf("expected event type shutter.new-dkg-instance, got %s", ev.Type)
 	}
 
@@ -214,7 +216,7 @@ func MakeNewDKGInstanceEvent(ev abcitypes.Event) (NewDKGInstanceEvent, error) {
 
 func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegisteredEvent, error) {
 	res := PolyCommitmentRegisteredEvent{}
-	if ev.Type != "shutter.poly-commitment-registered" {
+	if ev.Type != EventType.PolyCommitment {
 		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
 	}
 
@@ -239,22 +241,43 @@ func MakePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 	return res, nil
 }
 
+func MakePolyEvalRegisteredEvent(ev abcitypes.Event) (PolyEvalRegisteredEvent, error) {
+	res := PolyEvalRegisteredEvent{}
+	if ev.Type != EventType.PolyEval {
+		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return res, err
+	}
+	res.Sender = sender
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return res, err
+	}
+	res.Eon = eon
+
+	return res, nil
+}
+
 // MakeEvent creates an Event from the given tendermint event.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
-	if ev.Type == "shutter.check-in" {
+	switch ev.Type {
+	case EventType.CheckIn:
 		return MakeCheckInEvent(ev)
-	}
-	if ev.Type == "shutter.batch-config" {
+	case EventType.BatchConfig:
 		return MakeBatchConfigEvent(ev)
-	}
-	if ev.Type == "shutter.decryption-signature" {
+	case EventType.DecryptionSignature:
 		return MakeDecryptionSignatureEvent(ev)
-	}
-	if ev.Type == "shutter.new-dkg-instance" {
+	case EventType.NewDkgInstance:
 		return MakeNewDKGInstanceEvent(ev)
-	}
-	if ev.Type == "shutter.poly-commitment-registered" {
+	case EventType.PolyCommitment:
 		return MakePolyCommitmentRegisteredEvent(ev)
+	case EventType.PolyEval:
+		return MakePolyEvalRegisteredEvent(ev)
+	default:
+		return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 	}
-	return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 }

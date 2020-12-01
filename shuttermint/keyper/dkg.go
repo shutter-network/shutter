@@ -115,6 +115,9 @@ func (dkg *DKGInstance) makePolyEvalMessage(polyEvals []puredkg.PolyEvalMsg) (*s
 		receivers = append(receivers, keyper)
 		evals = append(evals, encryptedEval)
 	}
+	if uint64(len(evals)) < dkg.BatchConfig.Threshold {
+		return nil, fmt.Errorf("makePolyEvalMessage: need at least %d keys, only have %d", dkg.BatchConfig.Threshold, len(evals))
+	}
 	return NewPolyEvalMsg(dkg.Eon, receivers, evals), nil
 }
 
@@ -150,6 +153,14 @@ func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
 			log.Printf("Could not handle poly commitment message: %+v %s", m, err)
 			return
 		}
+	case PolyEvalRegisteredEvent:
+		senderIndex, err := dkg.FindKeyperIndex(e.Sender)
+		if err != nil {
+			log.Printf("Could not handle poly eval message. sender is not a keyper")
+			return
+		}
+		_ = senderIndex
+		log.Printf("XXX handle poly eval registered: %+v", e)
 	default:
 		panic("unknown event type, cannot dispatch")
 	}

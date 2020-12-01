@@ -24,7 +24,7 @@ func TestEvents(t *testing.T) {
 
 		require.Nil(t, err)
 		ev := MakeCheckInEvent(sender, &publicKey)
-		require.Equal(t, "shutter.check-in", ev.Type)
+		require.Equal(t, EventType.CheckIn, ev.Type)
 		require.Equal(t, 2, len(ev.Attributes))
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
@@ -36,7 +36,7 @@ func TestEvents(t *testing.T) {
 
 	t.Run("MakeNewDKGInstanceEvent", func(t *testing.T) {
 		ev := MakeNewDKGInstanceEvent(uint64(10), uint64(20))
-		require.Equal(t, "shutter.new-dkg-instance", ev.Type)
+		require.Equal(t, EventType.NewDkgInstance, ev.Type)
 		require.Equal(t, 2, len(ev.Attributes))
 		require.Equal(t, []byte("Eon"), ev.Attributes[0].Key)
 		require.Equal(t, []byte("10"), ev.Attributes[0].Value)
@@ -52,7 +52,7 @@ func TestEvents(t *testing.T) {
 			EncryptedEvals: [][]byte{data},
 		}
 		ev := MakePolyEvalRegisteredEvent(msg)
-		require.Equal(t, ev.Type, "shutter.poly-eval-registered")
+		require.Equal(t, EventType.PolyEval, ev.Type)
 		require.Equal(t, 4, len(ev.Attributes))
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
@@ -71,7 +71,7 @@ func TestEvents(t *testing.T) {
 			Gammas: [][]byte{{0xa0, 0xa1, 0xa2}, {0xa3, 0xa4, 0xa5}},
 		}
 		ev := MakePolyCommitmentRegisteredEvent(msg)
-		require.Equal(t, ev.Type, "shutter.poly-commitment-registered")
+		require.Equal(t, EventType.PolyCommitment, ev.Type)
 		require.Equal(t, 3, len(ev.Attributes))
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
@@ -88,7 +88,7 @@ func TestEvents(t *testing.T) {
 			Accused: []common.Address{anotherAddress},
 		}
 		ev := MakeAccusationRegisteredEvent(msg)
-		require.Equal(t, ev.Type, "shutter.accusation-registered")
+		require.Equal(t, EventType.Accusation, ev.Type)
 		require.Equal(t, 3, len(ev.Attributes))
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
@@ -106,7 +106,7 @@ func TestEvents(t *testing.T) {
 			PolyEvals: [][]byte{data},
 		}
 		ev := MakeApologyRegisteredEvent(msg)
-		require.Equal(t, ev.Type, "shutter.apology-registered")
+		require.Equal(t, EventType.Apology, ev.Type)
 		require.Equal(t, 4, len(ev.Attributes))
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)

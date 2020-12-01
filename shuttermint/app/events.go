@@ -21,11 +21,32 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
 
+// EventType declares the different event types. This is a poor man's namespaced enum.
+var EventType = struct {
+	CheckIn             string
+	PolyCommitment      string
+	PolyEval            string
+	BatchConfig         string
+	DecryptionSignature string
+	NewDkgInstance      string
+	Accusation          string
+	Apology             string
+}{
+	CheckIn:             "shutter.check-in",
+	PolyCommitment:      "shutter.poly-commitment-registered",
+	PolyEval:            "shutter.poly-eval-registered",
+	BatchConfig:         "shutter.batch-config",
+	DecryptionSignature: "shutter.decryption-signature",
+	NewDkgInstance:      "shutter.new-dkg-instance",
+	Accusation:          "shutter.accusation-registered",
+	Apology:             "shutter.apology-registered",
+}
+
 // MakeCheckInEvent creates a shutter.check-in event, to be raised whenever a new keyper sends
 // their check in message.
 func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKey) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.check-in",
+		Type: EventType.CheckIn,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", sender),
 			newStringPair("EncryptionPublicKey", encodePubkeyForEvent(encryptionPublicKey.ExportECDSA())),
@@ -37,7 +58,7 @@ func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKe
 // startBatchIndex, threshold and list of keyper addresses are encoded as attributes of the event.
 func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []common.Address) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.batch-config",
+		Type: EventType.BatchConfig,
 		Attributes: []abcitypes.EventAttribute{
 			{
 				Key:   []byte("StartBatchIndex"),
@@ -60,7 +81,7 @@ func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []co
 func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, signature []byte) abcitypes.Event {
 	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
 	return abcitypes.Event{
-		Type: "shutter.decryption-signature",
+		Type: EventType.DecryptionSignature,
 		Attributes: []abcitypes.EventAttribute{
 			{
 				Key:   []byte("BatchIndex"),
@@ -84,7 +105,7 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 // off.
 func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.new-dkg-instance",
+		Type: EventType.NewDkgInstance,
 		Attributes: []abcitypes.EventAttribute{
 			newUintPair("Eon", eon),
 			newUintPair("ConfigIndex", configIndex),
@@ -96,7 +117,7 @@ func MakeNewDKGInstanceEvent(eon uint64, configIndex uint64) abcitypes.Event {
 // registered.
 func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.poly-eval-registered",
+		Type: EventType.PolyEval,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
@@ -110,7 +131,7 @@ func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
 // message is registered.
 func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.poly-commitment-registered",
+		Type: EventType.PolyCommitment,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
@@ -123,7 +144,7 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 // is registered.
 func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.accusation-registered",
+		Type: EventType.Accusation,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
@@ -136,7 +157,7 @@ func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
 // is registered.
 func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
 	return abcitypes.Event{
-		Type: "shutter.apology-registered",
+		Type: EventType.Apology,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),

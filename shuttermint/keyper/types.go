@@ -135,6 +135,12 @@ type PolyCommitmentRegisteredEvent struct {
 	Gammas *crypto.Gammas
 }
 
+// PolyEvalRegisteredEvent
+type PolyEvalRegisteredEvent struct {
+	Eon    uint64
+	Sender common.Address
+}
+
 // IEvent is an interface for the event types declared above
 type IEvent interface {
 	IEvent()
@@ -145,6 +151,7 @@ func (BatchConfigEvent) IEvent()              {}
 func (DecryptionSignatureEvent) IEvent()      {}
 func (NewDKGInstanceEvent) IEvent()           {}
 func (PolyCommitmentRegisteredEvent) IEvent() {}
+func (PolyEvalRegisteredEvent) IEvent()       {}
 
 // ContractCaller interacts with the contracts on Ethereum.
 type ContractCaller struct {

@@ -761,6 +761,8 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.startNewDKGInstance(e)
 	case PolyCommitmentRegisteredEvent:
 		kpr.dispatchEventToDKG(e.Eon, e)
+	case PolyEvalRegisteredEvent:
+		kpr.dispatchEventToDKG(e.Eon, e)
 	default:
 		panic("unknown event type")
 	}
