@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -24,9 +23,7 @@ type DKGInstance struct {
 
 	ms                   MessageSender
 	keyperEncryptionKeys map[common.Address]*ecies.PublicKey
-
-	Commitment map[common.Address]crypto.Gammas
-	pure       puredkg.PureDKG
+	pure                 puredkg.PureDKG
 }
 
 // FindAddressIndex returns the index of the given address inside the slice of addresses or returns
@@ -59,9 +56,7 @@ func NewDKGInstance(
 
 		ms:                   ms,
 		keyperEncryptionKeys: keyperEncryptionKeys,
-
-		Commitment: make(map[common.Address]crypto.Gammas),
-		pure:       puredkg.NewPureDKG(eon, uint64(len(batchConfig.Keypers)), batchConfig.Threshold, uint64(keyperIndex)),
+		pure:                 puredkg.NewPureDKG(eon, uint64(len(batchConfig.Keypers)), batchConfig.Threshold, uint64(keyperIndex)),
 	}
 	return &dkg, nil
 }
@@ -73,6 +68,10 @@ func (dkg *DKGInstance) Run(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (dkg *DKGInstance) FindKeyperIndex(addr common.Address) (int, error) {
+	return FindAddressIndex(dkg.BatchConfig.Keypers, addr)
 }
 
 // startPhase1Dealing starts the dealing phase. It will send the gammas (commitment) and the
@@ -136,8 +135,21 @@ func (dkg *DKGInstance) sendPolyEvals(ctx context.Context, polyEvals []puredkg.P
 func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
 	switch e := ev.(type) {
 	case PolyCommitmentRegisteredEvent:
-		// XXX we should handle the case where we already have a commitment
-		dkg.Commitment[e.Sender] = *e.Gammas
+		senderIndex, err := dkg.FindKeyperIndex(e.Sender)
+		if err != nil {
+			log.Printf("Could not handle poly commitment message. sender is not a keyper")
+			return
+		}
+		m := puredkg.PolyCommitmentMsg{
+			Eon:    e.Eon,
+			Sender: uint64(senderIndex),
+			Gammas: e.Gammas,
+		}
+		err = dkg.pure.HandlePolyCommitmentMsg(m)
+		if err != nil {
+			log.Printf("Could not handle poly commitment message: %+v %s", m, err)
+			return
+		}
 	default:
 		panic("unknown event type, cannot dispatch")
 	}

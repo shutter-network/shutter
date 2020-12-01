@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	shcrypto "github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
 type testInstance struct {
@@ -120,17 +122,17 @@ func TestDKGInstance(t *testing.T) {
 }
 
 func TestDispatchPolyCommitmentRegistered(t *testing.T) {
+	senderIndex := 1
 	ti := setupTestInstance(t)
-	sender := ti.keypers[1]
-	polyCommitment, _, err := ti.dkg.pure.StartPhase1Dealing()
+	sender := ti.keypers[senderIndex]
+	polynomial, err := shcrypto.RandomPolynomial(rand.Reader, shcrypto.DegreeFromThreshold(ti.dkg.pure.Threshold))
 	require.Nil(t, err)
 	ev := PolyCommitmentRegisteredEvent{
 		Eon:    ti.eon,
 		Sender: sender,
-		Gammas: polyCommitment.Gammas,
+		Gammas: polynomial.Gammas(),
 	}
 	ti.dkg.dispatchShuttermintEvent(ev)
-	c, ok := ti.dkg.Commitment[sender]
-	require.True(t, ok)
-	require.Equal(t, *ev.Gammas, c)
+	c := ti.dkg.pure.Commitments[senderIndex]
+	require.Equal(t, ev.Gammas, c)
 }
