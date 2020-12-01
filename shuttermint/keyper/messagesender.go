@@ -12,6 +12,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+var mockMessageSenderBufferSize = 0x10000
+
 // NewRPCMessageSender creates a new RPCMessageSender
 func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMessageSender {
 	return RPCMessageSender{cl, signingKey}
@@ -34,10 +36,11 @@ func (ms RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) 
 	return nil
 }
 
-// NewMockMessageSender creates a new MockMessageSender
+// NewMockMessageSender creates a new MockMessageSender. We use a buffered channel with a rather
+// large size in order to simplify writing our tests.
 func NewMockMessageSender() MockMessageSender {
 	return MockMessageSender{
-		Msgs: make(chan *shmsg.Message),
+		Msgs: make(chan *shmsg.Message, mockMessageSenderBufferSize),
 	}
 }
 

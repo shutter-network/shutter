@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 )
@@ -63,7 +62,6 @@ func setupTestInstance(t *testing.T) testInstance {
 	dkg, err := NewDKGInstance(eon, batchConfig, keyperConfig, ms, keyperEncryptionPublicKeys)
 	require.Nil(t, err)
 	require.Equal(t, eon, dkg.Eon)
-	require.NotNil(t, dkg.Polynomial)
 
 	return testInstance{
 		eon:                         eon,
@@ -79,55 +77,57 @@ func setupTestInstance(t *testing.T) testInstance {
 
 func TestDKGInstance(t *testing.T) {
 	ti := setupTestInstance(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	group, _ := errgroup.WithContext(ctx)
-	group.Go(func() error {
-		return ti.dkg.Run(ctx)
-	})
+	err := ti.dkg.Run(context.Background())
+	require.Nil(t, err)
 
 	t.Run("SendGammas", func(t *testing.T) {
-		msgContainer := <-ti.ms.Msgs
-		msg := msgContainer.GetPolyCommitmentMsg()
-		require.NotNil(t, msg)
-		require.Equal(t, ti.eon, msg.Eon)
-		gammas := [][]byte{}
-		for _, g := range *ti.dkg.Polynomial.Gammas() {
-			gammas = append(gammas, g.Marshal())
+		select {
+		case msgContainer := <-ti.ms.Msgs:
+			msg := msgContainer.GetPolyCommitmentMsg()
+			require.NotNil(t, msg)
+			require.Equal(t, ti.eon, msg.Eon)
+			gammas := [][]byte{}
+			for _, g := range *ti.dkg.pure.Polynomial.Gammas() {
+				gammas = append(gammas, g.Marshal())
+			}
+			require.Equal(t, gammas, msg.Gammas)
+		default:
+			require.FailNow(t, "no message on channel")
 		}
-		require.Equal(t, gammas, msg.Gammas)
 	})
 
 	t.Run("SendPolyEvals", func(t *testing.T) {
-		msgContainer := <-ti.ms.Msgs
-		msg := msgContainer.GetPolyEvalMsg()
-		require.NotNil(t, msg)
-		require.Equal(t, ti.eon, msg.Eon)
-		require.Equal(t, len(ti.keypers)-1, len(msg.Receivers))
-		for i, receiver := range ti.keypers {
-			if i == 2 {
-				continue
+		select {
+		case msgContainer := <-ti.ms.Msgs:
+			msg := msgContainer.GetPolyEvalMsg()
+			require.NotNil(t, msg)
+			require.Equal(t, ti.eon, msg.Eon)
+			require.Equal(t, len(ti.keypers)-1, len(msg.Receivers))
+			for i, receiver := range ti.keypers {
+				if i == 2 {
+					continue
+				}
+				require.Equal(t, receiver.Bytes(), msg.Receivers[i])
+				polyEval := ti.dkg.pure.Polynomial.EvalForKeyper(i)
+				decryptedEval, err := ti.keyperEncryptionPrivateKeys[receiver].Decrypt(msg.EncryptedEvals[i], nil, nil)
+				require.Nil(t, err)
+				require.True(t, bytes.Equal(polyEval.Bytes(), decryptedEval))
 			}
-			require.Equal(t, receiver.Bytes(), msg.Receivers[i])
-			polyEval := ti.dkg.Polynomial.EvalForKeyper(i)
-			decryptedEval, err := ti.keyperEncryptionPrivateKeys[receiver].Decrypt(msg.EncryptedEvals[i], nil, nil)
-			require.Nil(t, err)
-			require.True(t, bytes.Equal(polyEval.Bytes(), decryptedEval))
+		default:
+			require.FailNow(t, "no message on channel")
 		}
 	})
-
-	err := group.Wait()
-	require.Nil(t, err)
 }
 
 func TestDispatchPolyCommitmentRegistered(t *testing.T) {
 	ti := setupTestInstance(t)
 	sender := ti.keypers[1]
-	ti.dkg.Polynomial.Gammas()
+	polyCommitment, _, err := ti.dkg.pure.StartPhase1Dealing()
+	require.Nil(t, err)
 	ev := PolyCommitmentRegisteredEvent{
 		Eon:    ti.eon,
 		Sender: sender,
-		Gammas: ti.dkg.Polynomial.Gammas(),
+		Gammas: polyCommitment.Gammas,
 	}
 	ti.dkg.dispatchShuttermintEvent(ev)
 	c, ok := ti.dkg.Commitment[sender]
