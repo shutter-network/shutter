@@ -78,8 +78,7 @@ type Keyper struct {
 	executor              Executor
 	cipherExecutionParams chan CipherExecutionParams
 	keyperEncryptionKeys  map[common.Address]*ecies.PublicKey
-
-	dkg *DKGInstance
+	dkg                   map[uint64]*DKGInstance
 }
 
 // MessageSender defines the interface of sending messages to shuttermint.

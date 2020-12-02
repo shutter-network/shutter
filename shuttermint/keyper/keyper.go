@@ -41,7 +41,7 @@ func NewKeyper(kc KeyperConfig) Keyper {
 		newHeaders:            make(chan *types.Header, newHeadersSize),
 		cipherExecutionParams: make(chan CipherExecutionParams),
 		keyperEncryptionKeys:  make(map[common.Address]*ecies.PublicKey),
-		dkg:                   nil,
+		dkg:                   make(map[uint64]*DKGInstance),
 	}
 }
 
@@ -743,11 +743,12 @@ func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev IEvent) {
 	kpr.Lock()
 	defer kpr.Unlock()
 
-	// we should probably maintain a map of eon -> dkg
-	if kpr.dkg == nil || kpr.dkg.Eon != eon {
+	d, ok := kpr.dkg[eon]
+	if ok {
+		d.dispatchShuttermintEvent(ev)
+	} else {
 		log.Printf("dkg is not active, cannot dispatch %+v", ev)
 	}
-	kpr.dkg.dispatchShuttermintEvent(ev)
 }
 
 func (kpr *Keyper) dispatchEvent(ev IEvent) {
@@ -778,11 +779,10 @@ func (kpr *Keyper) sendEonStartVote(startBatchIndex uint64) {
 }
 
 func (kpr *Keyper) startNewDKGInstance(ev EonStartedEvent) {
-	if kpr.dkg == nil {
-		log.Printf("Starting DKG for eon %d", ev.Eon)
-	} else {
-		log.Printf("Aborting DKG for eon %d to start DKG for eon %d", kpr.dkg.Eon, ev.Eon)
-		kpr.dkg = nil
+	_, ok := kpr.dkg[ev.Eon]
+	if ok {
+		log.Printf("Already have DKG instance for eon %d", ev.Eon)
+		return
 	}
 
 	config, err := kpr.configContract.GetConfig(nil, ev.BatchIndex)
@@ -797,16 +797,16 @@ func (kpr *Keyper) startNewDKGInstance(ev EonStartedEvent) {
 		keyperEncryptionKeys[k] = v
 	}
 
-	dkg, err := NewDKGInstance(ev.Eon, config, kpr.Config, kpr.ms, keyperEncryptionKeys)
+	d, err := NewDKGInstance(ev.Eon, config, kpr.Config, kpr.ms, keyperEncryptionKeys)
 	if err != nil {
 		log.Printf("Error starting DKG instance for eon %d: %s", ev.Eon, err)
 		return
 	}
-	kpr.dkg = dkg
+	kpr.dkg[ev.Eon] = d
 	ctx, cancel := context.WithCancel(kpr.ctx)
 	go func() {
 		defer cancel()
-		err = dkg.Run(ctx)
+		err = d.Run(ctx)
 		if err != nil {
 			log.Fatalf("DKG process for eon %d failed: %s", ev.Eon, err)
 		}
