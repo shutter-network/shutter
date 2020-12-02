@@ -790,7 +790,8 @@ func (kpr *Keyper) startNewDKGInstance(ev NewDKGInstanceEvent) {
 
 	dkg, err := NewDKGInstance(ev.Eon, config, kpr.Config, kpr.ms, keyperEncryptionKeys)
 	if err != nil {
-		log.Printf("Error starting DKG instance: %s", err)
+		log.Printf("Error starting DKG instance for eon %d: %s", ev.Eon, err)
+		return
 	}
 	kpr.dkg = dkg
 	ctx, cancel := context.WithCancel(kpr.ctx)

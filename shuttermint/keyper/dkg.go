@@ -47,7 +47,13 @@ func NewDKGInstance(
 ) (*DKGInstance, error) {
 	keyperIndex, err := FindAddressIndex(batchConfig.Keypers, keyperConfig.Address())
 	if err != nil {
-		return nil, fmt.Errorf("internal error: not a keyper: %s", keyperConfig.Address().Hex())
+		return nil, fmt.Errorf("new dkg: not a keyper: %s", keyperConfig.Address().Hex())
+	}
+	// The following checks if we have enough encryption keys.
+	// XXX Make sure we are not off by one here and check if keyperEncryptionKeys contains our
+	// own key.
+	if uint64(len(keyperEncryptionKeys)) < batchConfig.Threshold {
+		return nil, fmt.Errorf("new dkg: need at least %d encryption keys, only have %d", batchConfig.Threshold, len(keyperEncryptionKeys))
 	}
 	dkg := DKGInstance{
 		Eon:          eon,
