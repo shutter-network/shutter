@@ -99,7 +99,7 @@ func TestMessageParsing(t *testing.T) {
 		smsg := shmsg.EpochSKShareMsg{
 			Eon:          eon,
 			Epoch:        epoch,
-			EpochSKShare: []byte{},
+			EpochSkShare: []byte{},
 		}
 		msg, err := ParseEpochSKShareMsg(&smsg, sender)
 		require.Nil(t, err)

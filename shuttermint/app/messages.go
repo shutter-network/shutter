@@ -120,6 +120,6 @@ func ParseEpochSKShareMsg(msg *shmsg.EpochSKShareMsg, sender common.Address) (*E
 		Sender:       sender,
 		Eon:          msg.Eon,
 		Epoch:        msg.Epoch,
-		EpochSKShare: msg.EpochSKShare,
+		EpochSKShare: msg.EpochSkShare,
 	}, nil
 }
