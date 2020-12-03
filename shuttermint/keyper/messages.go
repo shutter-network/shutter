@@ -45,3 +45,14 @@ func NewPolyEvalMsg(
 		},
 	}
 }
+
+// NewEonStartVoteMsg creates a new eon start vote message.
+func NewEonStartVoteMsg(startBatchIndex uint64) *shmsg.Message {
+	return &shmsg.Message{
+		Payload: &shmsg.Message_EonStartVoteMsg{
+			EonStartVoteMsg: &shmsg.EonStartVoteMsg{
+				StartBatchIndex: startBatchIndex,
+			},
+		},
+	}
+}

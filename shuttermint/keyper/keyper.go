@@ -755,6 +755,7 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 	case CheckInEvent:
 		kpr.handleCheckInEvent(e)
 	case BatchConfigEvent:
+		kpr.sendEonStartVote(e.StartBatchIndex)
 	case DecryptionSignatureEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
 	case EonStartedEvent:
@@ -765,6 +766,14 @@ func (kpr *Keyper) dispatchEvent(ev IEvent) {
 		kpr.dispatchEventToDKG(e.Eon, e)
 	default:
 		panic("unknown event type")
+	}
+}
+
+func (kpr *Keyper) sendEonStartVote(startBatchIndex uint64) {
+	msg := NewEonStartVoteMsg(startBatchIndex)
+	err := kpr.ms.SendMessage(kpr.ctx, msg)
+	if err != nil {
+		log.Printf("Failed sending StartEonVote message: %s", err)
 	}
 }
 
