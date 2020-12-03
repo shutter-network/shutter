@@ -35,14 +35,14 @@ message CheckIn {
 }
 
 message DecryptionSignature {
-        uint64 batchIndex = 1;
+        uint64 batch_index = 1;
         bytes signature = 2;
 }
 
 message PolyEvalMsg {
         uint64 eon = 1;
         repeated bytes receivers = 2;
-        repeated bytes encryptedEvals = 3;
+        repeated bytes encrypted_evals = 3;
 }
 
 message PolyCommitmentMsg {
@@ -58,13 +58,13 @@ message AccusationMsg {
 message ApologyMsg {
         uint64 eon = 1;
         repeated bytes accusers = 2;
-        repeated bytes polyEvals = 3;
+        repeated bytes poly_evals = 3;
 }
 
 message EpochSKShareMsg {
         uint64 eon = 1;
         uint64 epoch = 2;
-        bytes epochSKShare = 3;
+        bytes epoch_sk_share = 3;
 }
 
 message EonStartVoteMsg {
