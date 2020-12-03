@@ -65,14 +65,14 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 // NewShutterApp creates a new ShutterApp
 func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
-		Configs:        []*BatchConfig{{}},
-		BatchStates:    make(map[uint64]BatchState),
-		DKGMap:         make(map[uint64]*DKGInstance),
-		ConfigVoting:   NewConfigVoting(),
-		EonStartVoting: NewEonStartVoting(),
-		Identities:     make(map[common.Address]ValidatorPubkey),
-		StartedVotes:   make(map[common.Address]bool),
-		CheckTxState:   NewCheckTxState(),
+		Configs:         []*BatchConfig{{}},
+		BatchStates:     make(map[uint64]BatchState),
+		DKGMap:          make(map[uint64]*DKGInstance),
+		ConfigVoting:    NewConfigVoting(),
+		EonStartVotings: make(map[uint64]*EonStartVoting),
+		Identities:      make(map[common.Address]ValidatorPubkey),
+		StartedVotes:    make(map[common.Address]bool),
+		CheckTxState:    NewCheckTxState(),
 	}
 }
 
@@ -421,6 +421,54 @@ func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, 
 	}
 }
 
+func (app *ShutterApp) deliverEonStartVoteMsg(msg *shmsg.EonStartVoteMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+	config := app.getConfig(msg.StartBatchIndex)
+	if !config.IsKeyper(sender) {
+		return notAKeyper(sender)
+	}
+
+	app.countEonStartVote(sender, config, msg.StartBatchIndex)
+	dkg, startBatchIndex, started := app.maybeStartEon(config)
+	if !started {
+		return abcitypes.ResponseDeliverTx{
+			Code:   0,
+			Events: []abcitypes.Event{},
+		}
+	}
+	return abcitypes.ResponseDeliverTx{
+		Code: 0,
+		Events: []abcitypes.Event{
+			MakeEonStartedEvent(dkg.Eon, startBatchIndex),
+		},
+	}
+}
+
+func (app *ShutterApp) countEonStartVote(sender common.Address, config *BatchConfig, startBatchIndex uint64) {
+	v := app.EonStartVotings[config.ConfigIndex]
+	if v == nil {
+		v = NewEonStartVoting()
+		app.EonStartVotings[config.ConfigIndex] = v
+	}
+	v.AddVote(sender, startBatchIndex)
+}
+
+func (app *ShutterApp) maybeStartEon(config *BatchConfig) (*DKGInstance, uint64, bool) {
+	v, ok := app.EonStartVotings[config.ConfigIndex]
+	if !ok {
+		return nil, uint64(0), false
+	}
+
+	threshold := int(config.Threshold)
+	startBatchIndex, success := v.Outcome(threshold)
+	if !success {
+		return nil, uint64(0), false
+	}
+
+	delete(app.EonStartVotings, config.ConfigIndex)
+	dkg := app.StartDKG(*config)
+	return dkg, startBatchIndex, true
+}
+
 func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature, sender common.Address) abcitypes.ResponseDeliverTx {
 	bs := app.getBatchState(msg.BatchIndex)
 	err := bs.AddDecryptionSignature(DecryptionSignature{Sender: sender, Signature: msg.Signature})
@@ -563,6 +611,9 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	if msg.GetCheckIn() != nil {
 		return app.deliverCheckIn(msg.GetCheckIn(), sender)
+	}
+	if msg.GetEonStartVoteMsg() != nil {
+		return app.deliverEonStartVoteMsg(msg.GetEonStartVoteMsg(), sender)
 	}
 	if msg.GetDecryptionSignature() != nil {
 		return app.deliverDecryptionSignature(msg.GetDecryptionSignature(), sender)

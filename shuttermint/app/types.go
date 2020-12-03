@@ -108,7 +108,7 @@ type ShutterApp struct {
 	BatchStates     map[uint64]BatchState
 	DKGMap          map[uint64]*DKGInstance
 	ConfigVoting    ConfigVoting
-	EonStartVoting  EonStartVoting
+	EonStartVotings map[uint64]*EonStartVoting
 	Gobpath         string
 	LastSaved       time.Time
 	LastBlockHeight int64

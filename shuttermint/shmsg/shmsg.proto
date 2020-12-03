@@ -67,6 +67,10 @@ message EpochSKShareMsg {
         bytes epochSKShare = 3;
 }
 
+message EonStartVoteMsg {
+        uint64 start_batch_index = 1;
+}
+
 message Message {
         oneof payload {
                 BatchConfig batch_config = 4;
@@ -79,5 +83,7 @@ message Message {
                 PolyCommitmentMsg poly_commitment_msg = 10;
                 AccusationMsg accusation_msg = 11;
                 ApologyMsg apology_msg = 12;
+
+                EonStartVoteMsg eon_start_vote_msg = 13;
         }
 }

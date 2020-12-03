@@ -2,11 +2,12 @@ package app
 
 import "github.com/ethereum/go-ethereum/common"
 
-func NewEonStartVoting() EonStartVoting {
-	return EonStartVoting{
+func NewEonStartVoting() *EonStartVoting {
+	v := EonStartVoting{
 		Voting:     NewVoting(),
 		Candidates: []uint64{},
 	}
+	return &v
 }
 
 func (v *EonStartVoting) AddVote(sender common.Address, batchIndex uint64) {
