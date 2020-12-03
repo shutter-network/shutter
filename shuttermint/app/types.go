@@ -118,12 +118,19 @@ type ShutterApp struct {
 	EONCounter      uint64
 	DevMode         bool
 	CheckTxState    *CheckTxState
+	NonceTracker    *NonceTracker
 }
 
 // CheckTxState is a part of the state used by CheckTx calls that is reset at every commit.
 type CheckTxState struct {
-	Members  map[common.Address]bool
-	TxCounts map[common.Address]int
+	Members      map[common.Address]bool
+	TxCounts     map[common.Address]int
+	NonceTracker *NonceTracker
+}
+
+// NonceTracker tracks which nonces have been used and which have not.
+type NonceTracker struct {
+	RandomNonces map[common.Address]map[uint64]bool
 }
 
 // DKGInstance manages the state of one eon key generation instance.

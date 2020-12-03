@@ -21,14 +21,18 @@ import (
 
 var version string = "(unknown)"
 
-func makeMessage() *shmsg.Message {
-	return &shmsg.Message{
+func makeMessage() *shmsg.MessageWithNonce {
+	msg := &shmsg.Message{
 		Payload: &shmsg.Message_CheckIn{
 			CheckIn: &shmsg.CheckIn{
 				ValidatorPublicKey:  bytes.Repeat([]byte("x"), 32),
 				EncryptionPublicKey: bytes.Repeat([]byte("y"), 33),
 			},
 		},
+	}
+	return &shmsg.MessageWithNonce{
+		RandomNonce: uint64(0),
+		Msg:         msg,
 	}
 }
 

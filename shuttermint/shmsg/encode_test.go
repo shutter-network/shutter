@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeMessage() *Message {
-	return &Message{
+func makeMessage() *MessageWithNonce {
+	msg := &Message{
 		Payload: &Message_CheckIn{
 			CheckIn: &CheckIn{
 				ValidatorPublicKey:  bytes.Repeat([]byte("x"), 32),
@@ -17,6 +17,11 @@ func makeMessage() *Message {
 			},
 		},
 	}
+	msgWithNonce := &MessageWithNonce{
+		Msg:         msg,
+		RandomNonce: 123,
+	}
+	return msgWithNonce
 }
 
 func TestEncodeDecode(t *testing.T) {
@@ -29,10 +34,10 @@ func TestEncodeDecode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got error while decoding: %s", err)
 	}
-	t.Logf("decoded check in: %+v", msg.GetCheckIn())
+	t.Logf("decoded check in: %+v", msg.Msg.GetCheckIn())
 
-	if msg.GetCheckIn() == nil {
-		t.Fatal("got no public key commitment")
+	if msg.Msg.GetCheckIn() == nil {
+		t.Fatal("got no check in")
 	}
 }
 
@@ -57,7 +62,7 @@ func TestSignMessage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get message: %s", err)
 	}
-	if msg.GetCheckIn() == nil {
+	if msg.Msg.GetCheckIn() == nil {
 		t.Fatal("got no check in")
 	}
 }

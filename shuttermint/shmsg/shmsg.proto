@@ -87,3 +87,8 @@ message Message {
                 EonStartVoteMsg eon_start_vote_msg = 13;
         }
 }
+
+message MessageWithNonce {
+        Message msg = 1;
+        uint64 random_nonce = 2;
+}

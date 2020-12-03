@@ -12,7 +12,7 @@ import (
 )
 
 // URLEncodeMessage encodes Message as a string, which is safe to be used as part of an URL
-func URLEncodeMessage(msg *Message) (string, error) {
+func URLEncodeMessage(msg *MessageWithNonce) (string, error) {
 	out, err := proto.Marshal(msg)
 	if err != nil {
 		return "", err
@@ -21,8 +21,8 @@ func URLEncodeMessage(msg *Message) (string, error) {
 }
 
 // URLDecodeMessage decodes a Message from the given string
-func URLDecodeMessage(encoded string) (*Message, error) {
-	msg := Message{}
+func URLDecodeMessage(encoded string) (*MessageWithNonce, error) {
+	msg := MessageWithNonce{}
 	out, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func URLDecodeMessage(encoded string) (*Message, error) {
 var hashPrefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
 
 // SignMessage signs the given Message with the given private key
-func SignMessage(msg *Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
+func SignMessage(msg *MessageWithNonce, privkey *ecdsa.PrivateKey) ([]byte, error) {
 	marshaled, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -91,8 +91,8 @@ func GetSigner(signedMessage []byte) (common.Address, error) {
 }
 
 // GetMessage returns the unmarshalled Message of a signed message
-func GetMessage(signedMessage []byte) (*Message, error) {
-	msg := Message{}
+func GetMessage(signedMessage []byte) (*MessageWithNonce, error) {
+	msg := MessageWithNonce{}
 	if err := proto.Unmarshal(signedMessage[crypto.SignatureLength:], &msg); err != nil {
 		return nil, err
 	}

@@ -943,6 +943,61 @@ func (*Message_ApologyMsg) isMessage_Payload() {}
 
 func (*Message_EonStartVoteMsg) isMessage_Payload() {}
 
+type MessageWithNonce struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Msg         *Message `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	RandomNonce uint64   `protobuf:"varint,2,opt,name=random_nonce,json=randomNonce,proto3" json:"random_nonce,omitempty"`
+}
+
+func (x *MessageWithNonce) Reset() {
+	*x = MessageWithNonce{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_shmsg_shmsg_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MessageWithNonce) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MessageWithNonce) ProtoMessage() {}
+
+func (x *MessageWithNonce) ProtoReflect() protoreflect.Message {
+	mi := &file_shmsg_shmsg_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MessageWithNonce.ProtoReflect.Descriptor instead.
+func (*MessageWithNonce) Descriptor() ([]byte, []int) {
+	return file_shmsg_shmsg_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *MessageWithNonce) GetMsg() *Message {
+	if x != nil {
+		return x.Msg
+	}
+	return nil
+}
+
+func (x *MessageWithNonce) GetRandomNonce() uint64 {
+	if x != nil {
+		return x.RandomNonce
+	}
+	return 0
+}
+
 var File_shmsg_shmsg_proto protoreflect.FileDescriptor
 
 var file_shmsg_shmsg_proto_rawDesc = []byte{
@@ -1055,8 +1110,14 @@ var file_shmsg_shmsg_proto_rawDesc = []byte{
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x73, 0x68, 0x6d, 0x73, 0x67, 0x2e, 0x45, 0x6f, 0x6e,
 	0x53, 0x74, 0x61, 0x72, 0x74, 0x56, 0x6f, 0x74, 0x65, 0x4d, 0x73, 0x67, 0x48, 0x00, 0x52, 0x0f,
 	0x65, 0x6f, 0x6e, 0x53, 0x74, 0x61, 0x72, 0x74, 0x56, 0x6f, 0x74, 0x65, 0x4d, 0x73, 0x67, 0x42,
-	0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b,
-	0x73, 0x68, 0x6d, 0x73, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x57, 0x0a, 0x10, 0x4d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x57, 0x69, 0x74, 0x68, 0x4e, 0x6f, 0x6e, 0x63, 0x65, 0x12, 0x20,
+	0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x73, 0x68,
+	0x6d, 0x73, 0x67, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x03, 0x6d, 0x73, 0x67,
+	0x12, 0x21, 0x0a, 0x0c, 0x72, 0x61, 0x6e, 0x64, 0x6f, 0x6d, 0x5f, 0x6e, 0x6f, 0x6e, 0x63, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x0b, 0x72, 0x61, 0x6e, 0x64, 0x6f, 0x6d, 0x4e, 0x6f,
+	0x6e, 0x63, 0x65, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x3b, 0x73, 0x68, 0x6d, 0x73, 0x67, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1071,7 +1132,7 @@ func file_shmsg_shmsg_proto_rawDescGZIP() []byte {
 	return file_shmsg_shmsg_proto_rawDescData
 }
 
-var file_shmsg_shmsg_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_shmsg_shmsg_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_shmsg_shmsg_proto_goTypes = []interface{}{
 	(*G1)(nil),                  // 0: shmsg.G1
 	(*G2)(nil),                  // 1: shmsg.G2
@@ -1087,6 +1148,7 @@ var file_shmsg_shmsg_proto_goTypes = []interface{}{
 	(*EpochSKShareMsg)(nil),     // 11: shmsg.EpochSKShareMsg
 	(*EonStartVoteMsg)(nil),     // 12: shmsg.EonStartVoteMsg
 	(*Message)(nil),             // 13: shmsg.Message
+	(*MessageWithNonce)(nil),    // 14: shmsg.MessageWithNonce
 }
 var file_shmsg_shmsg_proto_depIdxs = []int32{
 	3,  // 0: shmsg.Message.batch_config:type_name -> shmsg.BatchConfig
@@ -1098,11 +1160,12 @@ var file_shmsg_shmsg_proto_depIdxs = []int32{
 	9,  // 6: shmsg.Message.accusation_msg:type_name -> shmsg.AccusationMsg
 	10, // 7: shmsg.Message.apology_msg:type_name -> shmsg.ApologyMsg
 	12, // 8: shmsg.Message.eon_start_vote_msg:type_name -> shmsg.EonStartVoteMsg
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	13, // 9: shmsg.MessageWithNonce.msg:type_name -> shmsg.Message
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_shmsg_shmsg_proto_init() }
@@ -1279,6 +1342,18 @@ func file_shmsg_shmsg_proto_init() {
 				return nil
 			}
 		}
+		file_shmsg_shmsg_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MessageWithNonce); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_shmsg_shmsg_proto_msgTypes[13].OneofWrappers = []interface{}{
 		(*Message_BatchConfig)(nil),
@@ -1297,7 +1372,7 @@ func file_shmsg_shmsg_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_shmsg_shmsg_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -56,6 +56,9 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	if err != nil {
 		return abcitypes.ResponseCheckTx{Code: 1}
 	}
+	if !app.NonceTracker.Check(signer, msg.RandomNonce) {
+		return abcitypes.ResponseCheckTx{Code: 1}
+	}
 	if !app.CheckTxState.AddTx(signer, msg) {
 		return abcitypes.ResponseCheckTx{Code: 1}
 	}
@@ -73,6 +76,7 @@ func NewShutterApp() *ShutterApp {
 		Identities:      make(map[common.Address]ValidatorPubkey),
 		StartedVotes:    make(map[common.Address]bool),
 		CheckTxState:    NewCheckTxState(),
+		NonceTracker:    NewNonceTracker(),
 	}
 }
 
@@ -252,7 +256,7 @@ func (ShutterApp) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.Response
 
 // decodeTx decodes the given transaction.  It's kind of strange that we have do URL decode the
 // message outselves instead of tendermint doing it for us.
-func (ShutterApp) decodeTx(tx []byte) (signer common.Address, msg *shmsg.Message, err error) {
+func (ShutterApp) decodeTx(tx []byte) (signer common.Address, msg *shmsg.MessageWithNonce, err error) {
 	var signedMsg []byte
 	signedMsg, err = base64.RawURLEncoding.DecodeString(string(tx))
 	if err != nil {
@@ -278,7 +282,12 @@ func (app *ShutterApp) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.Respo
 		log.Print(msg)
 		return makeErrorResponse(msg)
 	}
-	return app.deliverMessage(msg, signer)
+	if !app.NonceTracker.Check(signer, msg.RandomNonce) {
+		msg := fmt.Sprintf("Nonce %d of %s already used", msg.RandomNonce, signer.Hex())
+		return makeErrorResponse(msg)
+	}
+	app.NonceTracker.Add(signer, msg.RandomNonce)
+	return app.deliverMessage(msg.Msg, signer)
 }
 
 func makeErrorResponse(msg string) abcitypes.ResponseDeliverTx {

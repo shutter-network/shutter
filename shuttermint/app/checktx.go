@@ -20,6 +20,7 @@ func NewCheckTxState() *CheckTxState {
 // their view on the network.
 func (s *CheckTxState) Reset() {
 	s.TxCounts = make(map[common.Address]int)
+	s.NonceTracker = NewNonceTracker()
 }
 
 // SetMembers sets the member set allowed to send txs. Duplicate addresses are ignored.
@@ -33,14 +34,18 @@ func (s *CheckTxState) SetMembers(members []common.Address) {
 // AddTx checks if a tx can be added and updates the internal state accordingly.
 // Returns true if the sender is a member (or the member set is empty) and has not exceeded their
 // tx limit yet.
-func (s *CheckTxState) AddTx(sender common.Address, msg *shmsg.Message) bool {
+func (s *CheckTxState) AddTx(sender common.Address, msg *shmsg.MessageWithNonce) bool {
 	if len(s.Members) > 0 && !s.Members[sender] {
 		return false
 	}
 	if s.TxCounts[sender] >= MaxTxsPerBlock {
 		return false
 	}
+	if !s.NonceTracker.Check(sender, msg.RandomNonce) {
+		return false
+	}
 
 	s.TxCounts[sender]++
+	s.NonceTracker.Add(sender, msg.RandomNonce)
 	return true
 }
