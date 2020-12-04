@@ -61,7 +61,7 @@ func setupTestInstance(t *testing.T) testInstance {
 		EncryptionKey: keyperEncryptionPrivateKeys[address],
 	}
 	ms := NewMockMessageSender()
-	dkg, err := NewDKGInstance(eon, batchConfig, keyperConfig, ms, keyperEncryptionPublicKeys)
+	dkg, err := NewDKGInstance(eon, batchConfig, keyperConfig, &ms, keyperEncryptionPublicKeys)
 	require.Nil(t, err)
 	require.Equal(t, eon, dkg.Eon)
 
