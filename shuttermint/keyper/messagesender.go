@@ -22,12 +22,20 @@ func init() {
 
 // NewRPCMessageSender creates a new RPCMessageSender
 func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMessageSender {
-	return RPCMessageSender{cl, signingKey}
+	return RPCMessageSender{
+		rpcclient:  cl,
+		chainID:    "",
+		signingKey: signingKey,
+	}
 }
 
 // SendMessage signs the given shmsg.Message and sends the message to shuttermint
-func (ms RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) error {
-	msgWithNonce := ms.addNonce(msg)
+func (ms *RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) error {
+	if err := ms.maybeFetchChainID(ctx); err != nil {
+		return err
+	}
+
+	msgWithNonce := ms.addNonceAndChainID(msg)
 	signedMessage, err := shmsg.SignMessage(msgWithNonce, ms.signingKey)
 	if err != nil {
 		return err
@@ -43,11 +51,29 @@ func (ms RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) 
 	return nil
 }
 
-func (ms RPCMessageSender) addNonce(msg *shmsg.Message) *shmsg.MessageWithNonce {
+func (ms *RPCMessageSender) addNonceAndChainID(msg *shmsg.Message) *shmsg.MessageWithNonce {
 	return &shmsg.MessageWithNonce{
+		ChainId:     []byte(ms.chainID),
 		RandomNonce: randomNonce(),
 		Msg:         msg,
 	}
+}
+
+func (ms *RPCMessageSender) maybeFetchChainID(ctx context.Context) error {
+	if ms.chainID != "" {
+		return nil
+	}
+
+	info, err := ms.rpcclient.BlockchainInfo(ctx, 0, 0)
+	if err != nil {
+		return err
+	}
+	if len(info.BlockMetas) == 0 {
+		return fmt.Errorf("failed to fetch block meta to check chain id")
+	}
+
+	ms.chainID = info.BlockMetas[0].Header.ChainID
+	return nil
 }
 
 func randomNonce() uint64 {
@@ -62,7 +88,7 @@ func NewMockMessageSender() MockMessageSender {
 	}
 }
 
-func (ms MockMessageSender) SendMessage(_ context.Context, msg *shmsg.Message) error {
+func (ms *MockMessageSender) SendMessage(_ context.Context, msg *shmsg.Message) error {
 	ms.Msgs <- msg
 	return nil
 }

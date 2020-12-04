@@ -90,5 +90,6 @@ message Message {
 
 message MessageWithNonce {
         Message msg = 1;
-        uint64 random_nonce = 2;
+        bytes chain_id = 2;
+        uint64 random_nonce = 3;
 }

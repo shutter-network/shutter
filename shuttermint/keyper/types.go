@@ -41,6 +41,7 @@ type BatchState struct {
 
 // KeyperConfig contains validated configuration parameters for the keyper client
 type KeyperConfig struct {
+	ChainID                     string
 	ShuttermintURL              string
 	EthereumURL                 string
 	SigningKey                  *ecdsa.PrivateKey
@@ -89,17 +90,18 @@ type MessageSender interface {
 // RPCMessageSender signs messages and sends them via RPC to shuttermint.
 type RPCMessageSender struct {
 	rpcclient  client.Client
+	chainID    string
 	signingKey *ecdsa.PrivateKey
 }
 
-var _ MessageSender = RPCMessageSender{}
+var _ MessageSender = &RPCMessageSender{}
 
 // MockMessageSender sends all messages to a channel so that they can be checked for testing.
 type MockMessageSender struct {
 	Msgs chan *shmsg.Message
 }
 
-var _ MessageSender = MockMessageSender{}
+var _ MessageSender = &MockMessageSender{}
 
 // CheckInEvent is emitted by shuttermint when a keyper sends their check in message.
 type CheckInEvent struct {
