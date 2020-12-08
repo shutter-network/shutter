@@ -299,23 +299,6 @@ func (kpr *Keyper) initializeConfigs(opts *bind.CallOpts) error {
 }
 
 func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
-	configs, err := kpr.configContract.CurrentAndFutureConfigs(opts, opts.BlockNumber.Uint64())
-	if err != nil {
-		return err
-	}
-
-	// Check if we are a keyper now or in some scheduled config. If not, no need to check in.
-	isKeyper := false
-	for _, config := range configs {
-		if config.IsKeyper(kpr.Config.Address()) {
-			isKeyper = true
-			break
-		}
-	}
-	if !isKeyper {
-		return nil
-	}
-
 	// Check that we're not already checked in. If not, no need to check in.
 	checkedIn, err := queryCheckedIn(kpr.shmcl, kpr.Config.Address())
 	if err != nil {
@@ -327,7 +310,19 @@ func (kpr *Keyper) doInitialCheckIn(opts *bind.CallOpts) error {
 		return nil
 	}
 
-	return kpr.sendCheckIn()
+	// Check in if we are keyper in some of the current or future configs
+	configs, err := kpr.configContract.CurrentAndFutureConfigs(opts, opts.BlockNumber.Uint64())
+	if err != nil {
+		return err
+	}
+
+	for _, config := range configs {
+		err := kpr.maybeSendCheckIn(config)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (kpr *Keyper) watchMainChainHeadBlock() error {
@@ -568,7 +563,7 @@ func (kpr *Keyper) maybeSendCheckIn(config contract.BatchConfig) error {
 		return nil
 	}
 
-	if _, isKeyper := config.KeyperIndex(kpr.Config.Address()); !isKeyper {
+	if !config.IsKeyper(kpr.Config.Address()) {
 		return nil
 	}
 
