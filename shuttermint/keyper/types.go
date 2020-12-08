@@ -156,7 +156,7 @@ func (PolyEvalRegisteredEvent) IEvent()       {}
 
 // ContractCaller interacts with the contracts on Ethereum.
 type ContractCaller struct {
-	client     *ethclient.Client
+	Ethclient  *ethclient.Client
 	signingKey *ecdsa.PrivateKey
 
 	ConfigContract       *contract.ConfigContract
@@ -175,7 +175,7 @@ func NewContractCaller(
 	executorContract *contract.ExecutorContract,
 ) ContractCaller {
 	return ContractCaller{
-		client:     client,
+		Ethclient:  client,
 		signingKey: signingKey,
 
 		ConfigContract:       configContract,

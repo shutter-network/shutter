@@ -18,13 +18,13 @@ func (cc *ContractCaller) Address() common.Address {
 func (cc *ContractCaller) Auth() (*bind.TransactOpts, error) {
 	auth := bind.NewKeyedTransactor(cc.signingKey)
 
-	nonce, err := cc.client.PendingNonceAt(context.Background(), cc.Address())
+	nonce, err := cc.Ethclient.PendingNonceAt(context.Background(), cc.Address())
 	if err != nil {
 		return nil, err
 	}
 	auth.Nonce = big.NewInt(int64(nonce))
 
-	gasPrice, err := cc.client.SuggestGasPrice(context.Background())
+	gasPrice, err := cc.Ethclient.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
 	}
