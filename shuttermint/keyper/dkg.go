@@ -3,7 +3,6 @@ package keyper
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"log"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -27,17 +27,6 @@ type DKGInstance struct {
 	pure                 puredkg.PureDKG
 }
 
-// FindAddressIndex returns the index of the given address inside the slice of addresses or returns
-// an error, if the slice does not contain the given address
-func FindAddressIndex(addresses []common.Address, addr common.Address) (int, error) {
-	for i, a := range addresses {
-		if a == addr {
-			return i, nil
-		}
-	}
-	return -1, errors.New("address not found")
-}
-
 // NewDKGInstance creates a new dkg instance with initialized local random values.
 func NewDKGInstance(
 	eon uint64,
@@ -46,7 +35,7 @@ func NewDKGInstance(
 	ms MessageSender,
 	keyperEncryptionKeys map[common.Address]*ecies.PublicKey,
 ) (*DKGInstance, error) {
-	keyperIndex, err := FindAddressIndex(batchConfig.Keypers, keyperConfig.Address())
+	keyperIndex, err := medley.FindAddressIndex(batchConfig.Keypers, keyperConfig.Address())
 	if err != nil {
 		return nil, fmt.Errorf("new dkg: not a keyper: %s", keyperConfig.Address().Hex())
 	}
@@ -78,7 +67,7 @@ func (dkg *DKGInstance) Run(ctx context.Context) error {
 }
 
 func (dkg *DKGInstance) FindKeyperIndex(addr common.Address) (int, error) {
-	return FindAddressIndex(dkg.BatchConfig.Keypers, addr)
+	return medley.FindAddressIndex(dkg.BatchConfig.Keypers, addr)
 }
 
 // startPhase1Dealing starts the dealing phase. It will send the gammas (commitment) and the
