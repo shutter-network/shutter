@@ -1,4 +1,4 @@
-package keyper
+package shutterevents
 
 import (
 	"crypto/rand"

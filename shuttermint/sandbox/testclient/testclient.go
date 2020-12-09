@@ -15,7 +15,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -38,7 +38,7 @@ func makeMessage() *shmsg.MessageWithNonce {
 
 func printEvents(events []abcitypes.Event) {
 	for _, ev := range events {
-		x, err := keyper.MakeEvent(ev)
+		x, err := shutterevents.MakeEvent(ev)
 		if err != nil {
 			fmt.Println(err)
 		} else {

@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -43,7 +44,7 @@ func NewBatchState(
 	cipherExecutionParams chan CipherExecutionParams,
 ) BatchState {
 	numKeypers := len(bp.BatchConfig.Keypers)
-	decryptionSignatureAdded := make(chan DecryptionSignatureEvent, numKeypers)
+	decryptionSignatureAdded := make(chan shutterevents.DecryptionSignatureEvent, numKeypers)
 	return BatchState{
 		BatchParams:               bp,
 		KeyperConfig:              kc,
@@ -57,9 +58,9 @@ func NewBatchState(
 	}
 }
 
-func (batch *BatchState) dispatchShuttermintEvent(ev IEvent) {
+func (batch *BatchState) dispatchShuttermintEvent(ev shutterevents.IEvent) {
 	switch e := ev.(type) {
-	case DecryptionSignatureEvent:
+	case shutterevents.DecryptionSignatureEvent:
 		select {
 		case batch.decryptionSignatureAdded <- e:
 		default:
@@ -74,8 +75,8 @@ func (batch *BatchState) collectDecryptionSignatureEvents(
 	cipherBatchHash common.Hash,
 	decryptionKey *ecdsa.PrivateKey,
 	batchHash common.Hash,
-) ([]DecryptionSignatureEvent, error) {
-	events := []DecryptionSignatureEvent{}
+) ([]shutterevents.DecryptionSignatureEvent, error) {
+	events := []shutterevents.DecryptionSignatureEvent{}
 	for {
 		select {
 		case ev := <-batch.decryptionSignatureAdded:
@@ -230,7 +231,7 @@ func (batch *BatchState) KeyperAddress() common.Address {
 	return crypto.PubkeyToAddress(batch.KeyperConfig.SigningKey.PublicKey)
 }
 
-func (batch *BatchState) signerIndicesAndSignaturesFromEvents(events []DecryptionSignatureEvent) ([]uint64, [][]byte, error) {
+func (batch *BatchState) signerIndicesAndSignaturesFromEvents(events []shutterevents.DecryptionSignatureEvent) ([]uint64, [][]byte, error) {
 	sliceIndices := []uint64{}
 	signerIndices := []uint64{}
 	signatures := [][]byte{}

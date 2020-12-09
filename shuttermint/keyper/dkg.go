@@ -12,6 +12,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -141,9 +142,9 @@ func (dkg *DKGInstance) sendPolyEvals(ctx context.Context, polyEvals []puredkg.P
 	return nil
 }
 
-func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
+func (dkg *DKGInstance) dispatchShuttermintEvent(ev shutterevents.IEvent) {
 	switch e := ev.(type) {
-	case PolyCommitmentRegisteredEvent:
+	case shutterevents.PolyCommitmentRegisteredEvent:
 		senderIndex, err := dkg.FindKeyperIndex(e.Sender)
 		if err != nil {
 			log.Printf("Could not handle poly commitment message. sender is not a keyper")
@@ -159,7 +160,7 @@ func (dkg *DKGInstance) dispatchShuttermintEvent(ev IEvent) {
 			log.Printf("Could not handle poly commitment message: %+v %s", m, err)
 			return
 		}
-	case PolyEvalRegisteredEvent:
+	case shutterevents.PolyEvalRegisteredEvent:
 		senderIndex, err := dkg.FindKeyperIndex(e.Sender)
 		if err != nil {
 			log.Printf("Could not handle poly eval message. sender is not a keyper")

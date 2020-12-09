@@ -22,6 +22,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -217,12 +218,12 @@ func (kpr *Keyper) fetchCurrentDKG(ctx context.Context) error {
 		fmt.Printf("=== tx height=%d\n", tx.Height)
 		events := tx.TxResult.GetEvents()
 		for _, rawEvent := range events {
-			e, err := MakeEvent(rawEvent)
+			e, err := shutterevents.MakeEvent(rawEvent)
 			if err != nil {
 				return err
 			}
 			switch event := e.(type) {
-			case EonStartedEvent:
+			case shutterevents.EonStartedEvent:
 				// XXX Unconditionally starting the DKG for this eon is certainly
 				// wrong. We need a way to decide if we should start it. For the
 				// moment it helps me get a first version working.
@@ -595,7 +596,7 @@ func (kpr *Keyper) dispatchTxs() error {
 		case tx := <-kpr.txs:
 			d := tx.Data.(tmtypes.EventDataTx)
 			for _, ev := range d.TxResult.Result.Events {
-				x, err := MakeEvent(ev)
+				x, err := shutterevents.MakeEvent(ev)
 				// XXX In case MakeEvent fails, returning with an error here, will
 				// abort the whole program. At the moment a malicious keyper is
 				// able to send a PolyCommitmentRegistered message with a malformed
@@ -723,7 +724,7 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 	return nil
 }
 
-func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
+func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev shutterevents.IEvent) {
 	kpr.Lock()
 	defer kpr.Unlock()
 
@@ -734,7 +735,7 @@ func (kpr *Keyper) dispatchEventToBatch(batchIndex uint64, ev IEvent) {
 	}
 }
 
-func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev IEvent) {
+func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev shutterevents.IEvent) {
 	kpr.Lock()
 	defer kpr.Unlock()
 
@@ -746,19 +747,19 @@ func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev IEvent) {
 	}
 }
 
-func (kpr *Keyper) dispatchEvent(ev IEvent) {
+func (kpr *Keyper) dispatchEvent(ev shutterevents.IEvent) {
 	switch e := ev.(type) {
-	case CheckInEvent:
+	case shutterevents.CheckInEvent:
 		kpr.handleCheckInEvent(e)
-	case BatchConfigEvent:
+	case shutterevents.BatchConfigEvent:
 		kpr.sendEonStartVote(e.StartBatchIndex)
-	case DecryptionSignatureEvent:
+	case shutterevents.DecryptionSignatureEvent:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
-	case EonStartedEvent:
+	case shutterevents.EonStartedEvent:
 		kpr.startNewDKGInstance(e)
-	case PolyCommitmentRegisteredEvent:
+	case shutterevents.PolyCommitmentRegisteredEvent:
 		kpr.dispatchEventToDKG(e.Eon, e)
-	case PolyEvalRegisteredEvent:
+	case shutterevents.PolyEvalRegisteredEvent:
 		kpr.dispatchEventToDKG(e.Eon, e)
 	default:
 		panic("unknown event type")
@@ -773,7 +774,7 @@ func (kpr *Keyper) sendEonStartVote(startBatchIndex uint64) {
 	}
 }
 
-func (kpr *Keyper) startNewDKGInstance(ev EonStartedEvent) {
+func (kpr *Keyper) startNewDKGInstance(ev shutterevents.EonStartedEvent) {
 	_, ok := kpr.dkg[ev.Eon]
 	if ok {
 		log.Printf("Already have DKG instance for eon %d", ev.Eon)
@@ -808,7 +809,7 @@ func (kpr *Keyper) startNewDKGInstance(ev EonStartedEvent) {
 	}()
 }
 
-func (kpr *Keyper) handleCheckInEvent(ev CheckInEvent) {
+func (kpr *Keyper) handleCheckInEvent(ev shutterevents.CheckInEvent) {
 	kpr.Lock()
 	defer kpr.Unlock()
 	kpr.keyperEncryptionKeys[ev.Sender] = ev.EncryptionPublicKey
