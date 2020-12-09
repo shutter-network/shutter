@@ -37,9 +37,23 @@ var keyperCmd = &cobra.Command{
 	},
 }
 
+// keyperCmd represents the keyper2 command
+var keyper2Cmd = &cobra.Command{
+	Use:   "keyper2",
+	Short: "Run a shutter keyper2",
+	Run: func(cmd *cobra.Command, args []string) {
+		keyper2Main()
+	},
+}
+var interactive = false
+
 func init() {
 	rootCmd.AddCommand(keyperCmd)
 	keyperCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+
+	rootCmd.AddCommand(keyper2Cmd)
+	keyper2Cmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
+	keyper2Cmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode for debugging")
 }
 
 func readKeyperConfig() (RawKeyperConfig, error) {
@@ -168,6 +182,33 @@ func keyperMain() {
 		kc.EthereumURL,
 	)
 	kpr := keyper.NewKeyper(kc)
+	err = kpr.Run()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func keyper2Main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
+	rkc, err := readKeyperConfig()
+	if err != nil {
+		log.Fatalf("Error reading the configuration file: %s\nPlease check your configuration.", err)
+	}
+
+	kc, err := ValidateKeyperConfig(rkc)
+	if err != nil {
+		log.Fatalf("Error: %s\nPlease check your configuration", err)
+	}
+
+	log.Printf(
+		"Starting keyper version %s with signing key %s, using %s for Shuttermint and %s for Ethereum",
+		version,
+		kc.Address().Hex(),
+		kc.ShuttermintURL,
+		kc.EthereumURL,
+	)
+	kpr := keyper.NewKeyper2(kc)
+	kpr.Interactive = interactive
 	err = kpr.Run()
 	if err != nil {
 		panic(err)
