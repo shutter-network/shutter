@@ -16,10 +16,9 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/app/evtype"
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
 )
-
-var EventType = app.EventType
 
 // CheckInEvent is emitted by shuttermint when a keyper sends their check in message.
 type CheckInEvent struct {
@@ -166,7 +165,7 @@ func getECIESPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*eci
 
 // makeCheckInEvent creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
 func makeCheckInEvent(ev abcitypes.Event) (CheckInEvent, error) {
-	if ev.Type != EventType.CheckIn {
+	if ev.Type != evtype.CheckIn {
 		return CheckInEvent{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
 	}
 
@@ -248,8 +247,8 @@ func makeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignatureEvent,
 // makeEonStartedEvent creates a EonStartedEvent from the given tendermint event of type
 // "shutter.eon-started".
 func makeEonStartedEvent(ev abcitypes.Event) (EonStartedEvent, error) {
-	if ev.Type != EventType.EonStarted {
-		return EonStartedEvent{}, fmt.Errorf("expected event type %s, got %s", EventType.EonStarted, ev.Type)
+	if ev.Type != evtype.EonStarted {
+		return EonStartedEvent{}, fmt.Errorf("expected event type %s, got %s", evtype.EonStarted, ev.Type)
 	}
 
 	eon, err := getUint64Attribute(ev, 0, "Eon")
@@ -269,7 +268,7 @@ func makeEonStartedEvent(ev abcitypes.Event) (EonStartedEvent, error) {
 
 func makePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegisteredEvent, error) {
 	res := PolyCommitmentRegisteredEvent{}
-	if ev.Type != EventType.PolyCommitment {
+	if ev.Type != evtype.PolyCommitment {
 		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
 	}
 
@@ -296,7 +295,7 @@ func makePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitmentRegist
 
 func makePolyEvalRegisteredEvent(ev abcitypes.Event) (PolyEvalRegisteredEvent, error) {
 	res := PolyEvalRegisteredEvent{}
-	if ev.Type != EventType.PolyEval {
+	if ev.Type != evtype.PolyEval {
 		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
 	}
 
@@ -318,17 +317,17 @@ func makePolyEvalRegisteredEvent(ev abcitypes.Event) (PolyEvalRegisteredEvent, e
 // MakeEvent creates an Event from the given tendermint event.
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	switch ev.Type {
-	case EventType.CheckIn:
+	case evtype.CheckIn:
 		return makeCheckInEvent(ev)
-	case EventType.BatchConfig:
+	case evtype.BatchConfig:
 		return makeBatchConfigEvent(ev)
-	case EventType.DecryptionSignature:
+	case evtype.DecryptionSignature:
 		return makeDecryptionSignatureEvent(ev)
-	case EventType.EonStarted:
+	case evtype.EonStarted:
 		return makeEonStartedEvent(ev)
-	case EventType.PolyCommitment:
+	case evtype.PolyCommitment:
 		return makePolyCommitmentRegisteredEvent(ev)
-	case EventType.PolyEval:
+	case evtype.PolyEval:
 		return makePolyEvalRegisteredEvent(ev)
 	default:
 		return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
