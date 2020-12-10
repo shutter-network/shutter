@@ -357,7 +357,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		if err != nil {
 			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 		}
-		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers))
+		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers, bc.ConfigIndex))
 	}
 
 	return abcitypes.ResponseDeliverTx{

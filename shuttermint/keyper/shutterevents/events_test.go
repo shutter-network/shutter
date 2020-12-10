@@ -53,8 +53,8 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		common.BigToAddress(big.NewInt(2)),
 		common.BigToAddress(big.NewInt(3)),
 	}
-
-	appEvent := app.MakeBatchConfigEvent(111, 2, addresses)
+	configIndex := uint64(0xffffffffffffffff)
+	appEvent := app.MakeBatchConfigEvent(111, 2, addresses, configIndex)
 	ev, err := MakeEvent(appEvent)
 	require.Nil(t, err)
 	require.Equal(t,
@@ -62,6 +62,7 @@ func TestMakeEventBatchConfig(t *testing.T) {
 			StartBatchIndex: 111,
 			Threshold:       2,
 			Keypers:         addresses,
+			ConfigIndex:     configIndex,
 		},
 		ev)
 }

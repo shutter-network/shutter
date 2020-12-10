@@ -37,7 +37,7 @@ func MakeCheckInEvent(sender common.Address, encryptionPublicKey *ecies.PublicKe
 
 // MakeBatchConfigEvent creates a 'shutter.batch-config' tendermint event. The given
 // startBatchIndex, threshold and list of keyper addresses are encoded as attributes of the event.
-func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []common.Address) abcitypes.Event {
+func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []common.Address, configIndex uint64) abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.BatchConfig,
 		Attributes: []abcitypes.EventAttribute{
@@ -53,6 +53,10 @@ func MakeBatchConfigEvent(startBatchIndex uint64, threshold uint64, keypers []co
 			{
 				Key:   []byte("Keypers"),
 				Value: []byte(encodeAddressesForEvent(keypers)),
+			},
+			{
+				Key:   []byte("ConfigIndex"),
+				Value: []byte(fmt.Sprintf("%d", configIndex)),
 			},
 		},
 	}
