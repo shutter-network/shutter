@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"log"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -111,23 +110,24 @@ func bootstrap() {
 		Context:     context.Background(),
 	}
 
-	indexBig := big.NewInt(int64(bootstrapFlags.BatchConfigIndex))
-	if indexBig.Sign() < 0 {
+	var batchConfigIndex uint64
+	if bootstrapFlags.BatchConfigIndex < 0 {
 		numConfigs, err := configContract.NumConfigs(opts)
 		if err != nil {
 			log.Fatalf("Failed to fetch number of configs: %v", err)
 		}
-		indexBig.SetUint64(numConfigs - 1)
+		if numConfigs == 0 {
+			log.Fatal("no configs found")
+		}
+		batchConfigIndex = numConfigs - 1
+	} else {
+		batchConfigIndex = uint64(bootstrapFlags.BatchConfigIndex)
 	}
-	bc, err := configContract.Configs(opts, indexBig)
+	bc, err := configContract.GetConfigByIndex(opts, batchConfigIndex)
 	if err != nil {
-		log.Fatalf("Failed to fetch config at index %d: %v", indexBig, err)
+		log.Fatalf("Failed to fetch config at index %d: %v", batchConfigIndex, err)
 	}
-
-	keypers, err := configContract.GetConfigKeypers(opts, indexBig.Uint64())
-	if err != nil {
-		log.Fatalf("Failed to fetch keyper set: %s", err)
-	}
+	keypers := bc.Keypers
 
 	ms := keyper.NewRPCMessageSender(shmcl, signingKey)
 	batchConfigMsg := keyper.NewBatchConfig(
@@ -135,7 +135,7 @@ func bootstrap() {
 		keypers,
 		bc.Threshold,
 		configContractAddress,
-		uint64(bootstrapFlags.BatchConfigIndex),
+		batchConfigIndex,
 	)
 
 	err = ms.SendMessage(context.Background(), batchConfigMsg)
@@ -143,14 +143,14 @@ func bootstrap() {
 		log.Fatalf("Failed to send batch config message: %v", err)
 	}
 
-	batchConfigStartedMsg := keyper.NewBatchConfigStarted(uint64(bootstrapFlags.BatchConfigIndex))
+	batchConfigStartedMsg := keyper.NewBatchConfigStarted(batchConfigIndex)
 	err = ms.SendMessage(context.Background(), batchConfigStartedMsg)
 	if err != nil {
 		log.Fatalf("Failed to send start message: %v", err)
 	}
 
 	log.Println("Submitted bootstrapping transaction")
-	log.Printf("Config index: %d", bootstrapFlags.BatchConfigIndex)
+	log.Printf("Config index: %d", batchConfigIndex)
 	log.Printf("StartBatchIndex: %d", bc.StartBatchIndex)
 	log.Printf("Threshold: %d", bc.Threshold)
 	log.Printf("Num Keypers: %d", len(keypers))
