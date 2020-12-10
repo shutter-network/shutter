@@ -163,11 +163,11 @@ func (cc *ConfigContract) CurrentAndFutureConfigs(opts *bind.CallOpts, blockNumb
 			return emptyResult, err
 		}
 
-		if config.StartBlockNumber < blockNumber {
+		configs = append([]BatchConfig{config}, configs...) // prepend
+
+		if config.StartBlockNumber <= blockNumber {
 			break
 		}
-
-		configs = append([]BatchConfig{config}, configs...) // prepend
 	}
 
 	return configs, nil
