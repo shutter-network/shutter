@@ -357,7 +357,13 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 		if err != nil {
 			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 		}
+
 		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers, bc.ConfigIndex))
+		if app.ShouldStartDKG(bc) {
+			dkg := app.StartDKG(bc)
+			batchIndex := app.LastConfig().StartBatchIndex
+			events = append(events, MakeEonStartedEvent(dkg.Eon, batchIndex))
+		}
 	}
 
 	return abcitypes.ResponseDeliverTx{
@@ -646,6 +652,20 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	}
 	log.Print("Error: cannot deliver messsage", msg)
 	return makeErrorResponse("cannot deliver message")
+}
+
+// ShouldStartDKG checks if the DKG should be started, because the threshold or the list of keypers
+// changed
+func (app *ShutterApp) ShouldStartDKG(config BatchConfig) bool {
+	dkg := app.DKGMap[app.EONCounter]
+	if dkg == nil {
+		return true
+	}
+	previousConfig := dkg.Config
+	if previousConfig.Threshold != config.Threshold {
+		return true
+	}
+	return !reflect.DeepEqual(previousConfig.Keypers, config.Keypers)
 }
 
 func (app *ShutterApp) StartDKG(config BatchConfig) *DKGInstance {
