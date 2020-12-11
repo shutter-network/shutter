@@ -19,11 +19,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 )
 
-type State struct {
-	checkinMessageSent       bool
-	lastSentBatchConfigIndex uint64
-}
-
 type Keyper2 struct {
 	Config    KeyperConfig
 	State     *State

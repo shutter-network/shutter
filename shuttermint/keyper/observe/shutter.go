@@ -2,6 +2,7 @@ package observe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
+var errEonNotFound = errors.New("eon not found")
+
 // Shutter let's a keyper fetch all necessary information from a shuttermint node. The only source
 // for the data stored in this struct should be the shutter node.  The SyncToHead method can be
 // used to update the data. All other accesses should be read-only.
@@ -22,6 +25,7 @@ type Shutter struct {
 	KeyperEncryptionKeys map[common.Address]*ecies.PublicKey
 	BatchConfigs         []shutterevents.BatchConfigEvent
 	Batches              map[uint64]*Batch
+	Eons                 []Eon
 }
 
 // NewShutter creates an empty Shutter struct
@@ -31,6 +35,13 @@ func NewShutter() *Shutter {
 		KeyperEncryptionKeys: make(map[common.Address]*ecies.PublicKey),
 		Batches:              make(map[uint64]*Batch),
 	}
+}
+
+type Eon struct {
+	Eon         uint64
+	StartEvent  shutterevents.EonStartedEvent
+	Commitments []shutterevents.PolyCommitmentRegisteredEvent
+	PolyEvals   []shutterevents.PolyEvalRegisteredEvent
 }
 
 type Batch struct {
@@ -58,6 +69,15 @@ func (shutter *Shutter) getBatch(batchIndex uint64) *Batch {
 	return b
 }
 
+func (shutter *Shutter) findEon(eon uint64) (*Eon, error) {
+	for i := 0; i < len(shutter.Eons); i++ {
+		if shutter.Eons[i].Eon == eon {
+			return &shutter.Eons[i], nil
+		}
+	}
+	return nil, errEonNotFound
+}
+
 func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 	warn := func() {
 		fmt.Printf("XXX observing event not yet implemented: %s%+v\n", reflect.TypeOf(ev), ev)
@@ -71,11 +91,23 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 		b := shutter.getBatch(e.BatchIndex)
 		b.DecryptionSignatures = append(b.DecryptionSignatures, e)
 	case shutterevents.EonStartedEvent:
-		warn() // TODO
+		_, err := shutter.findEon(e.Eon)
+		if err == nil {
+			panic("duplicate EonStartedEvent received")
+		}
+		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e})
 	case shutterevents.PolyCommitmentRegisteredEvent:
-		warn() // TODO
+		eon, err := shutter.findEon(e.Eon)
+		if err != nil {
+			panic(err) // XXX we should remove that later
+		}
+		eon.Commitments = append(eon.Commitments, e)
 	case shutterevents.PolyEvalRegisteredEvent:
-		warn() // TODO
+		eon, err := shutter.findEon(e.Eon)
+		if err != nil {
+			panic(err) // XXX we should remove that later
+		}
+		eon.PolyEvals = append(eon.PolyEvals, e)
 	default:
 		warn()
 		panic("applyEvent: unknown event. giving up")
@@ -122,6 +154,15 @@ func (shutter *Shutter) IsKeyper(addr common.Address) bool {
 		}
 	}
 	return false
+}
+
+func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfigEvent {
+	for i := len(shutter.BatchConfigs); i > 0; i++ {
+		if shutter.BatchConfigs[i-1].StartBatchIndex <= batchIndex {
+			return shutter.BatchConfigs[i-1]
+		}
+	}
+	return shutterevents.BatchConfigEvent{}
 }
 
 // SyncToHead syncs the state with the remote state. It fetches events from new blocks since the
