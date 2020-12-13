@@ -179,7 +179,7 @@ func (kpr *Keyper2) runOneStep(ctx context.Context) {
 	log.Printf("Running %d actions", len(decider.Actions))
 
 	for _, act := range decider.Actions {
-		err := act.Run(ctx, kpr)
+		err := act.Run(ctx, kpr.MessageSender)
 		// XXX at the moment we just let the whole program die. We need a better strategy
 		// here. We could retry the actions or feed the errors back into our state
 		if err != nil {

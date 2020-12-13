@@ -13,9 +13,15 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+// IRunEnv is passed as a parameter to IAction's Run function. At the moment this only allows
+// interaction with the shutter chain. We will also need a way to talk to the main chain
+type IRunEnv interface {
+	MessageSender
+}
+
 // IAction describes an action to run as determined by the Decider's Decide method.
 type IAction interface {
-	Run(ctx context.Context, kpr *Keyper2) error
+	Run(ctx context.Context, runenv IRunEnv) error
 }
 
 var (
@@ -53,7 +59,7 @@ type FakeAction struct {
 	msg string
 }
 
-func (a FakeAction) Run(_ context.Context, kpr *Keyper2) error {
+func (a FakeAction) Run(_ context.Context, _ IRunEnv) error {
 	log.Printf("Run: %s", a.msg)
 	return nil
 }
@@ -64,9 +70,9 @@ type SendShuttermintMessage struct {
 	msg         *shmsg.Message
 }
 
-func (a SendShuttermintMessage) Run(ctx context.Context, kpr *Keyper2) error {
+func (a SendShuttermintMessage) Run(ctx context.Context, runenv IRunEnv) error {
 	log.Printf("Run: %s", a)
-	return kpr.MessageSender.SendMessage(ctx, a.msg)
+	return runenv.SendMessage(ctx, a.msg)
 }
 
 func (a SendShuttermintMessage) String() string {
