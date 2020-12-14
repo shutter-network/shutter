@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -69,13 +70,21 @@ func (shutter *Shutter) getBatch(batchIndex uint64) *Batch {
 	return b
 }
 
-func (shutter *Shutter) findEon(eon uint64) (*Eon, error) {
-	for i := 0; i < len(shutter.Eons); i++ {
-		if shutter.Eons[i].Eon == eon {
-			return &shutter.Eons[i], nil
-		}
+func (shutter *Shutter) searchEon(eon uint64) int {
+	return sort.Search(
+		len(shutter.Eons),
+		func(i int) bool {
+			return eon <= shutter.Eons[i].Eon
+		},
+	)
+}
+
+func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
+	idx := shutter.searchEon(eon)
+	if idx == len(shutter.Eons) || eon < shutter.Eons[idx].Eon {
+		return nil, errEonNotFound
 	}
-	return nil, errEonNotFound
+	return &shutter.Eons[idx], nil
 }
 
 func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
@@ -91,19 +100,19 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 		b := shutter.getBatch(e.BatchIndex)
 		b.DecryptionSignatures = append(b.DecryptionSignatures, e)
 	case shutterevents.EonStartedEvent:
-		_, err := shutter.findEon(e.Eon)
-		if err == nil {
-			panic("duplicate EonStartedEvent received")
+		idx := shutter.searchEon(e.Eon)
+		if idx < len(shutter.Eons) {
+			panic("eons should increase")
 		}
 		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e})
 	case shutterevents.PolyCommitmentRegisteredEvent:
-		eon, err := shutter.findEon(e.Eon)
+		eon, err := shutter.FindEon(e.Eon)
 		if err != nil {
 			panic(err) // XXX we should remove that later
 		}
 		eon.Commitments = append(eon.Commitments, e)
 	case shutterevents.PolyEvalRegisteredEvent:
-		eon, err := shutter.findEon(e.Eon)
+		eon, err := shutter.FindEon(e.Eon)
 		if err != nil {
 			panic(err) // XXX we should remove that later
 		}
