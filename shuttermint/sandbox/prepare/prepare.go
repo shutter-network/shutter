@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -169,8 +170,8 @@ func initConfigFlags() {
 	configCmd.Flags().StringVar(
 		&configFlags.Bin,
 		"bin",
-		"../../../bin/shuttermint",
-		"path to the shuttermint executable",
+		"shuttermint",
+		"(path to) shuttermint executable",
 	)
 }
 
@@ -229,8 +230,9 @@ func validateConfigFlags() (string, error) {
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
 		return "dir", fmt.Errorf("output directory %s already exists", configFlags.Dir)
 	}
-	if _, err := os.Stat(configFlags.Bin); err != nil {
-		return "bin-dir", fmt.Errorf("shuttermint executable not found: %w", err)
+	var err error
+	if configFlags.Bin, err = LookPath(configFlags.Bin); err != nil {
+		return "", err
 	}
 	return "", nil
 }
@@ -348,7 +350,7 @@ func saveConfigs(configs []*cmd.RawKeyperConfig) error {
 		}
 
 		dir := filepath.Join(configFlags.Dir, "keyper"+strconv.Itoa(i))
-		if err = os.MkdirAll(dir, 0755); err != nil {
+		if err = os.MkdirAll(dir, 0o755); err != nil {
 			return fmt.Errorf("failed to create keyper directory: %w", err)
 		}
 		path := filepath.Join(dir, "config.toml")
@@ -638,22 +640,31 @@ func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*t
 	return res, nil
 }
 
+// LookPath searches for an executable in $PATH. The difference to os.LookPath is, that this
+// function makes sure to return an absolute path.
+func LookPath(file string) (string, error) {
+	p, err := exec.LookPath(file)
+	if err != nil {
+		return "", fmt.Errorf("cannot find executable %s: %w", file, err)
+	}
+	return filepath.Abs(p)
+}
+
 func createRunScript() error {
 	path := filepath.Join(configFlags.Dir, "run.sh")
 	file, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create run script file: %w", err)
 	}
-	err = os.Chmod(path, 0755)
+	err = os.Chmod(path, 0o755)
 	if err != nil {
 		return fmt.Errorf("failed to make run script executable: %w", err)
 	}
 
-	cwd, err := os.Getwd()
+	shuttermintCmd, err := LookPath(configFlags.Bin)
 	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %w", err)
+		return err
 	}
-
 	configPaths, err := findConfigFiles(configFlags.Dir)
 	if err != nil {
 		return err
@@ -670,7 +681,7 @@ func createRunScript() error {
 	}
 
 	d := runScriptTemplateData{
-		ShuttermintCmd: filepath.Join(cwd, configFlags.Bin),
+		ShuttermintCmd: shuttermintCmd,
 		KeyperDirs:     keyperDirs,
 	}
 	err = t.Execute(file, d)
