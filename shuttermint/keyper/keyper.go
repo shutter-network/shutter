@@ -174,7 +174,7 @@ func (kpr *Keyper) fetchCurrentDKG(ctx context.Context) error {
 				return err
 			}
 			switch event := e.(type) {
-			case shutterevents.EonStartedEvent:
+			case shutterevents.EonStarted:
 				// XXX Unconditionally starting the DKG for this eon is certainly
 				// wrong. We need a way to decide if we should start it. For the
 				// moment it helps me get a first version working.
@@ -704,17 +704,17 @@ func (kpr *Keyper) dispatchEventToDKG(eon uint64, ev shutterevents.IEvent) {
 
 func (kpr *Keyper) dispatchEvent(ev shutterevents.IEvent) {
 	switch e := ev.(type) {
-	case shutterevents.CheckInEvent:
+	case shutterevents.CheckIn:
 		kpr.handleCheckInEvent(e)
-	case shutterevents.BatchConfigEvent:
+	case shutterevents.BatchConfig:
 		// kpr.sendEonStartVote(e.StartBatchIndex)
-	case shutterevents.DecryptionSignatureEvent:
+	case shutterevents.DecryptionSignature:
 		kpr.dispatchEventToBatch(e.BatchIndex, e)
-	case shutterevents.EonStartedEvent:
+	case shutterevents.EonStarted:
 		kpr.startNewDKGInstance(e)
-	case shutterevents.PolyCommitmentRegisteredEvent:
+	case shutterevents.PolyCommitment:
 		kpr.dispatchEventToDKG(e.Eon, e)
-	case shutterevents.PolyEvalRegisteredEvent:
+	case shutterevents.PolyEval:
 		kpr.dispatchEventToDKG(e.Eon, e)
 	default:
 		panic("unknown event type")
@@ -729,7 +729,7 @@ func (kpr *Keyper) sendEonStartVote(startBatchIndex uint64) {
 	}
 }
 
-func (kpr *Keyper) startNewDKGInstance(ev shutterevents.EonStartedEvent) {
+func (kpr *Keyper) startNewDKGInstance(ev shutterevents.EonStarted) {
 	_, ok := kpr.dkg[ev.Eon]
 	if ok {
 		log.Printf("Already have DKG instance for eon %d", ev.Eon)
@@ -764,7 +764,7 @@ func (kpr *Keyper) startNewDKGInstance(ev shutterevents.EonStartedEvent) {
 	}()
 }
 
-func (kpr *Keyper) handleCheckInEvent(ev shutterevents.CheckInEvent) {
+func (kpr *Keyper) handleCheckInEvent(ev shutterevents.CheckIn) {
 	kpr.Lock()
 	defer kpr.Unlock()
 	kpr.keyperEncryptionKeys[ev.Sender] = ev.EncryptionPublicKey

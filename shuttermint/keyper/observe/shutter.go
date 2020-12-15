@@ -24,7 +24,7 @@ var errEonNotFound = errors.New("eon not found")
 type Shutter struct {
 	CurrentBlock         int64
 	KeyperEncryptionKeys map[common.Address]*ecies.PublicKey
-	BatchConfigs         []shutterevents.BatchConfigEvent
+	BatchConfigs         []shutterevents.BatchConfig
 	Batches              map[uint64]*Batch
 	Eons                 []Eon
 }
@@ -41,14 +41,14 @@ func NewShutter() *Shutter {
 type Eon struct {
 	Eon         uint64
 	StartHeight int64
-	StartEvent  shutterevents.EonStartedEvent
-	Commitments []shutterevents.PolyCommitmentRegisteredEvent
-	PolyEvals   []shutterevents.PolyEvalRegisteredEvent
+	StartEvent  shutterevents.EonStarted
+	Commitments []shutterevents.PolyCommitment
+	PolyEvals   []shutterevents.PolyEval
 }
 
 type Batch struct {
 	BatchIndex           uint64
-	DecryptionSignatures []shutterevents.DecryptionSignatureEvent
+	DecryptionSignatures []shutterevents.DecryptionSignature
 }
 
 func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
@@ -93,26 +93,26 @@ func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
 		fmt.Printf("XXX observing event not yet implemented: %s%+v\n", reflect.TypeOf(ev), ev)
 	}
 	switch e := ev.(type) {
-	case shutterevents.CheckInEvent:
+	case shutterevents.CheckIn:
 		shutter.KeyperEncryptionKeys[e.Sender] = e.EncryptionPublicKey
-	case shutterevents.BatchConfigEvent:
+	case shutterevents.BatchConfig:
 		shutter.BatchConfigs = append(shutter.BatchConfigs, e)
-	case shutterevents.DecryptionSignatureEvent:
+	case shutterevents.DecryptionSignature:
 		b := shutter.getBatch(e.BatchIndex)
 		b.DecryptionSignatures = append(b.DecryptionSignatures, e)
-	case shutterevents.EonStartedEvent:
+	case shutterevents.EonStarted:
 		idx := shutter.searchEon(e.Eon)
 		if idx < len(shutter.Eons) {
 			panic("eons should increase")
 		}
 		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e, StartHeight: height})
-	case shutterevents.PolyCommitmentRegisteredEvent:
+	case shutterevents.PolyCommitment:
 		eon, err := shutter.FindEon(e.Eon)
 		if err != nil {
 			panic(err) // XXX we should remove that later
 		}
 		eon.Commitments = append(eon.Commitments, e)
-	case shutterevents.PolyEvalRegisteredEvent:
+	case shutterevents.PolyEval:
 		eon, err := shutter.FindEon(e.Eon)
 		if err != nil {
 			panic(err) // XXX we should remove that later
@@ -166,13 +166,13 @@ func (shutter *Shutter) IsKeyper(addr common.Address) bool {
 	return false
 }
 
-func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfigEvent {
+func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfig {
 	for i := len(shutter.BatchConfigs); i > 0; i++ {
 		if shutter.BatchConfigs[i-1].StartBatchIndex <= batchIndex {
 			return shutter.BatchConfigs[i-1]
 		}
 	}
-	return shutterevents.BatchConfigEvent{}
+	return shutterevents.BatchConfig{}
 }
 
 // SyncToHead syncs the state with the remote state. It fetches events from new blocks since the

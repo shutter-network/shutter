@@ -41,7 +41,7 @@ func TestCheckInEvent(t *testing.T) {
 	appEv := app.MakeCheckInEvent(sender, publicKey)
 	evInt, err := MakeEvent(appEv)
 	require.Nil(t, err)
-	ev, ok := evInt.(CheckInEvent)
+	ev, ok := evInt.(CheckIn)
 	require.True(t, ok)
 	require.Equal(t, sender, ev.Sender)
 	require.True(t, ev.EncryptionPublicKey.ExportECDSA().Equal(&privateKeyECDSA.PublicKey))
@@ -58,7 +58,7 @@ func TestMakeEventBatchConfig(t *testing.T) {
 	ev, err := MakeEvent(appEvent)
 	require.Nil(t, err)
 	require.Equal(t,
-		BatchConfigEvent{
+		BatchConfig{
 			StartBatchIndex: 111,
 			Threshold:       2,
 			Keypers:         addresses,
@@ -72,7 +72,7 @@ func TestMakeEonStartedEvent(t *testing.T) {
 	var batchIndex uint64 = 20
 	appEv := app.MakeEonStartedEvent(eon, batchIndex)
 	ev, err := MakeEvent(appEv)
-	expectedEv := EonStartedEvent{
+	expectedEv := EonStarted{
 		Eon:        eon,
 		BatchIndex: batchIndex,
 	}
@@ -93,7 +93,7 @@ func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
 	ev, err := MakeEvent(appEv)
 	require.Nil(t, err)
 
-	expectedEv := PolyCommitmentRegisteredEvent{
+	expectedEv := PolyCommitment{
 		Eon:    eon,
 		Sender: sender,
 		Gammas: &gammas,

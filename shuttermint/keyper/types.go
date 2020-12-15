@@ -29,7 +29,7 @@ type BatchState struct {
 	KeyperConfig                  KeyperConfig
 	MessageSender                 MessageSender
 	ContractCaller                *ContractCaller
-	decryptionSignatureAdded      chan shutterevents.DecryptionSignatureEvent
+	decryptionSignatureAdded      chan shutterevents.DecryptionSignature
 	cipherExecutionParams         chan CipherExecutionParams
 	startBlockSeen                chan struct{}
 	endBlockSeen                  chan struct{}
