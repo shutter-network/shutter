@@ -40,6 +40,7 @@ func NewShutter() *Shutter {
 
 type Eon struct {
 	Eon         uint64
+	StartHeight int64
 	StartEvent  shutterevents.EonStartedEvent
 	Commitments []shutterevents.PolyCommitmentRegisteredEvent
 	PolyEvals   []shutterevents.PolyEvalRegisteredEvent
@@ -50,13 +51,13 @@ type Batch struct {
 	DecryptionSignatures []shutterevents.DecryptionSignatureEvent
 }
 
-func (shutter *Shutter) applyTxEvents(events []abcitypes.Event) {
+func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 	for _, ev := range events {
 		x, err := shutterevents.MakeEvent(ev)
 		if err != nil {
 			fmt.Printf("malformed event: %+v", x)
 		} else {
-			shutter.applyEvent(x)
+			shutter.applyEvent(height, x)
 		}
 	}
 }
@@ -87,7 +88,7 @@ func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
 	return &shutter.Eons[idx], nil
 }
 
-func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
+func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
 	warn := func() {
 		fmt.Printf("XXX observing event not yet implemented: %s%+v\n", reflect.TypeOf(ev), ev)
 	}
@@ -104,7 +105,7 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 		if idx < len(shutter.Eons) {
 			panic("eons should increase")
 		}
-		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e})
+		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e, StartHeight: height})
 	case shutterevents.PolyCommitmentRegisteredEvent:
 		eon, err := shutter.FindEon(e.Eon)
 		if err != nil {
@@ -138,7 +139,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 		}
 		for _, tx := range res.Txs {
 			events := tx.TxResult.GetEvents()
-			shutter.applyTxEvents(events)
+			shutter.applyTxEvents(tx.Height, events)
 		}
 		if page*perPage > res.TotalCount {
 			break
