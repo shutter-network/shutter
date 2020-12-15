@@ -440,7 +440,7 @@ func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, 
 	}
 }
 
-func (app *ShutterApp) deliverEonStartVoteMsg(msg *shmsg.EonStartVoteMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) deliverEonStartVoteMsg(msg *shmsg.EonStartVote, sender common.Address) abcitypes.ResponseDeliverTx {
 	config := app.getConfig(msg.StartBatchIndex)
 	if !config.IsKeyper(sender) {
 		return notAKeyper(sender)
@@ -505,7 +505,7 @@ func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature
 	}
 }
 
-func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) abcitypes.ResponseDeliverTx {
 	appMsg, err := ParsePolyEvalMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse PolyEval message: %s", err)
@@ -534,7 +534,7 @@ func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.A
 	}
 }
 
-func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) abcitypes.ResponseDeliverTx {
 	appMsg, err := ParsePolyCommitmentMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse PolyCommitment message: %s", err)
@@ -563,7 +563,7 @@ func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sen
 	}
 }
 
-func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) handleAccusationMsg(msg *shmsg.Accusation, sender common.Address) abcitypes.ResponseDeliverTx {
 	appMsg, err := ParseAccusationMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse Accusation message: %s", err)
@@ -592,7 +592,7 @@ func (app *ShutterApp) handleAccusationMsg(msg *shmsg.AccusationMsg, sender comm
 	}
 }
 
-func (app *ShutterApp) handleApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) abcitypes.ResponseDeliverTx {
+func (app *ShutterApp) handleApologyMsg(msg *shmsg.Apology, sender common.Address) abcitypes.ResponseDeliverTx {
 	appMsg, err := ParseApologyMsg(msg, sender)
 	if err != nil {
 		msg := fmt.Sprintf("Error: Failed to parse Apology message: %s", err)
@@ -631,24 +631,24 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 	if msg.GetCheckIn() != nil {
 		return app.deliverCheckIn(msg.GetCheckIn(), sender)
 	}
-	if msg.GetEonStartVoteMsg() != nil {
-		return app.deliverEonStartVoteMsg(msg.GetEonStartVoteMsg(), sender)
+	if msg.GetEonStartVote() != nil {
+		return app.deliverEonStartVoteMsg(msg.GetEonStartVote(), sender)
 	}
 	if msg.GetDecryptionSignature() != nil {
 		return app.deliverDecryptionSignature(msg.GetDecryptionSignature(), sender)
 	}
 
-	if msg.GetPolyEvalMsg() != nil {
-		return app.handlePolyEvalMsg(msg.GetPolyEvalMsg(), sender)
+	if msg.GetPolyEval() != nil {
+		return app.handlePolyEvalMsg(msg.GetPolyEval(), sender)
 	}
-	if msg.GetPolyCommitmentMsg() != nil {
-		return app.handlePolyCommitmentMsg(msg.GetPolyCommitmentMsg(), sender)
+	if msg.GetPolyCommitment() != nil {
+		return app.handlePolyCommitmentMsg(msg.GetPolyCommitment(), sender)
 	}
-	if msg.GetAccusationMsg() != nil {
-		return app.handleAccusationMsg(msg.GetAccusationMsg(), sender)
+	if msg.GetAccusation() != nil {
+		return app.handleAccusationMsg(msg.GetAccusation(), sender)
 	}
-	if msg.GetApologyMsg() != nil {
-		return app.handleApologyMsg(msg.GetApologyMsg(), sender)
+	if msg.GetApology() != nil {
+		return app.handleApologyMsg(msg.GetApology(), sender)
 	}
 	log.Print("Error: cannot deliver messsage", msg)
 	return makeErrorResponse("cannot deliver message")

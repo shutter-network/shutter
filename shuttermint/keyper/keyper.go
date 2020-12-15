@@ -46,55 +46,6 @@ func NewKeyper(kc KeyperConfig) Keyper {
 	}
 }
 
-// NewBatchConfig creates a new BatchConfig message
-func NewBatchConfig(
-	startBatchIndex uint64,
-	keypers []common.Address,
-	threshold uint64,
-	configContractAddress common.Address,
-	configIndex uint64,
-) *shmsg.Message {
-	var addresses [][]byte
-	for _, k := range keypers {
-		addresses = append(addresses, k.Bytes())
-	}
-	return &shmsg.Message{
-		Payload: &shmsg.Message_BatchConfig{
-			BatchConfig: &shmsg.BatchConfig{
-				StartBatchIndex:       startBatchIndex,
-				Keypers:               addresses,
-				Threshold:             threshold,
-				ConfigContractAddress: configContractAddress.Bytes(),
-				ConfigIndex:           configIndex,
-			},
-		},
-	}
-}
-
-// NewBatchConfigStarted creates a new BatchConfigStarted message
-func NewBatchConfigStarted(configIndex uint64) *shmsg.Message {
-	return &shmsg.Message{
-		Payload: &shmsg.Message_BatchConfigStarted{
-			BatchConfigStarted: &shmsg.BatchConfigStarted{
-				BatchConfigIndex: configIndex,
-			},
-		},
-	}
-}
-
-// NewCheckIn creates a new CheckIn message
-func NewCheckIn(validatorPublicKey []byte, encryptionKey *ecies.PublicKey) *shmsg.Message {
-	encryptionKeyECDSA := encryptionKey.ExportECDSA()
-	return &shmsg.Message{
-		Payload: &shmsg.Message_CheckIn{
-			CheckIn: &shmsg.CheckIn{
-				ValidatorPublicKey:  validatorPublicKey,
-				EncryptionPublicKey: crypto.CompressPubkey(encryptionKeyECDSA),
-			},
-		},
-	}
-}
-
 func (kpr *Keyper) init() error {
 	ethcl, err := ethclient.Dial(kpr.Config.EthereumURL)
 	if err != nil {
@@ -429,12 +380,14 @@ func (kpr *Keyper) sendConfigVote(configIndex uint64) error {
 		return fmt.Errorf("cannot vote on config %d as it is unknown", configIndex)
 	}
 
-	msg := NewBatchConfig(
+	msg := shmsg.NewBatchConfig(
 		config.StartBatchIndex,
 		config.Keypers,
 		config.Threshold,
 		kpr.Config.ConfigContractAddress,
 		configIndex,
+		false,
+		false,
 	)
 	err := kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
@@ -478,7 +431,7 @@ func (kpr *Keyper) maybeSendStartVote(blockNumber uint64) error {
 	}
 
 	// otherwise vote
-	msg := NewBatchConfigStarted(lastConfig.ConfigIndex)
+	msg := shmsg.NewBatchConfigStarted(lastConfig.ConfigIndex)
 	err = kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		return err
@@ -539,12 +492,14 @@ func (kpr *Keyper) handleConfigScheduledEvent(ev *contract.ConfigContractConfigS
 		kpr.batchConfigs[index] = config
 	}()
 
-	bc := NewBatchConfig(
+	bc := shmsg.NewBatchConfig(
 		config.StartBatchIndex,
 		config.Keypers,
 		config.Threshold,
 		kpr.Config.ConfigContractAddress,
 		index,
+		false,
+		false,
 	)
 	err = kpr.ms.SendMessage(kpr.ctx, bc)
 	if err != nil {
@@ -577,7 +532,7 @@ func (kpr *Keyper) sendCheckIn() error {
 		panic("Failed to assert type")
 	}
 
-	msg := NewCheckIn([]byte(validatorPublicKey), &kpr.Config.EncryptionKey.PublicKey)
+	msg := shmsg.NewCheckIn([]byte(validatorPublicKey), &kpr.Config.EncryptionKey.PublicKey)
 	err := kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		return err
@@ -767,7 +722,7 @@ func (kpr *Keyper) dispatchEvent(ev shutterevents.IEvent) {
 }
 
 func (kpr *Keyper) sendEonStartVote(startBatchIndex uint64) {
-	msg := NewEonStartVoteMsg(startBatchIndex)
+	msg := shmsg.NewEonStartVote(startBatchIndex)
 	err := kpr.ms.SendMessage(kpr.ctx, msg)
 	if err != nil {
 		log.Printf("Failed sending StartEonVote message: %s", err)

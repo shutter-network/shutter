@@ -20,7 +20,7 @@ func TestMessageParsing(t *testing.T) {
 	data := []byte("some data")
 
 	t.Run("ParsePolyEvalMsg", func(t *testing.T) {
-		smsg := shmsg.PolyEvalMsg{
+		smsg := shmsg.PolyEval{
 			Eon:            eon,
 			Receivers:      [][]byte{anotherAddressBytes},
 			EncryptedEvals: [][]byte{data},
@@ -33,7 +33,7 @@ func TestMessageParsing(t *testing.T) {
 		require.Equal(t, data, msg.EncryptedEvals[0])
 
 		// invalid receiver
-		smsg = shmsg.PolyEvalMsg{
+		smsg = shmsg.PolyEval{
 			Eon:            eon,
 			Receivers:      [][]byte{badAddressBytes},
 			EncryptedEvals: [][]byte{data},
@@ -43,7 +43,7 @@ func TestMessageParsing(t *testing.T) {
 	})
 
 	t.Run("ParsePolyCommitmentMsg", func(t *testing.T) {
-		smsg := shmsg.PolyCommitmentMsg{
+		smsg := shmsg.PolyCommitment{
 			Eon:    eon,
 			Gammas: [][]byte{},
 		}
@@ -54,7 +54,7 @@ func TestMessageParsing(t *testing.T) {
 	})
 
 	t.Run("ParseAccusationMsg", func(t *testing.T) {
-		smsg := shmsg.AccusationMsg{
+		smsg := shmsg.Accusation{
 			Eon:     eon,
 			Accused: [][]byte{anotherAddressBytes},
 		}
@@ -65,7 +65,7 @@ func TestMessageParsing(t *testing.T) {
 		require.Equal(t, anotherAddress, msg.Accused[0])
 
 		// invalid accused
-		smsg = shmsg.AccusationMsg{
+		smsg = shmsg.Accusation{
 			Eon:     eon,
 			Accused: [][]byte{badAddressBytes},
 		}
@@ -74,7 +74,7 @@ func TestMessageParsing(t *testing.T) {
 	})
 
 	t.Run("ParseApologyMsg", func(t *testing.T) {
-		smsg := shmsg.ApologyMsg{
+		smsg := shmsg.Apology{
 			Eon:       eon,
 			Accusers:  [][]byte{anotherAddressBytes},
 			PolyEvals: [][]byte{[]byte{}},
@@ -86,7 +86,7 @@ func TestMessageParsing(t *testing.T) {
 		require.Equal(t, anotherAddress, msg.Accusers[0])
 
 		// invalid accuser
-		smsg = shmsg.ApologyMsg{
+		smsg = shmsg.Apology{
 			Eon:       eon,
 			Accusers:  [][]byte{badAddressBytes},
 			PolyEvals: [][]byte{[]byte{}},
@@ -96,7 +96,7 @@ func TestMessageParsing(t *testing.T) {
 	})
 
 	t.Run("ParseEpochSKShareMsg", func(t *testing.T) {
-		smsg := shmsg.EpochSKShareMsg{
+		smsg := shmsg.EpochSKShare{
 			Eon:          eon,
 			Epoch:        epoch,
 			EpochSkShare: []byte{},

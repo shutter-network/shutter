@@ -1,4 +1,4 @@
-package keyper
+package shmsg
 
 import (
 	"bytes"
@@ -19,8 +19,8 @@ func TestNewPolyCommitmentMsg(t *testing.T) {
 	require.Nil(t, err)
 	gammas := poly.Gammas()
 
-	msgContainer := NewPolyCommitmentMsg(eon, gammas)
-	msg := msgContainer.GetPolyCommitmentMsg()
+	msgContainer := NewPolyCommitment(eon, gammas)
+	msg := msgContainer.GetPolyCommitment()
 	require.NotNil(t, msg)
 
 	require.Equal(t, eon, msg.Eon)
@@ -36,8 +36,8 @@ func TestNewPolyEvalMsg(t *testing.T) {
 	receiver := common.BigToAddress(big.NewInt(0xaabbcc))
 	encryptedEval := []byte("secret")
 
-	msgContainer := NewPolyEvalMsg(eon, []common.Address{receiver}, [][]byte{encryptedEval})
-	msg := msgContainer.GetPolyEvalMsg()
+	msgContainer := NewPolyEval(eon, []common.Address{receiver}, [][]byte{encryptedEval})
+	msg := msgContainer.GetPolyEval()
 	require.NotNil(t, msg)
 
 	require.Equal(t, eon, msg.Eon)

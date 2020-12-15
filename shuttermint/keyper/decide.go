@@ -104,7 +104,7 @@ func (dcdr *Decider) shouldSendCheckin() bool {
 
 func (dcdr *Decider) sendCheckIn() {
 	validatorPublicKey := dcdr.Config.ValidatorKey.Public().(ed25519.PublicKey)
-	msg := NewCheckIn([]byte(validatorPublicKey), &dcdr.Config.EncryptionKey.PublicKey)
+	msg := shmsg.NewCheckIn([]byte(validatorPublicKey), &dcdr.Config.EncryptionKey.PublicKey)
 	dcdr.sendShuttermintMessage("checkin", msg)
 }
 
@@ -116,12 +116,14 @@ func (dcdr *Decider) maybeSendCheckIn() {
 }
 
 func (dcdr *Decider) sendBatchConfig(configIndex uint64, config contract.BatchConfig) {
-	msg := NewBatchConfig(
+	msg := shmsg.NewBatchConfig(
 		config.StartBatchIndex,
 		config.Keypers,
 		config.Threshold,
 		dcdr.Config.ConfigContractAddress,
 		configIndex,
+		false,
+		false,
 	)
 	dcdr.sendShuttermintMessage(fmt.Sprintf("batch config, index=%d", configIndex), msg)
 }
@@ -144,7 +146,7 @@ func (dcdr *Decider) maybeSendBatchConfig() {
 }
 
 func (dcdr *Decider) sendEonStartVoting(startBatchIndex uint64) {
-	msg := NewEonStartVoteMsg(startBatchIndex)
+	msg := shmsg.NewEonStartVote(startBatchIndex)
 	dcdr.sendShuttermintMessage(fmt.Sprintf("eon start voting, startBatchIndex=%d", startBatchIndex), msg)
 }
 
@@ -161,7 +163,7 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 		return
 	}
 	_ = evals // XXX we need to send them as well
-	msg := NewPolyCommitmentMsg(eon.Eon, commitment.Gammas)
+	msg := shmsg.NewPolyCommitment(eon.Eon, commitment.Gammas)
 	dcdr.sendShuttermintMessage(fmt.Sprintf("poly commitment, eon=%d", eon.Eon), msg)
 	dkg := DKG{Eon: eon.Eon, Pure: &pure}
 	dcdr.State.dkgs = append(dcdr.State.dkgs, dkg)

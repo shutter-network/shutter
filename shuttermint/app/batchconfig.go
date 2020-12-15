@@ -40,24 +40,15 @@ func (bc *BatchConfig) EnsureValid() error {
 }
 
 // Message converts the batch config to a shmsg.Message
-func (bc *BatchConfig) Message() shmsg.Message {
-	var keypers [][]byte
-	for _, keyperAddress := range bc.Keypers {
-		keypers = append(keypers, keyperAddress.Bytes())
-	}
-
-	msg := shmsg.Message_BatchConfig{
-		BatchConfig: &shmsg.BatchConfig{
-			StartBatchIndex:       bc.StartBatchIndex,
-			Keypers:               keypers,
-			Threshold:             bc.Threshold,
-			ConfigContractAddress: bc.ConfigContractAddress.Bytes(),
-			ConfigIndex:           bc.ConfigIndex,
-			Started:               bc.Started,
-			ValidatorsUpdated:     bc.ValidatorsUpdated,
-		},
-	}
-	return shmsg.Message{Payload: &msg}
+func (bc *BatchConfig) Message() *shmsg.Message {
+	return shmsg.NewBatchConfig(
+		bc.StartBatchIndex,
+		bc.Keypers,
+		bc.Threshold,
+		bc.ConfigContractAddress,
+		bc.ConfigIndex,
+		bc.Started,
+		bc.ValidatorsUpdated)
 }
 
 // BatchConfigFromMessage extracts the batch config received in a message

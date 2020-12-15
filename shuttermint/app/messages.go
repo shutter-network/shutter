@@ -21,7 +21,7 @@ func validateAddress(address []byte) (common.Address, error) {
 }
 
 // ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg
-func ParsePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) (*PolyEvalMsg, error) {
+func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEvalMsg, error) {
 	if len(msg.Receivers) != len(msg.EncryptedEvals) {
 		return nil, fmt.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
 	}
@@ -51,7 +51,7 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEvalMsg, sender common.Address) (*PolyEvalM
 }
 
 // ParsePolyCommitmentMsg converts a shmsg.PolyCommitmentMsg to an app.PolyCommitmentMsg
-func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address) (*PolyCommitmentMsg, error) {
+func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*PolyCommitmentMsg, error) {
 	return &PolyCommitmentMsg{
 		Sender: sender,
 		Eon:    msg.Eon,
@@ -60,7 +60,7 @@ func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitmentMsg, sender common.Address)
 }
 
 // ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg
-func ParseAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) (*AccusationMsg, error) {
+func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*AccusationMsg, error) {
 	accused := []common.Address{}
 	accusedMap := make(map[common.Address]bool)
 	for _, acc := range msg.Accused {
@@ -85,7 +85,7 @@ func ParseAccusationMsg(msg *shmsg.AccusationMsg, sender common.Address) (*Accus
 }
 
 // ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg
-func ParseApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) (*ApologyMsg, error) {
+func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*ApologyMsg, error) {
 	if len(msg.Accusers) != len(msg.PolyEvals) {
 		return nil, fmt.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
 	}
@@ -115,7 +115,7 @@ func ParseApologyMsg(msg *shmsg.ApologyMsg, sender common.Address) (*ApologyMsg,
 }
 
 // ParseEpochSKShareMsg converts a shmsg.ESKShareMsg to an app.ESKShareMsg
-func ParseEpochSKShareMsg(msg *shmsg.EpochSKShareMsg, sender common.Address) (*EpochSKShareMsg, error) {
+func ParseEpochSKShareMsg(msg *shmsg.EpochSKShare, sender common.Address) (*EpochSKShareMsg, error) {
 	return &EpochSKShareMsg{
 		Sender:       sender,
 		Eon:          msg.Eon,

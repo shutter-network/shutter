@@ -23,18 +23,6 @@ func SleepUntil(t time.Time) {
 	time.Sleep(time.Until(t))
 }
 
-// NewDecryptionSignature creates a new DecryptionSignature message.
-func NewDecryptionSignature(batchIndex uint64, signature []byte) *shmsg.Message {
-	return &shmsg.Message{
-		Payload: &shmsg.Message_DecryptionSignature{
-			DecryptionSignature: &shmsg.DecryptionSignature{
-				BatchIndex: batchIndex,
-				Signature:  signature,
-			},
-		},
-	}
-}
-
 // NewBatchState created a new BatchState object with the given parameters.
 func NewBatchState(
 	bp BatchParams,
@@ -149,7 +137,7 @@ func (batch *BatchState) sendDecryptionSignature(cipherTxs [][]byte, decryptedTx
 		return fmt.Errorf("error computing dercyption signature: %s", err)
 	}
 
-	msg := NewDecryptionSignature(batch.BatchParams.BatchIndex, decryptionSignature)
+	msg := shmsg.NewDecryptionSignature(batch.BatchParams.BatchIndex, decryptionSignature)
 	return batch.MessageSender.SendMessage(context.TODO(), msg)
 }
 

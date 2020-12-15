@@ -39,35 +39,35 @@ message DecryptionSignature {
         bytes signature = 2;
 }
 
-message PolyEvalMsg {
+message PolyEval {
         uint64 eon = 1;
         repeated bytes receivers = 2;
         repeated bytes encrypted_evals = 3;
 }
 
-message PolyCommitmentMsg {
+message PolyCommitment {
         uint64 eon = 1;
         repeated bytes gammas = 2;
 }
 
-message AccusationMsg {
+message Accusation {
         uint64 eon = 1;
         repeated bytes accused = 2;
 }
 
-message ApologyMsg {
+message Apology {
         uint64 eon = 1;
         repeated bytes accusers = 2;
         repeated bytes poly_evals = 3;
 }
 
-message EpochSKShareMsg {
+message EpochSKShare {
         uint64 eon = 1;
         uint64 epoch = 2;
         bytes epoch_sk_share = 3;
 }
 
-message EonStartVoteMsg {
+message EonStartVote {
         uint64 start_batch_index = 1;
 }
 
@@ -79,12 +79,12 @@ message Message {
                 DecryptionSignature decryption_signature = 8;
 
                 // DKG messages
-                PolyEvalMsg poly_eval_msg = 9;
-                PolyCommitmentMsg poly_commitment_msg = 10;
-                AccusationMsg accusation_msg = 11;
-                ApologyMsg apology_msg = 12;
+                PolyEval poly_eval = 9;
+                PolyCommitment poly_commitment = 10;
+                Accusation accusation = 11;
+                Apology apology = 12;
 
-                EonStartVoteMsg eon_start_vote_msg = 13;
+                EonStartVote eon_start_vote = 13;
         }
 }
 

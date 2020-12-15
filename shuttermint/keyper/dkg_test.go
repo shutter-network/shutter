@@ -86,7 +86,7 @@ func TestDKGInstance(t *testing.T) {
 	t.Run("SendGammas", func(t *testing.T) {
 		select {
 		case msgContainer := <-ti.ms.Msgs:
-			msg := msgContainer.GetPolyCommitmentMsg()
+			msg := msgContainer.GetPolyCommitment()
 			require.NotNil(t, msg)
 			require.Equal(t, ti.eon, msg.Eon)
 			gammas := [][]byte{}
@@ -102,7 +102,7 @@ func TestDKGInstance(t *testing.T) {
 	t.Run("SendPolyEvals", func(t *testing.T) {
 		select {
 		case msgContainer := <-ti.ms.Msgs:
-			msg := msgContainer.GetPolyEvalMsg()
+			msg := msgContainer.GetPolyEval()
 			require.NotNil(t, msg)
 			require.Equal(t, ti.eon, msg.Eon)
 			require.Equal(t, len(ti.keypers)-1, len(msg.Receivers))

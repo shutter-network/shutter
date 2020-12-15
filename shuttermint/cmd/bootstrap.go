@@ -13,6 +13,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 var bootstrapFlags struct {
@@ -130,12 +131,14 @@ func bootstrap() {
 	keypers := bc.Keypers
 
 	ms := keyper.NewRPCMessageSender(shmcl, signingKey)
-	batchConfigMsg := keyper.NewBatchConfig(
+	batchConfigMsg := shmsg.NewBatchConfig(
 		bc.StartBatchIndex,
 		keypers,
 		bc.Threshold,
 		configContractAddress,
 		batchConfigIndex,
+		false,
+		false,
 	)
 
 	err = ms.SendMessage(context.Background(), batchConfigMsg)
@@ -143,7 +146,7 @@ func bootstrap() {
 		log.Fatalf("Failed to send batch config message: %v", err)
 	}
 
-	batchConfigStartedMsg := keyper.NewBatchConfigStarted(batchConfigIndex)
+	batchConfigStartedMsg := shmsg.NewBatchConfigStarted(batchConfigIndex)
 	err = ms.SendMessage(context.Background(), batchConfigStartedMsg)
 	if err != nil {
 		log.Fatalf("Failed to send start message: %v", err)

@@ -77,7 +77,7 @@ func (dkg *DKGInstance) startPhase1Dealing(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	msg := NewPolyCommitmentMsg(dkg.Eon, polyCommitment.Gammas)
+	msg := shmsg.NewPolyCommitment(dkg.Eon, polyCommitment.Gammas)
 	log.Printf("Sending Gammas")
 	err = dkg.ms.SendMessage(ctx, msg)
 	if err != nil {
@@ -114,7 +114,7 @@ func (dkg *DKGInstance) makePolyEvalMessage(polyEvals []puredkg.PolyEvalMsg) (*s
 	if uint64(len(evals)) < dkg.BatchConfig.Threshold {
 		return nil, fmt.Errorf("makePolyEvalMessage: need at least %d keys, only have %d", dkg.BatchConfig.Threshold, len(evals))
 	}
-	return NewPolyEvalMsg(dkg.Eon, receivers, evals), nil
+	return shmsg.NewPolyEval(dkg.Eon, receivers, evals), nil
 }
 
 // sendPolyEvals sends the corresponding polynomial evaluation to each keyper, including ourselves.
