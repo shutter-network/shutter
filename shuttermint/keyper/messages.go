@@ -7,6 +7,21 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+func NewAccusationMessage(eon uint64, accused []common.Address) *shmsg.Message {
+	accusedBytes := [][]byte{}
+	for _, a := range accused {
+		accusedBytes = append(accusedBytes, a.Bytes())
+	}
+	return &shmsg.Message{
+		Payload: &shmsg.Message_AccusationMsg{
+			AccusationMsg: &shmsg.AccusationMsg{
+				Eon:     eon,
+				Accused: accusedBytes,
+			},
+		},
+	}
+}
+
 // NewPolyCommitmentMsg creates a new poly commitment message containing gamma values.
 func NewPolyCommitmentMsg(eon uint64, gammas *crypto.Gammas) *shmsg.Message {
 	gammaBytes := [][]byte{}
