@@ -17,11 +17,11 @@ type (
 )
 
 const (
-	off = phase(iota)
-	dealing
-	accusing
-	apologizing
-	finalized
+	Off = phase(iota)
+	Dealing
+	Accusing
+	Apologizing
+	Finalized
 )
 
 // XXX All of the messages here carry the Eon field, which we could also remove. It's not needed
@@ -75,7 +75,7 @@ type PureDKG struct {
 
 func NewPureDKG(eon uint64, numKeypers uint64, threshold uint64, keyper KeyperIndex) PureDKG {
 	return PureDKG{
-		Phase:       off,
+		Phase:       Off,
 		Eon:         eon,
 		NumKeypers:  numKeypers,
 		Threshold:   threshold,
@@ -119,7 +119,7 @@ func (pure *PureDKG) checkEonAndPhase(eon uint64, maxPhase phase) error {
 }
 
 func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, error) {
-	pure.setPhase(dealing)
+	pure.setPhase(Dealing)
 	degree := crypto.DegreeFromThreshold(pure.Threshold)
 	polynomial, err := crypto.RandomPolynomial(rand.Reader, degree)
 	if err != nil {
@@ -149,7 +149,7 @@ func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, err
 }
 
 func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
-	pure.setPhase(accusing)
+	pure.setPhase(Accusing)
 	var accusations []AccusationMsg
 	var dealer KeyperIndex
 	for dealer = 0; dealer < pure.NumKeypers; dealer++ {
@@ -165,7 +165,7 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 }
 
 func (pure *PureDKG) StartPhase3Apologizing() []ApologyMsg {
-	pure.setPhase(apologizing)
+	pure.setPhase(Apologizing)
 	var apologies []ApologyMsg
 	for key := range pure.Accusations {
 		if key.Accused == pure.Keyper {
@@ -181,7 +181,7 @@ func (pure *PureDKG) StartPhase3Apologizing() []ApologyMsg {
 }
 
 func (pure *PureDKG) Finalize() {
-	pure.setPhase(finalized)
+	pure.setPhase(Finalized)
 }
 
 func (pure *PureDKG) present(i KeyperIndex) bool {
@@ -198,7 +198,7 @@ func (pure *PureDKG) verifyPolyEval(dealer KeyperIndex) bool {
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
 // error is returned if this is called before finalization or if too few keypers participated.
 func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) {
-	if pure.Phase < finalized {
+	if pure.Phase < Finalized {
 		return nil, nil, fmt.Errorf("dkg is not finalized yet")
 	}
 
@@ -230,7 +230,7 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) 
 
 // HandlePolyCommitmentMsg
 func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
-	if err := pure.checkEonAndPhase(msg.Eon, dealing); err != nil {
+	if err := pure.checkEonAndPhase(msg.Eon, Dealing); err != nil {
 		return err
 	}
 	if pure.Commitments[msg.Sender] != nil {
@@ -250,7 +250,7 @@ func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 
 // HandlePolyEvalMsg
 func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
-	if err := pure.checkEonAndPhase(msg.Eon, dealing); err != nil {
+	if err := pure.checkEonAndPhase(msg.Eon, Dealing); err != nil {
 		return err
 	}
 	if msg.Receiver != pure.Keyper {
@@ -269,7 +269,7 @@ func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
 
 // HandleAccusationMsg
 func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
-	if err := pure.checkEonAndPhase(msg.Eon, accusing); err != nil {
+	if err := pure.checkEonAndPhase(msg.Eon, Accusing); err != nil {
 		return err
 	}
 	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
@@ -283,7 +283,7 @@ func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
 
 // HandleApologyMsg
 func (pure *PureDKG) HandleApologyMsg(msg ApologyMsg) error {
-	if err := pure.checkEonAndPhase(msg.Eon, apologizing); err != nil {
+	if err := pure.checkEonAndPhase(msg.Eon, Apologizing); err != nil {
 		return err
 	}
 	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
