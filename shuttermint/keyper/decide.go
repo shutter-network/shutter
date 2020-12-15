@@ -5,6 +5,9 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"log"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
@@ -12,6 +15,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
+
+type decryptfn func(encrypted []byte) ([]byte, error)
 
 // IRunEnv is passed as a parameter to IAction's Run function. At the moment this only allows
 // interaction with the shutter chain. We will also need a way to talk to the main chain
@@ -29,9 +34,81 @@ var (
 	_ IAction = SendShuttermintMessage{}
 )
 
+// DKG is used to store local state about active DKG processes. Each DKG has a corresponding
+// observe.Eon struct stored in observe.Shutter, which we can find with Shutter's FindEon method.
 type DKG struct {
-	Eon  uint64
-	Pure *puredkg.PureDKG
+	Eon              uint64
+	Keypers          []common.Address
+	Pure             *puredkg.PureDKG
+	CommitmentsIndex int
+	PolyEvalsIndex   int
+}
+
+func (dkg *DKG) syncCommitments(eon observe.Eon) {
+	for i := dkg.CommitmentsIndex; i < len(eon.Commitments); i++ {
+		comm := eon.Commitments[i]
+		sender, err := medley.FindAddressIndex(dkg.Keypers, comm.Sender)
+		if err != nil {
+			continue
+		}
+
+		err = dkg.Pure.HandlePolyCommitmentMsg(
+			puredkg.PolyCommitmentMsg{Eon: comm.Eon, Gammas: comm.Gammas, Sender: uint64(sender)},
+		)
+		if err != nil {
+			log.Printf("Error in syncCommitments: %s", err)
+		}
+	}
+	dkg.CommitmentsIndex = len(eon.Commitments)
+}
+
+func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
+	keyperIndex := dkg.Pure.Keyper
+	for i := dkg.PolyEvalsIndex; i < len(eon.PolyEvals); i++ {
+		eval := eon.PolyEvals[i]
+
+		sender, err := medley.FindAddressIndex(dkg.Keypers, eval.Sender)
+		if err != nil {
+			continue
+		}
+		if uint64(sender) == keyperIndex {
+			continue
+		}
+
+		for j, receiver := range eval.Receivers {
+			receiverIndex, err := medley.FindAddressIndex(dkg.Keypers, receiver)
+			if err != nil {
+				log.Printf("Error in syncPolyEvals: %s", err)
+				continue
+			}
+			if uint64(receiverIndex) != keyperIndex {
+				continue
+			}
+			encrypted := eval.EncryptedEvals[j]
+			evalBytes, err := decrypt(encrypted)
+			if err != nil {
+				log.Printf("Error in syncPolyEvals: %s", err)
+				continue
+			}
+			b := new(big.Int)
+			b.SetBytes(evalBytes)
+			err = dkg.Pure.HandlePolyEvalMsg(
+				puredkg.PolyEvalMsg{
+					Eon:      eval.Eon,
+					Sender:   uint64(sender),
+					Receiver: keyperIndex,
+					Eval:     b,
+				})
+			if err != nil {
+				log.Printf("Error in syncPolyEvals: %s", err)
+			}
+		}
+	}
+}
+
+func (dkg *DKG) syncWithEon(eon observe.Eon, decrypt decryptfn) {
+	dkg.syncCommitments(eon)
+	dkg.syncPolyEvals(eon, decrypt)
 }
 
 // State is the keyper's internal state
@@ -158,14 +235,7 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 	}
 
 	pure := puredkg.NewPureDKG(eon.Eon, uint64(len(batchConfig.Keypers)), batchConfig.Threshold, uint64(keyperIndex))
-	commitment, evals, err := pure.StartPhase1Dealing()
-	if err != nil {
-		return
-	}
-	_ = evals // XXX we need to send them as well
-	msg := shmsg.NewPolyCommitment(eon.Eon, commitment.Gammas)
-	dcdr.sendShuttermintMessage(fmt.Sprintf("poly commitment, eon=%d", eon.Eon), msg)
-	dkg := DKG{Eon: eon.Eon, Pure: &pure}
+	dkg := DKG{Eon: eon.Eon, Pure: &pure, Keypers: batchConfig.Keypers}
 	dcdr.State.dkgs = append(dcdr.State.dkgs, dkg)
 }
 
@@ -179,6 +249,96 @@ func (dcdr *Decider) maybeStartDKG() {
 	}
 }
 
+// PhaseLength is used to store the accumulated lengths of the DKG phases
+type PhaseLength struct {
+	Off         int64
+	Dealing     int64
+	Accusing    int64
+	Apologizing int64
+}
+
+var phaseLength = PhaseLength{
+	Off:         0,
+	Dealing:     10,
+	Accusing:    20,
+	Apologizing: 30,
+}
+
+func (dcdr *Decider) startPhase1Dealing(dkg *DKG) {
+	commitment, evals, err := dkg.Pure.StartPhase1Dealing()
+	if err != nil {
+		panic(err) // XXX fix error handling
+	}
+	_ = evals // XXX we need to send them as well
+	msg := shmsg.NewPolyCommitment(dkg.Eon, commitment.Gammas)
+	dcdr.sendShuttermintMessage(fmt.Sprintf("poly commitment, eon=%d", dkg.Eon), msg)
+}
+
+func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
+	accusations := dkg.Pure.StartPhase2Accusing()
+	if len(accusations) == 0 {
+		return
+	}
+
+	var accused []common.Address
+	for _, a := range accusations {
+		accused = append(accused, dkg.Keypers[a.Accused])
+	}
+	dcdr.sendShuttermintMessage(
+		fmt.Sprintf("accustions, eon=%d, count=%d", dkg.Eon, len(accused)),
+		shmsg.NewAccusation(dkg.Eon, accused))
+}
+
+func (dcdr *Decider) sendApologyMessage(a puredkg.ApologyMsg) {
+}
+
+func (dcdr *Decider) startPhase3Apologizing(dkg *DKG) {
+	apologies := dkg.Pure.StartPhase3Apologizing()
+	for _, a := range apologies {
+		dcdr.sendApologyMessage(a)
+	}
+}
+
+func (dcdr *Decider) dkgFinalize(dkg *DKG) {
+	dkg.Pure.Finalize()
+}
+
+func (dcdr *Decider) dkgStartNextPhase(dkg *DKG, eon *observe.Eon) {
+	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Off &&
+		dkg.Pure.Phase <= puredkg.Off {
+		dcdr.startPhase1Dealing(dkg)
+	}
+	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Dealing &&
+		dkg.Pure.Phase <= puredkg.Dealing {
+		dcdr.startPhase2Accusing(dkg)
+	}
+
+	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Accusing &&
+		dkg.Pure.Phase <= puredkg.Accusing {
+		dcdr.startPhase3Apologizing(dkg)
+	}
+
+	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Apologizing &&
+		dkg.Pure.Phase <= puredkg.Apologizing {
+		dcdr.dkgFinalize(dkg)
+	}
+}
+
+func (dcdr *Decider) handleDKGs() {
+	decrypt := func(encrypted []byte) ([]byte, error) {
+		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
+	}
+	for i := range dcdr.State.dkgs {
+		dkg := &dcdr.State.dkgs[i]
+		eon, err := dcdr.Shutter.FindEon(dkg.Eon)
+		if err != nil {
+			panic(err)
+		}
+		dkg.syncWithEon(*eon, decrypt)
+		dcdr.dkgStartNextPhase(dkg, eon)
+	}
+}
+
 // Decide determines the next actions to run.
 func (dcdr *Decider) Decide() {
 	// We can't go on unless we're registered as keyper in shuttermint
@@ -189,4 +349,5 @@ func (dcdr *Decider) Decide() {
 	dcdr.maybeSendCheckIn()
 	dcdr.maybeSendBatchConfig()
 	dcdr.maybeStartDKG()
+	dcdr.handleDKGs()
 }
