@@ -57,8 +57,10 @@ type PolyCommitmentRegisteredEvent struct {
 
 // PolyEvalRegisteredEvent
 type PolyEvalRegisteredEvent struct {
-	Eon    uint64
-	Sender common.Address
+	Eon            uint64
+	Sender         common.Address
+	Receivers      []common.Address
+	EncryptedEvals [][]byte
 }
 
 // IEvent is an interface for the event types declared above
