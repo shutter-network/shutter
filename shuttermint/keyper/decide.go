@@ -3,11 +3,13 @@ package keyper
 import (
 	"context"
 	"crypto/ed25519"
+	"crypto/rand"
 	"fmt"
 	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
@@ -37,11 +39,12 @@ var (
 // DKG is used to store local state about active DKG processes. Each DKG has a corresponding
 // observe.Eon struct stored in observe.Shutter, which we can find with Shutter's FindEon method.
 type DKG struct {
-	Eon              uint64
-	Keypers          []common.Address
-	Pure             *puredkg.PureDKG
-	CommitmentsIndex int
-	PolyEvalsIndex   int
+	Eon                  uint64
+	Keypers              []common.Address
+	Pure                 *puredkg.PureDKG
+	CommitmentsIndex     int
+	PolyEvalsIndex       int
+	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
 }
 
 // newApology create a new shmsg apology message from the given puredkg apologies
@@ -285,14 +288,61 @@ var phaseLength = PhaseLength{
 	Apologizing: 30,
 }
 
+// sendPolyEvals sends the outgoing PolyEvalMsg stored in dkg that can be sent. A PolyEvalMessage
+// can only be sent, when we do have the receiver's public encryption key. If we're beyond the
+// 'Dealing' phase, it's too late to send these messages. In that case we clear the
+// OutgoingPolyEvalMsgs field and log a message.
+func (dcdr *Decider) sendPolyEvals(dkg *DKG) {
+	if len(dkg.OutgoingPolyEvalMsgs) == 0 {
+		return
+	}
+
+	if dkg.Pure.Phase > puredkg.Dealing {
+		log.Printf("Dropping %d poly eval messages for eon %d", len(dkg.OutgoingPolyEvalMsgs), dkg.Eon)
+		dkg.OutgoingPolyEvalMsgs = nil
+		return
+	}
+
+	var newOutgoing []puredkg.PolyEvalMsg
+	var receivers []common.Address
+	var encryptedEvals [][]byte
+
+	for _, p := range dkg.OutgoingPolyEvalMsgs {
+		receiver := dkg.Keypers[p.Receiver]
+		encryptionKey, ok := dcdr.Shutter.KeyperEncryptionKeys[receiver]
+		if ok {
+			encrypted, err := ecies.Encrypt(rand.Reader, encryptionKey, p.Eval.Bytes(), nil, nil)
+			if err != nil {
+				panic(err)
+			}
+			encryptedEvals = append(encryptedEvals, encrypted)
+			receivers = append(receivers, receiver)
+		} else {
+			newOutgoing = append(newOutgoing, p)
+		}
+	}
+	if len(receivers) > 0 {
+		dcdr.sendShuttermintMessage(
+			fmt.Sprintf("poly eval, eon=%d, %d receivers, %d still outgoing", dkg.Eon, len(receivers), len(newOutgoing)),
+			shmsg.NewPolyEval(dkg.Eon, receivers, encryptedEvals))
+		dkg.OutgoingPolyEvalMsgs = newOutgoing
+		if len(dkg.OutgoingPolyEvalMsgs) == 0 {
+			log.Printf("Sent all poly eval messages for eon %d", dkg.Eon)
+		}
+	}
+}
+
 func (dcdr *Decider) startPhase1Dealing(dkg *DKG) {
-	commitment, evals, err := dkg.Pure.StartPhase1Dealing()
+	commitment, polyEvals, err := dkg.Pure.StartPhase1Dealing()
 	if err != nil {
 		panic(err) // XXX fix error handling
 	}
-	_ = evals // XXX we need to send them as well
-	msg := shmsg.NewPolyCommitment(dkg.Eon, commitment.Gammas)
-	dcdr.sendShuttermintMessage(fmt.Sprintf("poly commitment, eon=%d", dkg.Eon), msg)
+
+	dkg.OutgoingPolyEvalMsgs = polyEvals
+
+	dcdr.sendShuttermintMessage(
+		fmt.Sprintf("poly commitment, eon=%d", dkg.Eon),
+		shmsg.NewPolyCommitment(dkg.Eon, commitment.Gammas))
 }
 
 func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
@@ -352,6 +402,7 @@ func (dcdr *Decider) handleDKGs() {
 		}
 		dkg.syncWithEon(*eon, decrypt)
 		dcdr.dkgStartNextPhase(dkg, eon)
+		dcdr.sendPolyEvals(dkg)
 	}
 }
 
