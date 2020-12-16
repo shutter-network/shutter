@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"sort"
 
@@ -55,7 +56,7 @@ func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 	for _, ev := range events {
 		x, err := shutterevents.MakeEvent(ev)
 		if err != nil {
-			fmt.Printf("malformed event: %+v", x)
+			log.Printf("Error: malformed event: %s ev=%+v", err, ev)
 		} else {
 			shutter.applyEvent(height, x)
 		}
