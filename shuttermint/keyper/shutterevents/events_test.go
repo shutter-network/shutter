@@ -125,7 +125,7 @@ func gammasToEvent(gammas crypto.Gammas) []byte {
 
 func TestDecodeGammasFromEvent(t *testing.T) {
 	eventValue := gammasToEvent(gammas)
-	decoded, err := decodeGammasFromEvent(eventValue)
+	decoded, err := decodeGammas(eventValue)
 	require.Nil(t, err)
 	require.Equal(t, gammas, decoded)
 }

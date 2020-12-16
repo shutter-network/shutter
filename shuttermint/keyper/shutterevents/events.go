@@ -99,9 +99,9 @@ func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, err
 	return uint64(v), nil
 }
 
-// decodeAddressesFromEvent reverses the encodeAddressesForEvent operation, i.e. it parses a list
+// decodeAddresses reverses the encodeAddressesForEvent operation, i.e. it parses a list
 // of addresses from a comma-separated string.
-func decodeAddressesFromEvent(s string) []common.Address {
+func decodeAddresses(s string) []common.Address {
 	var res []common.Address
 	for _, a := range strings.Split(s, ",") {
 		res = append(res, common.HexToAddress(a))
@@ -109,11 +109,11 @@ func decodeAddressesFromEvent(s string) []common.Address {
 	return res
 }
 
-// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
+// DecodePubkey decodes a public key from a tendermint event (this is the reverse
 // operation of app.encodePubkeyForEvent )
 // XXX the is only needed by a shuttermint app test, should eventually end up private like all
 // other methods
-func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
+func DecodePubkey(s string) (*ecdsa.PublicKey, error) {
 	data, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
 	return ethcrypto.UnmarshalPubkey(data)
 }
 
-func decodeGammasFromEvent(eventValue []byte) (crypto.Gammas, error) {
+func decodeGammas(eventValue []byte) (crypto.Gammas, error) {
 	parts := strings.Split(string(eventValue), ",")
 	var res crypto.Gammas
 	for _, p := range parts {
@@ -144,7 +144,7 @@ func getGammasAttribute(ev abcitypes.Event, index int, name string) (crypto.Gamm
 	if err != nil {
 		return crypto.Gammas{}, err
 	}
-	return decodeGammasFromEvent(attr)
+	return decodeGammas(attr)
 }
 
 func getStringAttribute(ev abcitypes.Event, index int, key string) (string, error) {
@@ -173,7 +173,7 @@ func getPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*ecdsa.Pu
 		return nil, err
 	}
 
-	publicKey, err := DecodePubkeyFromEvent(s)
+	publicKey, err := DecodePubkey(s)
 	if err != nil {
 		return nil, err
 	}
@@ -189,8 +189,8 @@ func getECIESPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*eci
 	return ecies.ImportECDSAPublic(publicKeyECDSA), nil
 }
 
-// makeCheckInEvent creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
-func makeCheckInEvent(ev abcitypes.Event) (CheckIn, error) {
+// makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
+func makeCheckIn(ev abcitypes.Event) (CheckIn, error) {
 	if ev.Type != evtype.CheckIn {
 		return CheckIn{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
 	}
@@ -210,9 +210,9 @@ func makeCheckInEvent(ev abcitypes.Event) (CheckIn, error) {
 	}, nil
 }
 
-// makeBatchConfigEvent creates a BatchConfigEvent from the given tendermint event of type
+// makeBatchConfig creates a BatchConfigEvent from the given tendermint event of type
 // "shutter.batch-config"
-func makeBatchConfigEvent(ev abcitypes.Event) (BatchConfig, error) {
+func makeBatchConfig(ev abcitypes.Event) (BatchConfig, error) {
 	if len(ev.Attributes) < 4 {
 		return BatchConfig{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
@@ -232,7 +232,7 @@ func makeBatchConfigEvent(ev abcitypes.Event) (BatchConfig, error) {
 	if err != nil {
 		return BatchConfig{}, err
 	}
-	keypers := decodeAddressesFromEvent(string(ev.Attributes[2].Value))
+	keypers := decodeAddresses(string(ev.Attributes[2].Value))
 	configIndex, err := strconv.ParseUint(string(ev.Attributes[3].Value), 10, 64)
 	if err != nil {
 		return BatchConfig{}, err
@@ -240,9 +240,9 @@ func makeBatchConfigEvent(ev abcitypes.Event) (BatchConfig, error) {
 	return BatchConfig{uint64(b), uint64(threshold), keypers, configIndex}, nil
 }
 
-// makeDecryptionSignatureEvent creates a DecryptionSignatureEvent from the given tendermint event
+// makeDecryptionSignature creates a DecryptionSignatureEvent from the given tendermint event
 // of type "shutter.decryption-signature".
-func makeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignature, error) {
+func makeDecryptionSignature(ev abcitypes.Event) (DecryptionSignature, error) {
 	if len(ev.Attributes) < 3 {
 		return DecryptionSignature{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
 	}
@@ -275,9 +275,9 @@ func makeDecryptionSignatureEvent(ev abcitypes.Event) (DecryptionSignature, erro
 	}, nil
 }
 
-// makeEonStartedEvent creates a EonStartedEvent from the given tendermint event of type
+// makeEonStarted creates a EonStartedEvent from the given tendermint event of type
 // "shutter.eon-started".
-func makeEonStartedEvent(ev abcitypes.Event) (EonStarted, error) {
+func makeEonStarted(ev abcitypes.Event) (EonStarted, error) {
 	if ev.Type != evtype.EonStarted {
 		return EonStarted{}, fmt.Errorf("expected event type %s, got %s", evtype.EonStarted, ev.Type)
 	}
@@ -297,7 +297,7 @@ func makeEonStartedEvent(ev abcitypes.Event) (EonStarted, error) {
 	}, nil
 }
 
-func makePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitment, error) {
+func makePolyCommitment(ev abcitypes.Event) (PolyCommitment, error) {
 	res := PolyCommitment{}
 	if ev.Type != evtype.PolyCommitment {
 		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
@@ -324,7 +324,7 @@ func makePolyCommitmentRegisteredEvent(ev abcitypes.Event) (PolyCommitment, erro
 	return res, nil
 }
 
-func makePolyEvalRegisteredEvent(ev abcitypes.Event) (PolyEval, error) {
+func makePolyEval(ev abcitypes.Event) (PolyEval, error) {
 	res := PolyEval{}
 	if ev.Type != evtype.PolyEval {
 		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
@@ -349,17 +349,17 @@ func makePolyEvalRegisteredEvent(ev abcitypes.Event) (PolyEval, error) {
 func MakeEvent(ev abcitypes.Event) (IEvent, error) {
 	switch ev.Type {
 	case evtype.CheckIn:
-		return makeCheckInEvent(ev)
+		return makeCheckIn(ev)
 	case evtype.BatchConfig:
-		return makeBatchConfigEvent(ev)
+		return makeBatchConfig(ev)
 	case evtype.DecryptionSignature:
-		return makeDecryptionSignatureEvent(ev)
+		return makeDecryptionSignature(ev)
 	case evtype.EonStarted:
-		return makeEonStartedEvent(ev)
+		return makeEonStarted(ev)
 	case evtype.PolyCommitment:
-		return makePolyCommitmentRegisteredEvent(ev)
+		return makePolyCommitment(ev)
 	case evtype.PolyEval:
-		return makePolyEvalRegisteredEvent(ev)
+		return makePolyEval(ev)
 	default:
 		return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 	}
