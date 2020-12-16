@@ -1,6 +1,8 @@
 package shmsg
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -45,6 +47,34 @@ func NewDecryptionSignature(batchIndex uint64, signature []byte) *Message {
 			DecryptionSignature: &DecryptionSignature{
 				BatchIndex: batchIndex,
 				Signature:  signature,
+			},
+		},
+	}
+}
+
+// NewApology creates a new apology message used in the DKG process. This message reveals the
+// polyEvals, that where sent encrypted via the PolyEval messages to each accuser.
+func NewApology(eon uint64, accusers []common.Address, polyEvals []*big.Int) *Message {
+	if len(accusers) != len(polyEvals) {
+		panic("bad call to NewApology")
+	}
+
+	var accusersBytes [][]byte
+	for _, a := range accusers {
+		accusersBytes = append(accusersBytes, a.Bytes())
+	}
+
+	var polyEvalsBytes [][]byte
+	for _, e := range polyEvals {
+		polyEvalsBytes = append(polyEvalsBytes, e.Bytes())
+	}
+
+	return &Message{
+		Payload: &Message_Apology{
+			Apology: &Apology{
+				Eon:       eon,
+				Accusers:  accusersBytes,
+				PolyEvals: polyEvalsBytes,
 			},
 		},
 	}

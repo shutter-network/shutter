@@ -44,6 +44,27 @@ type DKG struct {
 	PolyEvalsIndex   int
 }
 
+// newApology create a new shmsg apology message from the given puredkg apologies
+func (dkg *DKG) newApology(apologies []puredkg.ApologyMsg) *shmsg.Message {
+	var accusers []common.Address
+	var polyEvals []*big.Int
+
+	for _, a := range apologies {
+		accusers = append(accusers, dkg.Keypers[a.Accuser])
+		polyEvals = append(polyEvals, a.Eval)
+	}
+	return shmsg.NewApology(dkg.Eon, accusers, polyEvals)
+}
+
+// newAccusation creates a new shmsg accusation message from the given puredkg accusations
+func (dkg *DKG) newAccusation(accusations []puredkg.AccusationMsg) *shmsg.Message {
+	var accused []common.Address
+	for _, a := range accusations {
+		accused = append(accused, dkg.Keypers[a.Accused])
+	}
+	return shmsg.NewAccusation(dkg.Eon, accused)
+}
+
 func (dkg *DKG) syncCommitments(eon observe.Eon) {
 	for i := dkg.CommitmentsIndex; i < len(eon.Commitments); i++ {
 		comm := eon.Commitments[i]
@@ -279,24 +300,19 @@ func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
 	if len(accusations) == 0 {
 		return
 	}
-
-	var accused []common.Address
-	for _, a := range accusations {
-		accused = append(accused, dkg.Keypers[a.Accused])
-	}
 	dcdr.sendShuttermintMessage(
-		fmt.Sprintf("accustions, eon=%d, count=%d", dkg.Eon, len(accused)),
-		shmsg.NewAccusation(dkg.Eon, accused))
-}
-
-func (dcdr *Decider) sendApologyMessage(a puredkg.ApologyMsg) {
+		fmt.Sprintf("accusations, eon=%d, count=%d", dkg.Eon, len(accusations)),
+		dkg.newAccusation(accusations))
 }
 
 func (dcdr *Decider) startPhase3Apologizing(dkg *DKG) {
 	apologies := dkg.Pure.StartPhase3Apologizing()
-	for _, a := range apologies {
-		dcdr.sendApologyMessage(a)
+	if len(apologies) == 0 {
+		return
 	}
+	dcdr.sendShuttermintMessage(
+		fmt.Sprintf("apologies, eon=%d, count=%d", dkg.Eon, len(apologies)),
+		dkg.newApology(apologies))
 }
 
 func (dcdr *Decider) dkgFinalize(dkg *DKG) {
