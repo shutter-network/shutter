@@ -15,7 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/brainbot-com/shutter/shuttermint/app/evtype"
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
 )
@@ -98,6 +99,28 @@ func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, err
 	return uint64(v), nil
 }
 
+// decodeAddressesFromEvent reverses the encodeAddressesForEvent operation, i.e. it parses a list
+// of addresses from a comma-separated string.
+func decodeAddressesFromEvent(s string) []common.Address {
+	var res []common.Address
+	for _, a := range strings.Split(s, ",") {
+		res = append(res, common.HexToAddress(a))
+	}
+	return res
+}
+
+// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
+// operation of app.encodePubkeyForEvent )
+// XXX the is only needed by a shuttermint app test, should eventually end up private like all
+// other methods
+func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
+	data, err := base64.RawURLEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.UnmarshalPubkey(data)
+}
+
 func decodeGammasFromEvent(eventValue []byte) (crypto.Gammas, error) {
 	parts := strings.Split(string(eventValue), ",")
 	var res crypto.Gammas
@@ -150,7 +173,7 @@ func getPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*ecdsa.Pu
 		return nil, err
 	}
 
-	publicKey, err := app.DecodePubkeyFromEvent(s)
+	publicKey, err := DecodePubkeyFromEvent(s)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +232,7 @@ func makeBatchConfigEvent(ev abcitypes.Event) (BatchConfig, error) {
 	if err != nil {
 		return BatchConfig{}, err
 	}
-	keypers := app.DecodeAddressesFromEvent(string(ev.Attributes[2].Value))
+	keypers := decodeAddressesFromEvent(string(ev.Attributes[2].Value))
 	configIndex, err := strconv.ParseUint(string(ev.Attributes[3].Value), 10, 64)
 	if err != nil {
 		return BatchConfig{}, err

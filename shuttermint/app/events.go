@@ -205,16 +205,6 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 	return base64.RawURLEncoding.EncodeToString(crypto.FromECDSAPub(pubkey))
 }
 
-// DecodePubkeyFromEvent decodes a public key from a tendermint event (this is the reverse
-// operation of encodePubkeyForEvent )
-func DecodePubkeyFromEvent(s string) (*ecdsa.PublicKey, error) {
-	data, err := base64.RawURLEncoding.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.UnmarshalPubkey(data)
-}
-
 // encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
 	var hex []string
@@ -222,16 +212,6 @@ func encodeAddressesForEvent(addr []common.Address) string {
 		hex = append(hex, a.Hex())
 	}
 	return strings.Join(hex, ",")
-}
-
-// DecodeAddressesFromEvent reverses the encodeAddressesForEvent operation, i.e. it parses a list
-// of addresses from a comma-separated string.
-func DecodeAddressesFromEvent(s string) []common.Address {
-	var res []common.Address
-	for _, a := range strings.Split(s, ",") {
-		res = append(res, common.HexToAddress(a))
-	}
-	return res
 }
 
 func encodeByteSequenceForEvent(v [][]byte) string {

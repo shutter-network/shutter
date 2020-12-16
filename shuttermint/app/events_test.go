@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/app/evtype"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
 
 func TestEvents(t *testing.T) {
@@ -30,9 +31,11 @@ func TestEvents(t *testing.T) {
 		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
 		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
 		require.Equal(t, []byte("EncryptionPublicKey"), ev.Attributes[1].Key)
-		publicKeyECDSA, err := DecodePubkeyFromEvent(string(ev.Attributes[1].Value))
+		shev, err := shutterevents.MakeEvent(ev)
 		require.Nil(t, err)
-		require.True(t, publicKeyECDSA.Equal(&privateKeyECDSA.PublicKey))
+		checkInEv, ok := shev.(shutterevents.CheckIn)
+		require.True(t, ok)
+		require.Equal(t, &publicKey, checkInEv.EncryptionPublicKey)
 	})
 
 	t.Run("MakeEonStartedEvent", func(t *testing.T) {
