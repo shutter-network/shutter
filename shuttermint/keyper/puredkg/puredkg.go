@@ -136,12 +136,21 @@ func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, err
 	var polyEvalMsgs []PolyEvalMsg
 	var receiver KeyperIndex
 	for receiver = 0; receiver < pure.NumKeypers; receiver++ {
-		polyEvalMsgs = append(polyEvalMsgs, PolyEvalMsg{
+		msg := PolyEvalMsg{
 			Eon:      pure.Eon,
 			Sender:   pure.Keyper,
 			Receiver: receiver,
 			Eval:     pure.Polynomial.EvalForKeyper(int(receiver)),
-		})
+		}
+		if receiver == pure.Keyper {
+			// XXX maybe use pure.Evals[msg.Sender] = msg.Eval instead
+			err = pure.HandlePolyEvalMsg(msg)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			polyEvalMsgs = append(polyEvalMsgs, msg)
+		}
 	}
 	return polyCommitmentMsg, polyEvalMsgs, nil
 

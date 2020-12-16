@@ -32,7 +32,7 @@ func TestPureDKGFull(t *testing.T) {
 			require.Nil(t, err)
 		}
 
-		require.Equal(t, int(numKeypers), len(polyEvalMsgs))
+		require.Equal(t, int(numKeypers), 1+len(polyEvalMsgs))
 		for _, msg := range polyEvalMsgs {
 			err := dkgs[msg.Receiver].HandlePolyEvalMsg(msg)
 			require.Nil(t, err)
@@ -86,12 +86,11 @@ func TestDealingSendsCorrectMsgs(t *testing.T) {
 		require.True(t, crypto.EqualG2(g, (*expectedGammas)[i]))
 	}
 
-	require.Equal(t, int(numKeypers), len(evalMsgs))
-	for i, msg := range evalMsgs {
+	require.Equal(t, int(numKeypers), 1+len(evalMsgs))
+	for _, msg := range evalMsgs {
 		require.Equal(t, eon, msg.Eon)
 		require.Equal(t, keyper, msg.Sender)
-		require.Equal(t, uint64(i), msg.Receiver)
-		require.Equal(t, dkg.Polynomial.EvalForKeyper(i), msg.Eval)
+		require.Equal(t, dkg.Polynomial.EvalForKeyper(int(msg.Receiver)), msg.Eval)
 	}
 }
 
