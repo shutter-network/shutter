@@ -21,6 +21,13 @@ import (
 var (
 	polynomial *crypto.Polynomial
 	gammas     crypto.Gammas
+	eon        = uint64(64738)
+	sender     = common.BytesToAddress([]byte("foo"))
+	addresses  = []common.Address{
+		common.BigToAddress(big.NewInt(1)),
+		common.BigToAddress(big.NewInt(2)),
+		common.BigToAddress(big.NewInt(3)),
+	}
 )
 
 func init() {
@@ -40,21 +47,43 @@ func mkeq(t *testing.T, appEv abcitypes.Event, expected IEvent) {
 	require.Equal(t, expected, ev)
 }
 
-func TestCheckInEvent(t *testing.T) {
-	sender := common.BigToAddress(big.NewInt(1))
-	privateKeyECDSA, err := ethcrypto.GenerateKey()
-	require.Nil(t, err)
-	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
-	appEv := app.MakeCheckInEvent(sender, publicKey)
-	mkeq(t, appEv, CheckIn{Sender: sender, EncryptionPublicKey: publicKey})
+func TestAccusation(t *testing.T) {
+	appEv := app.MakeAccusationRegisteredEvent(&app.AccusationMsg{
+		Eon:     eon,
+		Sender:  sender,
+		Accused: addresses,
+	})
+	mkeq(t, appEv, Accusation{
+		Eon:     eon,
+		Sender:  sender,
+		Accused: addresses,
+	})
+}
+
+func TestApology(t *testing.T) {
+	accusers := addresses
+	var polyEval []*big.Int
+	var polyEvalsBytes [][]byte
+	for i := 0; i < len(accusers); i++ {
+		eval := big.NewInt(int64(100 + i))
+		polyEval = append(polyEval, eval)
+		polyEvalsBytes = append(polyEvalsBytes, eval.Bytes())
+	}
+	appEv := app.MakeApologyRegisteredEvent(&app.ApologyMsg{
+		Eon:       eon,
+		Sender:    sender,
+		Accusers:  addresses,
+		PolyEvals: polyEvalsBytes,
+	})
+	mkeq(t, appEv, Apology{
+		Eon:      eon,
+		Sender:   sender,
+		Accusers: addresses,
+		PolyEval: polyEval,
+	})
 }
 
 func TestMakeEventBatchConfig(t *testing.T) {
-	var addresses []common.Address = []common.Address{
-		common.BigToAddress(big.NewInt(1)),
-		common.BigToAddress(big.NewInt(2)),
-		common.BigToAddress(big.NewInt(3)),
-	}
 	configIndex := uint64(0xffffffffffffffff)
 	appEv := app.MakeBatchConfigEvent(111, 2, addresses, configIndex)
 	mkeq(t, appEv, BatchConfig{
@@ -65,8 +94,15 @@ func TestMakeEventBatchConfig(t *testing.T) {
 	})
 }
 
+func TestCheckInEvent(t *testing.T) {
+	privateKeyECDSA, err := ethcrypto.GenerateKey()
+	require.Nil(t, err)
+	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
+	appEv := app.MakeCheckInEvent(sender, publicKey)
+	mkeq(t, appEv, CheckIn{Sender: sender, EncryptionPublicKey: publicKey})
+}
+
 func TestMakeEonStartedEvent(t *testing.T) {
-	var eon uint64 = 10
 	var batchIndex uint64 = 20
 	appEv := app.MakeEonStartedEvent(eon, batchIndex)
 
@@ -74,9 +110,6 @@ func TestMakeEonStartedEvent(t *testing.T) {
 }
 
 func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
-	var eon uint64 = 10
-	sender := common.BytesToAddress([]byte("foo"))
-
 	appEv := app.MakePolyCommitmentRegisteredEvent(&app.PolyCommitmentMsg{
 		Sender: sender,
 		Eon:    eon,

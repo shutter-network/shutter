@@ -221,16 +221,3 @@ func encodeByteSequenceForEvent(v [][]byte) string {
 	}
 	return strings.Join(hex, ",")
 }
-
-// DecodeByteSequenceFromEvent parses a list of hex encoded, comma-separated byte slices.
-func DecodeByteSequenceFromEvent(s string) ([][]byte, error) {
-	var res [][]byte
-	for _, v := range strings.Split(s, ",") {
-		bs, err := hexutil.Decode(v)
-		if err != nil {
-			return [][]byte{}, err
-		}
-		res = append(res, bs)
-	}
-	return res, nil
-}
