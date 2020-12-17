@@ -60,7 +60,7 @@ func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*
 }
 
 // ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg
-func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*AccusationMsg, error) {
+func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusation, error) {
 	accused := []common.Address{}
 	accusedMap := make(map[common.Address]bool)
 	for _, acc := range msg.Accused {
@@ -77,7 +77,7 @@ func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusati
 		accused = append(accused, address)
 	}
 
-	return &AccusationMsg{
+	return &Accusation{
 		Sender:  sender,
 		Eon:     msg.Eon,
 		Accused: accused,

@@ -141,7 +141,7 @@ func TestRegisterMsgs(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 
 		// fail if wrong eon
-		msg := AccusationMsg{
+		msg := Accusation{
 			Sender:  keypers[0],
 			Eon:     eon + 1,
 			Accused: []common.Address{keypers[1]},
@@ -152,7 +152,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
-		msg = AccusationMsg{
+		msg = Accusation{
 			Sender:  nonKeyper,
 			Eon:     eon,
 			Accused: []common.Address{keypers[0]},
@@ -163,7 +163,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if accused is not a keyper
-		msg = AccusationMsg{
+		msg = Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{nonKeyper},
@@ -174,7 +174,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
-		msg = AccusationMsg{
+		msg = Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{keypers[0]},
@@ -185,7 +185,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// adding should work
-		msg = AccusationMsg{
+		msg = Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{keypers[1]},
@@ -196,7 +196,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.True(t, ok)
 
 		// adding twice should fail
-		msg = AccusationMsg{
+		msg = Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{keypers[1]},
@@ -311,7 +311,7 @@ func TestClosing(t *testing.T) {
 		require.NotNil(t, err)
 
 		// accusations and apologies still work
-		msg3 := AccusationMsg{
+		msg3 := Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{keypers[1]},
@@ -331,7 +331,7 @@ func TestClosing(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 		dkg.CloseAccusations()
 
-		msg := AccusationMsg{
+		msg := Accusation{
 			Sender:  keypers[0],
 			Eon:     eon,
 			Accused: []common.Address{keypers[1]},

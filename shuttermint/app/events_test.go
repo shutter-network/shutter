@@ -86,7 +86,7 @@ func TestEvents(t *testing.T) {
 	})
 
 	t.Run("MakeAccusationRegisteredEvent", func(t *testing.T) {
-		msg := &AccusationMsg{
+		msg := &Accusation{
 			Sender:  sender,
 			Eon:     eon,
 			Accused: []common.Address{anotherAddress},

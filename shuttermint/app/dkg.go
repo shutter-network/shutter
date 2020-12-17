@@ -10,7 +10,7 @@ import (
 func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
 	polyEvalMsgs := make(map[common.Address]PolyEval)
 	polyCommitmentMsgs := make(map[common.Address]PolyCommitmentMsg)
-	accusationMsgs := make(map[common.Address]AccusationMsg)
+	accusationMsgs := make(map[common.Address]Accusation)
 	apologyMsgs := make(map[common.Address]ApologyMsg)
 
 	return DKGInstance{
@@ -73,7 +73,7 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
 }
 
 // RegisterAccusationMsg adds an accusation message to the instance.
-func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
+func (dkg *DKGInstance) RegisterAccusationMsg(msg Accusation) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}

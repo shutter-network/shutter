@@ -179,7 +179,7 @@ func TestGobDKG(t *testing.T) {
 		Keypers:         keypers,
 	}, eon)
 
-	err = dkg.RegisterAccusationMsg(AccusationMsg{
+	err = dkg.RegisterAccusationMsg(Accusation{
 		Sender:  keypers[0],
 		Eon:     eon,
 		Accused: []common.Address{keypers[1]},

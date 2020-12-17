@@ -47,7 +47,7 @@ func mkeq(t *testing.T, appEv abcitypes.Event, expected shutterevents.IEvent) {
 }
 
 func TestAccusation(t *testing.T) {
-	appEv := app.MakeAccusationRegisteredEvent(&app.AccusationMsg{
+	appEv := app.MakeAccusationRegisteredEvent(&app.Accusation{
 		Eon:     eon,
 		Sender:  sender,
 		Accused: addresses,

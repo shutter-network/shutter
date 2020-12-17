@@ -143,7 +143,7 @@ type DKGInstance struct {
 
 	PolyEvalMsgs       map[common.Address]PolyEval
 	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
-	AccusationMsgs     map[common.Address]AccusationMsg
+	AccusationMsgs     map[common.Address]Accusation
 	ApologyMsgs        map[common.Address]ApologyMsg
 
 	SubmissionsClosed bool
@@ -163,12 +163,7 @@ type PolyCommitmentMsg struct {
 	Gammas [][]byte
 }
 
-// AccusationMsg represents a broadcasted accusation message against one or more keypers.
-type AccusationMsg struct {
-	Eon     uint64
-	Sender  common.Address
-	Accused []common.Address
-}
+type Accusation = shutterevents.Accusation
 
 // ApologyMsg represents an apology broadcasted in response to a prior accusation.
 type ApologyMsg struct {

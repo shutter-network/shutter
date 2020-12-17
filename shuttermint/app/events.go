@@ -127,7 +127,7 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
 
 // MakeAccusationRegisteredEvent creates a new event to be emitted whenever an Accusation message
 // is registered.
-func MakeAccusationRegisteredEvent(msg *AccusationMsg) abcitypes.Event {
+func MakeAccusationRegisteredEvent(msg *Accusation) abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.Accusation,
 		Attributes: []abcitypes.EventAttribute{
