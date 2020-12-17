@@ -23,7 +23,7 @@ func TestRegisterMsgs(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 
 		// fail if wrong eon
-		msg := PolyEvalMsg{
+		msg := PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon + 1,
 			Receivers:      []common.Address{keypers[1]},
@@ -35,7 +35,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
-		msg = PolyEvalMsg{
+		msg = PolyEval{
 			Sender:         nonKeyper,
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[0]},
@@ -47,7 +47,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if receiver is not a keyper
-		msg = PolyEvalMsg{
+		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{nonKeyper},
@@ -59,7 +59,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender and receiver are equal
-		msg = PolyEvalMsg{
+		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[0]},
@@ -71,7 +71,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// adding should work
-		msg = PolyEvalMsg{
+		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[1]},
@@ -84,7 +84,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
-		msg = PolyEvalMsg{
+		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[1]},
@@ -294,7 +294,7 @@ func TestClosing(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 		dkg.CloseSubmissions()
 
-		msg1 := PolyEvalMsg{
+		msg1 := PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[1]},

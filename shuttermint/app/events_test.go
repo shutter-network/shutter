@@ -49,7 +49,7 @@ func TestEvents(t *testing.T) {
 	})
 
 	t.Run("MakePolyEvalRegisteredEvent", func(t *testing.T) {
-		msg := &PolyEvalMsg{
+		msg := &PolyEval{
 			Sender:         sender,
 			Eon:            eon,
 			Receivers:      []common.Address{anotherAddress},

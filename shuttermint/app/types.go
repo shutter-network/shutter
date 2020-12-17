@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
 
 // GenesisAppState is used to hold the initial list of keypers, who will bootstrap the system by
@@ -139,7 +141,7 @@ type DKGInstance struct {
 	Config BatchConfig
 	Eon    uint64
 
-	PolyEvalMsgs       map[common.Address]PolyEvalMsg
+	PolyEvalMsgs       map[common.Address]PolyEval
 	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
 	AccusationMsgs     map[common.Address]AccusationMsg
 	ApologyMsgs        map[common.Address]ApologyMsg
@@ -149,13 +151,7 @@ type DKGInstance struct {
 	ApologiesClosed   bool
 }
 
-// PolyEvalMsg represents an encrypted polynomial evaluation message from one keyper to another.
-type PolyEvalMsg struct {
-	Eon            uint64
-	Sender         common.Address
-	Receivers      []common.Address
-	EncryptedEvals [][]byte
-}
+type PolyEval = shutterevents.PolyEval
 
 // PolyCommitmentMsg represents a broadcasted polynomial commitment message.
 type PolyCommitmentMsg struct {

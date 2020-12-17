@@ -72,7 +72,7 @@ type PolyCommitment struct {
 	Gammas *crypto.Gammas
 }
 
-// PolyEval
+// PolyEval represents an encrypted polynomial evaluation message from one keyper to another.
 type PolyEval struct {
 	Eon            uint64
 	Sender         common.Address

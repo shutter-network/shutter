@@ -199,7 +199,7 @@ func TestGobDKG(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterPolyEvalMsg(PolyEvalMsg{
+	err = dkg.RegisterPolyEvalMsg(PolyEval{
 		Sender:         keypers[0],
 		Eon:            eon,
 		Receivers:      []common.Address{keypers[1]},

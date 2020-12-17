@@ -100,7 +100,7 @@ func MakeEonStartedEvent(eon uint64, batchIndex uint64) abcitypes.Event {
 
 // MakePolyEvalRegisteredEvent creates a new event to be emitted whenever a PolyEval message is
 // registered.
-func MakePolyEvalRegisteredEvent(msg *PolyEvalMsg) abcitypes.Event {
+func MakePolyEvalRegisteredEvent(msg *PolyEval) abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.PolyEval,
 		Attributes: []abcitypes.EventAttribute{

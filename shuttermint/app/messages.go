@@ -21,7 +21,7 @@ func validateAddress(address []byte) (common.Address, error) {
 }
 
 // ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg
-func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEvalMsg, error) {
+func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, error) {
 	if len(msg.Receivers) != len(msg.EncryptedEvals) {
 		return nil, fmt.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
 	}
@@ -42,7 +42,7 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEvalMsg,
 		receivers = append(receivers, address)
 	}
 
-	return &PolyEvalMsg{
+	return &PolyEval{
 		Sender:         sender,
 		Eon:            msg.Eon,
 		Receivers:      receivers,
