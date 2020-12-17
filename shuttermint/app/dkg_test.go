@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var polyEval = []*big.Int{new(big.Int).SetBytes([]byte{})}
+
 func TestRegisterMsgs(t *testing.T) {
 	eon := uint64(10)
 	keypers := []common.Address{}
@@ -209,11 +211,11 @@ func TestRegisterMsgs(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 
 		// fail if wrong eon
-		msg := ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon + 1,
-			Accusers:  []common.Address{keypers[1]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg := Apology{
+			Sender:   keypers[0],
+			Eon:      eon + 1,
+			Accusers: []common.Address{keypers[1]},
+			PolyEval: polyEval,
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -221,11 +223,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
-		msg = ApologyMsg{
-			Sender:    nonKeyper,
-			Eon:       eon,
-			Accusers:  []common.Address{keypers[0]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg = Apology{
+			Sender:   nonKeyper,
+			Eon:      eon,
+			Accusers: []common.Address{keypers[0]},
+			PolyEval: polyEval,
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -233,11 +235,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if accuser is not a keyper
-		msg = ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon,
-			Accusers:  []common.Address{nonKeyper},
-			PolyEvals: [][]byte{[]byte{}},
+		msg = Apology{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{nonKeyper},
+			PolyEval: polyEval,
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -245,11 +247,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
-		msg = ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon,
-			Accusers:  []common.Address{keypers[0]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg = Apology{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[0]},
+			PolyEval: polyEval,
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -257,11 +259,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// adding should work
-		msg = ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon,
-			Accusers:  []common.Address{keypers[1]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg = Apology{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[1]},
+			PolyEval: polyEval,
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.Nil(t, err)
@@ -269,11 +271,11 @@ func TestRegisterMsgs(t *testing.T) {
 		require.True(t, ok)
 
 		// adding twice should fail
-		msg = ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon,
-			Accusers:  []common.Address{keypers[1]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg = Apology{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[1]},
+			PolyEval: polyEval,
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
@@ -318,7 +320,7 @@ func TestClosing(t *testing.T) {
 		}
 		err = dkg.RegisterAccusationMsg(msg3)
 		require.Nil(t, err)
-		msg4 := ApologyMsg{
+		msg4 := Apology{
 			Sender:   keypers[0],
 			Eon:      eon,
 			Accusers: []common.Address{keypers[1]},
@@ -340,7 +342,7 @@ func TestClosing(t *testing.T) {
 		require.NotNil(t, err)
 
 		// Apologies still work
-		msg2 := ApologyMsg{
+		msg2 := Apology{
 			Sender:   keypers[0],
 			Eon:      eon,
 			Accusers: []common.Address{keypers[1]},
@@ -353,11 +355,11 @@ func TestClosing(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 		dkg.CloseApologies()
 
-		msg := ApologyMsg{
-			Sender:    keypers[0],
-			Eon:       eon,
-			Accusers:  []common.Address{keypers[1]},
-			PolyEvals: [][]byte{[]byte{}},
+		msg := Apology{
+			Sender:   keypers[0],
+			Eon:      eon,
+			Accusers: []common.Address{keypers[1]},
+			PolyEval: polyEval,
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)

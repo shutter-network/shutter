@@ -140,14 +140,18 @@ func MakeAccusationRegisteredEvent(msg *Accusation) abcitypes.Event {
 
 // MakeApologyRegisteredEvent creates a new event to be emitted whenever an Apology message
 // is registered.
-func MakeApologyRegisteredEvent(msg *ApologyMsg) abcitypes.Event {
+func MakeApologyRegisteredEvent(msg *Apology) abcitypes.Event {
+	var polyEvalBytes [][]byte
+	for _, e := range msg.PolyEval {
+		polyEvalBytes = append(polyEvalBytes, e.Bytes())
+	}
 	return abcitypes.Event{
 		Type: evtype.Apology,
 		Attributes: []abcitypes.EventAttribute{
 			newAddressPair("Sender", msg.Sender),
 			newUintPair("Eon", msg.Eon),
 			newAddressesPair("Accusers", msg.Accusers),
-			newByteSequencePair("PolyEvals", msg.PolyEvals),
+			newByteSequencePair("PolyEvals", polyEvalBytes),
 		},
 	}
 }

@@ -103,11 +103,12 @@ func TestEvents(t *testing.T) {
 	})
 
 	t.Run("MakeApologyRegisteredEvent", func(t *testing.T) {
-		msg := &ApologyMsg{
-			Sender:    sender,
-			Eon:       eon,
-			Accusers:  []common.Address{anotherAddress},
-			PolyEvals: [][]byte{data},
+		e := new(big.Int).SetBytes(data)
+		msg := &Apology{
+			Sender:   sender,
+			Eon:      eon,
+			Accusers: []common.Address{anotherAddress},
+			PolyEval: []*big.Int{e},
 		}
 		ev := MakeApologyRegisteredEvent(msg)
 		require.Equal(t, evtype.Apology, ev.Type)

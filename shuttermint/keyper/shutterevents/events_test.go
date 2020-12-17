@@ -62,17 +62,15 @@ func TestAccusation(t *testing.T) {
 func TestApology(t *testing.T) {
 	accusers := addresses
 	var polyEval []*big.Int
-	var polyEvalsBytes [][]byte
 	for i := 0; i < len(accusers); i++ {
 		eval := big.NewInt(int64(100 + i))
 		polyEval = append(polyEval, eval)
-		polyEvalsBytes = append(polyEvalsBytes, eval.Bytes())
 	}
-	appEv := app.MakeApologyRegisteredEvent(&app.ApologyMsg{
-		Eon:       eon,
-		Sender:    sender,
-		Accusers:  addresses,
-		PolyEvals: polyEvalsBytes,
+	appEv := app.MakeApologyRegisteredEvent(&app.Apology{
+		Eon:      eon,
+		Sender:   sender,
+		Accusers: addresses,
+		PolyEval: polyEval,
 	})
 	mkeq(t, appEv, shutterevents.Apology{
 		Eon:      eon,

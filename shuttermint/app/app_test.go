@@ -186,7 +186,7 @@ func TestGobDKG(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterApologyMsg(ApologyMsg{
+	err = dkg.RegisterApologyMsg(Apology{
 		Sender:   keypers[0],
 		Eon:      eon,
 		Accusers: []common.Address{keypers[1]},

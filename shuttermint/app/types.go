@@ -144,14 +144,12 @@ type DKGInstance struct {
 	PolyEvalMsgs       map[common.Address]PolyEval
 	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
 	AccusationMsgs     map[common.Address]Accusation
-	ApologyMsgs        map[common.Address]ApologyMsg
+	ApologyMsgs        map[common.Address]Apology
 
 	SubmissionsClosed bool
 	AccusationsClosed bool
 	ApologiesClosed   bool
 }
-
-type PolyEval = shutterevents.PolyEval
 
 // PolyCommitmentMsg represents a broadcasted polynomial commitment message.
 type PolyCommitmentMsg struct {
@@ -163,15 +161,11 @@ type PolyCommitmentMsg struct {
 	Gammas [][]byte
 }
 
-type Accusation = shutterevents.Accusation
-
-// ApologyMsg represents an apology broadcasted in response to a prior accusation.
-type ApologyMsg struct {
-	Eon       uint64
-	Sender    common.Address
-	Accusers  []common.Address
-	PolyEvals [][]byte
-}
+type (
+	PolyEval   = shutterevents.PolyEval
+	Accusation = shutterevents.Accusation
+	Apology    = shutterevents.Apology
+)
 
 // EpochSKShareMsg represents a message containing an epoch secret key.
 type EpochSKShareMsg struct {

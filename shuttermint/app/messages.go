@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -85,13 +86,14 @@ func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusati
 }
 
 // ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg
-func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*ApologyMsg, error) {
+func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error) {
 	if len(msg.Accusers) != len(msg.PolyEvals) {
 		return nil, fmt.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
 	}
 
 	accusers := []common.Address{}
 	accuserMap := make(map[common.Address]bool)
+
 	for _, acc := range msg.Accusers {
 		accuser, err := validateAddress(acc)
 		if err != nil {
@@ -106,11 +108,18 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*ApologyMsg, er
 		accusers = append(accusers, accuser)
 	}
 
-	return &ApologyMsg{
-		Sender:    sender,
-		Eon:       msg.Eon,
-		Accusers:  accusers,
-		PolyEvals: msg.PolyEvals,
+	var polyEval []*big.Int
+	for _, b := range msg.PolyEvals {
+		e := new(big.Int)
+		e.SetBytes(b)
+		polyEval = append(polyEval, e)
+	}
+
+	return &Apology{
+		Sender:   sender,
+		Eon:      msg.Eon,
+		Accusers: accusers,
+		PolyEval: polyEval,
 	}, nil
 }
 
