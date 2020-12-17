@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/kr/pretty"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
@@ -33,18 +33,20 @@ func init() {
 	gammas = *polynomial.Gammas()
 }
 
+// mkeq ensures that calling MakeEvent on the given app event returns the expected IEvent
+func mkeq(t *testing.T, appEv abcitypes.Event, expected IEvent) {
+	ev, err := MakeEvent(appEv)
+	require.Nil(t, err)
+	require.Equal(t, expected, ev)
+}
+
 func TestCheckInEvent(t *testing.T) {
 	sender := common.BigToAddress(big.NewInt(1))
 	privateKeyECDSA, err := ethcrypto.GenerateKey()
+	require.Nil(t, err)
 	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
-	require.Nil(t, err)
 	appEv := app.MakeCheckInEvent(sender, publicKey)
-	evInt, err := MakeEvent(appEv)
-	require.Nil(t, err)
-	ev, ok := evInt.(CheckIn)
-	require.True(t, ok)
-	require.Equal(t, sender, ev.Sender)
-	require.True(t, ev.EncryptionPublicKey.ExportECDSA().Equal(&privateKeyECDSA.PublicKey))
+	mkeq(t, appEv, CheckIn{Sender: sender, EncryptionPublicKey: publicKey})
 }
 
 func TestMakeEventBatchConfig(t *testing.T) {
@@ -54,30 +56,21 @@ func TestMakeEventBatchConfig(t *testing.T) {
 		common.BigToAddress(big.NewInt(3)),
 	}
 	configIndex := uint64(0xffffffffffffffff)
-	appEvent := app.MakeBatchConfigEvent(111, 2, addresses, configIndex)
-	ev, err := MakeEvent(appEvent)
-	require.Nil(t, err)
-	require.Equal(t,
-		BatchConfig{
-			StartBatchIndex: 111,
-			Threshold:       2,
-			Keypers:         addresses,
-			ConfigIndex:     configIndex,
-		},
-		ev)
+	appEv := app.MakeBatchConfigEvent(111, 2, addresses, configIndex)
+	mkeq(t, appEv, BatchConfig{
+		StartBatchIndex: 111,
+		Threshold:       2,
+		Keypers:         addresses,
+		ConfigIndex:     configIndex,
+	})
 }
 
 func TestMakeEonStartedEvent(t *testing.T) {
 	var eon uint64 = 10
 	var batchIndex uint64 = 20
 	appEv := app.MakeEonStartedEvent(eon, batchIndex)
-	ev, err := MakeEvent(appEv)
-	expectedEv := EonStarted{
-		Eon:        eon,
-		BatchIndex: batchIndex,
-	}
-	require.Nil(t, err)
-	require.Equal(t, expectedEv, ev)
+
+	mkeq(t, appEv, EonStarted{Eon: eon, BatchIndex: batchIndex})
 }
 
 func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
@@ -89,16 +82,11 @@ func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
 		Eon:    eon,
 		Gammas: gammasToMsg(gammas),
 	})
-	pretty.Println(appEv)
-	ev, err := MakeEvent(appEv)
-	require.Nil(t, err)
-
-	expectedEv := PolyCommitment{
+	mkeq(t, appEv, PolyCommitment{
 		Eon:    eon,
 		Sender: sender,
 		Gammas: &gammas,
-	}
-	require.Equal(t, expectedEv, ev)
+	})
 }
 
 // gammasToMsg converts the gammas to what the keyper sends to shuttermint
