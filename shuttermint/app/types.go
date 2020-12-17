@@ -36,21 +36,6 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 	return res
 }
 
-// BatchConfig is the configuration we use for a consecutive sequence of batches.
-// This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
-// deployed on the main chain.
-type BatchConfig struct {
-	Keypers         []common.Address
-	StartBatchIndex uint64
-	Threshold       uint64
-
-	ConfigIndex           uint64
-	ConfigContractAddress common.Address
-
-	Started           bool
-	ValidatorsUpdated bool
-}
-
 // Voting is a struct storing votes for arbitrary indices.
 type Voting struct {
 	Votes map[common.Address]int
@@ -152,10 +137,11 @@ type DKGInstance struct {
 }
 
 type (
-	PolyEval       = shutterevents.PolyEval
-	PolyCommitment = shutterevents.PolyCommitment
 	Accusation     = shutterevents.Accusation
 	Apology        = shutterevents.Apology
+	BatchConfig    = shutterevents.BatchConfig
+	PolyCommitment = shutterevents.PolyCommitment
+	PolyEval       = shutterevents.PolyEval
 )
 
 // EpochSKShareMsg represents a message containing an epoch secret key.

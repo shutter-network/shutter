@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -33,7 +34,7 @@ func queryConfig(cl client.Client, path string) (app.BatchConfig, error) {
 		return app.BatchConfig{}, fmt.Errorf("received unexpected message type")
 	}
 
-	bc, err := app.BatchConfigFromMessage(batchConfigMsg)
+	bc, err := shutterevents.BatchConfigFromMessage(batchConfigMsg)
 	if err != nil {
 		return app.BatchConfig{}, err
 	}
@@ -86,7 +87,7 @@ func queryVote(cl client.Client, address common.Address) (app.BatchConfig, bool,
 	if batchConfigMsg == nil {
 		return app.BatchConfig{}, false, fmt.Errorf("received unexpected message type")
 	}
-	batchConfig, err := app.BatchConfigFromMessage(batchConfigMsg)
+	batchConfig, err := shutterevents.BatchConfigFromMessage(batchConfigMsg)
 	if err != nil {
 		return app.BatchConfig{}, false, err
 	}

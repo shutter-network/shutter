@@ -14,7 +14,6 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 var errEonNotFound = errors.New("eon not found")
@@ -159,8 +158,7 @@ func (shutter *Shutter) IsCheckedIn(addr common.Address) bool {
 // IsKeyper checks if the given address is a keyper in any of the given configs
 func (shutter *Shutter) IsKeyper(addr common.Address) bool {
 	for _, cfg := range shutter.BatchConfigs {
-		_, err := medley.FindAddressIndex(cfg.Keypers, addr)
-		if err == nil {
+		if cfg.IsKeyper(addr) {
 			return true
 		}
 	}
