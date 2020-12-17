@@ -5,7 +5,9 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 
+	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -52,11 +54,20 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, er
 }
 
 // ParsePolyCommitmentMsg converts a shmsg.PolyCommitmentMsg to an app.PolyCommitmentMsg
-func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*PolyCommitmentMsg, error) {
-	return &PolyCommitmentMsg{
+func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*PolyCommitment, error) {
+	gammas := crypto.Gammas{}
+	for _, g := range msg.Gammas {
+		g2 := new(bn256.G2)
+		_, err := g2.Unmarshal(g)
+		if err != nil {
+			return nil, err
+		}
+		gammas = append(gammas, g2)
+	}
+	return &PolyCommitment{
 		Sender: sender,
 		Eon:    msg.Eon,
-		Gammas: msg.Gammas,
+		Gammas: &gammas,
 	}, nil
 }
 

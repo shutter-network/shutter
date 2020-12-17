@@ -69,10 +69,9 @@ func TestEvents(t *testing.T) {
 	})
 
 	t.Run("MakePolyCommitmentRegisteredEvent", func(t *testing.T) {
-		msg := &PolyCommitmentMsg{
+		msg := &PolyCommitment{
 			Sender: sender,
 			Eon:    eon,
-			Gammas: [][]byte{{0xa0, 0xa1, 0xa2}, {0xa3, 0xa4, 0xa5}},
 		}
 		ev := MakePolyCommitmentRegisteredEvent(msg)
 		require.Equal(t, evtype.PolyCommitment, ev.Type)
@@ -82,7 +81,6 @@ func TestEvents(t *testing.T) {
 		require.Equal(t, []byte("Eon"), ev.Attributes[1].Key)
 		require.Equal(t, []byte("5"), ev.Attributes[1].Value)
 		require.Equal(t, []byte("Gammas"), ev.Attributes[2].Key)
-		require.Equal(t, []byte("a0a1a2,a3a4a5"), ev.Attributes[2].Value)
 	})
 
 	t.Run("MakeAccusationRegisteredEvent", func(t *testing.T) {

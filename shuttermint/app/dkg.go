@@ -9,7 +9,7 @@ import (
 // NewDKGInstance creates a new DKGInstance.
 func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
 	polyEvalMsgs := make(map[common.Address]PolyEval)
-	polyCommitmentMsgs := make(map[common.Address]PolyCommitmentMsg)
+	polyCommitmentMsgs := make(map[common.Address]PolyCommitment)
 	accusationMsgs := make(map[common.Address]Accusation)
 	apologyMsgs := make(map[common.Address]Apology)
 
@@ -53,7 +53,7 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEval) error {
 }
 
 // RegisterPolyCommitmentMsg adds a polynomial commitment message to the instance.
-func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
+func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitment) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}

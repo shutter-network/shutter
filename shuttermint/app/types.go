@@ -142,7 +142,7 @@ type DKGInstance struct {
 	Eon    uint64
 
 	PolyEvalMsgs       map[common.Address]PolyEval
-	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
+	PolyCommitmentMsgs map[common.Address]PolyCommitment
 	AccusationMsgs     map[common.Address]Accusation
 	ApologyMsgs        map[common.Address]Apology
 
@@ -151,20 +151,11 @@ type DKGInstance struct {
 	ApologiesClosed   bool
 }
 
-// PolyCommitmentMsg represents a broadcasted polynomial commitment message.
-type PolyCommitmentMsg struct {
-	Sender common.Address
-	Eon    uint64
-	// Gammas holds the marshaled crypto.Gammas. Currently we do not unmarshal this value,
-	// which means when we sent this out via events, those events may also contain illegal
-	// data.
-	Gammas [][]byte
-}
-
 type (
-	PolyEval   = shutterevents.PolyEval
-	Accusation = shutterevents.Accusation
-	Apology    = shutterevents.Apology
+	PolyEval       = shutterevents.PolyEval
+	PolyCommitment = shutterevents.PolyCommitment
+	Accusation     = shutterevents.Accusation
+	Apology        = shutterevents.Apology
 )
 
 // EpochSKShareMsg represents a message containing an epoch secret key.

@@ -21,6 +21,7 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app/evtype"
+	shcrypto "github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
 // MakeCheckInEvent creates a shutter.check-in event, to be raised whenever a new keyper sends
@@ -114,7 +115,7 @@ func MakePolyEvalRegisteredEvent(msg *PolyEval) abcitypes.Event {
 
 // MakePolyCommitmentRegisteredEvent creates a new event to be emitted whenever a PolyCommitment
 // message is registered.
-func MakePolyCommitmentRegisteredEvent(msg *PolyCommitmentMsg) abcitypes.Event {
+func MakePolyCommitmentRegisteredEvent(msg *PolyCommitment) abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.PolyCommitment,
 		Attributes: []abcitypes.EventAttribute{
@@ -192,10 +193,12 @@ func newUintPair(key string, value uint64) abcitypes.EventAttribute {
 	return p
 }
 
-func newGammas(key string, gammas [][]byte) abcitypes.EventAttribute {
+func newGammas(key string, gammas *shcrypto.Gammas) abcitypes.EventAttribute {
 	var encoded []string
-	for _, i := range gammas {
-		encoded = append(encoded, hex.EncodeToString(i))
+	if gammas != nil {
+		for _, g := range *gammas {
+			encoded = append(encoded, hex.EncodeToString(g.Marshal()))
+		}
 	}
 	return abcitypes.EventAttribute{
 		Key:   []byte(key),

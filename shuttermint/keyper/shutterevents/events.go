@@ -65,7 +65,7 @@ type EonStarted struct {
 	BatchIndex uint64
 }
 
-// PolyCommitment
+// PolyCommitment represents a broadcasted polynomial commitment message.
 type PolyCommitment struct {
 	Eon    uint64
 	Sender common.Address

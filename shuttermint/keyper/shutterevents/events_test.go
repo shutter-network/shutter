@@ -107,10 +107,10 @@ func TestMakeEonStartedEvent(t *testing.T) {
 }
 
 func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
-	appEv := app.MakePolyCommitmentRegisteredEvent(&app.PolyCommitmentMsg{
+	appEv := app.MakePolyCommitmentRegisteredEvent(&app.PolyCommitment{
 		Sender: sender,
 		Eon:    eon,
-		Gammas: gammasToMsg(gammas),
+		Gammas: &gammas,
 	})
 	mkeq(t, appEv, shutterevents.PolyCommitment{
 		Eon:    eon,
@@ -119,15 +119,15 @@ func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
 	})
 }
 
-// gammasToMsg converts the gammas to what the keyper sends to shuttermint
-func gammasToMsg(gammas crypto.Gammas) [][]byte {
-	// original implementation in NewPolyCommitmentMsg
-	gammaBytes := [][]byte{}
-	for _, gamma := range gammas {
-		gammaBytes = append(gammaBytes, gamma.Marshal())
-	}
-	return gammaBytes
-}
+// // gammasToMsg converts the gammas to what the keyper sends to shuttermint
+// func gammasToMsg(gammas crypto.Gammas) [][]byte {
+//	// original implementation in NewPolyCommitmentMsg
+//	gammaBytes := [][]byte{}
+//	for _, gamma := range gammas {
+//		gammaBytes = append(gammaBytes, gamma.Marshal())
+//	}
+//	return gammaBytes
+// }
 
 // // gammasToEvent converts the gammas to what we get in a shuttermint event
 // func gammasToEvent(gammas crypto.Gammas) []byte {

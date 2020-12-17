@@ -193,7 +193,7 @@ func TestGobDKG(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterPolyCommitmentMsg(PolyCommitmentMsg{
+	err = dkg.RegisterPolyCommitmentMsg(PolyCommitment{
 		Sender: keypers[0],
 		Eon:    eon,
 	})

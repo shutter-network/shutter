@@ -100,7 +100,7 @@ func TestRegisterMsgs(t *testing.T) {
 		dkg := NewDKGInstance(config, eon)
 
 		// fail if wrong eon
-		msg := PolyCommitmentMsg{
+		msg := PolyCommitment{
 			Sender: keypers[0],
 			Eon:    eon + 1,
 		}
@@ -110,7 +110,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
-		msg = PolyCommitmentMsg{
+		msg = PolyCommitment{
 			Sender: nonKeyper,
 			Eon:    eon,
 		}
@@ -120,7 +120,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.False(t, ok)
 
 		// adding should work
-		msg = PolyCommitmentMsg{
+		msg = PolyCommitment{
 			Sender: keypers[0],
 			Eon:    eon,
 		}
@@ -131,7 +131,7 @@ func TestRegisterMsgs(t *testing.T) {
 		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
-		msg = PolyCommitmentMsg{
+		msg = PolyCommitment{
 			Sender: keypers[0],
 			Eon:    eon,
 		}
@@ -305,7 +305,7 @@ func TestClosing(t *testing.T) {
 		err := dkg.RegisterPolyEvalMsg(msg1)
 		require.NotNil(t, err)
 
-		msg2 := PolyCommitmentMsg{
+		msg2 := PolyCommitment{
 			Sender: keypers[0],
 			Eon:    eon,
 		}
