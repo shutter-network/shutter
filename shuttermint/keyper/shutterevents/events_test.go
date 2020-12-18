@@ -47,16 +47,12 @@ func mkeq(t *testing.T, appEv abcitypes.Event, expected shutterevents.IEvent) {
 }
 
 func TestAccusation(t *testing.T) {
-	appEv := app.MakeAccusationRegisteredEvent(&app.Accusation{
+	ev := shutterevents.Accusation{
 		Eon:     eon,
 		Sender:  sender,
 		Accused: addresses,
-	})
-	mkeq(t, appEv, shutterevents.Accusation{
-		Eon:     eon,
-		Sender:  sender,
-		Accused: addresses,
-	})
+	}
+	roundtrip(t, ev)
 }
 
 func TestApology(t *testing.T) {

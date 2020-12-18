@@ -595,7 +595,7 @@ func (app *ShutterApp) handleAccusationMsg(msg *shmsg.Accusation, sender common.
 		return makeErrorResponse(msg)
 	}
 
-	event := MakeAccusationRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},

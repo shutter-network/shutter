@@ -74,19 +74,6 @@ func MakePolyCommitmentRegisteredEvent(msg *PolyCommitment) abcitypes.Event {
 	}
 }
 
-// MakeAccusationRegisteredEvent creates a new event to be emitted whenever an Accusation message
-// is registered.
-func MakeAccusationRegisteredEvent(msg *Accusation) abcitypes.Event {
-	return abcitypes.Event{
-		Type: evtype.Accusation,
-		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newAddressesPair("Accused", msg.Accused),
-		},
-	}
-}
-
 //
 // Encoding/decoding helpers
 //
