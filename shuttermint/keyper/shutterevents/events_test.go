@@ -122,6 +122,15 @@ func TestPolyEval(t *testing.T) {
 	roundtrip(t, ev)
 }
 
+func TestDecryptionSignature(t *testing.T) {
+	ev := shutterevents.DecryptionSignature{
+		BatchIndex: uint64(64738),
+		Sender:     sender,
+		Signature:  []byte("fooobar"),
+	}
+	roundtrip(t, ev)
+}
+
 // // gammasToMsg converts the gammas to what the keyper sends to shuttermint
 // func gammasToMsg(gammas crypto.Gammas) [][]byte {
 //	// original implementation in NewPolyCommitmentMsg

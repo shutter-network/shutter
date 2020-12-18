@@ -5,13 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -91,19 +88,6 @@ func TestAddConfig(t *testing.T) {
 		Keypers:         addr,
 	})
 	require.Nil(t, err)
-}
-
-func TestEncodePubkeyForEvent(t *testing.T) {
-	key, err := crypto.GenerateKey()
-	require.Nil(t, err, "Could not generate key")
-	encoded := encodePubkeyForEvent(&key.PublicKey)
-	t.Logf("Encoded: %s", encoded)
-	require.True(t, utf8.ValidString(encoded))
-
-	decoded, err := shutterevents.DecodePubkey(encoded)
-	require.Nil(t, err, "could not decode pubkey")
-	t.Logf("Decoded: %+v", decoded)
-	require.Equal(t, key.PublicKey, *decoded)
 }
 
 func TestAddDecryptionSignature(t *testing.T) {
