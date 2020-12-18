@@ -77,16 +77,24 @@ def install_prettier(session: Session) -> None:
             )
 
 
+def fix_requirements(session: Session) -> None:
+    """remove extra requirements, because otherwise pip can't use this file as a constraints file
+    anymore"""
+    session.run("sed", "-i", r"s/\[.*\]//", "requirements.txt", external=True)
+
+
 @nox.session
 def update_requirements(session: Session) -> None:
     session.install("pip-tools")
     session.run("pip-compile", "requirements.in")
+    fix_requirements(session)
 
 
 @nox.session
 def upgrade_requirements(session: Session) -> None:
     session.install("pip-tools")
     session.run("pip-compile", "-U", "requirements.in")
+    fix_requirements(session)
 
 
 @nox.session
