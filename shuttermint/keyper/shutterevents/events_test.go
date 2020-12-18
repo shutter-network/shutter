@@ -109,10 +109,8 @@ func TestCheckInEvent(t *testing.T) {
 }
 
 func TestMakeEonStartedEvent(t *testing.T) {
-	var batchIndex uint64 = 20
-	appEv := app.MakeEonStartedEvent(eon, batchIndex)
-
-	mkeq(t, appEv, shutterevents.EonStarted{Eon: eon, BatchIndex: batchIndex})
+	ev := shutterevents.EonStarted{Eon: eon, BatchIndex: 9999}
+	roundtrip(t, ev)
 }
 
 func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {

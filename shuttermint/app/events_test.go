@@ -17,16 +17,6 @@ func TestEvents(t *testing.T) {
 	anotherAddress := common.BigToAddress(new(big.Int).SetUint64(456))
 	data := []byte("some data")
 
-	t.Run("MakeEonStartedEvent", func(t *testing.T) {
-		ev := MakeEonStartedEvent(uint64(10), uint64(20))
-		require.Equal(t, evtype.EonStarted, ev.Type)
-		require.Equal(t, 2, len(ev.Attributes))
-		require.Equal(t, []byte("Eon"), ev.Attributes[0].Key)
-		require.Equal(t, []byte("10"), ev.Attributes[0].Value)
-		require.Equal(t, []byte("BatchIndex"), ev.Attributes[1].Key)
-		require.Equal(t, []byte("20"), ev.Attributes[1].Value)
-	})
-
 	t.Run("MakePolyEvalRegisteredEvent", func(t *testing.T) {
 		msg := &PolyEval{
 			Sender:         sender,

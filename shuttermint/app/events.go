@@ -74,18 +74,6 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	}
 }
 
-// MakeEonStartEvent creates a new event to be emitted whenever a new eon is started. The batch
-// index identifies the first batch that belongs to that eon.
-func MakeEonStartedEvent(eon uint64, batchIndex uint64) abcitypes.Event {
-	return abcitypes.Event{
-		Type: evtype.EonStarted,
-		Attributes: []abcitypes.EventAttribute{
-			newUintPair("Eon", eon),
-			newUintPair("BatchIndex", batchIndex),
-		},
-	}
-}
-
 // MakePolyEvalRegisteredEvent creates a new event to be emitted whenever a PolyEval message is
 // registered.
 func MakePolyEvalRegisteredEvent(msg *PolyEval) abcitypes.Event {
