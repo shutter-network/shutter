@@ -9,7 +9,6 @@ package app
 import (
 	"crypto/ecdsa"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/app/evtype"
-	shcrypto "github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
 // MakeDecryptionSignatureEvent creates a 'shutter.decryption-signature' event.
@@ -61,19 +59,6 @@ func MakePolyEvalRegisteredEvent(msg *PolyEval) abcitypes.Event {
 	}
 }
 
-// MakePolyCommitmentRegisteredEvent creates a new event to be emitted whenever a PolyCommitment
-// message is registered.
-func MakePolyCommitmentRegisteredEvent(msg *PolyCommitment) abcitypes.Event {
-	return abcitypes.Event{
-		Type: evtype.PolyCommitment,
-		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newGammas("Gammas", msg.Gammas),
-		},
-	}
-}
-
 //
 // Encoding/decoding helpers
 //
@@ -108,19 +93,6 @@ func newUintPair(key string, value uint64) abcitypes.EventAttribute {
 	p := newStringPair(key, strconv.FormatUint(value, 10))
 	p.Index = true
 	return p
-}
-
-func newGammas(key string, gammas *shcrypto.Gammas) abcitypes.EventAttribute {
-	var encoded []string
-	if gammas != nil {
-		for _, g := range *gammas {
-			encoded = append(encoded, hex.EncodeToString(g.Marshal()))
-		}
-	}
-	return abcitypes.EventAttribute{
-		Key:   []byte(key),
-		Value: []byte(strings.Join(encoded, ",")),
-	}
 }
 
 // encodePubkeyForEvent encodes the PublicKey as a string suitable for putting it into a tendermint

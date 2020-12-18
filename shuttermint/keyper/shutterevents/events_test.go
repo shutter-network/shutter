@@ -10,9 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
-	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
 	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
@@ -37,13 +35,6 @@ func init() {
 	}
 
 	gammas = *polynomial.Gammas()
-}
-
-// mkeq ensures that calling MakeEvent on the given app event returns the expected IEvent
-func mkeq(t *testing.T, appEv abcitypes.Event, expected shutterevents.IEvent) {
-	ev, err := shutterevents.MakeEvent(appEv)
-	require.Nil(t, err)
-	require.Equal(t, expected, ev)
 }
 
 func TestAccusation(t *testing.T) {
@@ -104,16 +95,12 @@ func TestMakeEonStartedEvent(t *testing.T) {
 }
 
 func TestMakePolyCommitmentRegisteredEvent(t *testing.T) {
-	appEv := app.MakePolyCommitmentRegisteredEvent(&app.PolyCommitment{
-		Sender: sender,
-		Eon:    eon,
-		Gammas: &gammas,
-	})
-	mkeq(t, appEv, shutterevents.PolyCommitment{
+	ev := shutterevents.PolyCommitment{
 		Eon:    eon,
 		Sender: sender,
 		Gammas: &gammas,
-	})
+	}
+	roundtrip(t, ev)
 }
 
 // // gammasToMsg converts the gammas to what the keyper sends to shuttermint

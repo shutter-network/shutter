@@ -566,7 +566,7 @@ func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender
 		return makeErrorResponse(msg)
 	}
 
-	event := MakePolyCommitmentRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
