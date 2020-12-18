@@ -91,12 +91,21 @@ func TestMakeEventBatchConfig(t *testing.T) {
 	})
 }
 
+// roundtrip checks that the given IEvent rount-trips, i.e. it can be serialized as an ABCI Event
+// and deserialized back again to an equal value.
+func roundtrip(t *testing.T, ev shutterevents.IEvent) {
+	ev2, err := shutterevents.MakeEvent(ev.MakeABCIEvent())
+	require.Nil(t, err)
+	require.Equal(t, ev, ev2)
+}
+
 func TestCheckInEvent(t *testing.T) {
 	privateKeyECDSA, err := ethcrypto.GenerateKey()
 	require.Nil(t, err)
 	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
-	appEv := app.MakeCheckInEvent(sender, publicKey)
-	mkeq(t, appEv, shutterevents.CheckIn{Sender: sender, EncryptionPublicKey: publicKey})
+
+	ev := shutterevents.CheckIn{Sender: sender, EncryptionPublicKey: publicKey}
+	roundtrip(t, ev)
 }
 
 func TestMakeEonStartedEvent(t *testing.T) {
