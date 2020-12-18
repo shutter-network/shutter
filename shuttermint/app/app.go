@@ -624,7 +624,7 @@ func (app *ShutterApp) handleApologyMsg(msg *shmsg.Apology, sender common.Addres
 		return makeErrorResponse(msg)
 	}
 
-	event := MakeApologyRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},

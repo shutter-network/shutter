@@ -68,25 +68,4 @@ func TestEvents(t *testing.T) {
 		require.Equal(t, []byte("Accused"), ev.Attributes[2].Key)
 		require.Equal(t, []byte(anotherAddress.Hex()), ev.Attributes[2].Value)
 	})
-
-	t.Run("MakeApologyRegisteredEvent", func(t *testing.T) {
-		e := new(big.Int).SetBytes(data)
-		msg := &Apology{
-			Sender:   sender,
-			Eon:      eon,
-			Accusers: []common.Address{anotherAddress},
-			PolyEval: []*big.Int{e},
-		}
-		ev := MakeApologyRegisteredEvent(msg)
-		require.Equal(t, evtype.Apology, ev.Type)
-		require.Equal(t, 4, len(ev.Attributes))
-		require.Equal(t, []byte("Sender"), ev.Attributes[0].Key)
-		require.Equal(t, []byte(sender.Hex()), ev.Attributes[0].Value)
-		require.Equal(t, []byte("Eon"), ev.Attributes[1].Key)
-		require.Equal(t, []byte("5"), ev.Attributes[1].Value)
-		require.Equal(t, []byte("Accusers"), ev.Attributes[2].Key)
-		require.Equal(t, []byte(anotherAddress.Hex()), ev.Attributes[2].Value)
-		require.Equal(t, []byte("PolyEvals"), ev.Attributes[3].Key)
-		require.Equal(t, []byte(hexutil.Encode(data)), ev.Attributes[3].Value)
-	})
 }
