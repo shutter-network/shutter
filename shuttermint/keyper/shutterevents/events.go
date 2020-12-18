@@ -373,8 +373,8 @@ func makePolyCommitment(ev abcitypes.Event) (PolyCommitment, error) {
 
 // PolyEval represents an encrypted polynomial evaluation message from one keyper to another.
 type PolyEval struct {
-	Eon            uint64
 	Sender         common.Address
+	Eon            uint64
 	Receivers      []common.Address
 	EncryptedEvals [][]byte
 }
@@ -392,24 +392,38 @@ func (msg PolyEval) MakeABCIEvent() abcitypes.Event {
 }
 
 func makePolyEval(ev abcitypes.Event) (PolyEval, error) {
-	res := PolyEval{}
 	if ev.Type != evtype.PolyEval {
-		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
+		return PolyEval{}, fmt.Errorf("expected event type %q, got %q", evtype.PolyEval, ev.Type)
 	}
-
+	if len(ev.Attributes) != 4 {
+		return PolyEval{}, fmt.Errorf("malformed PolyEval event: wrong number of attributes")
+	}
 	sender, err := getAddressAttribute(ev, 0, "Sender")
 	if err != nil {
-		return res, err
+		return PolyEval{}, err
 	}
-	res.Sender = sender
 
 	eon, err := getUint64Attribute(ev, 1, "Eon")
 	if err != nil {
-		return res, err
+		return PolyEval{}, err
 	}
-	res.Eon = eon
 
-	return res, nil
+	receivers, err := decodeAddresses(string(ev.Attributes[2].GetValue()))
+	if err != nil {
+		return PolyEval{}, err
+	}
+
+	encryptedEvals, err := decodeByteSequenceFromEvent(string(ev.Attributes[3].GetValue()))
+	if err != nil {
+		return PolyEval{}, err
+	}
+
+	return PolyEval{
+		Eon:            eon,
+		Sender:         sender,
+		Receivers:      receivers,
+		EncryptedEvals: encryptedEvals,
+	}, nil
 }
 
 // IEvent is an interface for the event types declared above

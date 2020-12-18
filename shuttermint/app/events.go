@@ -45,20 +45,6 @@ func MakeDecryptionSignatureEvent(batchIndex uint64, sender common.Address, sign
 	}
 }
 
-// MakePolyEvalRegisteredEvent creates a new event to be emitted whenever a PolyEval message is
-// registered.
-func MakePolyEvalRegisteredEvent(msg *PolyEval) abcitypes.Event {
-	return abcitypes.Event{
-		Type: evtype.PolyEval,
-		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newAddressesPair("Receivers", msg.Receivers),
-			newByteSequencePair("EncryptedEvals", msg.EncryptedEvals),
-		},
-	}
-}
-
 //
 // Encoding/decoding helpers
 //

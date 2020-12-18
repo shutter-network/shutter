@@ -537,7 +537,7 @@ func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEval, sender common.Addr
 		return makeErrorResponse(msg)
 	}
 
-	event := MakePolyEvalRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
