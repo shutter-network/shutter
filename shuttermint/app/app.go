@@ -359,7 +359,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 		}
 
-		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers, bc.ConfigIndex))
+		events = append(events, bc.MakeABCIEvent())
 		if app.ShouldStartDKG(bc) {
 			dkg := app.StartDKG(bc)
 			batchIndex := app.LastConfig().StartBatchIndex

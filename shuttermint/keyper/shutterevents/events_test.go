@@ -81,14 +81,13 @@ func TestApology(t *testing.T) {
 }
 
 func TestMakeEventBatchConfig(t *testing.T) {
-	configIndex := uint64(0xffffffffffffffff)
-	appEv := app.MakeBatchConfigEvent(111, 2, addresses, configIndex)
-	mkeq(t, appEv, shutterevents.BatchConfig{
+	ev := shutterevents.BatchConfig{
 		StartBatchIndex: 111,
 		Threshold:       2,
 		Keypers:         addresses,
-		ConfigIndex:     configIndex,
-	})
+		ConfigIndex:     uint64(0xffffffffffffffff),
+	}
+	roundtrip(t, ev)
 }
 
 // roundtrip checks that the given IEvent rount-trips, i.e. it can be serialized as an ABCI Event
