@@ -29,12 +29,101 @@ type Accusation struct {
 	Accused []common.Address
 }
 
+func (acc Accusation) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.Accusation,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", acc.Sender),
+			newUintPair("Eon", acc.Eon),
+			newAddressesPair("Accused", acc.Accused),
+		},
+	}
+}
+
+func makeAccusation(ev abcitypes.Event) (Accusation, error) {
+	if ev.Type != evtype.Accusation {
+		return Accusation{}, fmt.Errorf("expected event type %s, got %s", evtype.Accusation, ev.Type)
+	}
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return Accusation{}, err
+	}
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return Accusation{}, err
+	}
+
+	accused, err := decodeAddresses(string(ev.Attributes[2].GetValue()))
+	if err != nil {
+		return Accusation{}, err
+	}
+
+	return Accusation{
+		Sender:  sender,
+		Eon:     eon,
+		Accused: accused,
+	}, nil
+}
+
 // Apology represents an apology broadcasted in response to a prior accusation.
 type Apology struct {
 	Eon      uint64
 	Sender   common.Address
 	Accusers []common.Address
 	PolyEval []*big.Int
+}
+
+func (msg Apology) MakeABCIEvent() abcitypes.Event {
+	var polyEvalBytes [][]byte
+	for _, e := range msg.PolyEval {
+		polyEvalBytes = append(polyEvalBytes, e.Bytes())
+	}
+	return abcitypes.Event{
+		Type: evtype.Apology,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newAddressesPair("Accusers", msg.Accusers),
+			newByteSequencePair("PolyEvals", polyEvalBytes),
+		},
+	}
+}
+
+func makeApology(ev abcitypes.Event) (Apology, error) {
+	if ev.Type != evtype.Apology {
+		return Apology{}, fmt.Errorf("expected event type %s, got %s", evtype.Apology, ev.Type)
+	}
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return Apology{}, err
+	}
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return Apology{}, err
+	}
+
+	accusers, err := decodeAddresses(string(ev.Attributes[2].GetValue()))
+	if err != nil {
+		return Apology{}, err
+	}
+	var polyEval []*big.Int // XXX
+	polyEvalBytes, err := decodeByteSequenceFromEvent(string(ev.Attributes[3].GetValue()))
+	if err != nil {
+		return Apology{}, err
+	}
+	for _, b := range polyEvalBytes {
+		e := new(big.Int)
+		e.SetBytes(b)
+		polyEval = append(polyEval, e)
+	}
+	return Apology{
+		Sender:   sender,
+		Eon:      eon,
+		Accusers: accusers,
+		PolyEval: polyEval,
+	}, nil
 }
 
 //
@@ -53,10 +142,105 @@ type BatchConfig struct {
 	ValidatorsUpdated     bool
 }
 
+func (msg BatchConfig) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.BatchConfig,
+		Attributes: []abcitypes.EventAttribute{
+			{
+				Key:   []byte("StartBatchIndex"),
+				Value: []byte(fmt.Sprintf("%d", msg.StartBatchIndex)),
+				Index: true,
+			},
+			{
+				Key:   []byte("Threshold"),
+				Value: []byte(fmt.Sprintf("%d", msg.Threshold)),
+			},
+			{
+				Key:   []byte("Keypers"),
+				Value: []byte(encodeAddressesForEvent(msg.Keypers)),
+			},
+			{
+				Key:   []byte("ConfigIndex"),
+				Value: []byte(fmt.Sprintf("%d", msg.ConfigIndex)),
+			},
+		},
+	}
+}
+
+// makeBatchConfig creates a BatchConfigEvent from the given tendermint event of type
+// "shutter.batch-config"
+func makeBatchConfig(ev abcitypes.Event) (BatchConfig, error) {
+	if len(ev.Attributes) < 4 {
+		return BatchConfig{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
+	}
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("StartBatchIndex")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("Threshold")) ||
+		!bytes.Equal(ev.Attributes[2].Key, []byte("Keypers")) ||
+		!bytes.Equal(ev.Attributes[3].Key, []byte("ConfigIndex")) {
+		return BatchConfig{}, fmt.Errorf("bad event attributes: %+v", ev)
+	}
+
+	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	threshold, err := strconv.Atoi(string(ev.Attributes[1].Value))
+	if err != nil {
+		return BatchConfig{}, err
+	}
+	keypers, err := decodeAddresses(string(ev.Attributes[2].Value))
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	configIndex, err := strconv.ParseUint(string(ev.Attributes[3].Value), 10, 64)
+	if err != nil {
+		return BatchConfig{}, err
+	}
+	return BatchConfig{
+		StartBatchIndex: uint64(b),
+		Threshold:       uint64(threshold),
+		Keypers:         keypers,
+		ConfigIndex:     configIndex,
+	}, nil
+}
+
 // CheckIn is emitted by shuttermint when a keyper sends their check in message.
 type CheckIn struct {
 	Sender              common.Address
 	EncryptionPublicKey *ecies.PublicKey
+}
+
+func (msg CheckIn) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.CheckIn,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", msg.Sender),
+			newStringPair("EncryptionPublicKey", encodePubkeyForEvent(msg.EncryptionPublicKey.ExportECDSA())),
+		},
+	}
+}
+
+// makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
+func makeCheckIn(ev abcitypes.Event) (CheckIn, error) {
+	if ev.Type != evtype.CheckIn {
+		return CheckIn{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return CheckIn{}, err
+	}
+	publicKey, err := getECIESPublicKeyAttribute(ev, 1, "EncryptionPublicKey")
+	if err != nil {
+		return CheckIn{}, err
+	}
+
+	return CheckIn{
+		Sender:              sender,
+		EncryptionPublicKey: publicKey,
+	}, nil
 }
 
 // DecryptionSignature is generated by shuttermint when a keyper sends a decryption
@@ -67,10 +251,78 @@ type DecryptionSignature struct {
 	Signature  []byte
 }
 
+func (msg DecryptionSignature) MakeABCIEvent() abcitypes.Event {
+	encodedSignature := base64.RawURLEncoding.EncodeToString(msg.Signature)
+	return abcitypes.Event{
+		Type: evtype.DecryptionSignature,
+		Attributes: []abcitypes.EventAttribute{
+			{
+				Key:   []byte("BatchIndex"),
+				Value: []byte(fmt.Sprintf("%d", msg.BatchIndex)),
+				Index: true,
+			},
+			{
+				Key:   []byte("Sender"),
+				Value: []byte(msg.Sender.Hex()),
+				Index: true,
+			},
+			{
+				Key:   []byte("Signature"),
+				Value: []byte(encodedSignature),
+			},
+		},
+	}
+}
+
+// makeDecryptionSignature creates a DecryptionSignatureEvent from the given tendermint event
+// of type "shutter.decryption-signature".
+func makeDecryptionSignature(ev abcitypes.Event) (DecryptionSignature, error) {
+	if len(ev.Attributes) < 3 {
+		return DecryptionSignature{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
+	}
+	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) ||
+		!bytes.Equal(ev.Attributes[1].Key, []byte("Sender")) ||
+		!bytes.Equal(ev.Attributes[2].Key, []byte("Signature")) {
+		return DecryptionSignature{}, fmt.Errorf("bad event attributes: %+v", ev)
+	}
+
+	batchIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
+	if err != nil {
+		return DecryptionSignature{}, err
+	}
+
+	encodedSender := string(ev.Attributes[1].Value)
+	sender := common.HexToAddress(encodedSender)
+	if sender.Hex() != encodedSender {
+		return DecryptionSignature{}, fmt.Errorf("invalid sender address %s", encodedSender)
+	}
+
+	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
+	if err != nil {
+		return DecryptionSignature{}, err
+	}
+
+	return DecryptionSignature{
+		BatchIndex: uint64(batchIndex),
+		Sender:     sender,
+		Signature:  signature,
+	}, nil
+}
+
 // EonStarted is generated by shuttermint when a new eon is started.
 type EonStarted struct {
 	Eon        uint64
 	BatchIndex uint64
+}
+
+func (msg EonStarted) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.EonStarted,
+		Attributes: []abcitypes.EventAttribute{
+			newUintPair("Eon", msg.Eon),
+			newUintPair("BatchIndex", msg.BatchIndex),
+		},
+	}
 }
 
 // PolyCommitment represents a broadcasted polynomial commitment message.
@@ -78,6 +330,44 @@ type PolyCommitment struct {
 	Eon    uint64
 	Sender common.Address
 	Gammas *crypto.Gammas
+}
+
+func (msg PolyCommitment) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.PolyCommitment,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newGammas("Gammas", msg.Gammas),
+		},
+	}
+}
+
+func makePolyCommitment(ev abcitypes.Event) (PolyCommitment, error) {
+	res := PolyCommitment{}
+	if ev.Type != evtype.PolyCommitment {
+		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return res, err
+	}
+	res.Sender = sender
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return res, err
+	}
+	res.Eon = eon
+
+	gammas, err := getGammasAttribute(ev, 2, "Gammas")
+	if err != nil {
+		return res, err
+	}
+	res.Gammas = &gammas
+
+	return res, nil
 }
 
 // PolyEval represents an encrypted polynomial evaluation message from one keyper to another.
@@ -88,19 +378,43 @@ type PolyEval struct {
 	EncryptedEvals [][]byte
 }
 
-// IEvent is an interface for the event types declared above
-type IEvent interface {
-	IEvent()
+func (msg PolyEval) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.PolyEval,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newAddressesPair("Receivers", msg.Receivers),
+			newByteSequencePair("EncryptedEvals", msg.EncryptedEvals),
+		},
+	}
 }
 
-func (Accusation) IEvent()          {}
-func (Apology) IEvent()             {}
-func (BatchConfig) IEvent()         {}
-func (CheckIn) IEvent()             {}
-func (DecryptionSignature) IEvent() {}
-func (EonStarted) IEvent()          {}
-func (PolyCommitment) IEvent()      {}
-func (PolyEval) IEvent()            {}
+func makePolyEval(ev abcitypes.Event) (PolyEval, error) {
+	res := PolyEval{}
+	if ev.Type != evtype.PolyEval {
+		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
+	}
+
+	sender, err := getAddressAttribute(ev, 0, "Sender")
+	if err != nil {
+		return res, err
+	}
+	res.Sender = sender
+
+	eon, err := getUint64Attribute(ev, 1, "Eon")
+	if err != nil {
+		return res, err
+	}
+	res.Eon = eon
+
+	return res, nil
+}
+
+// IEvent is an interface for the event types declared above
+type IEvent interface {
+	MakeABCIEvent() abcitypes.Event
+}
 
 func getBytesAttribute(ev abcitypes.Event, index int, key string) ([]byte, error) {
 	if len(ev.Attributes) <= index {
@@ -232,101 +546,6 @@ func getECIESPublicKeyAttribute(ev abcitypes.Event, index int, key string) (*eci
 	return ecies.ImportECDSAPublic(publicKeyECDSA), nil
 }
 
-// makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
-func makeCheckIn(ev abcitypes.Event) (CheckIn, error) {
-	if ev.Type != evtype.CheckIn {
-		return CheckIn{}, fmt.Errorf("expected event type shutter.check-in, got %s", ev.Type)
-	}
-
-	sender, err := getAddressAttribute(ev, 0, "Sender")
-	if err != nil {
-		return CheckIn{}, err
-	}
-	publicKey, err := getECIESPublicKeyAttribute(ev, 1, "EncryptionPublicKey")
-	if err != nil {
-		return CheckIn{}, err
-	}
-
-	return CheckIn{
-		Sender:              sender,
-		EncryptionPublicKey: publicKey,
-	}, nil
-}
-
-// makeBatchConfig creates a BatchConfigEvent from the given tendermint event of type
-// "shutter.batch-config"
-func makeBatchConfig(ev abcitypes.Event) (BatchConfig, error) {
-	if len(ev.Attributes) < 4 {
-		return BatchConfig{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("StartBatchIndex")) ||
-		!bytes.Equal(ev.Attributes[1].Key, []byte("Threshold")) ||
-		!bytes.Equal(ev.Attributes[2].Key, []byte("Keypers")) ||
-		!bytes.Equal(ev.Attributes[3].Key, []byte("ConfigIndex")) {
-		return BatchConfig{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
-
-	b, err := strconv.Atoi(string(ev.Attributes[0].Value))
-	if err != nil {
-		return BatchConfig{}, err
-	}
-
-	threshold, err := strconv.Atoi(string(ev.Attributes[1].Value))
-	if err != nil {
-		return BatchConfig{}, err
-	}
-	keypers, err := decodeAddresses(string(ev.Attributes[2].Value))
-	if err != nil {
-		return BatchConfig{}, err
-	}
-
-	configIndex, err := strconv.ParseUint(string(ev.Attributes[3].Value), 10, 64)
-	if err != nil {
-		return BatchConfig{}, err
-	}
-	return BatchConfig{
-		StartBatchIndex: uint64(b),
-		Threshold:       uint64(threshold),
-		Keypers:         keypers,
-		ConfigIndex:     configIndex,
-	}, nil
-}
-
-// makeDecryptionSignature creates a DecryptionSignatureEvent from the given tendermint event
-// of type "shutter.decryption-signature".
-func makeDecryptionSignature(ev abcitypes.Event) (DecryptionSignature, error) {
-	if len(ev.Attributes) < 3 {
-		return DecryptionSignature{}, fmt.Errorf("event contains not enough attributes: %+v", ev)
-	}
-	if !bytes.Equal(ev.Attributes[0].Key, []byte("BatchIndex")) ||
-		!bytes.Equal(ev.Attributes[1].Key, []byte("Sender")) ||
-		!bytes.Equal(ev.Attributes[2].Key, []byte("Signature")) {
-		return DecryptionSignature{}, fmt.Errorf("bad event attributes: %+v", ev)
-	}
-
-	batchIndex, err := strconv.Atoi(string(ev.Attributes[0].Value))
-	if err != nil {
-		return DecryptionSignature{}, err
-	}
-
-	encodedSender := string(ev.Attributes[1].Value)
-	sender := common.HexToAddress(encodedSender)
-	if sender.Hex() != encodedSender {
-		return DecryptionSignature{}, fmt.Errorf("invalid sender address %s", encodedSender)
-	}
-
-	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
-	if err != nil {
-		return DecryptionSignature{}, err
-	}
-
-	return DecryptionSignature{
-		BatchIndex: uint64(batchIndex),
-		Sender:     sender,
-		Signature:  signature,
-	}, nil
-}
-
 // makeEonStarted creates a EonStartedEvent from the given tendermint event of type
 // "shutter.eon-started".
 func makeEonStarted(ev abcitypes.Event) (EonStarted, error) {
@@ -346,116 +565,6 @@ func makeEonStarted(ev abcitypes.Event) (EonStarted, error) {
 	return EonStarted{
 		Eon:        eon,
 		BatchIndex: batchIndex,
-	}, nil
-}
-
-func makePolyCommitment(ev abcitypes.Event) (PolyCommitment, error) {
-	res := PolyCommitment{}
-	if ev.Type != evtype.PolyCommitment {
-		return res, fmt.Errorf("expected event type shutter.poly-commitment-registered, got %s", ev.Type)
-	}
-
-	sender, err := getAddressAttribute(ev, 0, "Sender")
-	if err != nil {
-		return res, err
-	}
-	res.Sender = sender
-
-	eon, err := getUint64Attribute(ev, 1, "Eon")
-	if err != nil {
-		return res, err
-	}
-	res.Eon = eon
-
-	gammas, err := getGammasAttribute(ev, 2, "Gammas")
-	if err != nil {
-		return res, err
-	}
-	res.Gammas = &gammas
-
-	return res, nil
-}
-
-func makePolyEval(ev abcitypes.Event) (PolyEval, error) {
-	res := PolyEval{}
-	if ev.Type != evtype.PolyEval {
-		return res, fmt.Errorf("expected event type shutter.poly-eval-registered, got %s", ev.Type)
-	}
-
-	sender, err := getAddressAttribute(ev, 0, "Sender")
-	if err != nil {
-		return res, err
-	}
-	res.Sender = sender
-
-	eon, err := getUint64Attribute(ev, 1, "Eon")
-	if err != nil {
-		return res, err
-	}
-	res.Eon = eon
-
-	return res, nil
-}
-
-func makeAccusation(ev abcitypes.Event) (Accusation, error) {
-	if ev.Type != evtype.Accusation {
-		return Accusation{}, fmt.Errorf("expected event type %s, got %s", evtype.Accusation, ev.Type)
-	}
-	sender, err := getAddressAttribute(ev, 0, "Sender")
-	if err != nil {
-		return Accusation{}, err
-	}
-
-	eon, err := getUint64Attribute(ev, 1, "Eon")
-	if err != nil {
-		return Accusation{}, err
-	}
-
-	accused, err := decodeAddresses(string(ev.Attributes[2].GetValue()))
-	if err != nil {
-		return Accusation{}, err
-	}
-
-	return Accusation{
-		Sender:  sender,
-		Eon:     eon,
-		Accused: accused,
-	}, nil
-}
-
-func makeApology(ev abcitypes.Event) (Apology, error) {
-	if ev.Type != evtype.Apology {
-		return Apology{}, fmt.Errorf("expected event type %s, got %s", evtype.Apology, ev.Type)
-	}
-	sender, err := getAddressAttribute(ev, 0, "Sender")
-	if err != nil {
-		return Apology{}, err
-	}
-
-	eon, err := getUint64Attribute(ev, 1, "Eon")
-	if err != nil {
-		return Apology{}, err
-	}
-
-	accusers, err := decodeAddresses(string(ev.Attributes[2].GetValue()))
-	if err != nil {
-		return Apology{}, err
-	}
-	var polyEval []*big.Int // XXX
-	polyEvalBytes, err := decodeByteSequenceFromEvent(string(ev.Attributes[3].GetValue()))
-	if err != nil {
-		return Apology{}, err
-	}
-	for _, b := range polyEvalBytes {
-		e := new(big.Int)
-		e.SetBytes(b)
-		polyEval = append(polyEval, e)
-	}
-	return Apology{
-		Sender:   sender,
-		Eon:      eon,
-		Accusers: accusers,
-		PolyEval: polyEval,
 	}, nil
 }
 
