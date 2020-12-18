@@ -16,6 +16,7 @@ import (
 	"github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -320,7 +321,7 @@ func (app *ShutterApp) allowedToVoteOnConfigChanges(sender common.Address) bool 
 }
 
 func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.Address) abcitypes.ResponseDeliverTx {
-	bc, err := BatchConfigFromMessage(msg)
+	bc, err := shutterevents.BatchConfigFromMessage(msg)
 	if err != nil {
 		return makeErrorResponse(fmt.Sprintf("Malformed BatchConfig message: %s", err))
 	}
@@ -358,11 +359,14 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 			return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
 		}
 
-		events = append(events, MakeBatchConfigEvent(bc.StartBatchIndex, bc.Threshold, bc.Keypers, bc.ConfigIndex))
+		events = append(events, bc.MakeABCIEvent())
 		if app.ShouldStartDKG(bc) {
 			dkg := app.StartDKG(bc)
 			batchIndex := app.LastConfig().StartBatchIndex
-			events = append(events, MakeEonStartedEvent(dkg.Eon, batchIndex))
+			events = append(events, shutterevents.EonStarted{
+				Eon:        dkg.Eon,
+				BatchIndex: batchIndex,
+			}.MakeABCIEvent())
 		}
 	}
 
@@ -409,7 +413,10 @@ func (app *ShutterApp) deliverCheckIn(msg *shmsg.CheckIn, sender common.Address)
 	return abcitypes.ResponseDeliverTx{
 		Code: 0,
 		Events: []abcitypes.Event{
-			MakeCheckInEvent(sender, encryptionPublicKey),
+			shutterevents.CheckIn{
+				Sender:              sender,
+				EncryptionPublicKey: encryptionPublicKey,
+			}.MakeABCIEvent(),
 		},
 	}
 }
@@ -457,7 +464,10 @@ func (app *ShutterApp) deliverEonStartVoteMsg(msg *shmsg.EonStartVote, sender co
 	return abcitypes.ResponseDeliverTx{
 		Code: 0,
 		Events: []abcitypes.Event{
-			MakeEonStartedEvent(dkg.Eon, startBatchIndex),
+			shutterevents.EonStarted{
+				Eon:        dkg.Eon,
+				BatchIndex: startBatchIndex,
+			}.MakeABCIEvent(),
 		},
 	}
 }
@@ -498,7 +508,11 @@ func (app *ShutterApp) deliverDecryptionSignature(msg *shmsg.DecryptionSignature
 	}
 	app.BatchStates[msg.BatchIndex] = bs
 
-	event := MakeDecryptionSignatureEvent(msg.BatchIndex, sender, msg.Signature)
+	event := shutterevents.DecryptionSignature{
+		BatchIndex: msg.BatchIndex,
+		Sender:     sender,
+		Signature:  msg.Signature,
+	}.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
@@ -527,7 +541,7 @@ func (app *ShutterApp) handlePolyEvalMsg(msg *shmsg.PolyEval, sender common.Addr
 		return makeErrorResponse(msg)
 	}
 
-	event := MakePolyEvalRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
@@ -556,7 +570,7 @@ func (app *ShutterApp) handlePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender
 		return makeErrorResponse(msg)
 	}
 
-	event := MakePolyCommitmentRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
@@ -585,7 +599,7 @@ func (app *ShutterApp) handleAccusationMsg(msg *shmsg.Accusation, sender common.
 		return makeErrorResponse(msg)
 	}
 
-	event := MakeAccusationRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},
@@ -614,7 +628,7 @@ func (app *ShutterApp) handleApologyMsg(msg *shmsg.Apology, sender common.Addres
 		return makeErrorResponse(msg)
 	}
 
-	event := MakeApologyRegisteredEvent(appMsg)
+	event := appMsg.MakeABCIEvent()
 	return abcitypes.ResponseDeliverTx{
 		Code:   0,
 		Events: []abcitypes.Event{event},

@@ -121,6 +121,29 @@ func (g *Gammas) Pi(xi *big.Int) *bn256.G2 {
 	return res
 }
 
+// GobEncode encodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobEncoder
+func (g Gammas) GobEncode() ([]byte, error) {
+	buff := bytes.Buffer{}
+	for _, g2 := range g {
+		buff.Write(g2.Marshal())
+	}
+	return buff.Bytes(), nil
+}
+
+// GobDecode decodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobDecoder
+func (g *Gammas) GobDecode(data []byte) error {
+	var err error
+	for len(data) > 0 {
+		g2 := new(bn256.G2)
+		data, err = g2.Unmarshal(data)
+		if err != nil {
+			return err
+		}
+		*g = append(*g, g2)
+	}
+	return nil
+}
+
 // KeyperX computes the x value assigned to the keyper identified by its index.
 func KeyperX(keyperIndex int) *big.Int {
 	keyperIndexBig := big.NewInt(int64(keyperIndex))

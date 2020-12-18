@@ -1,7 +1,9 @@
 package crypto
 
 import (
+	"bytes"
 	"crypto/rand"
+	"encoding/gob"
 	"math/big"
 	"testing"
 
@@ -167,4 +169,23 @@ func TestPi(t *testing.T) {
 
 	require.True(t, EqualG2(pi1, pi1Exp))
 	require.True(t, EqualG2(pi2, pi2Exp))
+}
+
+func TestGobable(t *testing.T) {
+	p, err := NewPolynomial([]*big.Int{
+		big.NewInt(0),
+		big.NewInt(10),
+		big.NewInt(20),
+	})
+	require.Nil(t, err)
+
+	var gammas, deserialized *Gammas
+	gammas = p.Gammas()
+	buff := bytes.Buffer{}
+	err = gob.NewEncoder(&buff).Encode(gammas)
+	require.Nil(t, err)
+
+	err = gob.NewDecoder(&buff).Decode(&deserialized)
+	require.Nil(t, err)
+	require.Equal(t, gammas, deserialized)
 }

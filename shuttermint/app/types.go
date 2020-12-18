@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
 
 // GenesisAppState is used to hold the initial list of keypers, who will bootstrap the system by
@@ -32,21 +34,6 @@ func (appState *GenesisAppState) GetKeypers() []common.Address {
 		res = append(res, k.Address())
 	}
 	return res
-}
-
-// BatchConfig is the configuration we use for a consecutive sequence of batches.
-// This should be synchronized with the list of BatchConfig structures stored in the ConfigContract
-// deployed on the main chain.
-type BatchConfig struct {
-	Keypers         []common.Address
-	StartBatchIndex uint64
-	Threshold       uint64
-
-	ConfigIndex           uint64
-	ConfigContractAddress common.Address
-
-	Started           bool
-	ValidatorsUpdated bool
 }
 
 // Voting is a struct storing votes for arbitrary indices.
@@ -139,48 +126,23 @@ type DKGInstance struct {
 	Config BatchConfig
 	Eon    uint64
 
-	PolyEvalMsgs       map[common.Address]PolyEvalMsg
-	PolyCommitmentMsgs map[common.Address]PolyCommitmentMsg
-	AccusationMsgs     map[common.Address]AccusationMsg
-	ApologyMsgs        map[common.Address]ApologyMsg
+	PolyEvalMsgs       map[common.Address]PolyEval
+	PolyCommitmentMsgs map[common.Address]PolyCommitment
+	AccusationMsgs     map[common.Address]Accusation
+	ApologyMsgs        map[common.Address]Apology
 
 	SubmissionsClosed bool
 	AccusationsClosed bool
 	ApologiesClosed   bool
 }
 
-// PolyEvalMsg represents an encrypted polynomial evaluation message from one keyper to another.
-type PolyEvalMsg struct {
-	Eon            uint64
-	Sender         common.Address
-	Receivers      []common.Address
-	EncryptedEvals [][]byte
-}
-
-// PolyCommitmentMsg represents a broadcasted polynomial commitment message.
-type PolyCommitmentMsg struct {
-	Sender common.Address
-	Eon    uint64
-	// Gammas holds the marshaled crypto.Gammas. Currently we do not unmarshal this value,
-	// which means when we sent this out via events, those events may also contain illegal
-	// data.
-	Gammas [][]byte
-}
-
-// AccusationMsg represents a broadcasted accusation message against one or more keypers.
-type AccusationMsg struct {
-	Eon     uint64
-	Sender  common.Address
-	Accused []common.Address
-}
-
-// ApologyMsg represents an apology broadcasted in response to a prior accusation.
-type ApologyMsg struct {
-	Eon       uint64
-	Sender    common.Address
-	Accusers  []common.Address
-	PolyEvals [][]byte
-}
+type (
+	Accusation     = shutterevents.Accusation
+	Apology        = shutterevents.Apology
+	BatchConfig    = shutterevents.BatchConfig
+	PolyCommitment = shutterevents.PolyCommitment
+	PolyEval       = shutterevents.PolyEval
+)
 
 // EpochSKShareMsg represents a message containing an epoch secret key.
 type EpochSKShareMsg struct {

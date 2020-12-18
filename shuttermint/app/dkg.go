@@ -8,10 +8,10 @@ import (
 
 // NewDKGInstance creates a new DKGInstance.
 func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
-	polyEvalMsgs := make(map[common.Address]PolyEvalMsg)
-	polyCommitmentMsgs := make(map[common.Address]PolyCommitmentMsg)
-	accusationMsgs := make(map[common.Address]AccusationMsg)
-	apologyMsgs := make(map[common.Address]ApologyMsg)
+	polyEvalMsgs := make(map[common.Address]PolyEval)
+	polyCommitmentMsgs := make(map[common.Address]PolyCommitment)
+	accusationMsgs := make(map[common.Address]Accusation)
+	apologyMsgs := make(map[common.Address]Apology)
 
 	return DKGInstance{
 		Config: config,
@@ -25,7 +25,7 @@ func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
 }
 
 // RegisterPolyEvalMsg adds a polynomial evaluation message to the instance.
-func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
+func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEval) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}
@@ -53,7 +53,7 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEvalMsg) error {
 }
 
 // RegisterPolyCommitmentMsg adds a polynomial commitment message to the instance.
-func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
+func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitment) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}
@@ -73,7 +73,7 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitmentMsg) error {
 }
 
 // RegisterAccusationMsg adds an accusation message to the instance.
-func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
+func (dkg *DKGInstance) RegisterAccusationMsg(msg Accusation) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}
@@ -101,7 +101,7 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg AccusationMsg) error {
 }
 
 // RegisterApologyMsg adds an apology message to the instance.
-func (dkg *DKGInstance) RegisterApologyMsg(msg ApologyMsg) error {
+func (dkg *DKGInstance) RegisterApologyMsg(msg Apology) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
 	}

@@ -5,13 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"testing"
-	"unicode/utf8"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -93,19 +90,6 @@ func TestAddConfig(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestEncodePubkeyForEvent(t *testing.T) {
-	key, err := crypto.GenerateKey()
-	require.Nil(t, err, "Could not generate key")
-	encoded := encodePubkeyForEvent(&key.PublicKey)
-	t.Logf("Encoded: %s", encoded)
-	require.True(t, utf8.ValidString(encoded))
-
-	decoded, err := shutterevents.DecodePubkey(encoded)
-	require.Nil(t, err, "could not decode pubkey")
-	t.Logf("Decoded: %+v", decoded)
-	require.Equal(t, key.PublicKey, *decoded)
-}
-
 func TestAddDecryptionSignature(t *testing.T) {
 	app := NewShutterApp()
 	keypers := addresses[:3]
@@ -179,27 +163,27 @@ func TestGobDKG(t *testing.T) {
 		Keypers:         keypers,
 	}, eon)
 
-	err = dkg.RegisterAccusationMsg(AccusationMsg{
+	err = dkg.RegisterAccusationMsg(Accusation{
 		Sender:  keypers[0],
 		Eon:     eon,
 		Accused: []common.Address{keypers[1]},
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterApologyMsg(ApologyMsg{
+	err = dkg.RegisterApologyMsg(Apology{
 		Sender:   keypers[0],
 		Eon:      eon,
 		Accusers: []common.Address{keypers[1]},
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterPolyCommitmentMsg(PolyCommitmentMsg{
+	err = dkg.RegisterPolyCommitmentMsg(PolyCommitment{
 		Sender: keypers[0],
 		Eon:    eon,
 	})
 	require.Nil(t, err)
 
-	err = dkg.RegisterPolyEvalMsg(PolyEvalMsg{
+	err = dkg.RegisterPolyEvalMsg(PolyEval{
 		Sender:         keypers[0],
 		Eon:            eon,
 		Receivers:      []common.Address{keypers[1]},
