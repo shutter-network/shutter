@@ -115,7 +115,7 @@ type ContractCaller struct {
 
 // NewContractCaller creates a new ContractCaller.
 func NewContractCaller(
-	client *ethclient.Client,
+	ethcl *ethclient.Client,
 	signingKey *ecdsa.PrivateKey,
 	configContract *contract.ConfigContract,
 	keyBroadcastContract *contract.KeyBroadcastContract,
@@ -123,7 +123,7 @@ func NewContractCaller(
 	executorContract *contract.ExecutorContract,
 ) ContractCaller {
 	return ContractCaller{
-		Ethclient:  client,
+		Ethclient:  ethcl,
 		signingKey: signingKey,
 
 		ConfigContract:       configContract,

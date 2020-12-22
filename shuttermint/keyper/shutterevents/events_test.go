@@ -6,10 +6,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/ecies"
-
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/crypto"

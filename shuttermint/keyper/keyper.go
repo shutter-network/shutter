@@ -324,8 +324,8 @@ func (kpr *Keyper) watchMainChainLogs() error {
 			return nil
 		case err := <-sub.Err():
 			return err
-		case log := <-logs:
-			kpr.dispatchMainChainLog(log)
+		case l := <-logs:
+			kpr.dispatchMainChainLog(l)
 		}
 	}
 }

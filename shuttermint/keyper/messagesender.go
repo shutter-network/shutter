@@ -17,7 +17,7 @@ import (
 var mockMessageSenderBufferSize = 0x10000
 
 func init() {
-	rand.Seed(int64(time.Now().UnixNano())) // Seed the PRNG we use for random nonces
+	rand.Seed(time.Now().UnixNano()) // Seed the PRNG we use for random nonces
 }
 
 // NewRPCMessageSender creates a new RPCMessageSender

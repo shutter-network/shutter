@@ -133,35 +133,35 @@ func makeApology(ev abcitypes.Event) (Apology, error) {
 // the main chain. The keypers use the corresponding shmsg.BatchConfig message to vote on new
 // configs. This struct is sent as an event, when a new batch config has enough votes.
 type BatchConfig struct {
-	StartBatchIndex       uint64
 	Keypers               []common.Address
+	StartBatchIndex       uint64
 	Threshold             uint64
-	ConfigContractAddress common.Address
 	ConfigIndex           uint64
+	ConfigContractAddress common.Address
 	Started               bool
 	ValidatorsUpdated     bool
 }
 
-func (msg BatchConfig) MakeABCIEvent() abcitypes.Event {
+func (bc BatchConfig) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.BatchConfig,
 		Attributes: []abcitypes.EventAttribute{
 			{
 				Key:   []byte("StartBatchIndex"),
-				Value: []byte(fmt.Sprintf("%d", msg.StartBatchIndex)),
+				Value: []byte(fmt.Sprintf("%d", bc.StartBatchIndex)),
 				Index: true,
 			},
 			{
 				Key:   []byte("Threshold"),
-				Value: []byte(fmt.Sprintf("%d", msg.Threshold)),
+				Value: []byte(fmt.Sprintf("%d", bc.Threshold)),
 			},
 			{
 				Key:   []byte("Keypers"),
-				Value: []byte(encodeAddressesForEvent(msg.Keypers)),
+				Value: []byte(encodeAddressesForEvent(bc.Keypers)),
 			},
 			{
 				Key:   []byte("ConfigIndex"),
-				Value: []byte(fmt.Sprintf("%d", msg.ConfigIndex)),
+				Value: []byte(fmt.Sprintf("%d", bc.ConfigIndex)),
 			},
 		},
 	}

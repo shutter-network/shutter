@@ -127,6 +127,7 @@ issues:
   exclude:
     - "Error return value of `.*MarkPersistentFlagRequired` is not checked"
     - "Error return value of `viper.BindEnv` is not checked"
+    - 'shadow: declaration of "err" shadows declaration at line'
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     - path: _test\.go

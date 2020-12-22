@@ -344,7 +344,7 @@ func randomValidatorSeed() (string, error) {
 
 func saveConfigs(configs []*cmd.RawKeyperConfig) error {
 	for i, c := range configs {
-		toml, err := toml.Marshal(*c)
+		configToml, err := toml.Marshal(*c)
 		if err != nil {
 			return err
 		}
@@ -359,7 +359,7 @@ func saveConfigs(configs []*cmd.RawKeyperConfig) error {
 		if err != nil {
 			return fmt.Errorf("failed to create keyper config file: %w", err)
 		}
-		if _, err = file.Write(toml); err != nil {
+		if _, err = file.Write(configToml); err != nil {
 			return fmt.Errorf("failed to write keyper config file: %w", err)
 		}
 	}

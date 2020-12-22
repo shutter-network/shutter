@@ -122,17 +122,17 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 	encryptionKey := ecies.ImportECDSA(encryptionKeyECDSA)
 
 	if !keyper.IsWebsocketURL(r.EthereumURL) {
-		return emptyConfig, fmt.Errorf("EthereumURL must start with ws:// or wss://")
+		return emptyConfig, fmt.Errorf("field EthereumURL must start with ws:// or wss://")
 	}
 
 	configContractAddress := common.HexToAddress(r.ConfigContract)
 	if r.ConfigContract != configContractAddress.Hex() {
-		return emptyConfig, fmt.Errorf("ConfigContract must be a valid checksummed address")
+		return emptyConfig, fmt.Errorf("field ConfigContract must be a valid checksummed address")
 	}
 
 	batcherContractAddress := common.HexToAddress(r.BatcherContract)
 	if r.BatcherContract != batcherContractAddress.Hex() {
-		return emptyConfig, fmt.Errorf("BatcherContract must be a valid checksummed address")
+		return emptyConfig, fmt.Errorf("field BatcherContract must be a valid checksummed address")
 	}
 
 	keyBroadcastContractAddress := common.HexToAddress(r.KeyBroadcastContract)

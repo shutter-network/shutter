@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -131,11 +130,11 @@ func TestEonPK(t *testing.T) {
 	require.Nil(t, err)
 
 	k1 := ComputeEonPK([]*Gammas{p1.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k1), ([]*bn256.G2)(*p1.Gammas())[0]))
+	require.True(t, EqualG2((*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0]))
 	k2 := ComputeEonPK([]*Gammas{p2.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k2), ([]*bn256.G2)(*p2.Gammas())[0]))
+	require.True(t, EqualG2((*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0]))
 	k3 := ComputeEonPK([]*Gammas{p3.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k3), ([]*bn256.G2)(*p3.Gammas())[0]))
+	require.True(t, EqualG2((*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0]))
 }
 
 func TestEonPKMatchesSK(t *testing.T) {

@@ -16,7 +16,7 @@ type encryptedMessageRLP struct {
 
 // EncodeRLP implements RLP encoding for blocks.
 func (b Block) EncodeRLP(w io.Writer) error {
-	return rlp.Encode(w, ([32]byte)(b))
+	return rlp.Encode(w, [32]byte(b))
 }
 
 // DecodeRLP implements RLP decoding for blocks.

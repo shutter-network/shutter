@@ -72,17 +72,17 @@ func encodePubkeyForEvent(pubkey *ecdsa.PublicKey) string {
 
 // encodeAddressesForEvent encodes the given slice of Addresses as comma-separated list of addresses
 func encodeAddressesForEvent(addr []common.Address) string {
-	var hex []string
+	var hexstrings []string
 	for _, a := range addr {
-		hex = append(hex, a.Hex())
+		hexstrings = append(hexstrings, a.Hex())
 	}
-	return strings.Join(hex, ",")
+	return strings.Join(hexstrings, ",")
 }
 
 func encodeByteSequenceForEvent(v [][]byte) string {
-	var hex []string
+	var hexstrings []string
 	for _, a := range v {
-		hex = append(hex, hexutil.Encode(a))
+		hexstrings = append(hexstrings, hexutil.Encode(a))
 	}
-	return strings.Join(hex, ",")
+	return strings.Join(hexstrings, ",")
 }
