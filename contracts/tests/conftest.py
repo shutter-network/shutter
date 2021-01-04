@@ -1,4 +1,5 @@
 from typing import Any
+from typing import List
 from typing import Sequence
 
 import pytest
@@ -22,6 +23,23 @@ def non_owner(accounts: Sequence[Account], owner: Account) -> Account:
     non_owner = accounts[1]
     assert non_owner != owner
     return non_owner
+
+
+@pytest.fixture
+def keypers(accounts: Sequence[Account]) -> List[Account]:
+    # as opposed to existing accounts, added ones have private keys known private keys which we
+    # need to sign things
+    return [accounts.add() for _ in range(3)]  # type: ignore
+
+
+@pytest.fixture
+def keyper_private_keys(keypers: Sequence[Account]) -> List[bytes]:
+    return [decode_hex(keyper.private_key) for keyper in keypers]
+
+
+@pytest.fixture
+def appeal_blocks() -> int:
+    return 10
 
 
 @pytest.fixture
@@ -52,6 +70,18 @@ def executor_contract(
 ) -> Any:
     executor_contract = owner.deploy(ExecutorContract, config_contract, mock_batcher_contract)
     return executor_contract
+
+
+@pytest.fixture
+def keyper_slasher(
+    KeyperSlasher: ContractContainer,
+    config_contract: Any,
+    executor_contract: Any,
+    owner: Account,
+    appeal_blocks: int,
+) -> Any:
+    keyper_slasher = owner.deploy(KeyperSlasher, appeal_blocks, config_contract, executor_contract)
+    return keyper_slasher
 
 
 @pytest.fixture

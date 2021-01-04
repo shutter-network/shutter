@@ -7,6 +7,14 @@ import "./ConfigContract.sol";
 import "./BatcherContract.sol";
 import "./ECDSA.sol";
 
+struct CipherExecutionReceipt {
+    bool executed;
+    address executor;
+    uint64 halfStep;
+    bytes32 cipherBatchHash;
+    bytes32 batchHash;
+}
+
 /// @title A contract that serves as the entry point of batch execution
 /// @dev Batch execution is carried out in two separate steps: Execution of the encrypted portion,
 ///     followed by execution of the plaintext portion. Thus, progress is counted in half steps (0
@@ -27,6 +35,7 @@ contract ExecutorContract {
     BatcherContract public batcherContract;
 
     uint64 public numExecutionHalfSteps;
+    mapping(uint64 => CipherExecutionReceipt) public cipherExecutionReceipts;
 
     constructor(
         ConfigContract _configContract,
@@ -39,19 +48,13 @@ contract ExecutorContract {
     /// @notice Execute the cipher portion of a batch.
     /// @param _cipherBatchHash The hash of the batch (consisting of encrypted transactions)
     /// @param _transactions The sequence of (decrypted) transactions to execute.
-    /// @param _decryptionKey The key that was used to decrypt the transactions.
-    /// @param _signerIndices Ordered sequence of indices corresponding to the keypers who signed
-    ///     the batch.
-    /// @param _signatures Array of keyper signatures, in the same order as `_signerIndices`.
+    /// @param _keyperIndex The index of the keyper calling the function.
     /// @notice Execution is only performed if `_cipherBatchHash` matches the hash in the batcher
-    ///     contract, the batch is active and completed, and enough keypers have provided their
-    ///     signature.
+    ///     contract and the batch is active and completed.
     function executeCipherBatch(
         bytes32 _cipherBatchHash,
         bytes[] calldata _transactions,
-        bytes32 _decryptionKey,
-        uint64[] calldata _signerIndices,
-        bytes[] calldata _signatures
+        uint64 _keyperIndex
     ) external {
         // Check that it's a cipher batch turn
         require(numExecutionHalfSteps % 2 == 0);
@@ -65,6 +68,10 @@ contract ExecutorContract {
             block.number >=
                 _config.startBlockNumber + _config.batchSpan * (_batchIndex + 1)
         );
+
+        // Check that caller is keyper
+        require(_keyperIndex < _config.keypers.length);
+        require(msg.sender == _config.keypers[_keyperIndex]);
 
         // Check the cipher batch hash is correct
         require(
@@ -80,32 +87,13 @@ contract ExecutorContract {
             _transactions
         );
 
-        // Check the signatures (can only be done after execution as we need the batch hash)
-        require(_signatures.length >= _config.threshold);
-        require(_signatures.length == _signerIndices.length);
-        bytes32 _decryptionSignaturePreimage = keccak256(
-            abi.encodePacked(
-                address(batcherContract),
-                _cipherBatchHash,
-                _decryptionKey,
-                _batchHash
-            )
-        );
-        for (uint64 _i = 0; _i < _signatures.length; _i++) {
-            bytes calldata _signature = _signatures[_i];
-            uint64 _signerIndex = _signerIndices[_i];
-
-            // Check order to easily prevent duplicates
-            require(_i == 0 || _signerIndex > _signerIndices[_i - 1]);
-
-            address _signer = ECDSA.recover(
-                _decryptionSignaturePreimage,
-                _signature
-            );
-            require(_signer == _config.keypers[_signerIndex]);
-        }
-
-        // Increment half steps and emit event
+        cipherExecutionReceipts[numExecutionHalfSteps] = CipherExecutionReceipt({
+            executed: true,
+            executor: msg.sender,
+            halfStep: numExecutionHalfSteps,
+            cipherBatchHash: _cipherBatchHash,
+            batchHash: _batchHash
+        });
         numExecutionHalfSteps++;
         emit BatchExecuted(numExecutionHalfSteps, _batchHash);
     }
@@ -188,5 +176,13 @@ contract ExecutorContract {
             );
         }
         return _batchHash;
+    }
+
+    function getReceipt(uint64 _halfStep)
+        public
+        view
+        returns (CipherExecutionReceipt memory)
+    {
+        return cipherExecutionReceipts[_halfStep];
     }
 }
