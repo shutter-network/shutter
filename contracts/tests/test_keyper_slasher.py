@@ -64,7 +64,6 @@ def test_appealing(
     owner: Account,
     config_change_heads_up_blocks: int,
 ) -> None:
-    print(keypers[0])
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
@@ -83,7 +82,6 @@ def test_appealing(
         cipher_batch_hash=cipher_batch_hash,
         decrypted_transactions=decrypted_transactions,
     )
-    print(decryption_signature_preimage)
     signatures = [ecdsa.sign(key, decryption_signature_preimage) for key in keyper_private_keys]
 
     executor_contract.executeCipherBatch(
