@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -86,6 +87,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.SetConfigFile(cfgFile)
 
 	err = viper.ReadInConfig()
+
 	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 		// Config file not found
 		if cfgFile != "" {
@@ -94,8 +96,20 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	} else if err != nil {
 		return rkc, err // Config file was found but another error was produced
 	}
-
 	err = viper.Unmarshal(&rkc)
+	if err != nil {
+		return rkc, err
+	}
+
+	if !filepath.IsAbs(rkc.DBDir) {
+		r := filepath.Dir(viper.ConfigFileUsed())
+		dbdir, err := filepath.Abs(filepath.Join(r, rkc.DBDir))
+		if err != nil {
+			return rkc, err
+		}
+		rkc.DBDir = dbdir
+	}
+
 	return rkc, err
 }
 
