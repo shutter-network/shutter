@@ -1,4 +1,5 @@
-TESTROOT=$(CURDIR)/testchain
+SHROOT ?= $(CURDIR)
+TESTROOT=$(SHROOT)/testchain
 
 VERSION=$(shell git describe --tags --always --abbrev=4 --dirty)
 
