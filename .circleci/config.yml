@@ -83,6 +83,7 @@ jobs:
           key: mypy-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
+
   pre-commit:
     executor: py37
     working_directory: ~/shutter
@@ -138,6 +139,10 @@ jobs:
       - restore_cache:
           keys:
             - test-contracts-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Install contract dependencies"
+          command: |
+            nox -s install_contract_dependencies
       - run:
           name: "Run tests"
           command: |
