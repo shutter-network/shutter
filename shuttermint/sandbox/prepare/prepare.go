@@ -43,6 +43,7 @@ var configFlags struct {
 	KeyBroadcastContractAddress string
 	ExecutorContractAddress     string
 	Bin                         string
+	FixedShuttermintPort        bool
 }
 
 var scheduleFlags struct {
@@ -172,6 +173,12 @@ func initConfigFlags() {
 		"bin",
 		"shuttermint",
 		"(path to) shuttermint executable",
+	)
+	configCmd.Flags().BoolVar(
+		&configFlags.FixedShuttermintPort,
+		"fixed-shuttermint-port",
+		false,
+		"use a fixed shuttermint port",
 	)
 }
 
@@ -304,7 +311,13 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		return nil, err
 	}
 
-	shuttermintPort := configFlags.FirstShuttermintPort + keyperIndex
+	var shuttermintPort int
+	if configFlags.FixedShuttermintPort {
+		shuttermintPort = configFlags.FirstShuttermintPort
+	} else {
+		shuttermintPort = configFlags.FirstShuttermintPort + keyperIndex
+	}
+
 	shuttermintURL := configFlags.ShuttermintURLBase + ":" + strconv.Itoa(shuttermintPort)
 
 	config := cmd.RawKeyperConfig{
