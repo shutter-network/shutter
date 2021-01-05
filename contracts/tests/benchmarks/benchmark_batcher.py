@@ -42,6 +42,7 @@ def print_gas_summary(txs: Sequence[TransactionReceipt]) -> None:
     print(f"Samples: {len(txs)}")
 
 
+@pytest.mark.skip(reason="benchmark")
 def benchmark_add_cipher_txs(batcher_contract: Any) -> None:
     txs = []
     for _ in range(10):
@@ -50,6 +51,7 @@ def benchmark_add_cipher_txs(batcher_contract: Any) -> None:
     print_gas_summary(txs)
 
 
+@pytest.mark.skip(reason="benchmark")
 def benchmark_add_cipher_txs_by_size(batcher_contract: Any) -> None:
     # first tx takes more gas, so add one in advance to not skew results
     batcher_contract.addTransaction(0, 0, b"\x00")
@@ -62,6 +64,7 @@ def benchmark_add_cipher_txs_by_size(batcher_contract: Any) -> None:
     print_gas_summary(txs)
 
 
+@pytest.mark.skip(reason="benchmark")
 def benchmark_add_plain_txs(batcher_contract: Any) -> None:
     txs = []
     for _ in range(10):
@@ -70,6 +73,7 @@ def benchmark_add_plain_txs(batcher_contract: Any) -> None:
     print_gas_summary(txs)
 
 
+@pytest.mark.skip(reason="benchmark")
 def benchmark_add_plain_txs_by_size(batcher_contract: Any) -> None:
     # first tx takes more gas, so add one in advance to not skew results
     batcher_contract.addTransaction(0, 1, b"\x00")

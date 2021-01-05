@@ -80,6 +80,7 @@ def execute_cipher_batch(
     )
 
 
+@pytest.mark.skip(reason="benchmark")
 def benchmark_execute_cipher_batch(
     config_contract: Any,
     batcher_contract: Any,
