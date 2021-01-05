@@ -122,10 +122,12 @@ func (g *Gammas) Pi(xi *big.Int) *bn256.G2 {
 }
 
 // GobEncode encodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobEncoder
-func (g Gammas) GobEncode() ([]byte, error) {
+func (g *Gammas) GobEncode() ([]byte, error) {
 	buff := bytes.Buffer{}
-	for _, g2 := range g {
-		buff.Write(g2.Marshal())
+	if g != nil {
+		for _, g2 := range *g {
+			buff.Write(g2.Marshal())
+		}
 	}
 	return buff.Bytes(), nil
 }

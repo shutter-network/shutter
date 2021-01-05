@@ -44,6 +44,7 @@ type KeyperConfig struct {
 	ChainID                     string
 	ShuttermintURL              string
 	EthereumURL                 string
+	DBDir                       string
 	SigningKey                  *ecdsa.PrivateKey
 	ValidatorKey                ed25519.PrivateKey
 	EncryptionKey               *ecies.PrivateKey

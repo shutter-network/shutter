@@ -3,9 +3,11 @@ package keyper
 import (
 	"bufio"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -37,14 +39,6 @@ func NewKeyper2(kc KeyperConfig) Keyper2 {
 		State:     &State{},
 		Shutter:   observe.NewShutter(),
 		MainChain: observe.NewMainChain(),
-
-		// batchConfigs:          make(map[uint64]contract.BatchConfig),
-		// batches:               make(map[uint64]*BatchState),
-		// checkedIn:             false,
-		// newHeaders:            make(chan *types.Header, newHeadersSize),
-		// cipherExecutionParams: make(chan CipherExecutionParams),
-		// keyperEncryptionKeys:  make(map[common.Address]*ecies.PublicKey),
-		// dkg:                   make(map[uint64]*DKGInstance),
 	}
 }
 
@@ -161,6 +155,68 @@ func readline() {
 	fmt.Printf("\n")
 }
 
+type storedState struct {
+	State     *State
+	Shutter   *observe.Shutter
+	MainChain *observe.MainChain
+}
+
+func (kpr *Keyper2) gobpath() string {
+	return filepath.Join(kpr.Config.DBDir, "state.gob")
+}
+
+func (kpr *Keyper2) LoadState() error {
+	gobpath := kpr.gobpath()
+
+	gobfile, err := os.Open(gobpath)
+	if os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	log.Printf("Loading state from %s", gobpath)
+
+	defer gobfile.Close()
+	dec := gob.NewDecoder(gobfile)
+	st := storedState{}
+	err = dec.Decode(&st)
+	if err != nil {
+		return err
+	}
+	kpr.State = st.State
+	kpr.Shutter = st.Shutter
+	kpr.MainChain = st.MainChain
+	return nil
+}
+
+func (kpr *Keyper2) saveState() error {
+	gobpath := kpr.gobpath()
+	log.Printf("Saving state to %s", gobpath)
+	tmppath := gobpath + ".tmp"
+	file, err := os.Create(tmppath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	st := storedState{
+		State:     kpr.State,
+		Shutter:   kpr.Shutter,
+		MainChain: kpr.MainChain,
+	}
+	enc := gob.NewEncoder(file)
+	err = enc.Encode(st)
+	if err != nil {
+		return err
+	}
+
+	err = file.Sync()
+	if err != nil {
+		return err
+	}
+	err = os.Rename(tmppath, gobpath)
+	return err
+}
+
 func (kpr *Keyper2) runOneStep(ctx context.Context) {
 	decider := Decider{
 		Config:    kpr.Config,
@@ -175,6 +231,10 @@ func (kpr *Keyper2) runOneStep(ctx context.Context) {
 			fmt.Println(act)
 		}
 		readline()
+	}
+	err := kpr.saveState()
+	if err != nil {
+		panic(err)
 	}
 	log.Printf("Running %d actions", len(decider.Actions))
 

@@ -137,10 +137,10 @@ func (dkg *DKG) syncWithEon(eon observe.Eon, decrypt decryptfn) {
 
 // State is the keyper's internal state
 type State struct {
-	checkinMessageSent       bool
-	lastSentBatchConfigIndex uint64
-	lastEonStarted           uint64
-	dkgs                     []DKG
+	CheckinMessageSent       bool
+	LastSentBatchConfigIndex uint64
+	LastEonStarted           uint64
+	DKGs                     []DKG
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter
@@ -194,7 +194,7 @@ func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Messa
 
 // shouldSendCheckin returns true if we should send the CheckIn message
 func (dcdr *Decider) shouldSendCheckin() bool {
-	if dcdr.State.checkinMessageSent {
+	if dcdr.State.CheckinMessageSent {
 		return false
 	}
 	if dcdr.Shutter.IsCheckedIn(dcdr.Config.Address()) {
@@ -212,7 +212,7 @@ func (dcdr *Decider) sendCheckIn() {
 func (dcdr *Decider) maybeSendCheckIn() {
 	if dcdr.shouldSendCheckin() {
 		dcdr.sendCheckIn()
-		dcdr.State.checkinMessageSent = true
+		dcdr.State.CheckinMessageSent = true
 	}
 }
 
@@ -236,13 +236,13 @@ func (dcdr *Decider) maybeSendBatchConfig() {
 	}
 	configIndex := 1 + dcdr.Shutter.BatchConfigs[len(dcdr.Shutter.BatchConfigs)-1].ConfigIndex
 
-	if configIndex <= dcdr.State.lastSentBatchConfigIndex {
+	if configIndex <= dcdr.State.LastSentBatchConfigIndex {
 		return // already sent this one out
 	}
 
 	if configIndex < uint64(len(dcdr.MainChain.BatchConfigs)) {
 		dcdr.sendBatchConfig(configIndex, dcdr.MainChain.BatchConfigs[configIndex])
-		dcdr.State.lastSentBatchConfigIndex = configIndex
+		dcdr.State.LastSentBatchConfigIndex = configIndex
 	}
 }
 
@@ -260,15 +260,15 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 
 	pure := puredkg.NewPureDKG(eon.Eon, uint64(len(batchConfig.Keypers)), batchConfig.Threshold, uint64(keyperIndex))
 	dkg := DKG{Eon: eon.Eon, Pure: &pure, Keypers: batchConfig.Keypers}
-	dcdr.State.dkgs = append(dcdr.State.dkgs, dkg)
+	dcdr.State.DKGs = append(dcdr.State.DKGs, dkg)
 }
 
 func (dcdr *Decider) maybeStartDKG() {
 	for _, eon := range dcdr.Shutter.Eons {
-		if eon.Eon > dcdr.State.lastEonStarted {
+		if eon.Eon > dcdr.State.LastEonStarted {
 			// TODO we should check that we do not start eons that are in the past
 			dcdr.startDKG(eon)
-			dcdr.State.lastEonStarted = eon.Eon
+			dcdr.State.LastEonStarted = eon.Eon
 		}
 	}
 }
@@ -394,8 +394,8 @@ func (dcdr *Decider) handleDKGs() {
 	decrypt := func(encrypted []byte) ([]byte, error) {
 		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
 	}
-	for i := range dcdr.State.dkgs {
-		dkg := &dcdr.State.dkgs[i]
+	for i := range dcdr.State.DKGs {
+		dkg := &dcdr.State.DKGs[i]
 		eon, err := dcdr.Shutter.FindEon(dkg.Eon)
 		if err != nil {
 			panic(err)

@@ -26,6 +26,7 @@ type RawKeyperConfig struct {
 	BatcherContract      string
 	KeyBroadcastContract string
 	ExecutorContract     string
+	DBDir                string
 }
 
 // keyperCmd represents the keyper command
@@ -159,6 +160,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		BatcherContractAddress:      batcherContractAddress,
 		KeyBroadcastContractAddress: keyBroadcastContractAddress,
 		ExecutorContractAddress:     executorContractAddress,
+		DBDir:                       r.DBDir,
 	}, nil
 }
 
@@ -208,6 +210,10 @@ func keyper2Main() {
 		kc.EthereumURL,
 	)
 	kpr := keyper.NewKeyper2(kc)
+	err = kpr.LoadState()
+	if err != nil {
+		panic(err)
+	}
 	kpr.Interactive = interactive
 	err = kpr.Run()
 	if err != nil {
