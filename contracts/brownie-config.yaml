@@ -1,3 +1,6 @@
 compiler:
   solc:
     version: 0.7.1
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@3.3.0

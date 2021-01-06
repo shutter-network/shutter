@@ -22,10 +22,6 @@ python_paths = [
 ]
 requirements_as_constraints = ["-c", "requirements.txt"]
 
-contract_dependencies = [
-    "OpenZeppelin/openzeppelin-contracts@3.3.0",
-]
-
 nox.options.error_on_external_run = True
 nox.options.reuse_existing_virtualenvs = True
 
@@ -99,13 +95,6 @@ def upgrade_requirements(session: Session) -> None:
     session.install("pip-tools")
     session.run("pip-compile", "-U", "requirements.in")
     fix_requirements(session)
-
-
-@nox.session
-def install_contract_dependencies(session: Session) -> None:
-    session.install("-r", "requirements.txt")
-    for dependency in contract_dependencies:
-        session.run("brownie", "pm", "install", dependency)
 
 
 @nox.session
