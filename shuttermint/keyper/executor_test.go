@@ -300,13 +300,11 @@ func subTestExecutePlain(t *testing.T) {
 
 	// execute cipher batch so that plain batch can be executed
 	mineUntilBlock(t, batchConfig.StartBlockNumber+batchConfig.BatchSpan)
-	tx, err := ex.cc.ExecutorContract.ExecuteCipherBatch2(
+	tx, err := ex.cc.ExecutorContract.ExecuteCipherBatch(
 		auth,
 		emptyBatchHash,
 		[][]byte{},
-		zeroDecryptionKey,
-		emptyDecryptionSignerIndices,
-		emptyDecryptionSignatures,
+		0,
 	)
 	require.Nil(t, err)
 	waitSuccessful(t, tx)
@@ -378,13 +376,15 @@ func subTestExecuteCipher(t *testing.T) {
 		DecryptionSignerIndices: decryptionSignerIndices,
 		DecryptionSignatures:    decryptionSignatures,
 	}
+	batchParams, err := contract.MakeBatchParams(&batchConfig, 0)
+	require.Nil(t, err)
 
 	// execute cipher batch
 	mineUntilBlock(t, batchConfig.StartBlockNumber+batchConfig.BatchSpan)
 	numHalfStepsBefore, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(nil)
 	require.Nil(t, err)
 	require.Equal(t, uint64(0), numHalfStepsBefore%2)
-	err = ex.executeCipherHalfStep(cipherParams)
+	err = ex.executeCipherHalfStep(batchParams, cipherParams)
 	require.Nil(t, err)
 	numHalfStepsAfter, err := ex.cc.ExecutorContract.NumExecutionHalfSteps(nil)
 	require.Nil(t, err)

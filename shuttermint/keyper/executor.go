@@ -81,7 +81,7 @@ func (ex *Executor) executeBatch(p CipherExecutionParams) error {
 		return nil
 	}
 
-	err = ex.executeCipherHalfStep(p)
+	err = ex.executeCipherHalfStep(batchParams, p)
 	if err != nil {
 		return err
 	}
@@ -232,14 +232,17 @@ func (ex *Executor) skipCipherHalfStep(batchParams BatchParams) error {
 
 // executeCipherHalfStep executes the current cipher half step and returns when it's done. It does
 // not perform any prior checks.
-func (ex *Executor) executeCipherHalfStep(p CipherExecutionParams) error {
-	tx, err := ex.cc.ExecutorContract.ExecuteCipherBatch2(
+func (ex *Executor) executeCipherHalfStep(batchParams BatchParams, p CipherExecutionParams) error {
+	keyperIndex, ok := batchParams.BatchConfig.KeyperIndex(ex.cc.Address())
+	if !ok {
+		return fmt.Errorf("not a keyper %s", ex.cc.Address().Hex())
+	}
+
+	tx, err := ex.cc.ExecutorContract.ExecuteCipherBatch(
 		ex.transactOpts(),
 		p.CipherBatchHash,
 		p.DecryptedTxs,
-		p.DecryptionKey,
-		p.DecryptionSignerIndices,
-		p.DecryptionSignatures,
+		keyperIndex,
 	)
 	if err != nil {
 		return fmt.Errorf("error sending cipher execution tx: %s", err)
