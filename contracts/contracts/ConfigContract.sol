@@ -41,7 +41,7 @@ contract ConfigContract is Ownable {
 
     uint64 public immutable configChangeHeadsUpBlocks;
 
-    constructor(uint64 _configChangeHeadsUpBlocks) public {
+    constructor(uint64 _configChangeHeadsUpBlocks) {
         configs.push(zeroConfig());
 
         configChangeHeadsUpBlocks = _configChangeHeadsUpBlocks;

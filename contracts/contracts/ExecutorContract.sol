@@ -39,7 +39,7 @@ contract ExecutorContract {
     constructor(
         ConfigContract _configContract,
         BatcherContract _batcherContract
-    ) public {
+    ) {
         configContract = _configContract;
         batcherContract = _batcherContract;
     }
@@ -168,7 +168,9 @@ contract ExecutorContract {
                 _targetFunctionSelector,
                 _transactions[_i]
             );
-            _targetAddress.call{gas: _gasLimit}(_calldata);
+
+            // call target function, ignoring any errors
+            (bool _, ) = _targetAddress.call{gas: _gasLimit}(_calldata);
 
             _batchHash = keccak256(
                 abi.encodePacked(_transactions[_i], _batchHash)

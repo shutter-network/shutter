@@ -24,7 +24,7 @@ contract KeyBroadcastContract {
 
     ConfigContract public configContract;
 
-    constructor(address _configContractAddress) public {
+    constructor(address _configContractAddress) {
         configContract = ConfigContract(_configContractAddress);
     }
 
