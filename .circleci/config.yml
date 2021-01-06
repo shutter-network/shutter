@@ -138,17 +138,18 @@ jobs:
       - install-nox
       - restore_cache:
           keys:
-            - test-contracts-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
+            - test-contracts-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
       - run:
           name: "Run tests"
           command: |
             nox -s test_contracts
       - save_cache:
-          key: test-contracts-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
+          key: test-contracts-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
           paths:
             - ~/shutter/.nox
             - ~/shutter/.mypy_cache
             - ~/shutter/.brownie
+            - ~/.solcx
 
   mint-build:
     executor: go
