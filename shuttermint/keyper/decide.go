@@ -128,6 +128,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 			}
 		}
 	}
+	dkg.PolyEvalsIndex = len(eon.PolyEvals)
 }
 
 func (dkg *DKG) syncWithEon(eon observe.Eon, decrypt decryptfn) {
