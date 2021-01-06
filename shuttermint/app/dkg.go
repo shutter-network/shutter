@@ -8,23 +8,19 @@ import (
 
 // NewDKGInstance creates a new DKGInstance.
 func NewDKGInstance(config BatchConfig, eon uint64) DKGInstance {
-	polyEvalMsgs := make(map[common.Address]PolyEval)
-	polyCommitmentMsgs := make(map[common.Address]PolyCommitment)
-	accusationMsgs := make(map[common.Address]Accusation)
-	apologyMsgs := make(map[common.Address]Apology)
-
 	return DKGInstance{
-		Config: config,
-		Eon:    eon,
-
-		PolyEvalMsgs:       polyEvalMsgs,
-		PolyCommitmentMsgs: polyCommitmentMsgs,
-		AccusationMsgs:     accusationMsgs,
-		ApologyMsgs:        apologyMsgs,
+		Config:              config,
+		Eon:                 eon,
+		PolyEvalsSeen:       make(map[SenderReceiverPair]struct{}),
+		PolyCommitmentsSeen: make(map[common.Address]struct{}),
+		AccusationsSeen:     make(map[common.Address]struct{}),
+		ApologiesSeen:       make(map[common.Address]struct{}),
 	}
 }
 
-// RegisterPolyEvalMsg adds a polynomial evaluation message to the instance.
+// RegisterPolyEvalMsg adds a polynomial evaluation message to the instance. It makes sure the
+// message meets the basic requirements, i.e. the sender and receivers are keypers and we do not
+// send multiple messages from one sender to one receiver.
 func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEval) error {
 	if msg.Eon != dkg.Eon {
 		return fmt.Errorf("msg is from eon %d, not %d", msg.Eon, dkg.Eon)
@@ -32,22 +28,28 @@ func (dkg *DKGInstance) RegisterPolyEvalMsg(msg PolyEval) error {
 	if dkg.SubmissionsClosed {
 		return fmt.Errorf("submissions are already closed")
 	}
-	if !dkg.Config.IsKeyper(msg.Sender) {
-		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
+
+	sender := msg.Sender
+	if !dkg.Config.IsKeyper(sender) {
+		return fmt.Errorf("sender %s is not a keyper", sender.Hex())
 	}
+
 	for _, receiver := range msg.Receivers {
 		if !dkg.Config.IsKeyper(receiver) {
 			return fmt.Errorf("receiver %s is not a keyper", msg.Sender.Hex())
 		}
-		if msg.Sender == receiver {
+		if receiver == sender {
 			return fmt.Errorf("receiver %s is also the sender", msg.Sender.Hex())
+		}
+		_, ok := dkg.PolyEvalsSeen[SenderReceiverPair{sender, receiver}]
+		if ok {
+			return fmt.Errorf("polynomial evaluation from keyper %s for receiver %s already present", sender.Hex(), receiver.Hex())
 		}
 	}
 
-	if _, ok := dkg.PolyEvalMsgs[msg.Sender]; ok {
-		return fmt.Errorf("polynomial evaluation from keyper %s already present", msg.Sender.Hex())
+	for _, receiver := range msg.Receivers {
+		dkg.PolyEvalsSeen[SenderReceiverPair{sender, receiver}] = struct{}{}
 	}
-	dkg.PolyEvalMsgs[msg.Sender] = msg
 
 	return nil
 }
@@ -64,10 +66,10 @@ func (dkg *DKGInstance) RegisterPolyCommitmentMsg(msg PolyCommitment) error {
 		return fmt.Errorf("sender %s is not a keyper", msg.Sender.Hex())
 	}
 
-	if _, ok := dkg.PolyCommitmentMsgs[msg.Sender]; ok {
+	if _, ok := dkg.PolyCommitmentsSeen[msg.Sender]; ok {
 		return fmt.Errorf("polynomial commitment from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.PolyCommitmentMsgs[msg.Sender] = msg
+	dkg.PolyCommitmentsSeen[msg.Sender] = struct{}{}
 
 	return nil
 }
@@ -92,10 +94,10 @@ func (dkg *DKGInstance) RegisterAccusationMsg(msg Accusation) error {
 		}
 	}
 
-	if _, ok := dkg.AccusationMsgs[msg.Sender]; ok {
+	if _, ok := dkg.AccusationsSeen[msg.Sender]; ok {
 		return fmt.Errorf("accusation from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.AccusationMsgs[msg.Sender] = msg
+	dkg.AccusationsSeen[msg.Sender] = struct{}{}
 
 	return nil
 }
@@ -120,10 +122,10 @@ func (dkg *DKGInstance) RegisterApologyMsg(msg Apology) error {
 		}
 	}
 
-	if _, ok := dkg.ApologyMsgs[msg.Sender]; ok {
+	if _, ok := dkg.ApologiesSeen[msg.Sender]; ok {
 		return fmt.Errorf("apology from keyper %s already present", msg.Sender.Hex())
 	}
-	dkg.ApologyMsgs[msg.Sender] = msg
+	dkg.ApologiesSeen[msg.Sender] = struct{}{}
 
 	return nil
 }

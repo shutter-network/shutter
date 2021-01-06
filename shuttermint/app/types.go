@@ -121,15 +121,19 @@ type NonceTracker struct {
 	RandomNonces map[common.Address]map[uint64]bool
 }
 
+type SenderReceiverPair struct {
+	Sender, Receiver common.Address
+}
+
 // DKGInstance manages the state of one eon key generation instance.
 type DKGInstance struct {
 	Config BatchConfig
 	Eon    uint64
 
-	PolyEvalMsgs       map[common.Address]PolyEval
-	PolyCommitmentMsgs map[common.Address]PolyCommitment
-	AccusationMsgs     map[common.Address]Accusation
-	ApologyMsgs        map[common.Address]Apology
+	PolyEvalsSeen       map[SenderReceiverPair]struct{}
+	PolyCommitmentsSeen map[common.Address]struct{}
+	AccusationsSeen     map[common.Address]struct{}
+	ApologiesSeen       map[common.Address]struct{}
 
 	SubmissionsClosed bool
 	AccusationsClosed bool

@@ -29,68 +29,57 @@ func TestRegisterMsgs(t *testing.T) {
 			Sender:         keypers[0],
 			Eon:            eon + 1,
 			Receivers:      []common.Address{keypers[1]},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err := dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.PolyEvalMsgs[nonKeyper]
-		require.False(t, ok)
 
 		// fail if sender is not a keyper
 		msg = PolyEval{
 			Sender:         nonKeyper,
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[0]},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[nonKeyper]
-		require.False(t, ok)
 
 		// fail if receiver is not a keyper
 		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{nonKeyper},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[keypers[0]]
-		require.False(t, ok)
 
 		// fail if sender and receiver are equal
 		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[0]},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyEvalMsgs[keypers[0]]
-		require.False(t, ok)
 
 		// adding should work
 		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[1]},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.Nil(t, err)
-		storedMsg, ok := dkg.PolyEvalMsgs[keypers[0]]
-		require.True(t, ok)
-		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
 		msg = PolyEval{
 			Sender:         keypers[0],
 			Eon:            eon,
 			Receivers:      []common.Address{keypers[1]},
-			EncryptedEvals: [][]byte{[]byte{}},
+			EncryptedEvals: [][]byte{{}},
 		}
 		err = dkg.RegisterPolyEvalMsg(msg)
 		require.NotNil(t, err)
@@ -106,7 +95,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err := dkg.RegisterPolyCommitmentMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.PolyCommitmentMsgs[nonKeyper]
+		_, ok := dkg.PolyCommitmentsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
@@ -116,7 +105,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterPolyCommitmentMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.PolyCommitmentMsgs[nonKeyper]
+		_, ok = dkg.PolyCommitmentsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// adding should work
@@ -126,9 +115,8 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterPolyCommitmentMsg(msg)
 		require.Nil(t, err)
-		storedMsg, ok := dkg.PolyCommitmentMsgs[keypers[0]]
+		_, ok = dkg.PolyCommitmentsSeen[keypers[0]]
 		require.True(t, ok)
-		require.Equal(t, msg, storedMsg)
 
 		// adding twice should fail
 		msg = PolyCommitment{
@@ -150,7 +138,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err := dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.AccusationMsgs[nonKeyper]
+		_, ok := dkg.AccusationsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
@@ -161,7 +149,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[nonKeyper]
+		_, ok = dkg.AccusationsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// fail if accused is not a keyper
@@ -172,7 +160,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[keypers[0]]
+		_, ok = dkg.AccusationsSeen[keypers[0]]
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
@@ -183,7 +171,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[keypers[0]]
+		_, ok = dkg.AccusationsSeen[keypers[0]]
 		require.False(t, ok)
 
 		// adding should work
@@ -194,7 +182,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterAccusationMsg(msg)
 		require.Nil(t, err)
-		_, ok = dkg.AccusationMsgs[keypers[0]]
+		_, ok = dkg.AccusationsSeen[keypers[0]]
 		require.True(t, ok)
 
 		// adding twice should fail
@@ -219,7 +207,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err := dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok := dkg.AccusationMsgs[nonKeyper]
+		_, ok := dkg.AccusationsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// fail if sender is not a keyper
@@ -231,7 +219,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.AccusationMsgs[nonKeyper]
+		_, ok = dkg.AccusationsSeen[nonKeyper]
 		require.False(t, ok)
 
 		// fail if accuser is not a keyper
@@ -243,7 +231,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.ApologyMsgs[keypers[0]]
+		_, ok = dkg.ApologiesSeen[keypers[0]]
 		require.False(t, ok)
 
 		// fail if sender and accused are equal
@@ -255,7 +243,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.NotNil(t, err)
-		_, ok = dkg.ApologyMsgs[keypers[0]]
+		_, ok = dkg.ApologiesSeen[keypers[0]]
 		require.False(t, ok)
 
 		// adding should work
@@ -267,7 +255,7 @@ func TestRegisterMsgs(t *testing.T) {
 		}
 		err = dkg.RegisterApologyMsg(msg)
 		require.Nil(t, err)
-		_, ok = dkg.ApologyMsgs[keypers[0]]
+		_, ok = dkg.ApologiesSeen[keypers[0]]
 		require.True(t, ok)
 
 		// adding twice should fail
