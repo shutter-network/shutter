@@ -283,9 +283,9 @@ type PhaseLength struct {
 
 var phaseLength = PhaseLength{
 	Off:         0,
-	Dealing:     10,
-	Accusing:    20,
-	Apologizing: 30,
+	Dealing:     30,
+	Accusing:    60,
+	Apologizing: 90,
 }
 
 // sendPolyEvals sends the outgoing PolyEvalMsg stored in dkg that can be sent. A PolyEvalMessage
@@ -298,7 +298,10 @@ func (dcdr *Decider) sendPolyEvals(dkg *DKG) {
 	}
 
 	if dkg.Pure.Phase > puredkg.Dealing {
-		log.Printf("Dropping %d poly eval messages for eon %d", len(dkg.OutgoingPolyEvalMsgs), dkg.Eon)
+		log.Printf(
+			"Warning: could not send %d poly eval messages for eon %d, because the dealing phase is already over",
+			len(dkg.OutgoingPolyEvalMsgs),
+			dkg.Eon)
 		dkg.OutgoingPolyEvalMsgs = nil
 		return
 	}
