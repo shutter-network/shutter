@@ -3,9 +3,9 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
+import "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/access/Ownable.sol";
 import "./ConfigContract.sol";
 import "./FeeBankContract.sol";
-import "./Ownable.sol";
 
 enum TransactionType {Cipher, Plain}
 
