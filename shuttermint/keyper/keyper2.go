@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -121,6 +120,15 @@ func (kpr *Keyper2) sync(ctx context.Context) error {
 	return err
 }
 
+func (kpr *Keyper2) ShortInfo() string {
+	return fmt.Sprintf(
+		"shutter block %d, main chain %d, last eon started %d",
+		kpr.Shutter.CurrentBlock,
+		kpr.MainChain.CurrentBlock,
+		kpr.State.LastEonStarted,
+	)
+}
+
 func (kpr *Keyper2) Run() error {
 	err := kpr.init()
 	if err != nil {
@@ -134,12 +142,8 @@ func (kpr *Keyper2) Run() error {
 			return err
 		}
 
-		fmt.Println("-----------------------------------------------------------------------")
-		pretty.Println("SHUTTER   ==>", *kpr.Shutter)
-		pretty.Println("MAINCHAIN ==>", *kpr.MainChain)
+		log.Println(kpr.ShortInfo())
 		kpr.runOneStep(ctx)
-		pretty.Println("INTERNAL  ==>", *kpr.State)
-
 		time.Sleep(10 * time.Second)
 	}
 }

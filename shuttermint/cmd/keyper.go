@@ -228,6 +228,7 @@ func keyper2Main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("loaded state: %s", kpr.ShortInfo())
 	kpr.Interactive = interactive
 	err = kpr.Run()
 	if err != nil {
