@@ -37,10 +37,8 @@ def test_accusing(
     executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
     tx = keyper_slasher.accuse(0, 1, {"from": keypers[1]})
 
-    assert len(tx.events) == 1
-    assert len(tx.events["Accused"]) == 1
+    assert "Accused" in tx.events and len(tx.events["Accused"]) == 1
     event = tx.events["Accused"][0]
-
     assert event["halfStep"] == 0
     assert event["executor"] == keypers[0]
     assert event["accuser"] == keypers[1]
@@ -97,8 +95,7 @@ def test_appealing(
     )
     tx = keyper_slasher.appeal(authorization)
 
-    assert len(tx.events) == 1
-    assert len(tx.events["Appealed"]) == 1
+    assert "Appealed" in tx.events and len(tx.events["Appealed"]) == 1
     event = tx.events["Appealed"]
     assert event["halfStep"] == 0
     assert event["executor"] == keypers[0]
@@ -111,6 +108,8 @@ def test_slashing(
     keyper_slasher: Any,
     config_contract: Any,
     executor_contract: Any,
+    deposit_contract: Any,
+    deposit_token_contract: Any,
     chain: Chain,
     owner: Account,
     keypers: List[Account],
@@ -127,13 +126,20 @@ def test_slashing(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span * 10, chain)
 
+    deposit_token_contract.send(keypers[0], 100, "0x0000000000000000", {"from": owner})
+    deposit_token_contract.send(deposit_contract, 100, "0x0000000000000000", {"from": keypers[0]})
+
     executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
     tx = keyper_slasher.accuse(0, 1, {"from": keypers[1]})
     mine_until(tx.block_number + appeal_blocks, chain)
     tx = keyper_slasher.slash(0)
 
-    assert len(tx.events) == 1
-    assert len(tx.events["Slashed"]) == 1
-    event = tx.events["Slashed"][0]
-    assert event["halfStep"] == 0
-    assert event["executor"] == keypers[0]
+    assert "Slashed" in tx.events and len(tx.events["Slashed"]) == 2
+    slasher_event = [ev for ev in tx.events["Slashed"] if ev.address == keyper_slasher][0]
+    deposit_event = [ev for ev in tx.events["Slashed"] if ev.address == deposit_contract][0]
+
+    assert slasher_event["halfStep"] == 0
+    assert slasher_event["executor"] == keypers[0]
+
+    assert deposit_event["account"] == keypers[0]
+    assert deposit_contract.getDepositAmount(keypers[0]) == 0

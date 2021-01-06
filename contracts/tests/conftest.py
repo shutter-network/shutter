@@ -83,10 +83,13 @@ def keyper_slasher(
     KeyperSlasher: ContractContainer,
     config_contract: Any,
     executor_contract: Any,
+    deposit_contract: Any,
     owner: Account,
     appeal_blocks: int,
 ) -> Any:
-    keyper_slasher = owner.deploy(KeyperSlasher, appeal_blocks, config_contract, executor_contract)
+    keyper_slasher = owner.deploy(
+        KeyperSlasher, appeal_blocks, config_contract, executor_contract, deposit_contract
+    )
     return keyper_slasher
 
 

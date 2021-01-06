@@ -112,7 +112,7 @@ contract DepositContract is IERC777Recipient {
     function slash(address account) external {
         require(msg.sender == _slasher);
 
-        delete _deposits[msg.sender];
+        delete _deposits[account];
 
         emit Slashed(account);
     }

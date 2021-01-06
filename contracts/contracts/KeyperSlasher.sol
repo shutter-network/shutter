@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/cryptography/ECDSA.sol";
 import "./ConfigContract.sol";
+import "./DepositContract.sol";
 import "./ExecutorContract.sol";
 import "./BatcherContract.sol";
 
@@ -33,8 +34,8 @@ contract KeyperSlasher {
     event Slashed(uint64 indexed halfStep, address indexed executor);
 
     ConfigContract configContract;
-    // DepositContract depositContract;
     ExecutorContract executorContract;
+    DepositContract depositContract;
 
     uint256 appealBlocks;
 
@@ -43,12 +44,16 @@ contract KeyperSlasher {
     constructor(
         uint256 _appealBlocks,
         ConfigContract _configContract,
-        ExecutorContract _executorContract
+        ExecutorContract _executorContract,
+        DepositContract _depositContract
     ) {
         appealBlocks = _appealBlocks;
 
         configContract = _configContract;
         executorContract = _executorContract;
+        depositContract = _depositContract;
+
+        depositContract.setSlasher(address(this));
     }
 
     function accuse(uint64 _halfStep, uint64 _keyperIndex) external {
@@ -140,7 +145,7 @@ contract KeyperSlasher {
         require(!_accusation.appealed);
         require(block.number >= _accusation.blockNumber + appealBlocks);
 
-        // depositContract.slash(_accusation.executor);
+        depositContract.slash(_accusation.executor);
 
         emit Slashed({
             halfStep: _accusation.halfStep,
