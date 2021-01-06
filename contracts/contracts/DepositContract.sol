@@ -158,7 +158,7 @@ contract DepositContract is IERC777Recipient {
         });
     }
 
-    function _bytesToUint64(bytes memory b) internal returns (uint64) {
+    function _bytesToUint64(bytes memory b) internal pure returns (uint64) {
         uint64 number;
         for (uint256 i = 0; i < b.length; i++) {
             number =
