@@ -5,7 +5,6 @@ pragma experimental ABIEncoderV2;
 
 import "./ConfigContract.sol";
 import "./BatcherContract.sol";
-import "./ECDSA.sol";
 
 struct CipherExecutionReceipt {
     bool executed;
