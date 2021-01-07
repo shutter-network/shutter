@@ -45,6 +45,7 @@ type Eon struct {
 	Commitments []shutterevents.PolyCommitment
 	PolyEvals   []shutterevents.PolyEval
 	Accusations []shutterevents.Accusation
+	Apologies   []shutterevents.Apology
 }
 
 type Batch struct {
@@ -125,6 +126,13 @@ func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
 			panic(err) // XXX we should remove that later
 		}
 		eon.Accusations = append(eon.Accusations, e)
+	case shutterevents.Apology:
+		eon, err := shutter.FindEon(e.Eon)
+		if err != nil {
+			panic(err) // XXX we should remove that later
+		}
+		eon.Apologies = append(eon.Apologies, e)
+
 	default:
 		warn()
 		panic("applyEvent: unknown event. giving up")
