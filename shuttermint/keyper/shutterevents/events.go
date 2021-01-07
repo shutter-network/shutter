@@ -458,6 +458,9 @@ func getUint64Attribute(ev abcitypes.Event, index int, name string) (uint64, err
 // of addresses from a comma-separated string.
 func decodeAddresses(s string) ([]common.Address, error) {
 	var res []common.Address
+	if s == "" {
+		return res, nil
+	}
 	for _, a := range strings.Split(s, ",") {
 		if !common.IsHexAddress(a) {
 			return nil, fmt.Errorf("malformed address: %q", s)
@@ -471,6 +474,9 @@ func decodeAddresses(s string) ([]common.Address, error) {
 // decodeByteSequenceFromEvent parses a list of hex encoded, comma-separated byte slices.
 func decodeByteSequenceFromEvent(s string) ([][]byte, error) {
 	var res [][]byte
+	if s == "" {
+		return res, nil
+	}
 	for _, v := range strings.Split(s, ",") {
 		bs, err := hexutil.Decode(v)
 		if err != nil {

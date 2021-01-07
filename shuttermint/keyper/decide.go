@@ -355,9 +355,6 @@ func (dcdr *Decider) startPhase1Dealing(dkg *DKG) {
 
 func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
 	accusations := dkg.Pure.StartPhase2Accusing()
-	if len(accusations) == 0 {
-		return
-	}
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("accusations, eon=%d, count=%d", dkg.Eon, len(accusations)),
 		dkg.newAccusation(accusations))
@@ -365,9 +362,6 @@ func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
 
 func (dcdr *Decider) startPhase3Apologizing(dkg *DKG) {
 	apologies := dkg.Pure.StartPhase3Apologizing()
-	if len(apologies) == 0 {
-		return
-	}
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("apologies, eon=%d, count=%d", dkg.Eon, len(apologies)),
 		dkg.newApology(apologies))

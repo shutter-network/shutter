@@ -54,6 +54,14 @@ func TestAccusation(t *testing.T) {
 	roundtrip(t, ev)
 }
 
+func TestEmptyAccusation(t *testing.T) {
+	ev := shutterevents.Accusation{
+		Eon:    eon,
+		Sender: sender,
+	}
+	roundtrip(t, ev)
+}
+
 func TestApology(t *testing.T) {
 	accusers := addresses
 	var polyEval []*big.Int
@@ -66,6 +74,14 @@ func TestApology(t *testing.T) {
 		Sender:   sender,
 		Accusers: accusers,
 		PolyEval: polyEval,
+	}
+	roundtrip(t, ev)
+}
+
+func TestEmptyApology(t *testing.T) {
+	ev := shutterevents.Apology{
+		Eon:    eon,
+		Sender: sender,
 	}
 	roundtrip(t, ev)
 }
