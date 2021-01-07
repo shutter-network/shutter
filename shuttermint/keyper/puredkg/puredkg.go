@@ -164,7 +164,9 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 	var accusations []AccusationMsg
 	var dealer KeyperIndex
 	for dealer = 0; dealer < pure.NumKeypers; dealer++ {
-		if pure.present(dealer) && !pure.verifyPolyEval(dealer) {
+		eval := pure.Evals[dealer]
+		c := pure.Commitments[dealer]
+		if pure.present(dealer) && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
 			accusations = append(accusations, AccusationMsg{
 				Eon:     pure.Eon,
 				Accuser: pure.Keyper,
@@ -199,13 +201,6 @@ func (pure *PureDKG) present(i KeyperIndex) bool {
 	return pure.Commitments[i] != nil
 }
 
-func (pure *PureDKG) verifyPolyEval(dealer KeyperIndex) bool {
-	if pure.Evals[dealer] == nil || pure.Commitments[dealer] == nil {
-		return false
-	}
-	return crypto.VerifyPolyEval(int(pure.Keyper), pure.Evals[dealer], pure.Commitments[dealer], pure.Threshold)
-}
-
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
 // error is returned if this is called before finalization or if too few keypers participated.
 func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) {
@@ -219,10 +214,18 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) 
 	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
 		var c *crypto.Gammas
 		var eval *big.Int
-		if pure.verifyPolyEval(dealer) {
+
+		if !pure.isCorrupt(dealer) {
 			numParticipants++
 			c = pure.Commitments[dealer]
-			eval = pure.Evals[dealer]
+			eval = pure.polyEval(dealer)
+
+			if eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold) {
+				// when we receive no or an invalid poly eval, we send an accusation. If this
+				// accusation does not end up in the chain, the keyper will not be considered
+				// corrupt by the other keypers. We know  they should be though, so we abort.
+				return nil, nil, fmt.Errorf("corrupt keyper %d not considered corrupt", dealer)
+			}
 		} else {
 			c = crypto.ZeroGammas(crypto.DegreeFromThreshold(pure.Threshold))
 			eval = big.NewInt(0)
@@ -237,6 +240,51 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) 
 	eonSKShare := crypto.ComputeEonSKShare(evals)
 	eonPK := crypto.ComputeEonPK(commitments)
 	return eonSKShare, eonPK, nil
+}
+
+// isCorrupt checks if the given keyper is considered corrupt. Note that this might change when
+// new messages are received.
+func (pure *PureDKG) isCorrupt(dealer KeyperIndex) bool {
+	// a keyper is corrupt if they haven't sent a commitment
+	c := pure.Commitments[dealer]
+	if c == nil {
+		return true
+	}
+
+	// a keyper is corrupt if they have apologized with a poly eval that doesn't match their
+	// commitment
+	for accusationKey, polyEval := range pure.Apologies {
+		if accusationKey.Accused != dealer {
+			continue
+		}
+		if !crypto.VerifyPolyEval(int(accusationKey.Accuser), polyEval, c, pure.Threshold) {
+			return true
+		}
+	}
+
+	// a keyper is corrupt if they haven't apologized in case of an accusation
+	for accusationKey, accused := range pure.Accusations {
+		if !accused || accusationKey.Accused != dealer {
+			continue
+		}
+		_, apologized := pure.Apologies[accusationKey]
+		if !apologized {
+			return true
+		}
+	}
+
+	return false
+}
+
+// polyEval returns the poly eval received from the given dealer. Only call this function if the
+// dealer has been determined to not be corrupt, otherwise the result is not necessarily unique.
+func (pure *PureDKG) polyEval(dealer KeyperIndex) *big.Int {
+	for accusationKey, polyEval := range pure.Apologies {
+		if accusationKey.Accused == dealer {
+			return polyEval
+		}
+	}
+	return pure.Evals[dealer]
 }
 
 // HandlePolyCommitmentMsg
