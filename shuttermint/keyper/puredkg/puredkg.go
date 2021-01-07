@@ -280,7 +280,7 @@ func (pure *PureDKG) isCorrupt(dealer KeyperIndex) bool {
 // dealer has been determined to not be corrupt, otherwise the result is not necessarily unique.
 func (pure *PureDKG) polyEval(dealer KeyperIndex) *big.Int {
 	for accusationKey, polyEval := range pure.Apologies {
-		if accusationKey.Accused == dealer {
+		if accusationKey.Accuser == pure.Keyper && accusationKey.Accused == dealer {
 			return polyEval
 		}
 	}

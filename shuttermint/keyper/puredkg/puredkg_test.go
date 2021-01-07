@@ -69,6 +69,98 @@ func TestPureDKGFull(t *testing.T) {
 	}
 }
 
+func TestPureDKGCorrupt(t *testing.T) {
+	eon := uint64(5)
+	numKeypers := uint64(3)
+	threshold := uint64(2)
+
+	dkgs := []*PureDKG{}
+	for i := uint64(0); i < numKeypers; i++ {
+		dkg := NewPureDKG(eon, numKeypers, threshold, i)
+		dkgs = append(dkgs, &dkg)
+	}
+	honestDKGs := dkgs[:len(dkgs)-1]
+	corruptDKG := dkgs[len(dkgs)-1]
+
+	// dealing phase
+	for _, dkg := range honestDKGs {
+		polyCommitmentMsg, polyEvalMsgs, err := dkg.StartPhase1Dealing()
+		require.Nil(t, err)
+
+		for _, receiverDKG := range dkgs {
+			require.Nil(t, receiverDKG.HandlePolyCommitmentMsg(polyCommitmentMsg))
+		}
+		for _, msg := range polyEvalMsgs {
+			require.Nil(t, dkgs[msg.Receiver].HandlePolyEvalMsg(msg))
+		}
+	}
+
+	// corrupt DKG sends invalid poly eval to first keyper
+	polyCommitmentMsg, polyEvalMsgs, err := corruptDKG.StartPhase1Dealing()
+	require.Nil(t, err)
+	for _, receiverDKG := range dkgs {
+		require.Nil(t, receiverDKG.HandlePolyCommitmentMsg(polyCommitmentMsg))
+	}
+	for _, msg := range polyEvalMsgs {
+		if msg.Receiver == 0 {
+			corruptMsg := PolyEvalMsg{
+				Eon:      msg.Eon,
+				Sender:   msg.Sender,
+				Receiver: msg.Receiver,
+				Eval:     big.NewInt(666),
+			}
+			require.Nil(t, dkgs[msg.Receiver].HandlePolyEvalMsg(corruptMsg))
+		} else {
+			require.Nil(t, dkgs[msg.Receiver].HandlePolyEvalMsg(msg))
+		}
+	}
+
+	// accusation phase
+	for _, dkg := range dkgs[1:] {
+		accusations := dkg.StartPhase2Accusing()
+		require.Zero(t, len(accusations))
+	}
+	accusations := dkgs[0].StartPhase2Accusing()
+	require.Equal(t, 1, len(accusations))
+	for _, dkg := range dkgs {
+		dkg.HandleAccusationMsg(accusations[0])
+	}
+
+	// apology phase
+	for _, dkg := range honestDKGs {
+		apologies := dkg.StartPhase3Apologizing()
+		require.Zero(t, len(apologies))
+	}
+	apologies := corruptDKG.StartPhase3Apologizing()
+	require.Equal(t, 1, len(apologies))
+	for _, dkg := range dkgs {
+		msg := ApologyMsg{
+			Eon:     apologies[0].Eon,
+			Accuser: apologies[0].Accuser,
+			Accused: apologies[0].Accused,
+			Eval:    big.NewInt(121212),
+		}
+		dkg.HandleApologyMsg(msg)
+	}
+
+	// finalize
+	for _, dkg := range dkgs {
+		dkg.Finalize()
+	}
+
+	skShares := []*crypto.EonSKShare{}
+	eonPKs := []*crypto.EonPK{}
+	for _, dkg := range dkgs {
+		skShare, eonPK, err := dkg.ComputeResult()
+		require.Nil(t, err)
+		skShares = append(skShares, skShare)
+		eonPKs = append(eonPKs, eonPK)
+	}
+	for _, eonPK := range eonPKs {
+		require.True(t, reflect.DeepEqual(eonPK, eonPKs[0]))
+	}
+}
+
 func TestDealingSendsCorrectMsgs(t *testing.T) {
 	eon := uint64(5)
 	numKeypers := uint64(3)
