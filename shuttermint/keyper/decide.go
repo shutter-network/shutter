@@ -47,6 +47,10 @@ type DKG struct {
 	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
 }
 
+func (dkg *DKG) ShortInfo() string {
+	return fmt.Sprintf("eon=%d, #keypers=%d, phase=%s", dkg.Eon, len(dkg.Keypers), dkg.Pure.Phase)
+}
+
 // newApology create a new shmsg apology message from the given puredkg apologies
 func (dkg *DKG) newApology(apologies []puredkg.ApologyMsg) *shmsg.Message {
 	var accusers []common.Address

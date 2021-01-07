@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -121,11 +122,16 @@ func (kpr *Keyper2) sync(ctx context.Context) error {
 }
 
 func (kpr *Keyper2) ShortInfo() string {
+	var dkgInfo []string
+	for _, dkg := range kpr.State.DKGs {
+		dkgInfo = append(dkgInfo, dkg.ShortInfo())
+	}
 	return fmt.Sprintf(
-		"shutter block %d, main chain %d, last eon started %d",
+		"shutter block %d, main chain %d, last eon started %d, DKGs: %s",
 		kpr.Shutter.CurrentBlock,
 		kpr.MainChain.CurrentBlock,
 		kpr.State.LastEonStarted,
+		strings.Join(dkgInfo, " - "),
 	)
 }
 

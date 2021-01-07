@@ -39,6 +39,7 @@ require (
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/text v0.3.4 // indirect
+	golang.org/x/tools v0.0.0-20201118003311-bd56c0adb394
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	mvdan.cc/gofumpt v0.0.0-20200802201014-ab5a8192947d
