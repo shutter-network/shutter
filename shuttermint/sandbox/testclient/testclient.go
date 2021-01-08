@@ -36,9 +36,9 @@ func makeMessage() *shmsg.MessageWithNonce {
 	}
 }
 
-func printEvents(events []abcitypes.Event) {
+func printEvents(events []abcitypes.Event, height int64) {
 	for _, ev := range events {
-		x, err := shutterevents.MakeEvent(ev)
+		x, err := shutterevents.MakeEvent(ev, height)
 		if err != nil {
 			fmt.Println(err)
 		} else {
@@ -58,7 +58,7 @@ func txsearch(cl client.Client) {
 	fmt.Println("transaction count", res.TotalCount)
 	for _, tx := range res.Txs {
 		fmt.Printf("=== tx height=%d\n", tx.Height)
-		printEvents(tx.TxResult.GetEvents())
+		printEvents(tx.TxResult.GetEvents(), tx.Height)
 	}
 }
 
@@ -84,7 +84,7 @@ func subscribe(cl client.Client) {
 		for e := range txs {
 			d := e.Data.(types.EventDataTx)
 			events := d.TxResult.Result.Events
-			printEvents(events)
+			printEvents(events, d.Height)
 		}
 	}()
 	time.Sleep(time.Hour)

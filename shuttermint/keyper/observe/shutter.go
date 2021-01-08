@@ -55,7 +55,7 @@ type Batch struct {
 
 func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 	for _, ev := range events {
-		x, err := shutterevents.MakeEvent(ev)
+		x, err := shutterevents.MakeEvent(ev, height)
 		if err != nil {
 			log.Printf("Error: malformed event: %s ev=%+v", err, ev)
 		} else {
