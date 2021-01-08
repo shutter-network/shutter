@@ -71,7 +71,7 @@ type PureDKG struct {
 	Polynomial  *crypto.Polynomial
 	Commitments []*crypto.Gammas
 	Evals       []*big.Int
-	Accusations map[accusationKey]bool
+	Accusations map[accusationKey]struct{}
 	Apologies   map[accusationKey]*big.Int
 }
 
@@ -84,7 +84,7 @@ func NewPureDKG(eon uint64, numKeypers uint64, threshold uint64, keyper KeyperIn
 		Keyper:      keyper,
 		Commitments: make([]*crypto.Gammas, numKeypers),
 		Evals:       make([]*big.Int, numKeypers),
-		Accusations: make(map[accusationKey]bool),
+		Accusations: make(map[accusationKey]struct{}),
 		Apologies:   make(map[accusationKey]*big.Int),
 	}
 }
@@ -263,8 +263,8 @@ func (pure *PureDKG) isCorrupt(dealer KeyperIndex) bool {
 	}
 
 	// a keyper is corrupt if they haven't apologized in case of an accusation
-	for accusationKey, accused := range pure.Accusations {
-		if !accused || accusationKey.Accused != dealer {
+	for accusationKey := range pure.Accusations {
+		if accusationKey.Accused != dealer {
 			continue
 		}
 		_, apologized := pure.Apologies[accusationKey]
@@ -336,7 +336,7 @@ func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
 		return fmt.Errorf("received duplicate accusation")
 	}
 
-	pure.Accusations[key] = true
+	pure.Accusations[key] = struct{}{}
 	return nil
 }
 
