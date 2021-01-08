@@ -44,6 +44,8 @@ type DKG struct {
 	Pure                 *puredkg.PureDKG
 	CommitmentsIndex     int
 	PolyEvalsIndex       int
+	AccusationsIndex     int
+	ApologiesIndex       int
 	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
 }
 
@@ -135,9 +137,68 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 	dkg.PolyEvalsIndex = len(eon.PolyEvals)
 }
 
+func (dkg *DKG) syncAccusations(eon observe.Eon) {
+	for i := dkg.AccusationsIndex; i < len(eon.Accusations); i++ {
+		accusation := eon.Accusations[i]
+		sender, err := medley.FindAddressIndex(dkg.Keypers, accusation.Sender)
+		if err != nil {
+			log.Printf("Error: cannot handle accusation. bad sender: %s", accusation.Sender.Hex())
+			continue
+		}
+		for _, accused := range accusation.Accused {
+			accusedIndex, err := medley.FindAddressIndex(dkg.Keypers, accused)
+			if err != nil {
+				log.Printf("Error in syncAccusations: %s", err)
+				continue
+			}
+			err = dkg.Pure.HandleAccusationMsg(
+				puredkg.AccusationMsg{
+					Eon:     dkg.Eon,
+					Accuser: uint64(sender),
+					Accused: uint64(accusedIndex),
+				})
+			if err != nil {
+				log.Printf("Error: cannot handle accusation: %s", err)
+			}
+		}
+	}
+	dkg.AccusationsIndex = len(eon.Accusations)
+}
+
+func (dkg *DKG) syncApologies(eon observe.Eon) {
+	for i := dkg.ApologiesIndex; i < len(eon.Apologies); i++ {
+		apology := eon.Apologies[i]
+		sender, err := medley.FindAddressIndex(dkg.Keypers, apology.Sender)
+		if err != nil {
+			log.Printf("Error: cannot handle apology. bad sender: %s", apology.Sender.Hex())
+			continue
+		}
+		for j, accuser := range apology.Accusers {
+			accuserIndex, err := medley.FindAddressIndex(dkg.Keypers, accuser)
+			if err != nil {
+				log.Printf("Error in syncApologies: %s", err)
+				continue
+			}
+			err = dkg.Pure.HandleApologyMsg(
+				puredkg.ApologyMsg{
+					Eon:     dkg.Eon,
+					Accuser: uint64(accuserIndex),
+					Accused: uint64(sender),
+					Eval:    apology.PolyEval[j],
+				})
+			if err != nil {
+				log.Printf("Error: cannot handle apology: %s", err)
+			}
+		}
+	}
+	dkg.ApologiesIndex = len(eon.Apologies)
+}
+
 func (dkg *DKG) syncWithEon(eon observe.Eon, decrypt decryptfn) {
 	dkg.syncCommitments(eon)
 	dkg.syncPolyEvals(eon, decrypt)
+	dkg.syncAccusations(eon)
+	dkg.syncApologies(eon)
 }
 
 // State is the keyper's internal state
