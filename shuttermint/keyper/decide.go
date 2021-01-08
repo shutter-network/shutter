@@ -77,6 +77,12 @@ func (dkg *DKG) newAccusation(accusations []puredkg.AccusationMsg) *shmsg.Messag
 func (dkg *DKG) syncCommitments(eon observe.Eon) {
 	for i := dkg.CommitmentsIndex; i < len(eon.Commitments); i++ {
 		comm := eon.Commitments[i]
+		phase := phaseLength.getPhaseAtHeight(comm.Height, eon.StartHeight)
+		if phase != puredkg.Dealing {
+			log.Printf("Warning: received commitment in wrong phase %s: %+v", phase, comm)
+			continue
+		}
+
 		sender, err := medley.FindAddressIndex(dkg.Keypers, comm.Sender)
 		if err != nil {
 			continue
@@ -96,6 +102,11 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 	keyperIndex := dkg.Pure.Keyper
 	for i := dkg.PolyEvalsIndex; i < len(eon.PolyEvals); i++ {
 		eval := eon.PolyEvals[i]
+		phase := phaseLength.getPhaseAtHeight(eval.Height, eon.StartHeight)
+		if phase != puredkg.Dealing {
+			log.Printf("Warning: received polyeval in wrong phase %s: %+v", phase, eval)
+			continue
+		}
 
 		sender, err := medley.FindAddressIndex(dkg.Keypers, eval.Sender)
 		if err != nil {
@@ -140,6 +151,12 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 func (dkg *DKG) syncAccusations(eon observe.Eon) {
 	for i := dkg.AccusationsIndex; i < len(eon.Accusations); i++ {
 		accusation := eon.Accusations[i]
+		phase := phaseLength.getPhaseAtHeight(accusation.Height, eon.StartHeight)
+		if phase != puredkg.Accusing {
+			log.Printf("Warning: received accusation in wrong phase %s: %+v", phase, accusation)
+			continue
+		}
+
 		sender, err := medley.FindAddressIndex(dkg.Keypers, accusation.Sender)
 		if err != nil {
 			log.Printf("Error: cannot handle accusation. bad sender: %s", accusation.Sender.Hex())
@@ -168,6 +185,12 @@ func (dkg *DKG) syncAccusations(eon observe.Eon) {
 func (dkg *DKG) syncApologies(eon observe.Eon) {
 	for i := dkg.ApologiesIndex; i < len(eon.Apologies); i++ {
 		apology := eon.Apologies[i]
+		phase := phaseLength.getPhaseAtHeight(apology.Height, eon.StartHeight)
+		if phase != puredkg.Apologizing {
+			log.Printf("Warning: received apology in wrong phase %s: %+v", phase, apology)
+			continue
+		}
+
 		sender, err := medley.FindAddressIndex(dkg.Keypers, apology.Sender)
 		if err != nil {
 			log.Printf("Error: cannot handle apology. bad sender: %s", apology.Sender.Hex())
