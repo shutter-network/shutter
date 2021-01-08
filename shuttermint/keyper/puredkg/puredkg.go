@@ -98,7 +98,7 @@ func (pure *PureDKG) setPhase(p Phase) {
 
 func (pure *PureDKG) checkPhase(maxPhase Phase) error {
 	if pure.Phase > maxPhase {
-		return fmt.Errorf("received msg for phase %d in phase %d", maxPhase, pure.Phase)
+		return fmt.Errorf("received msg for phase '%s' in phase '%s'", maxPhase, pure.Phase)
 	}
 	return nil
 }
