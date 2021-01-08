@@ -100,7 +100,7 @@ type ShutterApp struct {
 	LastSaved       time.Time
 	LastBlockHeight int64
 	Identities      map[common.Address]ValidatorPubkey
-	StartedVotes    map[common.Address]bool
+	StartedVotes    map[common.Address]struct{}
 	Validators      Powermap
 	EONCounter      uint64
 	DevMode         bool

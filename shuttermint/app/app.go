@@ -77,7 +77,7 @@ func NewShutterApp() *ShutterApp {
 		ConfigVoting:    NewConfigVoting(),
 		EonStartVotings: make(map[uint64]*EonStartVoting),
 		Identities:      make(map[common.Address]ValidatorPubkey),
-		StartedVotes:    make(map[common.Address]bool),
+		StartedVotes:    make(map[common.Address]struct{}),
 		CheckTxState:    NewCheckTxState(),
 		NonceTracker:    NewNonceTracker(),
 		ChainID:         "", // will be set in InitChain
@@ -437,7 +437,7 @@ func (app *ShutterApp) deliverBatchConfigStarted(msg *shmsg.BatchConfigStarted, 
 	}
 
 	if !lastBatchConfig.Started {
-		app.StartedVotes[sender] = true
+		app.StartedVotes[sender] = struct{}{}
 	}
 
 	return abcitypes.ResponseDeliverTx{
@@ -742,7 +742,7 @@ func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Respons
 		if uint64(len(app.StartedVotes)) >= currentConfig.Threshold {
 			log.Printf("starting config %d", lastConfig.ConfigIndex)
 			lastConfig.Started = true
-			app.StartedVotes = make(map[common.Address]bool)
+			app.StartedVotes = make(map[common.Address]struct{})
 		}
 	}
 
