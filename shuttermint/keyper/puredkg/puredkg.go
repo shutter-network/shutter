@@ -2,7 +2,7 @@
 driven from the outside.
 */
 
-//go:generate stringer -type=phase
+//go:generate stringer -type=Phase
 package puredkg
 
 import (
@@ -15,11 +15,11 @@ import (
 
 type (
 	KeyperIndex = uint64
-	phase       int
+	Phase       int
 )
 
 const (
-	Off = phase(iota)
+	Off = Phase(iota)
 	Dealing
 	Accusing
 	Apologizing
@@ -63,7 +63,7 @@ type accusationKey struct {
 
 // PureDKG implements the distributed key generation process for a single keyper
 type PureDKG struct {
-	Phase       phase
+	Phase       Phase
 	Eon         uint64
 	NumKeypers  uint64
 	Threshold   uint64
@@ -89,14 +89,14 @@ func NewPureDKG(eon uint64, numKeypers uint64, threshold uint64, keyper KeyperIn
 	}
 }
 
-func (pure *PureDKG) setPhase(p phase) {
+func (pure *PureDKG) setPhase(p Phase) {
 	if p != pure.Phase+1 {
 		panic("wrong phase")
 	}
 	pure.Phase = p
 }
 
-func (pure *PureDKG) checkPhase(maxPhase phase) error {
+func (pure *PureDKG) checkPhase(maxPhase Phase) error {
 	if pure.Phase > maxPhase {
 		return fmt.Errorf("received msg for phase %d in phase %d", maxPhase, pure.Phase)
 	}
@@ -110,7 +110,7 @@ func (pure *PureDKG) checkEon(eon uint64) error {
 	return nil
 }
 
-func (pure *PureDKG) checkEonAndPhase(eon uint64, maxPhase phase) error {
+func (pure *PureDKG) checkEonAndPhase(eon uint64, maxPhase Phase) error {
 	if err := pure.checkEon(eon); err != nil {
 		return err
 	}

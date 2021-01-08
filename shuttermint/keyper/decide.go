@@ -194,13 +194,6 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 	dkg.ApologiesIndex = len(eon.Apologies)
 }
 
-func (dkg *DKG) syncWithEon(eon observe.Eon, decrypt decryptfn) {
-	dkg.syncCommitments(eon)
-	dkg.syncPolyEvals(eon, decrypt)
-	dkg.syncAccusations(eon)
-	dkg.syncApologies(eon)
-}
-
 // State is the keyper's internal state
 type State struct {
 	CheckinMessageSent       bool
@@ -347,6 +340,22 @@ type PhaseLength struct {
 	Apologizing int64
 }
 
+func (plen *PhaseLength) getPhaseAtHeight(height int64, eonStartHeight int64) puredkg.Phase {
+	if height < eonStartHeight+plen.Off {
+		return puredkg.Off
+	}
+	if height < eonStartHeight+plen.Dealing {
+		return puredkg.Dealing
+	}
+	if height < eonStartHeight+plen.Accusing {
+		return puredkg.Accusing
+	}
+	if height < eonStartHeight+plen.Apologizing {
+		return puredkg.Apologizing
+	}
+	return puredkg.Finalized
+}
+
 var phaseLength = PhaseLength{
 	Off:         0,
 	Dealing:     30,
@@ -432,39 +441,42 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 	dkg.Pure.Finalize()
 }
 
-func (dcdr *Decider) dkgStartNextPhase(dkg *DKG, eon *observe.Eon) {
-	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Off &&
-		dkg.Pure.Phase <= puredkg.Off {
+func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
+	decrypt := func(encrypted []byte) ([]byte, error) {
+		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
+	}
+
+	phaseAtCurrentHeight := phaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock, eon.StartHeight)
+
+	if dkg.Pure.Phase == puredkg.Off && phaseAtCurrentHeight >= puredkg.Dealing {
 		dcdr.startPhase1Dealing(dkg)
 	}
-	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Dealing &&
-		dkg.Pure.Phase <= puredkg.Dealing {
+	dkg.syncCommitments(eon)
+	dkg.syncPolyEvals(eon, decrypt)
+
+	if dkg.Pure.Phase == puredkg.Dealing && phaseAtCurrentHeight >= puredkg.Accusing {
 		dcdr.startPhase2Accusing(dkg)
 	}
+	dkg.syncAccusations(eon)
 
-	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Accusing &&
-		dkg.Pure.Phase <= puredkg.Accusing {
+	if dkg.Pure.Phase == puredkg.Accusing && phaseAtCurrentHeight >= puredkg.Apologizing {
 		dcdr.startPhase3Apologizing(dkg)
 	}
+	dkg.syncApologies(eon)
 
-	if dcdr.Shutter.CurrentBlock >= eon.StartHeight+phaseLength.Apologizing &&
-		dkg.Pure.Phase <= puredkg.Apologizing {
+	if dkg.Pure.Phase == puredkg.Apologizing && phaseAtCurrentHeight >= puredkg.Finalized {
 		dcdr.dkgFinalize(dkg)
 	}
 }
 
 func (dcdr *Decider) handleDKGs() {
-	decrypt := func(encrypted []byte) ([]byte, error) {
-		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
-	}
 	for i := range dcdr.State.DKGs {
 		dkg := &dcdr.State.DKGs[i]
 		eon, err := dcdr.Shutter.FindEon(dkg.Eon)
 		if err != nil {
 			panic(err)
 		}
-		dkg.syncWithEon(*eon, decrypt)
-		dcdr.dkgStartNextPhase(dkg, eon)
+		dcdr.syncDKGWithEon(dkg, *eon)
 		dcdr.sendPolyEvals(dkg)
 	}
 }
