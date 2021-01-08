@@ -21,6 +21,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 )
 
+const runSleepTime = 10 * time.Second
+
 type Keyper2 struct {
 	Config    KeyperConfig
 	State     *State
@@ -91,14 +93,6 @@ func (kpr *Keyper2) init() error {
 
 	kpr.ContractCaller, err = NewContractCallerFromConfig(kpr.Config)
 	return err
-
-	// executor := Executor{
-	//	ctx:                   kpr.ctx,
-	//	client:                kpr.ethcl,
-	//	cc:                    &contractCaller,
-	//	cipherExecutionParams: kpr.cipherExecutionParams,
-	// }
-	// kpr.executor = executor
 }
 
 func (kpr *Keyper2) syncMain(ctx context.Context) error {
@@ -150,7 +144,7 @@ func (kpr *Keyper2) Run() error {
 
 		log.Println(kpr.ShortInfo())
 		kpr.runOneStep(ctx)
-		time.Sleep(10 * time.Second)
+		time.Sleep(runSleepTime)
 	}
 }
 
