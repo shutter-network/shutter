@@ -37,9 +37,12 @@ contract BatcherContract is Ownable {
     // The minimum fee required to add a transaction to a batch.
     uint64 public minFee;
 
-    constructor(address _configContractAddress, address _feeBankAddress) {
-        configContract = ConfigContract(_configContractAddress);
-        feeBankContract = FeeBankContract(_feeBankAddress);
+    constructor(
+        ConfigContract _configContract,
+        FeeBankContract _feeBankContract
+    ) {
+        configContract = _configContract;
+        feeBankContract = _feeBankContract;
     }
 
     /// @notice Add a transaction to a batch.

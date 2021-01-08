@@ -34,8 +34,8 @@ contract DepositContract is IERC777Recipient {
     address private _slasher;
     mapping(address => Deposit) private _deposits;
 
-    constructor(address token) {
-        _token = IERC777(token);
+    constructor(IERC777 token) {
+        _token = token;
 
         _erc1820.setInterfaceImplementer(
             address(this),
