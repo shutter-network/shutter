@@ -2,13 +2,13 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import {ConfigContract} from "./ConfigContract.sol";
-import {FeeBankContract} from "./FeeBankContract.sol";
-import {BatcherContract} from "./BatcherContract.sol";
-import {ExecutorContract} from "./ExecutorContract.sol";
-import {TestDepositTokenContract} from "./TestDepositTokenContract.sol";
-import {DepositContract} from "./DepositContract.sol";
-import {KeyperSlasher} from "./KeyperSlasher.sol";
+import "./ConfigContract.sol";
+import "./FeeBankContract.sol";
+import "./BatcherContract.sol";
+import "./ExecutorContract.sol";
+import "./TestDepositTokenContract.sol";
+import "./DepositContract.sol";
+import "./KeyperSlasher.sol";
 
 contract Deployer {
     event Deployed(
