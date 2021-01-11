@@ -14,13 +14,27 @@ import (
 // work. The only source for the data stored in this struct should be the ethereum node.  The
 // SyncToHead method can be used to update the data. All other accesses should be read-only.
 type MainChain struct {
-	CurrentBlock uint64
-	BatchConfigs []contract.BatchConfig
+	CurrentBlock      uint64
+	BatchConfigs      []contract.BatchConfig
+	Batches           map[uint64]*Batch
+	ExecutionHalfStep uint64
+}
+
+// Batch stores the encrypted and plain transactions submitted to the batching contract for a
+// particular index.
+type Batch struct {
+	BatchIndex            uint64
+	EncryptedBatchHash    common.Hash
+	EncryptedTransactions [][]byte
+	PlainTransactions     [][]byte
+	PlainBatchHash        common.Hash
 }
 
 // NewMainChain creates an empty MainChain struct
 func NewMainChain() *MainChain {
-	return &MainChain{}
+	return &MainChain{
+		Batches: make(map[uint64]*Batch),
+	}
 }
 
 // IsActiveKeyper checks if the given address is registered as a keyper in one of the active batch
@@ -64,10 +78,53 @@ func (mainchain *MainChain) syncConfigs(configContract *contract.ConfigContract,
 	return nil
 }
 
+func (mainchain *MainChain) syncBatches(batcherContract *contract.BatcherContract, filter *bind.FilterOpts) error {
+	it, err := batcherContract.FilterTransactionAdded(filter)
+	if err != nil {
+		return err
+	}
+
+	events := []*contract.BatcherContractTransactionAdded{}
+	for it.Next() {
+		events = append(events, it.Event)
+	}
+	if it.Error() != nil {
+		return it.Error()
+	}
+
+	for _, event := range events {
+		mainchain.addTransaction(event)
+	}
+
+	return nil
+}
+
+// AddTransaction adds a transaction to a batch according to a main chain TransactionAdded event.
+func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransactionAdded) {
+	batch, ok := mainchain.Batches[event.BatchIndex]
+	if !ok {
+		batch.BatchIndex = event.BatchIndex
+		// for the rest of the fields, the zero values are fine
+	}
+
+	switch event.TransactionType {
+	case contract.TransactionTypeCipher:
+		batch.EncryptedTransactions = append(batch.EncryptedTransactions, event.Transaction)
+		batch.EncryptedBatchHash = event.BatchHash
+	case contract.TransactionTypePlain:
+		batch.PlainTransactions = append(batch.EncryptedTransactions, event.Transaction)
+		batch.PlainBatchHash = event.BatchHash
+	default:
+		panic("unknown transaction type")
+	}
+
+	mainchain.Batches[event.BatchIndex] = batch
+}
+
 // SyncToHead fetches the latest state from the ethereum node.
 // XXX this mutates the object in place. we may want to control mutation of the MainChain struct.
 // XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
-func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Client, configContract *contract.ConfigContract) error {
+func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Client, configContract *contract.ConfigContract, batcherContract *contract.BatcherContract) error {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return err
@@ -82,8 +139,17 @@ func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Cli
 		BlockNumber: latestBlockHeader.Number,
 		Context:     ctx,
 	}
+	filter := &bind.FilterOpts{
+		Start: mainchain.CurrentBlock,
+		End:   &latestBlockNumber,
+	}
 
 	err = mainchain.syncConfigs(configContract, opts)
+	if err != nil {
+		return err
+	}
+
+	err = mainchain.syncBatches(batcherContract, filter)
 	if err != nil {
 		return err
 	}

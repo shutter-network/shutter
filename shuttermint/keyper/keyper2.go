@@ -96,7 +96,7 @@ func (kpr *Keyper2) init() error {
 }
 
 func (kpr *Keyper2) syncMain(ctx context.Context) error {
-	return kpr.MainChain.SyncToHead(ctx, kpr.ContractCaller.Ethclient, kpr.ContractCaller.ConfigContract)
+	return kpr.MainChain.SyncToHead(ctx, kpr.ContractCaller.Ethclient, kpr.ContractCaller.ConfigContract, kpr.ContractCaller.BatcherContract)
 }
 
 func (kpr *Keyper2) syncShutter(ctx context.Context) error {
