@@ -25,7 +25,7 @@ type Shutter struct {
 	CurrentBlock         int64
 	KeyperEncryptionKeys map[common.Address]*ecies.PublicKey
 	BatchConfigs         []shutterevents.BatchConfig
-	Batches              map[uint64]*Batch
+	Batches              map[uint64]*BatchData
 	Eons                 []Eon
 }
 
@@ -34,7 +34,7 @@ func NewShutter() *Shutter {
 	return &Shutter{
 		CurrentBlock:         -1,
 		KeyperEncryptionKeys: make(map[common.Address]*ecies.PublicKey),
-		Batches:              make(map[uint64]*Batch),
+		Batches:              make(map[uint64]*BatchData),
 	}
 }
 
@@ -48,7 +48,7 @@ type Eon struct {
 	Apologies   []shutterevents.Apology
 }
 
-type Batch struct {
+type BatchData struct {
 	BatchIndex           uint64
 	DecryptionSignatures []shutterevents.DecryptionSignature
 }
@@ -64,10 +64,10 @@ func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 	}
 }
 
-func (shutter *Shutter) getBatch(batchIndex uint64) *Batch {
+func (shutter *Shutter) getBatchData(batchIndex uint64) *BatchData {
 	b, ok := shutter.Batches[batchIndex]
 	if !ok {
-		b = &Batch{BatchIndex: batchIndex}
+		b = &BatchData{BatchIndex: batchIndex}
 		shutter.Batches[batchIndex] = b
 	}
 	return b
@@ -100,7 +100,7 @@ func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
 	case shutterevents.BatchConfig:
 		shutter.BatchConfigs = append(shutter.BatchConfigs, e)
 	case shutterevents.DecryptionSignature:
-		b := shutter.getBatch(e.BatchIndex)
+		b := shutter.getBatchData(e.BatchIndex)
 		b.DecryptionSignatures = append(b.DecryptionSignatures, e)
 	case shutterevents.EonStarted:
 		idx := shutter.searchEon(e.Eon)
