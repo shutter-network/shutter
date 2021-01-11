@@ -95,13 +95,13 @@ func TestMessageParsing(t *testing.T) {
 		require.NotNil(t, err)
 	})
 
-	t.Run("ParseEpochSKShareMsg", func(t *testing.T) {
-		smsg := shmsg.EpochSKShare{
+	t.Run("ParseEpochSecretKeyShareMsg", func(t *testing.T) {
+		smsg := shmsg.EpochSecretKeyShare{
 			Eon:          eon,
 			Epoch:        epoch,
 			EpochSkShare: []byte{},
 		}
-		msg, err := ParseEpochSKShareMsg(&smsg, sender)
+		msg, err := ParseEpochSecretKeyShareMsg(&smsg, sender)
 		require.Nil(t, err)
 		require.Equal(t, sender, msg.Sender)
 		require.Equal(t, eon, msg.Eon)

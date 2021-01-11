@@ -56,8 +56,8 @@ func TestPureDKGFull(t *testing.T) {
 		dkg.Finalize()
 	}
 
-	skShares := []*crypto.EonSKShare{}
-	eonPKs := []*crypto.EonPK{}
+	skShares := []*crypto.EonSecretKeyShare{}
+	eonPKs := []*crypto.EonPublicKey{}
 	for _, dkg := range dkgs {
 		skShare, eonPK, err := dkg.ComputeResult()
 		require.Nil(t, err)
@@ -148,8 +148,8 @@ func TestPureDKGCorrupt(t *testing.T) {
 		dkg.Finalize()
 	}
 
-	skShares := []*crypto.EonSKShare{}
-	eonPKs := []*crypto.EonPK{}
+	skShares := []*crypto.EonSecretKeyShare{}
+	eonPKs := []*crypto.EonPublicKey{}
 	for _, dkg := range dkgs {
 		skShare, eonPK, err := dkg.ComputeResult()
 		require.Nil(t, err)

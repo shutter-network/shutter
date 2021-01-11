@@ -215,25 +215,25 @@ func TestRoundTrip(t *testing.T) {
 		gammas = append(gammas, p.Gammas())
 	}
 
-	eonSKShares := []*EonSKShare{}
-	eonPKShares := []*EonPKShare{}
-	epochSKShares := []*EpochSKShare{}
-	eonSK := big.NewInt(0)
+	eonSecretKeyShares := []*EonSecretKeyShare{}
+	eonPublicKeyShares := []*EonPublicKeyShare{}
+	epochSecretKeyShares := []*EpochSecretKeyShare{}
+	eonSecretKey := big.NewInt(0)
 	for i := 0; i < n; i++ {
-		eonSK.Add(eonSK, ps[i].Eval(big.NewInt(0)))
+		eonSecretKey.Add(eonSecretKey, ps[i].Eval(big.NewInt(0)))
 
 		ss := []*big.Int{}
 		for j := 0; j < n; j++ {
 			s := ps[j].EvalForKeyper(i)
 			ss = append(ss, s)
 		}
-		eonSKShares = append(eonSKShares, ComputeEonSKShare(ss))
-		eonPKShares = append(eonPKShares, ComputeEonPKShare(i, gammas))
-		epochSKShares = append(epochSKShares, ComputeEpochSKShare(eonSKShares[i], epochID))
+		eonSecretKeyShares = append(eonSecretKeyShares, ComputeEonSecretKeyShare(ss))
+		eonPublicKeyShares = append(eonPublicKeyShares, ComputeEonPublicKeyShare(i, gammas))
+		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
-	eonPK := ComputeEonPK(gammas)
-	require.True(t, EqualG2(new(bn256.G2).ScalarBaseMult(eonSK), (*bn256.G2)(eonPK)))
-	epochSK, err := ComputeEpochSK([]int{0, 1}, []*EpochSKShare{epochSKShares[0], epochSKShares[1]}, threshold)
+	eonPublicKey := ComputeEonPublicKey(gammas)
+	require.True(t, EqualG2(new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey)))
+	epochSecretKey, err := ComputeEpochSecretKey([]int{0, 1}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]}, threshold)
 	require.Nil(t, err)
 
 	// now encrypt and decrypt message
@@ -241,8 +241,8 @@ func TestRoundTrip(t *testing.T) {
 	sigma, err := RandomSigma(rand.Reader)
 	require.Nil(t, err)
 
-	encM := Encrypt(m, eonPK, epochID, sigma)
-	decM, err := encM.Decrypt(epochSK)
+	encM := Encrypt(m, eonPublicKey, epochID, sigma)
+	decM, err := encM.Decrypt(epochSecretKey)
 	require.Nil(t, err)
 	require.True(t, bytes.Equal(m, decM))
 }

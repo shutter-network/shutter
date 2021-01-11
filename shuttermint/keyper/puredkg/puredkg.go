@@ -229,7 +229,7 @@ func (pure *PureDKG) ShortInfo() string {
 
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
 // error is returned if this is called before finalization or if too few keypers participated.
-func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) {
+func (pure *PureDKG) ComputeResult() (*crypto.EonSecretKeyShare, *crypto.EonPublicKey, error) {
 	if pure.Phase < Finalized {
 		return nil, nil, fmt.Errorf("dkg is not finalized yet")
 	}
@@ -263,8 +263,8 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) 
 	if uint64(numParticipants) < pure.Threshold {
 		return nil, nil, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
 	}
-	eonSKShare := crypto.ComputeEonSKShare(evals)
-	eonPK := crypto.ComputeEonPK(commitments)
+	eonSKShare := crypto.ComputeEonSecretKeyShare(evals)
+	eonPK := crypto.ComputeEonPublicKey(commitments)
 	return eonSKShare, eonPK, nil
 }
 

@@ -7,64 +7,64 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
-// EonSKShare represents a share of the eon secret key.
-type EonSKShare big.Int
+// EonSecretKeyShare represents a share of the eon secret key.
+type EonSecretKeyShare big.Int
 
-// EonPKShare represents a share of the eon public key.
-type EonPKShare bn256.G2
+// EonPublicKeyShare represents a share of the eon public key.
+type EonPublicKeyShare bn256.G2
 
-// EonPK represents the combined eon public key.
-type EonPK bn256.G2
+// EonPublicKey represents the combined eon public key.
+type EonPublicKey bn256.G2
 
 // EpochID is the identifier of an epoch.
 type EpochID bn256.G1
 
-// EpochSKShare represents a keyper's share of the epoch sk key.
-type EpochSKShare bn256.G1
+// EpochSecretKeyShare represents a keyper's share of the epoch sk key.
+type EpochSecretKeyShare bn256.G1
 
-// EpochSK represents an epoch secret key.
-type EpochSK bn256.G1
+// EpochSecretKey represents an epoch secret key.
+type EpochSecretKey bn256.G1
 
-// ComputeEonSKShare computes the a keyper's sk share from the set of poly evals received from the
+// ComputeEonSecretKeyShare computes the a keyper's sk share from the set of poly evals received from the
 // other keypers.
-func ComputeEonSKShare(polyEvals []*big.Int) *EonSKShare {
+func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 	res := big.NewInt(0)
 	for _, si := range polyEvals {
 		res.Add(res, si)
 		res.Mod(res, bn256.Order)
 	}
-	share := EonSKShare(*res)
+	share := EonSecretKeyShare(*res)
 	return &share
 }
 
-// ComputeEonPKShare computes the eon public key share of the given keyper.
-func ComputeEonPKShare(keyperIndex int, gammas []*Gammas) *EonPKShare {
+// ComputeEonPublicKeyShare computes the eon public key share of the given keyper.
+func ComputeEonPublicKeyShare(keyperIndex int, gammas []*Gammas) *EonPublicKeyShare {
 	g2 := new(bn256.G2).Set(zeroG2)
 	keyperX := KeyperX(keyperIndex)
 	for _, gs := range gammas {
 		pi := gs.Pi(keyperX)
 		g2 = new(bn256.G2).Add(g2, pi)
 	}
-	epk := EonPKShare(*g2)
+	epk := EonPublicKeyShare(*g2)
 	return &epk
 }
 
-// ComputeEonPK computes the combined eon public key from the set of eon public key shares.
-func ComputeEonPK(gammas []*Gammas) *EonPK {
+// ComputeEonPublicKey computes the combined eon public key from the set of eon public key shares.
+func ComputeEonPublicKey(gammas []*Gammas) *EonPublicKey {
 	g2 := new(bn256.G2).Set(zeroG2)
 	for _, gs := range gammas {
 		pi := gs.Pi(big.NewInt(0))
 		g2 = new(bn256.G2).Add(g2, pi)
 	}
-	epk := EonPK(*g2)
+	epk := EonPublicKey(*g2)
 	return &epk
 }
 
-// ComputeEpochSKShare computes a keyper's epoch sk share.
-func ComputeEpochSKShare(eonSKShare *EonSKShare, epochID *EpochID) *EpochSKShare {
-	g1 := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSKShare))
-	epochSKShare := EpochSKShare(*g1)
-	return &epochSKShare
+// ComputeEpochSecretKeyShare computes a keyper's epoch sk share.
+func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *EpochID) *EpochSecretKeyShare {
+	g1 := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
+	epochSecretKeyShare := EpochSecretKeyShare(*g1)
+	return &epochSecretKeyShare
 }
 
 // ComputeEpochID computes the id of the given epoch.
@@ -74,10 +74,10 @@ func ComputeEpochID(epochIndex uint64) *EpochID {
 	return &id
 }
 
-// ComputeEpochSK computes the epoch secret key from a set of shares.
-func ComputeEpochSK(keyperIndices []int, epochSKShares []*EpochSKShare, threshold uint64) (*EpochSK, error) {
-	if len(keyperIndices) != len(epochSKShares) {
-		return nil, fmt.Errorf("got %d keyper indices, but %d secret shares", len(keyperIndices), len(epochSKShares))
+// ComputeEpochSecretKey computes the epoch secret key from a set of shares.
+func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSecretKeyShare, threshold uint64) (*EpochSecretKey, error) {
+	if len(keyperIndices) != len(epochSecretKeyShares) {
+		return nil, fmt.Errorf("got %d keyper indices, but %d secret shares", len(keyperIndices), len(epochSecretKeyShares))
 	}
 	if uint64(len(keyperIndices)) != threshold {
 		return nil, fmt.Errorf("got %d shares, but threshold is %d", len(keyperIndices), threshold)
@@ -86,25 +86,25 @@ func ComputeEpochSK(keyperIndices []int, epochSKShares []*EpochSKShare, threshol
 	skG1 := new(bn256.G1).Set(zeroG1)
 	for i := 0; i < len(keyperIndices); i++ {
 		keyperIndex := keyperIndices[i]
-		share := epochSKShares[i]
+		share := epochSecretKeyShares[i]
 
 		lambda := lagrangeCoefficient(keyperIndex, keyperIndices)
 		qTimesLambda := new(bn256.G1).ScalarMult((*bn256.G1)(share), lambda)
 		skG1 = new(bn256.G1).Add(skG1, qTimesLambda)
 	}
-	sk := EpochSK(*skG1)
+	sk := EpochSecretKey(*skG1)
 	return &sk, nil
 }
 
-// VerifyEpochSKShare checks that an epoch sk share published by a keyper is correct.
-func VerifyEpochSKShare(epochSKShare *EpochSKShare, eonPKShare *EonPKShare, epochID *EpochID) bool {
+// VerifyEpochSecretKeyShare checks that an epoch sk share published by a keyper is correct.
+func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPublicKeyShare *EonPublicKeyShare, epochID *EpochID) bool {
 	g1s := []*bn256.G1{
-		(*bn256.G1)(epochSKShare),
+		(*bn256.G1)(epochSecretKeyShare),
 		new(bn256.G1).Neg((*bn256.G1)(epochID)),
 	}
 	g2s := []*bn256.G2{
 		new(bn256.G2).ScalarBaseMult(big.NewInt(1)),
-		(*bn256.G2)(eonPKShare),
+		(*bn256.G2)(eonPublicKeyShare),
 	}
 	return bn256.PairingCheck(g1s, g2s)
 }

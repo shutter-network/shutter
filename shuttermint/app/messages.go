@@ -134,12 +134,12 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 	}, nil
 }
 
-// ParseEpochSKShareMsg converts a shmsg.ESKShareMsg to an app.ESKShareMsg
-func ParseEpochSKShareMsg(msg *shmsg.EpochSKShare, sender common.Address) (*EpochSKShareMsg, error) {
-	return &EpochSKShareMsg{
-		Sender:       sender,
-		Eon:          msg.Eon,
-		Epoch:        msg.Epoch,
-		EpochSKShare: msg.EpochSkShare,
+// ParseEpochSecretKeyShareMsg converts a shmsg.EpochSecretKeyShareMsg to an app.EpochSecretShareMsg
+func ParseEpochSecretKeyShareMsg(msg *shmsg.EpochSecretKeyShare, sender common.Address) (*EpochSecretKeyShareMsg, error) {
+	return &EpochSecretKeyShareMsg{
+		Sender:              sender,
+		Eon:                 msg.Eon,
+		Epoch:               msg.Epoch,
+		EpochSecretKeyShare: msg.EpochSkShare,
 	}, nil
 }

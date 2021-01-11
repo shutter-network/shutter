@@ -67,14 +67,14 @@ func RandomSigma(r io.Reader) (Block, error) {
 	return b, nil
 }
 
-// Encrypt encrypts a message for the epoch given by its id. It uses the eon pk and randomness
+// Encrypt encrypts a message for the epoch given by its id. It uses the eon public key and randomness
 // provided in sigma.
-func Encrypt(message []byte, eonPK *EonPK, epochID *EpochID, sigma Block) *EncryptedMessage {
+func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma Block) *EncryptedMessage {
 	messageBlocks := PadMessage(message)
 	r := computeR(sigma)
 	result := EncryptedMessage{
 		C1: computeC1(r),
-		C2: computeC2(sigma, r, epochID, eonPK),
+		C2: computeC2(sigma, r, epochID, eonPublicKey),
 		C3: computeC3(messageBlocks, sigma),
 	}
 	return &result
@@ -88,8 +88,8 @@ func computeC1(r *big.Int) *bn256.G2 {
 	return new(bn256.G2).ScalarBaseMult(r)
 }
 
-func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPK *EonPK) Block {
-	pairing := bn256.Pair((*bn256.G1)(epochID), (*bn256.G2)(eonPK))
+func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPublicKey) Block {
+	pairing := bn256.Pair((*bn256.G1)(epochID), (*bn256.G2)(eonPublicKey))
 	preimage := new(bn256.GT).ScalarMult(pairing, r)
 	key := HashGTToBlock(preimage)
 	return XORBlocks(sigma, key)
@@ -119,15 +119,15 @@ func computeBlockKeys(sigma Block, n int) []Block {
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
-func (m *EncryptedMessage) Decrypt(epochSK *EpochSK) ([]byte, error) {
-	sigma := m.Sigma(epochSK)
+func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, error) {
+	sigma := m.Sigma(epochSecretKey)
 	decryptedBlocks := decryptBlocks(m.C3, sigma)
 	return UnpadMessage(decryptedBlocks)
 }
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
-func (m *EncryptedMessage) Sigma(epochSK *EpochSK) Block {
-	pairing := bn256.Pair((*bn256.G1)(epochSK), m.C1)
+func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
+	pairing := bn256.Pair((*bn256.G1)(epochSecretKey), m.C1)
 	key := HashGTToBlock(pairing)
 	sigma := XORBlocks(m.C2, key)
 	return sigma

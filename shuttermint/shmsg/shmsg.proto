@@ -61,7 +61,7 @@ message Apology {
         repeated bytes poly_evals = 3;
 }
 
-message EpochSKShare {
+message EpochSecretKeyShare {
         uint64 eon = 1;
         uint64 epoch = 2;
         bytes epoch_sk_share = 3;

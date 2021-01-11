@@ -148,10 +148,10 @@ type (
 	PolyEval       = shutterevents.PolyEval
 )
 
-// EpochSKShareMsg represents a message containing an epoch secret key.
-type EpochSKShareMsg struct {
-	Sender       common.Address
-	Eon          uint64
-	Epoch        uint64
-	EpochSKShare []byte
+// EpochSecretKeyShareMsg represents a message containing an epoch secret key.
+type EpochSecretKeyShareMsg struct {
+	Sender              common.Address
+	Eon                 uint64
+	Epoch               uint64
+	EpochSecretKeyShare []byte
 }
