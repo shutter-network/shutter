@@ -201,6 +201,32 @@ func (pure *PureDKG) present(i KeyperIndex) bool {
 	return pure.Commitments[i] != nil
 }
 
+// ShortInfo returns a short string to be used in log output, which describes the current state of the DKG
+func (pure *PureDKG) ShortInfo() string {
+	var numCommitments, numCorrupt, numAccusations, numApologies int
+	numAccusations = len(pure.Accusations)
+	numApologies = len(pure.Apologies)
+
+	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
+		c := pure.Commitments[dealer]
+		eval := pure.polyEval(dealer)
+
+		if c != nil && len(*c) != 0 {
+			numCommitments += 1
+		}
+
+		if pure.isCorrupt(dealer) {
+			numCorrupt += 1
+		} else {
+			if pure.Phase > Dealing && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
+				numCorrupt += 1
+			}
+		}
+	}
+
+	return fmt.Sprintf("phase=%s(commitments=%d, corrupt=%d, accusations=%d, apologies=%d)", pure.Phase, numCommitments, numCorrupt, numAccusations, numApologies)
+}
+
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
 // error is returned if this is called before finalization or if too few keypers participated.
 func (pure *PureDKG) ComputeResult() (*crypto.EonSKShare, *crypto.EonPK, error) {

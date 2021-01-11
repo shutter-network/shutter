@@ -50,7 +50,7 @@ type DKG struct {
 }
 
 func (dkg *DKG) ShortInfo() string {
-	return fmt.Sprintf("eon=%d, #keypers=%d, phase=%s", dkg.Eon, len(dkg.Keypers), dkg.Pure.Phase)
+	return fmt.Sprintf("eon=%d, #keypers=%d, %s", dkg.Eon, len(dkg.Keypers), dkg.Pure.ShortInfo())
 }
 
 // newApology create a new shmsg apology message from the given puredkg apologies
