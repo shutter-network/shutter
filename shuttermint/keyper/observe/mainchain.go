@@ -14,10 +14,11 @@ import (
 // work. The only source for the data stored in this struct should be the ethereum node.  The
 // SyncToHead method can be used to update the data. All other accesses should be read-only.
 type MainChain struct {
-	CurrentBlock      uint64
-	BatchConfigs      []contract.BatchConfig
-	Batches           map[uint64]*Batch
-	ExecutionHalfStep uint64
+	CurrentBlock            uint64
+	BatchConfigs            []contract.BatchConfig
+	Batches                 map[uint64]*Batch
+	NumExecutionHalfSteps   uint64
+	CipherExecutionReceipts map[uint64]*contract.CipherExecutionReceipt
 }
 
 // Batch stores the encrypted and plain transactions submitted to the batching contract for a
@@ -33,7 +34,8 @@ type Batch struct {
 // NewMainChain creates an empty MainChain struct
 func NewMainChain() *MainChain {
 	return &MainChain{
-		Batches: make(map[uint64]*Batch),
+		Batches:                 make(map[uint64]*Batch),
+		CipherExecutionReceipts: make(map[uint64]*contract.CipherExecutionReceipt),
 	}
 }
 
@@ -121,10 +123,40 @@ func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransa
 	mainchain.Batches[event.BatchIndex] = batch
 }
 
+func (mainchain *MainChain) syncExecutionState(executorContract *contract.ExecutorContract, opts *bind.CallOpts) error {
+	lastNumExecutionHalfSteps := mainchain.NumExecutionHalfSteps
+
+	numExecutionHalfSteps, err := executorContract.NumExecutionHalfSteps(opts)
+	if err != nil {
+		return err
+	}
+
+	receipts := []contract.CipherExecutionReceipt{}
+	for i := lastNumExecutionHalfSteps; i < numExecutionHalfSteps; i++ {
+		if i%2 != 0 {
+			// there will only be receipts for cipher execution steps, which are the even ones
+			continue
+		}
+
+		receipt, err := executorContract.CipherExecutionReceipts(opts, i)
+		if err != nil {
+			return err
+		}
+		receipts = append(receipts, receipt)
+	}
+
+	mainchain.NumExecutionHalfSteps = numExecutionHalfSteps
+	for _, receipt := range receipts {
+		mainchain.CipherExecutionReceipts[receipt.HalfStep] = &receipt
+	}
+
+	return nil
+}
+
 // SyncToHead fetches the latest state from the ethereum node.
 // XXX this mutates the object in place. we may want to control mutation of the MainChain struct.
 // XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
-func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Client, configContract *contract.ConfigContract, batcherContract *contract.BatcherContract) error {
+func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Client, configContract *contract.ConfigContract, batcherContract *contract.BatcherContract, executorContract *contract.ExecutorContract) error {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return err
@@ -150,6 +182,11 @@ func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Cli
 	}
 
 	err = mainchain.syncBatches(batcherContract, filter)
+	if err != nil {
+		return err
+	}
+
+	err = mainchain.syncExecutionState(executorContract, opts)
 	if err != nil {
 		return err
 	}
