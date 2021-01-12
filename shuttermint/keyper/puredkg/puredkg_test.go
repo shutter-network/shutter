@@ -56,16 +56,15 @@ func TestPureDKGFull(t *testing.T) {
 		dkg.Finalize()
 	}
 
-	skShares := []*crypto.EonSecretKeyShare{}
-	eonPKs := []*crypto.EonPublicKey{}
+	var results []Result
+
 	for _, dkg := range dkgs {
-		skShare, eonPK, err := dkg.ComputeResult()
+		result, err := dkg.ComputeResult()
 		require.Nil(t, err)
-		skShares = append(skShares, skShare)
-		eonPKs = append(eonPKs, eonPK)
+		results = append(results, result)
 	}
-	for _, eonPK := range eonPKs {
-		require.True(t, reflect.DeepEqual(eonPK, eonPKs[0]))
+	for _, r := range results {
+		require.True(t, reflect.DeepEqual(r.PublicKey, results[0].PublicKey))
 	}
 }
 
@@ -148,16 +147,14 @@ func TestPureDKGCorrupt(t *testing.T) {
 		dkg.Finalize()
 	}
 
-	skShares := []*crypto.EonSecretKeyShare{}
-	eonPKs := []*crypto.EonPublicKey{}
+	var results []Result
 	for _, dkg := range dkgs {
-		skShare, eonPK, err := dkg.ComputeResult()
+		result, err := dkg.ComputeResult()
 		require.Nil(t, err)
-		skShares = append(skShares, skShare)
-		eonPKs = append(eonPKs, eonPK)
+		results = append(results, result)
 	}
-	for _, eonPK := range eonPKs {
-		require.True(t, reflect.DeepEqual(eonPK, eonPKs[0]))
+	for _, r := range results {
+		require.True(t, reflect.DeepEqual(r.PublicKey, results[0].PublicKey))
 	}
 }
 
@@ -429,19 +426,19 @@ func TestInvalidApologyHandling(t *testing.T) {
 
 func TestGetResultErrors(t *testing.T) {
 	dkg := NewPureDKG(uint64(5), uint64(3), uint64(2), 1)
-	_, _, err := dkg.ComputeResult()
+	_, err := dkg.ComputeResult()
 	require.NotNil(t, err)
 	_, _, err = dkg.StartPhase1Dealing()
 	require.Nil(t, err)
-	_, _, err = dkg.ComputeResult()
+	_, err = dkg.ComputeResult()
 	require.NotNil(t, err)
 	dkg.StartPhase2Accusing()
-	_, _, err = dkg.ComputeResult()
+	_, err = dkg.ComputeResult()
 	require.NotNil(t, err)
 	dkg.StartPhase3Apologizing()
-	_, _, err = dkg.ComputeResult()
+	_, err = dkg.ComputeResult()
 	require.NotNil(t, err)
 	dkg.Finalize()
-	_, _, err = dkg.ComputeResult()
+	_, err = dkg.ComputeResult()
 	require.NotNil(t, err)
 }

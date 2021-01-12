@@ -26,6 +26,16 @@ const (
 	Finalized
 )
 
+type Result struct {
+	Eon             uint64
+	NumKeypers      uint64
+	Threshold       uint64
+	Keyper          KeyperIndex
+	SecretKeyShare  *crypto.EonSecretKeyShare
+	PublicKey       *crypto.EonPublicKey
+	PublicKeyShares []*crypto.EonPublicKeyShare
+}
+
 // XXX All of the messages here carry the Eon field, which we could also remove. It's not needed
 // here.
 
@@ -229,9 +239,9 @@ func (pure *PureDKG) ShortInfo() string {
 
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
 // error is returned if this is called before finalization or if too few keypers participated.
-func (pure *PureDKG) ComputeResult() (*crypto.EonSecretKeyShare, *crypto.EonPublicKey, error) {
+func (pure *PureDKG) ComputeResult() (Result, error) {
 	if pure.Phase < Finalized {
-		return nil, nil, fmt.Errorf("dkg is not finalized yet")
+		return Result{}, fmt.Errorf("dkg is not finalized yet")
 	}
 
 	numParticipants := 0
@@ -250,7 +260,7 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSecretKeyShare, *crypto.EonPubl
 				// when we receive no or an invalid poly eval, we send an accusation. If this
 				// accusation does not end up in the chain, the keyper will not be considered
 				// corrupt by the other keypers. We know  they should be though, so we abort.
-				return nil, nil, fmt.Errorf("corrupt keyper %d not considered corrupt", dealer)
+				return Result{}, fmt.Errorf("corrupt keyper %d not considered corrupt", dealer)
 			}
 		} else {
 			c = crypto.ZeroGammas(crypto.DegreeFromThreshold(pure.Threshold))
@@ -261,11 +271,25 @@ func (pure *PureDKG) ComputeResult() (*crypto.EonSecretKeyShare, *crypto.EonPubl
 	}
 
 	if uint64(numParticipants) < pure.Threshold {
-		return nil, nil, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
+		return Result{}, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
 	}
+
+	var publicKeyShares []*crypto.EonPublicKeyShare
+	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
+		publicKeyShares = append(publicKeyShares, crypto.ComputeEonPublicKeyShare(int(dealer), commitments))
+	}
+
 	eonSKShare := crypto.ComputeEonSecretKeyShare(evals)
 	eonPK := crypto.ComputeEonPublicKey(commitments)
-	return eonSKShare, eonPK, nil
+	return Result{
+		Eon:             pure.Eon,
+		NumKeypers:      pure.NumKeypers,
+		Threshold:       pure.Threshold,
+		Keyper:          pure.Keyper,
+		SecretKeyShare:  eonSKShare,
+		PublicKey:       eonPK,
+		PublicKeyShares: publicKeyShares,
+	}, nil
 }
 
 // isCorrupt checks if the given keyper is considered corrupt. Note that this might change when
