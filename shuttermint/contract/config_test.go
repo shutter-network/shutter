@@ -80,3 +80,20 @@ func TestNextBatchIndex(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, uint64(2), batchIndex)
 }
+
+func TestBatchConfig(t *testing.T) {
+	bc := BatchConfig{
+		StartBatchIndex:  10,
+		StartBlockNumber: 500,
+		BatchSpan:        5,
+	}
+	t.Run("BatchStartBlock", func(t *testing.T) {
+		require.Equal(t, uint64(500), bc.BatchStartBlock(10))
+		require.Equal(t, uint64(505), bc.BatchStartBlock(11))
+	})
+	t.Run("BatchIndex", func(t *testing.T) {
+		require.Equal(t, uint64(10), bc.BatchIndex(500))
+		require.Equal(t, uint64(10), bc.BatchIndex(504))
+		require.Equal(t, uint64(11), bc.BatchIndex(505))
+	})
+}

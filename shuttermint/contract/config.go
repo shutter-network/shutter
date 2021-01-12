@@ -40,6 +40,28 @@ func (bc *BatchConfig) IsActive() bool {
 	return bc.BatchSpan > 0
 }
 
+// BatchStartBlock returns the StartBlock for the given batch index. This function will panic if
+// the batchIndex is less than the BatchConfig's StartBatchIndex.
+func (bc *BatchConfig) BatchStartBlock(batchIndex uint64) uint64 {
+	if batchIndex < bc.StartBatchIndex {
+		panic("BatchStartBlock called with bad parameter")
+	}
+	relativeBatchIndex := batchIndex - bc.StartBatchIndex
+	return bc.StartBlockNumber + relativeBatchIndex*bc.BatchSpan
+}
+
+// BatchIndex returns the BatchIndex for the given blockNumber. This function will panic if the
+// blockNumber is less than the BatchConfig's StartBlockNumber or if the BatchConfig is not active
+func (bc *BatchConfig) BatchIndex(blockNumber uint64) uint64 {
+	if bc.BatchSpan == 0 {
+		panic("internal error: BatchIndex is not active")
+	}
+	if blockNumber < bc.StartBlockNumber {
+		panic("internal error: BatchIndex called with bad blockNumber")
+	}
+	return bc.StartBatchIndex + (blockNumber-bc.StartBlockNumber)/bc.BatchSpan
+}
+
 func MakeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
 	batchSpan := bc.BatchSpan
 	startBatchIndex := bc.StartBatchIndex
