@@ -50,10 +50,10 @@ func (mainchain *MainChain) IsActiveKeyper(addr common.Address) bool {
 	return false
 }
 
-// ActiveConfigIndex returns the index of the first config that is active.
-func (mainchain *MainChain) ActiveConfigIndex() int {
+// ActiveConfigIndex returns the index of the config that is active for the given block number
+func (mainchain *MainChain) ActiveConfigIndex(blocknum uint64) int {
 	for i := len(mainchain.BatchConfigs) - 1; i >= 0; i-- {
-		if mainchain.BatchConfigs[i].StartBlockNumber <= mainchain.CurrentBlock {
+		if mainchain.BatchConfigs[i].StartBlockNumber <= blocknum {
 			return i
 		}
 	}
@@ -62,7 +62,7 @@ func (mainchain *MainChain) ActiveConfigIndex() int {
 
 // ActiveConfigs returns a slice of the active configs.
 func (mainchain *MainChain) ActiveConfigs() []contract.BatchConfig {
-	return mainchain.BatchConfigs[mainchain.ActiveConfigIndex():]
+	return mainchain.BatchConfigs[mainchain.ActiveConfigIndex(mainchain.CurrentBlock):]
 }
 
 func (mainchain *MainChain) syncConfigs(configContract *contract.ConfigContract, opts *bind.CallOpts) error {
