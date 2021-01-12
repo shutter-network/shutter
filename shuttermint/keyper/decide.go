@@ -462,6 +462,15 @@ func (dcdr *Decider) startPhase3Apologizing(dkg *DKG) {
 
 func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 	dkg.Pure.Finalize()
+	eonSecretKeyShare, eonPublicKey, err := dkg.Pure.ComputeResult()
+	if err != nil {
+		log.Printf("Error: DKG process failed for %s: %s", dkg.ShortInfo(), err)
+		return
+	}
+	log.Printf("Success: DKG process succeeced for %s", dkg.ShortInfo())
+	// TODO
+	_ = eonSecretKeyShare
+	_ = eonPublicKey
 }
 
 func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
