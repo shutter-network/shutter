@@ -42,8 +42,9 @@ func NewMainChain() *MainChain {
 // IsActiveKeyper checks if the given address is registered as a keyper in one of the active batch
 // configs.
 func (mainchain *MainChain) IsActiveKeyper(addr common.Address) bool {
-	for _, config := range mainchain.ActiveConfigs() {
-		if config.IsKeyper(addr) {
+	activeConfigs := mainchain.ActiveConfigs()
+	for i := range activeConfigs {
+		if activeConfigs[i].IsKeyper(addr) {
 			return true
 		}
 	}
@@ -156,7 +157,13 @@ func (mainchain *MainChain) syncExecutionState(executorContract *contract.Execut
 // SyncToHead fetches the latest state from the ethereum node.
 // XXX this mutates the object in place. we may want to control mutation of the MainChain struct.
 // XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
-func (mainchain *MainChain) SyncToHead(ctx context.Context, ethcl *ethclient.Client, configContract *contract.ConfigContract, batcherContract *contract.BatcherContract, executorContract *contract.ExecutorContract) error {
+func (mainchain *MainChain) SyncToHead(
+	ctx context.Context,
+	ethcl *ethclient.Client,
+	configContract *contract.ConfigContract,
+	batcherContract *contract.BatcherContract,
+	executorContract *contract.ExecutorContract,
+) error {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return err
