@@ -385,6 +385,7 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		BatcherContract:      configFlags.BatcherContractAddress,
 		KeyBroadcastContract: configFlags.KeyBroadcastContractAddress,
 		ExecutorContract:     configFlags.ExecutorContractAddress,
+		ExecutionStaggering:  "5",
 	}
 	return &config, nil
 }

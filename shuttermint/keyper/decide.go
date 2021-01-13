@@ -20,8 +20,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-const transactionDelayStagger = 5
-
 type decryptfn func(encrypted []byte) ([]byte, error)
 
 // IRunEnv is passed as a parameter to IAction's Run function. At the moment this only allows
@@ -625,6 +623,7 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	if !config.IsActive() {
 		return // nothing to execute if config is inactive
 	}
+
 	batchIndex := config.BatchIndex(dcdr.MainChain.CurrentBlock)
 
 	nextHalfStep := dcdr.MainChain.NumExecutionHalfSteps
@@ -695,7 +694,7 @@ func (dcdr *Decider) executionDelay(batchIndex uint64) (uint64, error) {
 	}
 
 	place := (batchIndex + keyperIndex) % uint64(len(config.Keypers))
-	return place * transactionDelayStagger, nil
+	return place * dcdr.Config.ExecutionStaggering, nil
 }
 
 // Decide determines the next actions to run.

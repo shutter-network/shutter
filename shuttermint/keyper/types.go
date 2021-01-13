@@ -52,6 +52,7 @@ type KeyperConfig struct {
 	BatcherContractAddress      common.Address
 	KeyBroadcastContractAddress common.Address
 	ExecutorContractAddress     common.Address
+	ExecutionStaggering         uint64
 }
 
 // Keyper is used to run the keyper key generation
