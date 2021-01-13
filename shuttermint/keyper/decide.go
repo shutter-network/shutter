@@ -8,7 +8,9 @@ import (
 	"log"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -24,6 +26,7 @@ type decryptfn func(encrypted []byte) ([]byte, error)
 // interaction with the shutter chain. We will also need a way to talk to the main chain
 type IRunEnv interface {
 	MessageSender
+	GetContractCaller(ctx context.Context) *ContractCaller
 }
 
 // IAction describes an action to run as determined by the Decider's Decide method.
@@ -247,7 +250,7 @@ func (a FakeAction) Run(_ context.Context, _ IRunEnv) error {
 	return nil
 }
 
-// SendShuttermintMessage is a Action that send's a message to shuttermint
+// SendShuttermintMessage is an Action that sends a message to shuttermint
 type SendShuttermintMessage struct {
 	description string
 	msg         *shmsg.Message
@@ -260,6 +263,109 @@ func (a SendShuttermintMessage) Run(ctx context.Context, runenv IRunEnv) error {
 
 func (a SendShuttermintMessage) String() string {
 	return fmt.Sprintf("-> shuttermint: %s", a.description)
+}
+
+// ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
+type ExecuteCipherBatch struct {
+	cipherBatchHash [32]byte
+	transactions    [][]byte
+	keyperIndex     uint64
+}
+
+func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.ExecutorContract.ExecuteCipherBatch(auth, a.cipherBatchHash, a.transactions, a.keyperIndex)
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("tx %s has failed to execute cipher half step", tx.Hash().Hex())
+	}
+
+	return nil
+}
+
+func (a ExecuteCipherBatch) String() string {
+	return fmt.Sprintf("-> executor contract: execute cipher half step")
+}
+
+// ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
+type ExecutePlainBatch struct {
+	transactions [][]byte
+}
+
+func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.ExecutorContract.ExecutePlainBatch(auth, a.transactions)
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("tx %s has failed to execute plain half step", tx.Hash().Hex())
+	}
+
+	return nil
+}
+
+func (a ExecutePlainBatch) String() string {
+	return fmt.Sprintf("-> executor contract: execute plain half step")
+}
+
+// SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch
+type SkipCipherBatch struct {
+}
+
+func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.ExecutorContract.SkipCipherExecution(auth)
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("tx %s has failed to skip cipher half step", tx.Hash().Hex())
+	}
+
+	return nil
+}
+
+func (a SkipCipherBatch) String() string {
+	return fmt.Sprintf("-> executor contract: skip plain half step")
 }
 
 // addAction stores the given IAction to be run later
@@ -512,6 +618,54 @@ func (dcdr *Decider) handleDKGs() {
 	}
 }
 
+func (dcdr *Decider) maybeExecuteBatch() {
+	config := dcdr.MainChain.CurrentConfig()
+	if !config.IsActive() {
+		return // nothing to execute if config is inactive
+	}
+	batchIndex := config.BatchIndex(dcdr.MainChain.CurrentBlock)
+
+	nextHalfStep := dcdr.MainChain.NumExecutionHalfSteps
+	if nextHalfStep >= batchIndex*2 {
+		return // everything has been executed already
+	}
+
+	dcdr.maybeExecuteHalfStep(nextHalfStep)
+}
+
+func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
+	batchIndex := nextHalfStep / 2
+	batch, ok := dcdr.MainChain.Batches[batchIndex]
+	if !ok {
+		batch = &observe.Batch{BatchIndex: batchIndex}
+	}
+
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
+	if !ok {
+		return // nothing to do if config is inactive
+	}
+	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
+	if !ok {
+		return // only keypers can execute
+	}
+
+	var action IAction
+	if nextHalfStep%2 == 0 {
+		// XXX: use transactions from voting here and make sure there are enough votes
+		decryptedTransactions := [][]byte{}
+		action = ExecuteCipherBatch{
+			cipherBatchHash: batch.EncryptedBatchHash,
+			transactions:    decryptedTransactions,
+			keyperIndex:     keyperIndex,
+		}
+	} else {
+		action = ExecutePlainBatch{
+			transactions: batch.PlainTransactions,
+		}
+	}
+	dcdr.addAction(action)
+}
+
 // Decide determines the next actions to run.
 func (dcdr *Decider) Decide() {
 	// We can't go on unless we're registered as keyper in shuttermint
@@ -523,4 +677,6 @@ func (dcdr *Decider) Decide() {
 	dcdr.maybeSendBatchConfig()
 	dcdr.maybeStartDKG()
 	dcdr.handleDKGs()
+
+	dcdr.maybeExecuteBatch()
 }
