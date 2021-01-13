@@ -54,6 +54,11 @@ var scheduleFlags struct {
 	BatchSizeLimit       int
 }
 
+var fundFlags struct {
+	Dir      string
+	OwnerKey string
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "prepare",
 	Short: "Prepare everything needed to test shutter.",
@@ -93,12 +98,29 @@ var scheduleCmd = &cobra.Command{
 	},
 }
 
+var fundCmd = &cobra.Command{
+	Use:   "fund",
+	Short: "Fund the accounts of an earlier prepared keyper set",
+	Run: func(cmd *cobra.Command, args []string) {
+		if flag, err := validateFundFlags(); err != nil {
+			fmt.Printf("Invalid flag %s: %s\n", flag, err)
+			os.Exit(1)
+		}
+		if err := fund(); err != nil {
+			fmt.Printf("Error: %s\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(scheduleCmd)
+	rootCmd.AddCommand(fundCmd)
 
 	initConfigFlags()
 	initScheduleFlags()
+	initFundFlags()
 }
 
 func main() {
@@ -218,6 +240,23 @@ func initScheduleFlags() {
 	)
 }
 
+func initFundFlags() {
+	fundCmd.Flags().StringVarP(
+		&fundFlags.Dir,
+		"dir",
+		"d",
+		"testrun",
+		"directory in which config files are stored",
+	)
+	fundCmd.Flags().StringVarP(
+		&fundFlags.OwnerKey,
+		"owner-key",
+		"k",
+		"b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773",
+		"private key of the config contract owner",
+	)
+}
+
 func validateConfigFlags() (string, error) {
 	if configFlags.NumKeypers <= 0 {
 		return "num-keypers", fmt.Errorf("must be at least 1")
@@ -265,6 +304,22 @@ func validateScheduleFlags() (string, error) {
 	}
 	if scheduleFlags.BatchSizeLimit < 0 {
 		return "batch-size-limit", fmt.Errorf("must not be negative")
+	}
+
+	return "", nil
+}
+
+func validateFundFlags() (string, error) {
+	stats, err := os.Stat(fundFlags.Dir)
+	if os.IsNotExist(err) {
+		return "dir", fmt.Errorf("directory %s does not exists", fundFlags.Dir)
+	}
+	if !stats.IsDir() {
+		return "dir", fmt.Errorf("%s is not a directory", fundFlags.Dir)
+	}
+
+	if err := validatePrivateKey(fundFlags.OwnerKey); err != nil {
+		return "owner-key", err
 	}
 
 	return "", nil
@@ -651,6 +706,73 @@ func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*t
 	}
 
 	return res, nil
+}
+
+func fund() error {
+	ctx := context.Background()
+
+	configPaths, err := findConfigFiles(fundFlags.Dir)
+	if err != nil {
+		return err
+	}
+	configs, err := loadConfigs(configPaths)
+	if err != nil {
+		return err
+	}
+
+	ownerKey, err := crypto.HexToECDSA(fundFlags.OwnerKey)
+	if err != nil {
+		return fmt.Errorf("invalid owner key")
+	}
+	ownerAddress := crypto.PubkeyToAddress(ownerKey.PublicKey)
+
+	ethereumURL := configs[0].EthereumURL
+	client, err := ethclient.DialContext(context.Background(), ethereumURL)
+	if err != nil {
+		return fmt.Errorf("faild to connect to Ethereum node at %s: %w", ethereumURL, err)
+	}
+
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query chain id: %w", err)
+	}
+	signer := types.NewEIP155Signer(chainID)
+
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query gas price: %w", err)
+	}
+
+	amount, ok := new(big.Int).SetString("1000000000000000000", 10)
+	if !ok {
+		panic("unexpected error")
+	}
+
+	nonce, err := client.PendingNonceAt(ctx, ownerAddress)
+	if err != nil {
+		fmt.Errorf("failed to query nonce: %w", err)
+	}
+
+	txs := []*types.Transaction{}
+	for _, config := range configs {
+		unsignedTx := types.NewTransaction(nonce, config.Address(), amount, 21000, gasPrice, []byte{})
+		tx, err := types.SignTx(unsignedTx, signer, ownerKey)
+		if err != nil {
+			return fmt.Errorf("failed to sign transaction: %w", err)
+		}
+
+		err = client.SendTransaction(ctx, tx)
+		if err != nil {
+			return fmt.Errorf("failed to send transaction: %w", err)
+		}
+		nonce++
+
+		txs = append(txs, tx)
+
+	}
+
+	_, err = waitForTransactions(ctx, client, txs)
+	return err
 }
 
 // LookPath searches for an executable in $PATH. The difference to os.LookPath is, that this
