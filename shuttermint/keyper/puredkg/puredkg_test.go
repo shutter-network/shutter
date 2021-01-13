@@ -122,7 +122,8 @@ func TestPureDKGCorrupt(t *testing.T) {
 	accusations := dkgs[0].StartPhase2Accusing()
 	require.Equal(t, 1, len(accusations))
 	for _, dkg := range dkgs {
-		dkg.HandleAccusationMsg(accusations[0])
+		err := dkg.HandleAccusationMsg(accusations[0])
+		require.Nil(t, err)
 	}
 
 	// apology phase
@@ -139,7 +140,8 @@ func TestPureDKGCorrupt(t *testing.T) {
 			Accused: apologies[0].Accused,
 			Eval:    big.NewInt(121212),
 		}
-		dkg.HandleApologyMsg(msg)
+		err := dkg.HandleApologyMsg(msg)
+		require.Nil(t, err)
 	}
 
 	// finalize

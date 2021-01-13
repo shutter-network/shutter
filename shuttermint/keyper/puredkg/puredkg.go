@@ -222,19 +222,23 @@ func (pure *PureDKG) ShortInfo() string {
 		eval := pure.polyEval(dealer)
 
 		if c != nil && len(*c) != 0 {
-			numCommitments += 1
+			numCommitments++
 		}
 
 		if pure.isCorrupt(dealer) {
-			numCorrupt += 1
-		} else {
-			if pure.Phase > Dealing && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
-				numCorrupt += 1
-			}
+			numCorrupt++
+		} else if pure.Phase > Dealing && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
+			numCorrupt++
 		}
 	}
 
-	return fmt.Sprintf("phase=%s(commitments=%d, corrupt=%d, accusations=%d, apologies=%d)", pure.Phase, numCommitments, numCorrupt, numAccusations, numApologies)
+	return fmt.Sprintf(
+		"phase=%s(commitments=%d, corrupt=%d, accusations=%d, apologies=%d)",
+		pure.Phase,
+		numCommitments,
+		numCorrupt,
+		numAccusations,
+		numApologies)
 }
 
 // ComputeResult computes the eon secret key share and public key output of the DKG process. An
