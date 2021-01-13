@@ -114,7 +114,7 @@ func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransa
 		batch.EncryptedTransactions = append(batch.EncryptedTransactions, event.Transaction)
 		batch.EncryptedBatchHash = event.BatchHash
 	case contract.TransactionTypePlain:
-		batch.PlainTransactions = append(batch.EncryptedTransactions, event.Transaction)
+		batch.PlainTransactions = append(batch.PlainTransactions, event.Transaction)
 		batch.PlainBatchHash = event.BatchHash
 	default:
 		panic("unknown transaction type")
