@@ -61,9 +61,45 @@ func (mainchain *MainChain) ActiveConfigIndex(blocknum uint64) int {
 	panic("illegal values in MainChain.Configs field")
 }
 
+// ActiveConfig returns the config that is active for the given block number.
+func (mainchain *MainChain) ActiveConfig(blocknum uint64) contract.BatchConfig {
+	index := mainchain.ActiveConfigIndex(blocknum)
+	return mainchain.BatchConfigs[index]
+}
+
+// CurrentConfig returns the batch config active at the current block number.
+func (mainchain *MainChain) CurrentConfig() contract.BatchConfig {
+	return mainchain.ActiveConfig(mainchain.CurrentBlock)
+}
+
 // ActiveConfigs returns a slice of the active configs.
 func (mainchain *MainChain) ActiveConfigs() []contract.BatchConfig {
 	return mainchain.BatchConfigs[mainchain.ActiveConfigIndex(mainchain.CurrentBlock):]
+}
+
+// ConfigIndexForBatchIndex returns the index of the config responsible for the given batch if it
+// is active. Note that this config might change if the batch is too far into the future.
+func (mainchain *MainChain) ConfigIndexForBatchIndex(batchIndex uint64) (int, bool) {
+	for i := len(mainchain.BatchConfigs) - 1; i >= 0; i-- {
+		config := mainchain.BatchConfigs[i]
+		if config.StartBatchIndex <= batchIndex {
+			if config.IsActive() {
+				return i, true
+			}
+			return 0, false
+		}
+	}
+	panic("illegal values in MainChain.Configs field")
+}
+
+// ConfigForBatchIndex returns the config responsible for the given batch if it is active. Note
+// that this config might change if the batch is too far into the future.
+func (mainchain *MainChain) ConfigForBatchIndex(batchIndex uint64) (contract.BatchConfig, bool) {
+	index, ok := mainchain.ConfigIndexForBatchIndex(batchIndex)
+	if !ok {
+		return contract.BatchConfig{}, false
+	}
+	return mainchain.BatchConfigs[index], true
 }
 
 func (mainchain *MainChain) syncConfigs(configContract *contract.ConfigContract, opts *bind.CallOpts) error {
