@@ -56,26 +56,42 @@ contract ExecutorContract {
         uint64 _keyperIndex
     ) external {
         // Check that it's a cipher batch turn
-        require(numExecutionHalfSteps % 2 == 0);
+        require(
+            numExecutionHalfSteps % 2 == 0,
+            "ExecutorContract: unexpected half step"
+        );
 
         uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Check that batching is active and the batch is closed
-        require(_config.batchSpan > 0);
+        require(_config.batchSpan > 0, "ExecutorContract: config is inactive");
         require(
             block.number >=
-                _config.startBlockNumber + _config.batchSpan * (_batchIndex + 1)
+                _config.startBlockNumber +
+                    _config.batchSpan *
+                    (_batchIndex + 1),
+            "ExecutorContract: batch is not closed yet"
         );
 
         // Check that caller is keyper
-        require(_keyperIndex < _config.keypers.length);
-        require(msg.sender == _config.keypers[_keyperIndex]);
+        require(
+            _keyperIndex < _config.keypers.length,
+            "ExecutorContract: keyper index out of bounds"
+        );
+        require(
+            msg.sender == _config.keypers[_keyperIndex],
+            "ExecutorContract: sender is not specified keyper"
+        );
 
         // Check the cipher batch hash is correct
         require(
             _cipherBatchHash ==
-                batcherContract.batchHashes(_batchIndex, TransactionType.Cipher)
+                batcherContract.batchHashes(
+                    _batchIndex,
+                    TransactionType.Cipher
+                ),
+            "ExecutorContract: incorrect cipher batch hash"
         );
 
         // Execute the batch
@@ -101,18 +117,22 @@ contract ExecutorContract {
     /// @notice This is only possible if successful execution has not been carried out in time
     ///     (according to the execution timeout defined in the config)
     function skipCipherExecution() external {
-        require(numExecutionHalfSteps % 2 == 0);
+        require(
+            numExecutionHalfSteps % 2 == 0,
+            "ExecutorContract: unexpected half step"
+        );
 
         uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
-        require(_config.batchSpan > 0);
+        require(_config.batchSpan > 0, "ExecutorContract: config is inactive");
         require(
             block.number >=
                 _config.startBlockNumber +
                     _config.batchSpan *
                     (_batchIndex + 1) +
-                    _config.executionTimeout
+                    _config.executionTimeout,
+            "ExecutorContract: batch is not closed yet"
         );
 
         numExecutionHalfSteps++;
@@ -125,7 +145,10 @@ contract ExecutorContract {
     /// @notice This is a trustless operation since `_transactions` will be checked against the
     ///     (plaintext) batch hash from the batcher contract.
     function executePlainBatch(bytes[] calldata _transactions) external {
-        require(numExecutionHalfSteps % 2 == 1);
+        require(
+            numExecutionHalfSteps % 2 == 1,
+            "ExecutorContract: unexpected half step"
+        );
 
         uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
@@ -148,7 +171,8 @@ contract ExecutorContract {
 
         require(
             _batchHash ==
-                batcherContract.batchHashes(_batchIndex, TransactionType.Plain)
+                batcherContract.batchHashes(_batchIndex, TransactionType.Plain),
+            "ExecutorContract: batch hash does not match"
         );
 
         numExecutionHalfSteps++;
