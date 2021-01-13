@@ -146,8 +146,8 @@ func (mainchain *MainChain) syncExecutionState(executorContract *contract.Execut
 	}
 
 	mainchain.NumExecutionHalfSteps = numExecutionHalfSteps
-	for _, receipt := range receipts {
-		mainchain.CipherExecutionReceipts[receipt.HalfStep] = &receipt
+	for i := range receipts {
+		mainchain.CipherExecutionReceipts[receipts[i].HalfStep] = &receipts[i]
 	}
 
 	return nil
