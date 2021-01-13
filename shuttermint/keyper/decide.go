@@ -20,6 +20,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+const transactionDelayStagger = 5
+
 type decryptfn func(encrypted []byte) ([]byte, error)
 
 // IRunEnv is passed as a parameter to IAction's Run function. At the moment this only allows
@@ -649,6 +651,19 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 		return // only keypers can execute
 	}
 
+	delay, err := dcdr.executionDelay(batchIndex)
+	if err != nil {
+		return // shouldn't happen
+	}
+	batchParams, err := contract.MakeBatchParams(&config, batchIndex)
+	if err != nil {
+		return // shouldn't happen
+	}
+	executionBlock := batchParams.EndBlock + delay
+	if dcdr.MainChain.CurrentBlock < executionBlock {
+		return // wait for other keypers first
+	}
+
 	var action IAction
 	if nextHalfStep%2 == 0 {
 		// XXX: use transactions from voting here and make sure there are enough votes
@@ -664,6 +679,23 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 		}
 	}
 	dcdr.addAction(action)
+}
+
+// ExecutionDelay returns the number of main chain blocks to wait before sending a tx. This makes
+// sure not all keypers try to send the same tx at the same time.
+func (dcdr *Decider) executionDelay(batchIndex uint64) (uint64, error) {
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
+	if !ok {
+		return 0, fmt.Errorf("config is not active")
+	}
+
+	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
+	if !ok {
+		return 0, fmt.Errorf("not a keyper")
+	}
+
+	place := (batchIndex + keyperIndex) % uint64(len(config.Keypers))
+	return place * transactionDelayStagger, nil
 }
 
 // Decide determines the next actions to run.
