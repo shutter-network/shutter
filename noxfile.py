@@ -127,5 +127,6 @@ def test_contracts(session: Session) -> None:
     session.install("-r", "requirements.txt")
     install_ganache(session)
     session.chdir("contracts")
-    session.run("brownie", "compile")
-    session.run("brownie", "test")
+    brownie = os.path.abspath("./brownie")
+    session.run(brownie, "compile", external=True)
+    session.run(brownie, "test", external=True)
