@@ -751,7 +751,7 @@ func fund() error {
 
 	nonce, err := client.PendingNonceAt(ctx, ownerAddress)
 	if err != nil {
-		fmt.Errorf("failed to query nonce: %w", err)
+		return fmt.Errorf("failed to query nonce: %w", err)
 	}
 
 	txs := []*types.Transaction{}
@@ -769,7 +769,6 @@ func fund() error {
 		nonce++
 
 		txs = append(txs, tx)
-
 	}
 
 	_, err = waitForTransactions(ctx, client, txs)
