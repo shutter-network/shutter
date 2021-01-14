@@ -112,7 +112,17 @@ func sendtxs() {
 	initConfigContract()
 
 	ctx := context.Background()
-	transactOpts := bind.NewKeyedTransactor(key)
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		log.Printf("failed to query chain ID: %s", err)
+		return
+	}
+	transactOpts, err := bind.NewKeyedTransactorWithChainID(key, chainID)
+	if err != nil {
+		log.Printf("failed to create transactor: %s", err)
+		return
+	}
+
 	transactOpts.Context = ctx
 	transactOpts.GasLimit = 100000
 

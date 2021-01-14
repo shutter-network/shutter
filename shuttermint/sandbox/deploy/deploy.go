@@ -278,7 +278,17 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 	if err != nil {
 		return nil, err
 	}
-	auth := bind.NewKeyedTransactor(privateKey)
+
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		return nil, err
+	}
+
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0) // in wei
 	auth.GasLimit = defaultGasLimit

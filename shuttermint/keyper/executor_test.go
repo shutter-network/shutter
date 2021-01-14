@@ -114,7 +114,10 @@ func runGanache(t *testing.T) {
 }
 
 func deployContracts(t *testing.T) {
-	auth := bind.NewKeyedTransactor(deployKey)
+	chainID, err := cl.ChainID(context.Background())
+	require.Nil(t, err)
+	auth, err := bind.NewKeyedTransactorWithChainID(deployKey, chainID)
+	require.Nil(t, err)
 	nonce, err := cl.PendingNonceAt(context.Background(), deployAddress)
 	require.Nil(t, err)
 	auth.Nonce = new(big.Int).SetUint64(nonce)
@@ -165,7 +168,10 @@ func deployContracts(t *testing.T) {
 }
 
 func scheduleConfig(t *testing.T) {
-	auth := bind.NewKeyedTransactor(deployKey)
+	chainID, err := cl.ChainID(context.Background())
+	require.Nil(t, err)
+	auth, err := bind.NewKeyedTransactorWithChainID(deployKey, chainID)
+	require.Nil(t, err)
 	nonce, err := cl.PendingNonceAt(context.Background(), deployAddress)
 	require.Nil(t, err)
 	auth.Nonce = new(big.Int).SetUint64(nonce)
@@ -287,7 +293,10 @@ func subTestExecutePlain(t *testing.T) {
 		cc:                    cc,
 		cipherExecutionParams: cipherExecutionParams,
 	}
-	auth := bind.NewKeyedTransactor(keyperKeys[0])
+	chainID, err := cl.ChainID(context.Background())
+	require.Nil(t, err)
+	auth, err := bind.NewKeyedTransactorWithChainID(keyperKeys[0], chainID)
+	require.Nil(t, err)
 
 	// submit some plain txs
 	mineUntilBlock(t, batchConfig.StartBlockNumber)
@@ -329,7 +338,10 @@ func subTestExecuteCipher(t *testing.T) {
 		cc:                    cc,
 		cipherExecutionParams: cipherExecutionParams,
 	}
-	auth := bind.NewKeyedTransactor(keyperKeys[0])
+	chainID, err := cl.ChainID(context.Background())
+	require.Nil(t, err)
+	auth, err := bind.NewKeyedTransactorWithChainID(keyperKeys[0], chainID)
+	require.Nil(t, err)
 
 	// submit some cipher txs
 	mineUntilBlock(t, batchConfig.StartBlockNumber)
@@ -398,7 +410,10 @@ func subTestSkipCipher(t *testing.T) {
 		cc:                    cc,
 		cipherExecutionParams: cipherExecutionParams,
 	}
-	auth := bind.NewKeyedTransactor(keyperKeys[0])
+	chainID, err := cl.ChainID(context.Background())
+	require.Nil(t, err)
+	auth, err := bind.NewKeyedTransactorWithChainID(keyperKeys[0], chainID)
+	require.Nil(t, err)
 
 	// submit some cipher txs
 	mineUntilBlock(t, batchConfig.StartBlockNumber)

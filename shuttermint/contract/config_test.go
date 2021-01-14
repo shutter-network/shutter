@@ -17,7 +17,8 @@ import (
 func TestNextBatchIndex(t *testing.T) {
 	key, err := crypto.GenerateKey()
 	require.Nil(t, err)
-	auth := bind.NewKeyedTransactor(key)
+	auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
+	require.Nil(t, err)
 	alloc := make(core.GenesisAlloc)
 	alloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(1000000000)}
 	blockchain := backends.NewSimulatedBackend(alloc, 8000000)

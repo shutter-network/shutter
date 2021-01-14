@@ -16,7 +16,15 @@ func (cc *ContractCaller) Address() common.Address {
 
 // Auth returns a new transactor with initialized key, nonce, and gas price.
 func (cc *ContractCaller) Auth() (*bind.TransactOpts, error) {
-	auth := bind.NewKeyedTransactor(cc.signingKey)
+	chainID, err := cc.Ethclient.ChainID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(cc.signingKey, chainID)
+	if err != nil {
+		return nil, err
+	}
 
 	nonce, err := cc.Ethclient.PendingNonceAt(context.Background(), cc.Address())
 	if err != nil {
