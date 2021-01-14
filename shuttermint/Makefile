@@ -3,6 +3,9 @@ TESTROOT=$(SHROOT)/testchain
 
 VERSION=$(shell git describe --tags --always --abbrev=4 --dirty)
 
+OPENZEPPELIN_CONTRACTS=OpenZeppelin/openzeppelin-contracts@3.3.0
+OPENZEPPELIN_CONTRACTS_DIR=${HOME}/.brownie/packages/${OPENZEPPELIN_CONTRACTS}
+
 build:
 	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./sandbox/testclient ./sandbox/deploy ./sandbox/prepare
 
@@ -60,8 +63,11 @@ lint:
 lint-changes:
 	golangci-lint run --new-from-rev origin/master
 
-abigen:
-	solc OpenZeppelin/openzeppelin-contracts@3.3.0=${HOME}/.brownie/packages/OpenZeppelin/openzeppelin-contracts@3.3.0 --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout ../contracts/contracts/binding.sol > contract/combined.json
+${OPENZEPPELIN_CONTRACTS_DIR}:
+	cd ../contracts; ./brownie compile
+
+abigen: ${OPENZEPPELIN_CONTRACTS_DIR}
+	solc ${OPENZEPPELIN_CONTRACTS}=${OPENZEPPELIN_CONTRACTS_DIR} --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout ../contracts/contracts/binding.sol > contract/combined.json
 	abigen --pkg contract --out contract/binding.go --combined-json contract/combined.json
 
 deploy-ganache:
