@@ -11,17 +11,18 @@ struct Deposit {
     uint256 amount;
     uint64 withdrawalDelayBlocks;
     uint64 withdrawalRequestedBlock;
+    bool slashed;
 }
 
 contract DepositContract is IERC777Recipient {
-    event Deposited(
+    event DepositChanged(
         address indexed account,
         uint256 amount,
-        uint64 withdrawalDelayBlocks
+        uint64 withdrawalDelayBlocks,
+        uint64 withdrawalRequestedBlock,
+        bool withdrawn,
+        bool slashed
     );
-    event WithdrawalRequested(address indexed account);
-    event Withdrawn(address indexed account, address recipient, uint256 amount);
-    event Slashed(address indexed account);
 
     IERC1820Registry private _erc1820 = IERC1820Registry(
         0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
@@ -75,6 +76,7 @@ contract DepositContract is IERC777Recipient {
     function requestWithdrawal() external {
         Deposit memory deposit = _deposits[msg.sender];
         require(deposit.amount > 0, "DepositContract: no deposit");
+        assert(!deposit.slashed);
         require(
             deposit.withdrawalRequestedBlock == 0,
             "DepositContract: withdrawal already requested"
@@ -82,12 +84,20 @@ contract DepositContract is IERC777Recipient {
 
         _deposits[msg.sender].withdrawalRequestedBlock = uint64(block.number);
 
-        emit WithdrawalRequested({account: msg.sender});
+        emit DepositChanged({
+            account: msg.sender,
+            amount: deposit.amount,
+            withdrawalDelayBlocks: deposit.withdrawalDelayBlocks,
+            withdrawalRequestedBlock: uint64(block.number),
+            withdrawn: false,
+            slashed: false
+        });
     }
 
     function withdraw(address recipient) external {
         Deposit memory deposit = _deposits[msg.sender];
         require(deposit.amount > 0, "DepositContract: no deposit");
+        assert(!deposit.slashed);
         require(
             deposit.withdrawalRequestedBlock > 0,
             "DepositContract: withdrawal not requested yet"
@@ -102,19 +112,36 @@ contract DepositContract is IERC777Recipient {
         delete _deposits[msg.sender];
         _token.send(recipient, deposit.amount, "");
 
-        emit Withdrawn({
+        emit DepositChanged({
             account: msg.sender,
-            recipient: recipient,
-            amount: deposit.amount
+            amount: 0,
+            withdrawalDelayBlocks: 0,
+            withdrawalRequestedBlock: 0,
+            withdrawn: true,
+            slashed: false
         });
     }
 
     function slash(address account) external {
         require(msg.sender == _slasher);
 
-        delete _deposits[account];
+        Deposit memory deposit = _deposits[account];
 
-        emit Slashed(account);
+        deposit.amount = 0;
+        deposit.withdrawalDelayBlocks = 0;
+        deposit.withdrawalRequestedBlock = 0;
+        deposit.slashed = true;
+
+        _deposits[account] = deposit;
+
+        emit DepositChanged({
+            account: account,
+            amount: 0,
+            withdrawalDelayBlocks: 0,
+            withdrawalRequestedBlock: 0,
+            withdrawn: false,
+            slashed: true
+        });
     }
 
     function getDepositAmount(address account) public view returns (uint256) {
@@ -137,6 +164,10 @@ contract DepositContract is IERC777Recipient {
         return _deposits[account].withdrawalRequestedBlock;
     }
 
+    function isSlashed(address account) public view returns (bool) {
+        return _deposits[account].slashed;
+    }
+
     function _deposit(
         address depositor,
         uint256 amount,
@@ -147,14 +178,22 @@ contract DepositContract is IERC777Recipient {
             withdrawalDelayBlocks >= deposit.withdrawalDelayBlocks,
             "DepositContract: withdrawal delay cannot be decreased"
         );
+        require(
+            deposit.withdrawalRequestedBlock == 0,
+            "DepositContract: withdrawal in progress"
+        );
+        require(!deposit.slashed, "DepositContract: account slashed");
 
         _deposits[depositor].amount = deposit.amount + amount;
         _deposits[depositor].withdrawalDelayBlocks = withdrawalDelayBlocks;
 
-        emit Deposited({
+        emit DepositChanged({
             account: depositor,
-            amount: amount,
-            withdrawalDelayBlocks: withdrawalDelayBlocks
+            amount: deposit.amount + amount,
+            withdrawalDelayBlocks: withdrawalDelayBlocks,
+            withdrawalRequestedBlock: 0,
+            withdrawn: false,
+            slashed: false
         });
     }
 

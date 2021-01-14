@@ -17,20 +17,31 @@ def check_deposit(
     amount: int,
     withdrawal_delay_blocks: int,
     withdrawal_requested_block: int,
+    slashed: bool = False,
 ) -> None:
     assert deposit_contract.getDepositAmount(account) == amount
     assert deposit_contract.getWithdrawalDelayBlocks(account) == withdrawal_delay_blocks
     assert deposit_contract.getWithdrawalRequestedBlock(account) == withdrawal_requested_block
+    assert deposit_contract.isSlashed(account) == slashed
 
 
-def check_deposit_event(
-    tx: ContractTx, amount: int, withdrawal_delay_blocks: int, withdrawal_requested_block: int,
+def check_deposit_changed_evevnt(
+    tx: ContractTx,
+    amount: int,
+    withdrawal_delay_blocks: int,
+    withdrawal_requested_block: int,
+    *,
+    slashed: bool = False,
+    withdrawn: bool = False,
 ) -> None:
-    assert "Deposited" in tx.events and len(tx.events["Deposited"]) == 1
-    event = tx.events["Deposited"][0]
+    assert "DepositChanged" in tx.events and len(tx.events["DepositChanged"]) == 1
+    event = tx.events["DepositChanged"][0]
     assert event["account"] == tx.sender
     assert event["amount"] == amount
     assert event["withdrawalDelayBlocks"] == withdrawal_delay_blocks
+    assert event["withdrawalRequestedBlock"] == withdrawal_requested_block
+    assert event["withdrawn"] is withdrawn
+    assert event["slashed"] is slashed
 
 
 def test_deposit(deposit_contract: Any, deposit_token_contract: Any, owner: Account) -> None:
@@ -44,7 +55,7 @@ def test_deposit(deposit_contract: Any, deposit_token_contract: Any, owner: Acco
     withdrawal_delay_blocks = int.from_bytes(decode_hex(valid_data), byteorder="big")
 
     tx = deposit_token_contract.send(deposit_contract, 100, valid_data, {"from": owner})
-    check_deposit_event(tx, 100, withdrawal_delay_blocks, 0)
+    check_deposit_changed_evevnt(tx, 100, withdrawal_delay_blocks, 0)
     check_deposit(deposit_contract, owner, 100, withdrawal_delay_blocks, 0)
 
     # depositing twice works, but only if withdrawal delay isn't decreased
@@ -52,11 +63,11 @@ def test_deposit(deposit_contract: Any, deposit_token_contract: Any, owner: Acco
         deposit_token_contract.send(deposit_contract, 50, "0x00000000aabbccdc", {"from": owner})
 
     tx = deposit_token_contract.send(deposit_contract, 50, valid_data, {"from": owner})
-    check_deposit_event(tx, 50, withdrawal_delay_blocks, 0)
+    check_deposit_changed_evevnt(tx, 150, withdrawal_delay_blocks, 0)
     check_deposit(deposit_contract, owner, 150, withdrawal_delay_blocks, 0)
 
     tx = deposit_token_contract.send(deposit_contract, 0, "0x00000000aabbccde", {"from": owner})
-    check_deposit_event(tx, 0, withdrawal_delay_blocks + 1, 0)
+    check_deposit_changed_evevnt(tx, 150, withdrawal_delay_blocks + 1, 0)
     check_deposit(deposit_contract, owner, 150, withdrawal_delay_blocks + 1, 0)
 
 
@@ -78,9 +89,7 @@ def test_withdraw(
         deposit_contract.withdraw(recipient, {"from": owner})
 
     tx = deposit_contract.requestWithdrawal({"from": owner})
-    assert "WithdrawalRequested" in tx.events and len(tx.events["WithdrawalRequested"]) == 1
-    event = tx.events["WithdrawalRequested"][0]
-    assert event["account"] == owner
+    check_deposit_changed_evevnt(tx, 100, withdrawal_delay, tx.block_number)
     assert deposit_contract.getWithdrawalRequestedBlock(owner) == tx.block_number
     withdraw_block_number = tx.block_number + withdrawal_delay
 
@@ -92,11 +101,6 @@ def test_withdraw(
     assert web3.eth.blockNumber == withdraw_block_number - 1  # one block mined by sending tx
     tx = deposit_contract.withdraw(recipient, {"from": owner})
 
-    assert "Withdrawn" in tx.events and len(tx.events["Withdrawn"]) == 1
-    event = tx.events["Withdrawn"][0]
-    assert event["account"] == owner
-    assert event["recipient"] == recipient
-    assert event["amount"] == 100
-
+    check_deposit_changed_evevnt(tx, 0, 0, 0, withdrawn=True)
     check_deposit(deposit_contract, owner, 0, 0, 0)
     assert deposit_token_contract.balanceOf(recipient) == 100

@@ -134,12 +134,18 @@ def test_slashing(
     mine_until(tx.block_number + appeal_blocks, chain)
     tx = keyper_slasher.slash(0)
 
-    assert "Slashed" in tx.events and len(tx.events["Slashed"]) == 2
-    slasher_event = [ev for ev in tx.events["Slashed"] if ev.address == keyper_slasher][0]
-    deposit_event = [ev for ev in tx.events["Slashed"] if ev.address == deposit_contract][0]
+    assert "Slashed" in tx.events and "DepositChanged" in tx.events and len(tx.events) == 2
+    slasher_event = tx.events["Slashed"][0]
+    deposit_event = tx.events["DepositChanged"][0]
 
     assert slasher_event["halfStep"] == 0
     assert slasher_event["executor"] == keypers[0]
 
     assert deposit_event["account"] == keypers[0]
+    assert deposit_event["amount"] == 0
+    assert deposit_event["withdrawalDelayBlocks"] == 0
+    assert deposit_event["withdrawalRequestedBlock"] == 0
+    assert deposit_event["withdrawn"] is False
+    assert deposit_event["slashed"] is True
     assert deposit_contract.getDepositAmount(keypers[0]) == 0
+    assert deposit_contract.isSlashed(keypers[0]) is True
