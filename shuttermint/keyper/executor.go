@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	skipCheckInterval    = 5 * time.Second
-	halfStepPollInterval = 1 * time.Second
-	kickOffBlockStagger  = 5
+	skipCheckInterval   = 5 * time.Second
+	kickOffBlockStagger = 5
 )
 
 // CipherHalfStep returns the half step number of the cipher execution step.

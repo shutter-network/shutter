@@ -28,7 +28,6 @@ import (
 
 const (
 	ganachePort               = 8545
-	ganacheStartupTime        = 5 * time.Second
 	batchSpan                 = 5
 	threshold                 = 2
 	configChangeHeadsUpBlocks = 10
