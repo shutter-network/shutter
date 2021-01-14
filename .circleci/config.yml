@@ -173,6 +173,23 @@ jobs:
       - store_test_results:
           path: report
 
+  mint-lint:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - lint-shuttermint-go-v1-{{ checksum "go.sum" }}
+      - run: make install-golangci-lint
+      - save_cache:
+          key: lint-shuttermint-go-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build/"
+      - run: make lint-changes
+
 workflows:
   version: 2
   main:
@@ -186,3 +203,7 @@ workflows:
   shuttermint:
     jobs:
       - mint-build
+      - mint-lint:
+          filters:
+            branches:
+              ignore: /master/
