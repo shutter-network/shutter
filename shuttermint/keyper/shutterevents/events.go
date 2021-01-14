@@ -32,9 +32,9 @@ func (acc Accusation) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.Accusation,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", acc.Sender),
-			newUintPair("Eon", acc.Eon),
-			newAddressesPair("Accused", acc.Accused),
+			evattr.Sender(acc.Sender),
+			evattr.Eon(acc.Eon),
+			evattr.Accused(acc.Accused),
 		},
 	}
 }
@@ -104,9 +104,9 @@ func (msg Apology) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.Apology,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newAddressesPair("Accusers", msg.Accusers),
+			evattr.Sender(msg.Sender),
+			evattr.Eon(msg.Eon),
+			evattr.Accusers(msg.Accusers),
 			newByteSequencePair("PolyEvals", polyEvalBytes),
 		},
 	}
@@ -239,7 +239,7 @@ func (msg CheckIn) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.CheckIn,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
+			evattr.Sender(msg.Sender),
 			{
 				Key:   []byte("EncryptionPublicKey"),
 				Value: encodeECIESPublicKey(msg.EncryptionPublicKey),
@@ -346,8 +346,8 @@ func (msg EonStarted) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.EonStarted,
 		Attributes: []abcitypes.EventAttribute{
-			newUintPair("Eon", msg.Eon),
-			newUintPair("BatchIndex", msg.BatchIndex),
+			evattr.Eon(msg.Eon),
+			evattr.BatchIndex(msg.BatchIndex),
 		},
 	}
 }
@@ -364,8 +364,8 @@ func (msg PolyCommitment) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.PolyCommitment,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
+			evattr.Sender(msg.Sender),
+			evattr.Eon(msg.Eon),
 			newGammas("Gammas", msg.Gammas),
 		},
 	}
@@ -412,9 +412,9 @@ func (msg PolyEval) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.PolyEval,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newAddressesPair("Receivers", msg.Receivers),
+			evattr.Sender(msg.Sender),
+			evattr.Eon(msg.Eon),
+			evattr.Receivers(msg.Receivers),
 			newByteSequencePair("EncryptedEvals", msg.EncryptedEvals),
 		},
 	}
@@ -468,9 +468,9 @@ func (msg EpochSecretKeyShare) MakeABCIEvent() abcitypes.Event {
 	return abcitypes.Event{
 		Type: evtype.EpochSecretKeyShare,
 		Attributes: []abcitypes.EventAttribute{
-			newAddressPair("Sender", msg.Sender),
-			newUintPair("Eon", msg.Eon),
-			newUintPair("Epoch", msg.Epoch),
+			evattr.Sender(msg.Sender),
+			evattr.Eon(msg.Eon),
+			evattr.Epoch(msg.Epoch),
 			newEpochSecretKeyShare("Share", msg.Share),
 		},
 	}
