@@ -15,7 +15,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	addr := common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962")
+	addr := common.HexToAddress("0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e")
 	cc, err := contract.NewConfigContract(addr, cl)
 	if err != nil {
 		panic(err)

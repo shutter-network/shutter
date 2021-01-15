@@ -69,6 +69,11 @@ func NewContractCallerFromConfig(config KeyperConfig) (ContractCaller, error) {
 		return ContractCaller{}, err
 	}
 
+	depositContract, err := contract.NewDepositContract(config.DepositContractAddress, ethcl)
+	if err != nil {
+		return ContractCaller{}, err
+	}
+
 	return NewContractCaller(
 		ethcl,
 		config.SigningKey,
@@ -76,6 +81,7 @@ func NewContractCallerFromConfig(config KeyperConfig) (ContractCaller, error) {
 		keyBroadcastContract,
 		batcherContract,
 		executorContract,
+		depositContract,
 	), nil
 }
 

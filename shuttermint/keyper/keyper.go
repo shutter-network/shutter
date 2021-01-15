@@ -90,6 +90,12 @@ func (kpr *Keyper) init() error {
 	}
 	kpr.executorContract = ec
 
+	dc, err := contract.NewDepositContract(kpr.Config.DepositContractAddress, kpr.ethcl)
+	if err != nil {
+		return err
+	}
+	kpr.depositContract = dc
+
 	contractCaller := NewContractCaller(
 		kpr.ethcl,
 		kpr.Config.SigningKey,
@@ -97,6 +103,7 @@ func (kpr *Keyper) init() error {
 		kpr.keyBroadcastContract,
 		kpr.batcherContract,
 		kpr.executorContract,
+		kpr.depositContract,
 	)
 	executor := Executor{
 		ctx:                   kpr.ctx,
@@ -652,6 +659,7 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 		kpr.keyBroadcastContract,
 		kpr.batcherContract,
 		kpr.executorContract,
+		kpr.depositContract,
 	)
 	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc, kpr.cipherExecutionParams)
 

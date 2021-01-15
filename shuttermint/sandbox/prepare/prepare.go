@@ -42,6 +42,7 @@ var configFlags struct {
 	BatcherContractAddress      string
 	KeyBroadcastContractAddress string
 	ExecutorContractAddress     string
+	DepositContractAddress      string
 	Bin                         string
 	FixedShuttermintPort        bool
 }
@@ -169,26 +170,32 @@ func initConfigFlags() {
 	configCmd.Flags().StringVar(
 		&configFlags.ConfigContractAddress,
 		"config-contract",
-		"0x07a457d878BF363E0Bb5aa0B096092f941e19962",
+		"0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e",
 		"address of the config contract",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.BatcherContractAddress,
 		"batcher-contract",
-		"0x27D44c7337ce4D67b7cd573e9c36bDEED2b2162a",
+		"0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f",
 		"address of the batcher contract",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.KeyBroadcastContractAddress,
 		"key-broadcast-contract",
-		"0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e",
+		"0xBe0B0f08A599F07699E98A9D001084e97b9a900A",
 		"address of the key broadcast contract",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.ExecutorContractAddress,
 		"executor-contract",
-		"0x5d18dED3c0A476fCbc9E67Fc1C613cfc5DD0d34B",
+		"0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f",
 		"address of the executor contract",
+	)
+	configCmd.Flags().StringVar(
+		&configFlags.DepositContractAddress,
+		"deposit-contract",
+		"0x791c3f20f865c582A204134E0A64030Fc22D2E38",
+		"address of the deposit contract",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.Bin,
@@ -272,6 +279,9 @@ func validateConfigFlags() (string, error) {
 	}
 	if err := validateAddress(configFlags.ExecutorContractAddress); err != nil {
 		return "executor-contract", err
+	}
+	if err := validateAddress(configFlags.DepositContractAddress); err != nil {
+		return "deposit-contract", err
 	}
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
 		return "dir", fmt.Errorf("output directory %s already exists", configFlags.Dir)
@@ -385,6 +395,7 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		BatcherContract:      configFlags.BatcherContractAddress,
 		KeyBroadcastContract: configFlags.KeyBroadcastContractAddress,
 		ExecutorContract:     configFlags.ExecutorContractAddress,
+		DepositContract:      configFlags.DepositContractAddress,
 		ExecutionStaggering:  "5",
 	}
 	return &config, nil

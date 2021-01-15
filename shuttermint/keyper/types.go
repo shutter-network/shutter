@@ -52,6 +52,7 @@ type KeyperConfig struct {
 	BatcherContractAddress      common.Address
 	KeyBroadcastContractAddress common.Address
 	ExecutorContractAddress     common.Address
+	DepositContractAddress      common.Address
 	ExecutionStaggering         uint64
 }
 
@@ -67,6 +68,7 @@ type Keyper struct {
 	keyBroadcastContract *contract.KeyBroadcastContract
 	batcherContract      *contract.BatcherContract
 	executorContract     *contract.ExecutorContract
+	depositContract      *contract.DepositContract
 
 	batchConfigs          map[uint64]contract.BatchConfig
 	batches               map[uint64]*BatchState
@@ -113,6 +115,7 @@ type ContractCaller struct {
 	KeyBroadcastContract *contract.KeyBroadcastContract
 	BatcherContract      *contract.BatcherContract
 	ExecutorContract     *contract.ExecutorContract
+	DepositContract      *contract.DepositContract
 }
 
 // NewContractCaller creates a new ContractCaller.
@@ -123,6 +126,7 @@ func NewContractCaller(
 	keyBroadcastContract *contract.KeyBroadcastContract,
 	batcherContract *contract.BatcherContract,
 	executorContract *contract.ExecutorContract,
+	depositContract *contract.DepositContract,
 ) ContractCaller {
 	return ContractCaller{
 		Ethclient:  ethcl,
@@ -132,6 +136,7 @@ func NewContractCaller(
 		KeyBroadcastContract: keyBroadcastContract,
 		BatcherContract:      batcherContract,
 		ExecutorContract:     executorContract,
+		DepositContract:      depositContract,
 	}
 }
 

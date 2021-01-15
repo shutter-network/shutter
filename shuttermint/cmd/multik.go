@@ -53,10 +53,11 @@ func multikMain() {
 	baseConfig := keyper.KeyperConfig{
 		ShuttermintURL:              multikFlags.ShuttermintURL,
 		EthereumURL:                 multikFlags.EthereumURL,
-		ConfigContractAddress:       common.HexToAddress("0x07a457d878BF363E0Bb5aa0B096092f941e19962"),
-		KeyBroadcastContractAddress: common.HexToAddress("0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e"),
-		BatcherContractAddress:      common.HexToAddress("0x27D44c7337ce4D67b7cd573e9c36bDEED2b2162a"),
-		ExecutorContractAddress:     common.HexToAddress("0x5d18dED3c0A476fCbc9E67Fc1C613cfc5DD0d34B"),
+		ConfigContractAddress:       common.HexToAddress("0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e"),
+		KeyBroadcastContractAddress: common.HexToAddress("0xBe0B0f08A599F07699E98A9D001084e97b9a900A"),
+		BatcherContractAddress:      common.HexToAddress("0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f"),
+		ExecutorContractAddress:     common.HexToAddress("0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f"),
+		DepositContractAddress:      common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
 	}
 
 	var signingKeys [3]*ecdsa.PrivateKey
