@@ -140,6 +140,7 @@ issues:
       text: "unnecessaryDefer:"
 
 run:
+  timeout: 10m
   skip-dirs:
     - test/testdata_etc
     - internal/cache
