@@ -2,6 +2,7 @@ package observe
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,6 +20,7 @@ type MainChain struct {
 	Batches                 map[uint64]*Batch
 	NumExecutionHalfSteps   uint64
 	CipherExecutionReceipts map[uint64]*contract.CipherExecutionReceipt
+	Deposits                map[common.Address]*Deposit
 }
 
 // Batch stores the encrypted and plain transactions submitted to the batching contract for a
@@ -31,11 +33,21 @@ type Batch struct {
 	PlainBatchHash        common.Hash
 }
 
+// Deposit represents a deposit in the deposit contract.
+type Deposit struct {
+	Account                  common.Address
+	Slashed                  bool
+	Amount                   *big.Int
+	WithdrawalDelayBlocks    uint64
+	WithdrawalRequestedBlock uint64
+}
+
 // NewMainChain creates an empty MainChain struct
 func NewMainChain() *MainChain {
 	return &MainChain{
 		Batches:                 make(map[uint64]*Batch),
 		CipherExecutionReceipts: make(map[uint64]*contract.CipherExecutionReceipt),
+		Deposits:                make(map[common.Address]*Deposit),
 	}
 }
 
@@ -190,6 +202,44 @@ func (mainchain *MainChain) syncExecutionState(executorContract *contract.Execut
 	return nil
 }
 
+func (mainchain *MainChain) syncDeposits(depositContract *contract.DepositContract, filter *bind.FilterOpts) error {
+	eventIt, err := depositContract.FilterDepositChanged(filter, []common.Address{})
+	if err != nil {
+		return err
+	}
+
+	events := []*contract.DepositContractDepositChanged{}
+	for eventIt.Next() {
+		events = append(events, eventIt.Event)
+	}
+	if eventIt.Error() != nil {
+		return eventIt.Error()
+	}
+
+	for _, ev := range events {
+		deposit := mainchain.GetDeposit(ev.Account)
+		deposit.Amount = ev.Amount
+		deposit.WithdrawalDelayBlocks = ev.WithdrawalDelayBlocks
+		deposit.WithdrawalRequestedBlock = ev.WithdrawalRequestedBlock
+		deposit.Slashed = ev.Slashed
+		mainchain.Deposits[ev.Account] = deposit
+	}
+
+	return nil
+}
+
+// GetDeposit returns the deposit of the given account or an empty one if it doesn't exist.
+func (mainchain *MainChain) GetDeposit(account common.Address) *Deposit {
+	deposit, ok := mainchain.Deposits[account]
+	if !ok {
+		deposit = &Deposit{
+			Account: account,
+		}
+		mainchain.Deposits[account] = deposit
+	}
+	return deposit
+}
+
 // SyncToHead fetches the latest state from the ethereum node.
 // XXX this mutates the object in place. we may want to control mutation of the MainChain struct.
 // XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
@@ -199,6 +249,7 @@ func (mainchain *MainChain) SyncToHead(
 	configContract *contract.ConfigContract,
 	batcherContract *contract.BatcherContract,
 	executorContract *contract.ExecutorContract,
+	depositContract *contract.DepositContract,
 ) error {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -230,6 +281,11 @@ func (mainchain *MainChain) SyncToHead(
 	}
 
 	err = mainchain.syncExecutionState(executorContract, opts)
+	if err != nil {
+		return err
+	}
+
+	err = mainchain.syncDeposits(depositContract, filter)
 	if err != nil {
 		return err
 	}

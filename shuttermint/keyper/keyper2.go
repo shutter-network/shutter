@@ -108,6 +108,7 @@ func (kpr *Keyper2) syncMain(ctx context.Context) error {
 		kpr.ContractCaller.ConfigContract,
 		kpr.ContractCaller.BatcherContract,
 		kpr.ContractCaller.ExecutorContract,
+		kpr.ContractCaller.DepositContract,
 	)
 }
 
