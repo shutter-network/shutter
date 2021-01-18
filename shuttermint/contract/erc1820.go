@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
+	"time"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -86,11 +89,36 @@ func DeployERC1820Contract(ctx context.Context, client *ethclient.Client, key *e
 	if err != nil {
 		return err
 	}
+	err = waitMinedSuccessful(ctx, client, tx)
+	if err != nil {
+		return err
+	}
 
 	err = client.SendTransaction(ctx, ERC1820DeploymentTransaction)
 	if err != nil {
 		return err
 	}
+	err = waitMinedSuccessful(ctx, client, ERC1820DeploymentTransaction)
+	if err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func waitMinedSuccessful(ctx context.Context, client *ethclient.Client, tx *types.Transaction) error {
+	// bind.WaitMined doesn't work for some reason, at least not with Ganache
+	var receipt *types.Receipt
+	var err error
+	for receipt == nil {
+		receipt, err = client.TransactionReceipt(ctx, tx.Hash())
+		if err != nil && err != ethereum.NotFound {
+			return err
+		}
+		time.Sleep(time.Millisecond * 500)
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("deployment of ERC1820 contract failed")
+	}
 	return nil
 }
