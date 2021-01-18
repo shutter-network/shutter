@@ -114,8 +114,11 @@ func runGanache(t *testing.T) {
 }
 
 func deployContracts(t *testing.T) {
+	require.Nil(t, contract.DeployERC1820Contract(context.Background(), cl, deployKey))
+
 	chainID, err := cl.ChainID(context.Background())
 	require.Nil(t, err)
+
 	auth, err := bind.NewKeyedTransactorWithChainID(deployKey, chainID)
 	require.Nil(t, err)
 	nonce, err := cl.PendingNonceAt(context.Background(), deployAddress)
@@ -143,7 +146,15 @@ func deployContracts(t *testing.T) {
 	require.Nil(t, err)
 	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
 
-	for _, tx := range []*types.Transaction{tx1, tx2, tx3, tx4, tx5} {
+	tokenContractAddress, tx6, _, err := contract.DeployTestDepositTokenContract(auth, cl)
+	require.Nil(t, err)
+	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
+
+	_, tx7, depositContract, err := contract.DeployDepositContract(auth, cl, tokenContractAddress)
+	require.Nil(t, err)
+	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
+
+	for _, tx := range []*types.Transaction{tx1, tx2, tx3, tx4, tx5, tx6, tx7} {
 		receipt, err := bind.WaitMined(context.Background(), cl, tx)
 		require.Nil(t, err)
 		require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -156,6 +167,7 @@ func deployContracts(t *testing.T) {
 		keyBroadcastContract,
 		batcherContract,
 		executorContract,
+		depositContract,
 	)
 	cc = &contractCaller
 
