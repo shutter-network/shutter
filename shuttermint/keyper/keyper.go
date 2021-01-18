@@ -96,6 +96,12 @@ func (kpr *Keyper) init() error {
 	}
 	kpr.depositContract = dc
 
+	ks, err := contract.NewKeyperSlasher(kpr.Config.KeyperSlasherAddress, kpr.ethcl)
+	if err != nil {
+		return err
+	}
+	kpr.keyperSlasher = ks
+
 	contractCaller := NewContractCaller(
 		kpr.ethcl,
 		kpr.Config.SigningKey,
@@ -104,6 +110,7 @@ func (kpr *Keyper) init() error {
 		kpr.batcherContract,
 		kpr.executorContract,
 		kpr.depositContract,
+		kpr.keyperSlasher,
 	)
 	executor := Executor{
 		ctx:                   kpr.ctx,
@@ -660,6 +667,7 @@ func (kpr *Keyper) startBatch(bp BatchParams) error {
 		kpr.batcherContract,
 		kpr.executorContract,
 		kpr.depositContract,
+		kpr.keyperSlasher,
 	)
 	batch := NewBatchState(bp, kpr.Config, kpr.ms, &cc, kpr.cipherExecutionParams)
 

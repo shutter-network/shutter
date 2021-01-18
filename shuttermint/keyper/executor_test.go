@@ -31,6 +31,7 @@ const (
 	batchSpan                 = 5
 	threshold                 = 2
 	configChangeHeadsUpBlocks = 10
+	appealBlocks              = 10
 )
 
 var (
@@ -142,7 +143,7 @@ func deployContracts(t *testing.T) {
 	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
 	batcherContractAddress = batcherAddress
 
-	_, tx5, executorContract, err := contract.DeployExecutorContract(auth, cl, configAddress, batcherAddress)
+	executorContractAddress, tx5, executorContract, err := contract.DeployExecutorContract(auth, cl, configAddress, batcherAddress)
 	require.Nil(t, err)
 	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
 
@@ -150,11 +151,22 @@ func deployContracts(t *testing.T) {
 	require.Nil(t, err)
 	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
 
-	_, tx7, depositContract, err := contract.DeployDepositContract(auth, cl, tokenContractAddress)
+	depositContractAddress, tx7, depositContract, err := contract.DeployDepositContract(auth, cl, tokenContractAddress)
 	require.Nil(t, err)
 	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
 
-	for _, tx := range []*types.Transaction{tx1, tx2, tx3, tx4, tx5, tx6, tx7} {
+	_, tx8, keyperSlasher, err := contract.DeployKeyperSlasher(
+		auth,
+		cl,
+		big.NewInt(appealBlocks),
+		configAddress,
+		executorContractAddress,
+		depositContractAddress,
+	)
+	require.Nil(t, err)
+	auth.Nonce.SetUint64(auth.Nonce.Uint64() + 1)
+
+	for _, tx := range []*types.Transaction{tx1, tx2, tx3, tx4, tx5, tx6, tx7, tx8} {
 		receipt, err := bind.WaitMined(context.Background(), cl, tx)
 		require.Nil(t, err)
 		require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -168,6 +180,7 @@ func deployContracts(t *testing.T) {
 		batcherContract,
 		executorContract,
 		depositContract,
+		keyperSlasher,
 	)
 	cc = &contractCaller
 

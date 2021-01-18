@@ -58,6 +58,7 @@ func multikMain() {
 		BatcherContractAddress:      common.HexToAddress("0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f"),
 		ExecutorContractAddress:     common.HexToAddress("0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f"),
 		DepositContractAddress:      common.HexToAddress("0x791c3f20f865c582A204134E0A64030Fc22D2E38"),
+		KeyperSlasherAddress:        common.HexToAddress("0x2adf8B30d4Dd24a05Ccd9aFbDc06A5b49C9c758d"),
 	}
 
 	var signingKeys [3]*ecdsa.PrivateKey

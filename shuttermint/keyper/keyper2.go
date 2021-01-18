@@ -74,6 +74,11 @@ func NewContractCallerFromConfig(config KeyperConfig) (ContractCaller, error) {
 		return ContractCaller{}, err
 	}
 
+	keyperSlasher, err := contract.NewKeyperSlasher(config.KeyperSlasherAddress, ethcl)
+	if err != nil {
+		return ContractCaller{}, err
+	}
+
 	return NewContractCaller(
 		ethcl,
 		config.SigningKey,
@@ -82,6 +87,7 @@ func NewContractCallerFromConfig(config KeyperConfig) (ContractCaller, error) {
 		batcherContract,
 		executorContract,
 		depositContract,
+		keyperSlasher,
 	), nil
 }
 
@@ -109,6 +115,7 @@ func (kpr *Keyper2) syncMain(ctx context.Context) error {
 		kpr.ContractCaller.BatcherContract,
 		kpr.ContractCaller.ExecutorContract,
 		kpr.ContractCaller.DepositContract,
+		kpr.ContractCaller.KeyperSlasher,
 	)
 }
 

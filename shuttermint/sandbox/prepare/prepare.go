@@ -43,6 +43,7 @@ var configFlags struct {
 	KeyBroadcastContractAddress string
 	ExecutorContractAddress     string
 	DepositContractAddress      string
+	KeyperSlasherAddress        string
 	Bin                         string
 	FixedShuttermintPort        bool
 }
@@ -196,6 +197,12 @@ func initConfigFlags() {
 		"deposit-contract",
 		"0x791c3f20f865c582A204134E0A64030Fc22D2E38",
 		"address of the deposit contract",
+	)
+	configCmd.Flags().StringVar(
+		&configFlags.KeyperSlasherAddress,
+		"keyper-slasher",
+		"0x2adf8B30d4Dd24a05Ccd9aFbDc06A5b49C9c758d",
+		"address of the keyper slasher",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.Bin,
@@ -396,6 +403,7 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		KeyBroadcastContract: configFlags.KeyBroadcastContractAddress,
 		ExecutorContract:     configFlags.ExecutorContractAddress,
 		DepositContract:      configFlags.DepositContractAddress,
+		KeyperSlasher:        configFlags.KeyperSlasherAddress,
 		ExecutionStaggering:  "5",
 	}
 	return &config, nil

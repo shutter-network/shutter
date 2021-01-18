@@ -29,6 +29,7 @@ const (
 	startBlockNumberOffset           = 30
 	defaultGasLimit                  = 5000000
 	defaultConfigChangeHeadsUpBlocks = 20
+	defaultAppealBlocks              = 20
 	ganacheKeyIdx                    = 9
 	numKeypers                       = 3
 	threshold                        = 2
@@ -343,6 +344,16 @@ func deploy(ctx context.Context) {
 	depositAddress, tx, _, err := contract.DeployDepositContract(auth, client, tokenAddress)
 	addTx()
 
+	keyperSlasherAddress, tx, _, err := contract.DeployKeyperSlasher(
+		auth,
+		client,
+		big.NewInt(defaultAppealBlocks),
+		configAddress,
+		executorAddress,
+		depositAddress,
+	)
+	addTx()
+
 	_, err = waitForTransactions(ctx, client, txs)
 	if err != nil {
 		panic(err)
@@ -354,6 +365,7 @@ func deploy(ctx context.Context) {
 	fmt.Println("ExecutorContract address:", executorAddress.Hex())
 	fmt.Println("TokenContract address:", tokenAddress.Hex())
 	fmt.Println("DepositContract address:", depositAddress.Hex())
+	fmt.Println("KeyperSlasher address:", keyperSlasherAddress.Hex())
 }
 
 func checkContractExists(ctx context.Context, configContractAddress common.Address) {

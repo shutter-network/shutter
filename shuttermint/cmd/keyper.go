@@ -29,6 +29,7 @@ type RawKeyperConfig struct {
 	KeyBroadcastContract string
 	ExecutorContract     string
 	DepositContract      string
+	KeyperSlasher        string
 	ExecutionStaggering  string
 	DBDir                string
 }
@@ -73,6 +74,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("KeyBroadcastContract")
 	viper.BindEnv("ExecutorContract")
 	viper.BindEnv("DepositContract")
+	viper.BindEnv("KeyperSlasher")
 	viper.BindEnv("ExecutionStaggering")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
@@ -176,6 +178,13 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		)
 	}
 
+	keyperSlasherAddress := common.HexToAddress(r.KeyperSlasher)
+	if r.KeyperSlasher != keyperSlasherAddress.Hex() {
+		return emptyConfig, fmt.Errorf(
+			"KeyperSlasher must be a valid checksummed address",
+		)
+	}
+
 	executionStaggering, err := strconv.ParseUint(r.ExecutionStaggering, 10, 64)
 	if err != nil {
 		return emptyConfig, fmt.Errorf("error parsing ExecutionStaggering as non-negative integer: %w", err)
@@ -192,6 +201,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		KeyBroadcastContractAddress: keyBroadcastContractAddress,
 		ExecutorContractAddress:     executorContractAddress,
 		DepositContractAddress:      depositContractAddress,
+		KeyperSlasherAddress:        keyperSlasherAddress,
 		ExecutionStaggering:         executionStaggering,
 		DBDir:                       r.DBDir,
 	}, nil
