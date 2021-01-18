@@ -267,6 +267,7 @@ func (a SendShuttermintMessage) String() string {
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
 type ExecuteCipherBatch struct {
+	halfStep        uint64
 	cipherBatchHash [32]byte
 	transactions    [][]byte
 	keyperIndex     uint64
@@ -298,11 +299,12 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecuteCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute cipher half step")
+	return fmt.Sprintf("-> executor contract: execute cipher half step %d", a.halfStep)
 }
 
 // ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
 type ExecutePlainBatch struct {
+	halfStep     uint64
 	transactions [][]byte
 }
 
@@ -332,11 +334,12 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecutePlainBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute plain half step")
+	return fmt.Sprintf("-> executor contract: execute plain half step %d", a.halfStep)
 }
 
 // SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch
 type SkipCipherBatch struct {
+	halfStep uint64
 }
 
 func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
@@ -365,7 +368,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a SkipCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: skip plain half step")
+	return fmt.Sprintf("-> executor contract: skip plain half step %d", a.halfStep)
 }
 
 // addAction stores the given IAction to be run later
@@ -668,12 +671,14 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 		// XXX: use transactions from voting here and make sure there are enough votes
 		decryptedTransactions := [][]byte{}
 		action = ExecuteCipherBatch{
+			halfStep:        nextHalfStep,
 			cipherBatchHash: batch.EncryptedBatchHash,
 			transactions:    decryptedTransactions,
 			keyperIndex:     keyperIndex,
 		}
 	} else {
 		action = ExecutePlainBatch{
+			halfStep:     nextHalfStep,
 			transactions: batch.PlainTransactions,
 		}
 	}
