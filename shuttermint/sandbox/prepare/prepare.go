@@ -177,7 +177,7 @@ func initConfigFlags() {
 	configCmd.Flags().StringVar(
 		&configFlags.BatcherContractAddress,
 		"batcher-contract",
-		"0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f",
+		"0x5d18dED3c0A476fCbc9E67Fc1C613cfc5DD0d34B",
 		"address of the batcher contract",
 	)
 	configCmd.Flags().StringVar(
