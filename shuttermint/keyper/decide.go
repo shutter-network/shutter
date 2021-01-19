@@ -754,6 +754,23 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 	dcdr.addAction(action)
 }
 
+// maybeAppeal checks if there are any accusations against us and if so sends an appeal if possible.
+func (dcdr *Decider) maybeAppeal() {
+	accusations := dcdr.MainChain.AccusationsAgainst(dcdr.Config.Address())
+	for _, accusation := range accusations {
+		if accusation.Appealed {
+			continue
+		}
+
+		// XXX: we have to create a contract.Authorization here
+
+		// action := Appeal{
+		// 	authorization: authorization,
+		// }
+		// dcdr.addAction(action)
+	}
+}
+
 // ExecutionDelay returns the number of main chain blocks to wait before sending a tx. This makes
 // sure not all keypers try to send the same tx at the same time.
 func (dcdr *Decider) executionDelay(batchIndex uint64) (uint64, error) {
@@ -784,4 +801,5 @@ func (dcdr *Decider) Decide() {
 	dcdr.handleDKGs()
 
 	dcdr.maybeExecuteBatch()
+	dcdr.maybeAppeal()
 }
