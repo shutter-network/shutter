@@ -3,8 +3,12 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "./ConfigContract.sol";
-import "./BatcherContract.sol";
+import {ConfigContract} from "./ConfigContract.sol";
+import {
+    BatcherContract,
+    BatchConfig,
+    TransactionType
+} from "./BatcherContract.sol";
 
 struct CipherExecutionReceipt {
     bool executed;

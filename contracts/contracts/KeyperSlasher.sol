@@ -3,11 +3,13 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/cryptography/ECDSA.sol";
-import "./ConfigContract.sol";
-import "./DepositContract.sol";
-import "./ExecutorContract.sol";
-import "./BatcherContract.sol";
+import {
+    ECDSA
+} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/cryptography/ECDSA.sol";
+import {ConfigContract, BatchConfig} from "./ConfigContract.sol";
+import {DepositContract} from "./DepositContract.sol";
+import {ExecutorContract, CipherExecutionReceipt} from "./ExecutorContract.sol";
+import {BatcherContract} from "./BatcherContract.sol";
 
 struct Accusation {
     bool accused;

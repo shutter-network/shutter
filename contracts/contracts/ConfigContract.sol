@@ -3,7 +3,9 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/access/Ownable.sol";
+import {
+    Ownable
+} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/access/Ownable.sol";
 
 struct BatchConfig {
     uint64 startBatchIndex; // the index of the first batch using this config

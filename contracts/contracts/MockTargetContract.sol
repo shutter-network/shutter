@@ -2,8 +2,6 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import "./ConfigContract.sol";
-
 contract MockTargetContract {
     event Called(bytes transaction, uint256 gas);
 
