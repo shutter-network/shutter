@@ -57,6 +57,8 @@ contract KeyperSlasher {
     }
 
     function accuse(uint64 _halfStep, uint64 _keyperIndex) external {
+        require(_halfStep % 2 == 0);
+
         require(!accusations[_halfStep].accused);
 
         BatchConfig memory _config = configContract.getConfig(_halfStep / 2);
