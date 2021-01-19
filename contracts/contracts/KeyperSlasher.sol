@@ -142,6 +142,10 @@ contract KeyperSlasher {
         for (uint64 _i = 0; _i < _authorization.signatures.length; _i++) {
             bytes memory _signature = _authorization.signatures[_i];
             uint64 _signerIndex = _authorization.signerIndices[_i];
+            require(
+                _signerIndex < _config.keypers.length,
+                "KeyperSlasher: signer index out of range"
+            );
 
             // Check order as a simple way to check for duplicates
             require(
