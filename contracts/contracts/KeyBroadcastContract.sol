@@ -45,8 +45,14 @@ contract KeyBroadcastContract {
         bytes[] calldata _signatures
     ) public {
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
-        require(_keyperIndex < _config.keypers.length);
-        require(msg.sender == _config.keypers[_keyperIndex]);
+        require(
+            _keyperIndex < _config.keypers.length,
+            "KeyBroadcastContract: keyper index out of range"
+        );
+        require(
+            msg.sender == _config.keypers[_keyperIndex],
+            "KeyBroadcastContract: sender does not match keyper"
+        );
 
         emit EncryptionKeyBroadcasted(
             msg.sender,
