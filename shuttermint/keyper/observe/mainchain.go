@@ -2,6 +2,7 @@ package observe
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -21,6 +22,7 @@ type MainChain struct {
 	NumExecutionHalfSteps   uint64
 	CipherExecutionReceipts map[uint64]*contract.CipherExecutionReceipt
 	Deposits                map[common.Address]*Deposit
+	Accusations             map[uint64]*Accusation
 }
 
 // Batch stores the encrypted and plain transactions submitted to the batching contract for a
@@ -42,12 +44,22 @@ type Deposit struct {
 	WithdrawalRequestedBlock uint64
 }
 
+// Accusation represents an accusation against a keyper in the keyper slasher.
+type Accusation struct {
+	Executor    common.Address
+	Accuser     common.Address
+	Appealed    bool
+	HalfStep    uint64
+	BlockNumber uint64
+}
+
 // NewMainChain creates an empty MainChain struct
 func NewMainChain() *MainChain {
 	return &MainChain{
 		Batches:                 make(map[uint64]*Batch),
 		CipherExecutionReceipts: make(map[uint64]*contract.CipherExecutionReceipt),
 		Deposits:                make(map[common.Address]*Deposit),
+		Accusations:             make(map[uint64]*Accusation),
 	}
 }
 
@@ -228,6 +240,55 @@ func (mainchain *MainChain) syncDeposits(depositContract *contract.DepositContra
 	return nil
 }
 
+func (mainchain *MainChain) syncSlashings(keyperSlasher *contract.KeyperSlasher, filter *bind.FilterOpts) error {
+	accusedIt, err := keyperSlasher.FilterAccused(filter, []uint64{}, []common.Address{}, []common.Address{})
+	if err != nil {
+		return err
+	}
+	appealedIt, err := keyperSlasher.FilterAppealed(filter, []uint64{}, []common.Address{})
+	if err != nil {
+		return err
+	}
+	// We don't filter for slashed events. Each slashing also results in a DepositChanged event in
+	// the deposit contract which we already sync.
+
+	accusedEvents := []*contract.KeyperSlasherAccused{}
+	for accusedIt.Next() {
+		accusedEvents = append(accusedEvents, accusedIt.Event)
+	}
+	if accusedIt.Error() != nil {
+		return accusedIt.Error()
+	}
+
+	appealedEvents := []*contract.KeyperSlasherAppealed{}
+	for appealedIt.Next() {
+		appealedEvents = append(appealedEvents, appealedIt.Event)
+	}
+	if appealedIt.Error() != nil {
+		return appealedIt.Error()
+	}
+
+	for _, ev := range accusedEvents {
+		accusation := Accusation{
+			Executor:    ev.Executor,
+			Accuser:     ev.Accuser,
+			Appealed:    false,
+			HalfStep:    ev.HalfStep,
+			BlockNumber: ev.Raw.BlockNumber,
+		}
+		mainchain.Accusations[accusation.HalfStep] = &accusation
+	}
+	for _, ev := range appealedEvents {
+		accusation, ok := mainchain.Accusations[ev.HalfStep]
+		if !ok {
+			return fmt.Errorf("got appeal without prior accusation: %+v", accusation)
+		}
+		accusation.Appealed = true
+	}
+
+	return nil
+}
+
 // GetDeposit returns the deposit of the given account or an empty one if it doesn't exist.
 func (mainchain *MainChain) GetDeposit(account common.Address) *Deposit {
 	deposit, ok := mainchain.Deposits[account]
@@ -250,6 +311,7 @@ func (mainchain *MainChain) SyncToHead(
 	batcherContract *contract.BatcherContract,
 	executorContract *contract.ExecutorContract,
 	depositContract *contract.DepositContract,
+	keyperSlasher *contract.KeyperSlasher,
 ) error {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -286,6 +348,11 @@ func (mainchain *MainChain) SyncToHead(
 	}
 
 	err = mainchain.syncDeposits(depositContract, filter)
+	if err != nil {
+		return err
+	}
+
+	err = mainchain.syncSlashings(keyperSlasher, filter)
 	if err != nil {
 		return err
 	}
