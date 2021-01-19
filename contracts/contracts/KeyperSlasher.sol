@@ -58,18 +58,27 @@ contract KeyperSlasher {
     }
 
     function accuse(uint64 _halfStep, uint64 _keyperIndex) external {
-        require(_halfStep % 2 == 0);
+        require(_halfStep % 2 == 0, "KeyperSlasher: not a cipher half step");
 
-        require(!accusations[_halfStep].accused);
+        require(
+            !accusations[_halfStep].accused,
+            "KeyperSlasher: already accused"
+        );
 
         BatchConfig memory _config = configContract.getConfig(_halfStep / 2);
-        require(_keyperIndex < _config.keypers.length);
-        require(msg.sender == _config.keypers[_keyperIndex]);
+        require(
+            _keyperIndex < _config.keypers.length,
+            "KeyperSlasher: keyper index out of range"
+        );
+        require(
+            msg.sender == _config.keypers[_keyperIndex],
+            "KeyperSlasher: sender does not match keyper"
+        );
 
         CipherExecutionReceipt memory _receipt = executorContract.getReceipt(
             _halfStep
         );
-        require(_receipt.executed);
+        require(_receipt.executed, "KeyperSlasher: half step not yet executed");
 
         accusations[_halfStep] = Accusation({
             accused: true,
@@ -89,8 +98,8 @@ contract KeyperSlasher {
 
     function appeal(Authorization memory _authorization) external {
         Accusation memory _accusation = accusations[_authorization.halfStep];
-        require(_accusation.accused);
-        require(!_accusation.appealed);
+        require(_accusation.accused, "KeyperSlasher: no accusation");
+        require(!_accusation.appealed, "KeyperSlasher: already appealed");
         CipherExecutionReceipt memory _receipt = executorContract.getReceipt(
             _authorization.halfStep
         );
@@ -114,10 +123,14 @@ contract KeyperSlasher {
             _receipt.halfStep / 2
         );
 
-        require(_authorization.signatures.length >= _config.threshold);
+        require(
+            _authorization.signatures.length >= _config.threshold,
+            "KeyperSlasher: not enough signatures"
+        );
         require(
             _authorization.signatures.length ==
-                _authorization.signerIndices.length
+                _authorization.signerIndices.length,
+            "KeyperSlasher: number of signatures and indices does not match"
         );
         bytes32 _decryptionSignatureHash = keccak256(
             abi.encodePacked(
@@ -132,23 +145,30 @@ contract KeyperSlasher {
 
             // Check order as a simple way to check for duplicates
             require(
-                _i == 0 || _signerIndex > _authorization.signerIndices[_i - 1]
+                _i == 0 || _signerIndex > _authorization.signerIndices[_i - 1],
+                "KeyperSlasher: signer indices not ordered"
             );
 
             address _signer = ECDSA.recover(
                 _decryptionSignatureHash,
                 _signature
             );
-            require(_signer == _config.keypers[_signerIndex]);
+            require(
+                _signer == _config.keypers[_signerIndex],
+                "KeyperSlasher: wrong signer"
+            );
         }
     }
 
     function slash(uint64 _halfStep) external {
         Accusation memory _accusation = accusations[_halfStep];
-        require(_accusation.accused);
-        require(!_accusation.appealed);
-        require(!_accusation.slashed);
-        require(block.number >= _accusation.blockNumber + appealBlocks);
+        require(_accusation.accused, "KeyperSlasher: no accusation");
+        require(!_accusation.appealed, "KeyperSlasher: successfully appealed");
+        require(!_accusation.slashed, "KeyperSlasher: already slashed");
+        require(
+            block.number >= _accusation.blockNumber + appealBlocks,
+            "KeyperSlasher: appeal period not over yet"
+        );
 
         depositContract.slash(_accusation.executor);
         accusations[_halfStep].slashed = true;
