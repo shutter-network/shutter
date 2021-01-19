@@ -58,7 +58,7 @@ contract BatcherContract is Ownable {
         BatchConfig memory config = configContract.getConfig(_batchIndex);
 
         // check batching is active
-        require(config.batchSpan > 0);
+        require(config.batchSpan > 0, "BatcherContract: batch not active");
 
         // check given batch is current
         assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
@@ -67,19 +67,32 @@ contract BatcherContract is Ownable {
             _relativeBatchIndex *
             config.batchSpan;
         uint64 _batchEndBlock = _batchStartBlock + config.batchSpan;
-        require(block.number >= _batchStartBlock);
-        require(block.number < _batchEndBlock);
+        require(
+            block.number >= _batchStartBlock,
+            "BatcherContract: batch not started yet"
+        );
+        require(
+            block.number < _batchEndBlock,
+            "BatcherContract: batch already ended"
+        );
 
         // check tx and batch size limits
-        require(0 < _transaction.length);
-        require(_transaction.length <= config.transactionSizeLimit);
+        require(
+            _transaction.length > 0,
+            "BatcherContract: transaction is empty"
+        );
+        require(
+            _transaction.length <= config.transactionSizeLimit,
+            "BatcherContract: transaction too big"
+        );
         require(
             batchSizes[_batchIndex] + _transaction.length <=
-                config.batchSizeLimit
+                config.batchSizeLimit,
+            "BatcherContract: batch already full"
         ); // overflow can be ignored here because number of txs and their sizes are both small
 
         // check fee
-        require(msg.value >= minFee);
+        require(msg.value >= minFee, "BatcherContract: fee too small");
 
         // add tx to batch
         bytes memory _batchHashPreimage = abi.encodePacked(
