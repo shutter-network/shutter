@@ -371,6 +371,75 @@ func (a SkipCipherBatch) String() string {
 	return fmt.Sprintf("-> executor contract: skip plain half step %d", a.halfStep)
 }
 
+// Accuse is an action accusing the executor of a given half step at the keyper slasher.
+type Accuse struct {
+	halfStep    uint64
+	keyperIndex uint64 // index of the accuser, not the executor
+}
+
+func (a Accuse) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.KeyperSlasher.Accuse(auth, a.halfStep, a.keyperIndex)
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("tx %s has failed to accuse executor of half step %d", tx.Hash().Hex(), a.halfStep)
+	}
+
+	return nil
+}
+
+func (a Accuse) String() string {
+	return fmt.Sprintf("-> keyper slasher: accuse for half step %d", a.halfStep)
+}
+
+// Appeal is an action countering an earlier invalid accusation.
+type Appeal struct {
+	authorization contract.Authorization
+}
+
+func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.KeyperSlasher.Appeal(auth, a.authorization)
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
+	if err != nil {
+		return err
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return fmt.Errorf("tx %s has failed to appeal for half step %d", tx.Hash().Hex(), a.authorization.HalfStep)
+	}
+
+	return nil
+}
+
+func (a Appeal) String() string {
+	return fmt.Sprintf("-> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
+}
+
 // addAction stores the given IAction to be run later
 func (dcdr *Decider) addAction(a IAction) {
 	dcdr.Actions = append(dcdr.Actions, a)
