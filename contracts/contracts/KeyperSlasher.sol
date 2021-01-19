@@ -12,6 +12,7 @@ import "./BatcherContract.sol";
 struct Accusation {
     bool accused;
     bool appealed;
+    bool slashed;
     address executor;
     uint64 halfStep;
     uint64 blockNumber;
@@ -73,6 +74,7 @@ contract KeyperSlasher {
         accusations[_halfStep] = Accusation({
             accused: true,
             appealed: false,
+            slashed: false,
             executor: _receipt.executor,
             halfStep: _halfStep,
             blockNumber: uint64(block.number)
@@ -145,9 +147,11 @@ contract KeyperSlasher {
         Accusation memory _accusation = accusations[_halfStep];
         require(_accusation.accused);
         require(!_accusation.appealed);
+        require(!_accusation.slashed);
         require(block.number >= _accusation.blockNumber + appealBlocks);
 
         depositContract.slash(_accusation.executor);
+        accusations[_halfStep].slashed = true;
 
         emit Slashed({
             halfStep: _accusation.halfStep,

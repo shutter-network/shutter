@@ -1,6 +1,7 @@
 from typing import Any
 from typing import List
 
+import brownie
 from brownie.network.account import Account
 from brownie.network.state import Chain
 from eth_typing import Hash32
@@ -46,9 +47,10 @@ def test_accusing(
     accusation = keyper_slasher.accusations(0)
     assert accusation[0]  # accused
     assert not accusation[1]  # appealed
-    assert accusation[2] == keypers[0]  # executor
-    assert accusation[3] == 0  # half step
-    assert accusation[4] == tx.block_number
+    assert not accusation[2]  # slashed
+    assert accusation[3] == keypers[0]  # executor
+    assert accusation[4] == 0  # half step
+    assert accusation[5] == tx.block_number
 
 
 def test_appealing(
@@ -149,3 +151,7 @@ def test_slashing(
     assert deposit_event["slashed"] is True
     assert deposit_contract.getDepositAmount(keypers[0]) == 0
     assert deposit_contract.isSlashed(keypers[0]) is True
+
+    # can't slash twice
+    with brownie.reverts():
+        keyper_slasher.slash(0)
