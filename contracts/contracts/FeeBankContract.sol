@@ -33,9 +33,12 @@ contract FeeBankContract {
     /// @notice Deposit ETH for later withdrawal
     /// @param _receiver Address of the account that is eligible for withdrawal.
     function deposit(address _receiver) external payable {
-        require(_receiver != address(0));
-        require(msg.value > 0);
-        require(msg.value <= type(uint64).max - deposits[_receiver]);
+        require(_receiver != address(0), "FeeBank: receiver is zero address");
+        require(msg.value > 0, "FeeBank: fee is zero");
+        require(
+            msg.value <= type(uint64).max - deposits[_receiver],
+            "FeeBank: balance would exceed uint64"
+        );
         deposits[_receiver] += uint64(msg.value);
 
         emit DepositEvent(
@@ -59,13 +62,13 @@ contract FeeBankContract {
     }
 
     function withdrawInternal(address _receiver, uint64 _amount) internal {
-        require(_receiver != address(0));
+        require(_receiver != address(0), "FeeBank: receiver is zero address");
         uint64 _deposit = deposits[msg.sender];
-        require(_deposit > 0);
-        require(_amount <= _deposit);
+        require(_deposit > 0, "FeeBank: deposit is empty");
+        require(_amount <= _deposit, "FeeBank: amount exceeds deposit");
         deposits[msg.sender] = _deposit - _amount;
         (bool _success, ) = _receiver.call{value: _amount}("");
-        require(_success);
+        require(_success, "FeeBank: withdrawal call failed");
         emit WithdrawEvent(
             msg.sender,
             _receiver,
