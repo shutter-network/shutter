@@ -127,7 +127,10 @@ contract ConfigContract is Ownable {
 
     function nextConfigSetBatchSpan(uint64 _batchSpan) external onlyOwner {
         // make sure the heads up is at least one batch
-        require(_batchSpan < configChangeHeadsUpBlocks);
+        require(
+            _batchSpan < configChangeHeadsUpBlocks,
+            "ConfigContract: batch span not shorter than heads up"
+        );
         nextConfig.batchSpan = _batchSpan;
     }
 
@@ -182,7 +185,8 @@ contract ConfigContract is Ownable {
         onlyOwner
     {
         require(
-            nextConfig.keypers.length <= type(uint64).max - _newKeypers.length
+            nextConfig.keypers.length <= type(uint64).max - _newKeypers.length,
+            "ConfigContract: number of keypers exceeds uint64"
         );
         for (uint64 i = 0; i < _newKeypers.length; i++) {
             nextConfig.keypers.push(_newKeypers[i]);
@@ -222,24 +226,35 @@ contract ConfigContract is Ownable {
     /// @notice The transition between the next config and the config currently at the end of the
     ///     config sequence must be seamless, i.e., there batches must not be cut short.
     function scheduleNextConfig() external onlyOwner {
-        require(configs.length < type(uint64).max - 1);
+        require(
+            configs.length < type(uint64).max - 1,
+            "ConfigContract: number of configs exceeds uint64"
+        );
         BatchConfig memory _config = configs[configs.length - 1];
 
         require(
             nextConfig.startBlockNumber >
-                block.number + configChangeHeadsUpBlocks
+                block.number + configChangeHeadsUpBlocks,
+            "ConfigContract: start block too early"
         );
 
         if (_config.batchSpan > 0) {
-            require(nextConfig.startBatchIndex > _config.startBatchIndex);
+            require(
+                nextConfig.startBatchIndex > _config.startBatchIndex,
+                "ConfigContract: start batch index too small"
+            );
             uint64 _batchDelta = nextConfig.startBatchIndex -
                 _config.startBatchIndex;
             require(
                 _config.startBlockNumber + _config.batchSpan * _batchDelta ==
-                    nextConfig.startBlockNumber
+                    nextConfig.startBlockNumber,
+                "ConfigContract: config transition not seamless"
             );
         } else {
-            require(nextConfig.startBatchIndex == _config.startBatchIndex);
+            require(
+                nextConfig.startBatchIndex == _config.startBatchIndex,
+                "ConfigContract: transition from inactive config with wrong start index"
+            );
         }
 
         configs.push(nextConfig);
@@ -259,7 +274,8 @@ contract ConfigContract is Ownable {
         onlyOwner
     {
         require(
-            _fromStartBlockNumber > block.number + configChangeHeadsUpBlocks
+            _fromStartBlockNumber > block.number + configChangeHeadsUpBlocks,
+            "ConfigContract: from start block too early"
         );
 
         uint64 _lengthBefore = uint64(configs.length);
@@ -273,7 +289,10 @@ contract ConfigContract is Ownable {
             }
         }
 
-        require(configs.length < _lengthBefore);
+        require(
+            configs.length < _lengthBefore,
+            "ConfigContract: no configs unscheduled"
+        );
         emit ConfigUnscheduled(uint64(configs.length));
     }
 }
