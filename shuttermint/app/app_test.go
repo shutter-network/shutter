@@ -1,14 +1,13 @@
 package app
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/gob"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -145,13 +144,6 @@ func TestAddDecryptionSignature(t *testing.T) {
 	require.Empty(t, res1.Events)
 }
 
-func ensureGobable(t *testing.T, obj interface{}) {
-	buff := bytes.Buffer{}
-	enc := gob.NewEncoder(&buff)
-	err := enc.Encode(obj)
-	require.Nil(t, err)
-}
-
 func TestGobDKG(t *testing.T) {
 	var eon uint64 = 201
 	var err error
@@ -187,9 +179,9 @@ func TestGobDKG(t *testing.T) {
 		Sender:         keypers[0],
 		Eon:            eon,
 		Receivers:      []common.Address{keypers[1]},
-		EncryptedEvals: [][]byte{[]byte{}},
+		EncryptedEvals: [][]byte{{}},
 	})
 	require.Nil(t, err)
 
-	ensureGobable(t, dkg)
+	shtest.EnsureGobable(t, &dkg, new(DKGInstance))
 }
