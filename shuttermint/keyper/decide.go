@@ -8,7 +8,6 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -22,11 +21,11 @@ import (
 
 type decryptfn func(encrypted []byte) ([]byte, error)
 
-// IRunEnv is passed as a parameter to IAction's Run function. At the moment this only allows
-// interaction with the shutter chain. We will also need a way to talk to the main chain
+// IRunEnv is passed as a parameter to IAction's Run function.
 type IRunEnv interface {
 	MessageSender
 	GetContractCaller(ctx context.Context) *ContractCaller
+	WatchTransaction(tx *types.Transaction)
 }
 
 // IAction describes an action to run as determined by the Decider's Decide method.
@@ -226,6 +225,8 @@ type State struct {
 	LastSentBatchConfigIndex uint64
 	LastEonStarted           uint64
 	DKGs                     []DKG
+	PendingHalfStep          *uint64
+	PendingAppeals           map[uint64]struct{}
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter
@@ -286,14 +287,7 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 	if err != nil {
 		return err
 	}
-
-	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("tx %s has failed to execute cipher half step", tx.Hash().Hex())
-	}
+	runenv.WatchTransaction(tx)
 
 	return nil
 }
@@ -321,14 +315,7 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 	if err != nil {
 		return err
 	}
-
-	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("tx %s has failed to execute plain half step", tx.Hash().Hex())
-	}
+	runenv.WatchTransaction(tx)
 
 	return nil
 }
@@ -355,14 +342,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 	if err != nil {
 		return err
 	}
-
-	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("tx %s has failed to skip cipher half step", tx.Hash().Hex())
-	}
+	runenv.WatchTransaction(tx)
 
 	return nil
 }
@@ -390,14 +370,7 @@ func (a Accuse) Run(ctx context.Context, runenv IRunEnv) error {
 	if err != nil {
 		return err
 	}
-
-	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("tx %s has failed to accuse executor of half step %d", tx.Hash().Hex(), a.halfStep)
-	}
+	runenv.WatchTransaction(tx)
 
 	return nil
 }
@@ -424,14 +397,7 @@ func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
 	if err != nil {
 		return err
 	}
-
-	receipt, err := bind.WaitMined(ctx, cc.Ethclient, tx)
-	if err != nil {
-		return err
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("tx %s has failed to appeal for half step %d", tx.Hash().Hex(), a.authorization.HalfStep)
-	}
+	runenv.WatchTransaction(tx)
 
 	return nil
 }
@@ -699,6 +665,13 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	batchIndex := config.BatchIndex(dcdr.MainChain.CurrentBlock)
 
 	nextHalfStep := dcdr.MainChain.NumExecutionHalfSteps
+	if dcdr.State.PendingHalfStep != nil && nextHalfStep > *dcdr.State.PendingHalfStep {
+		// Reset the pending half step if the current one is greater.
+		// XXX There's a chance that another keyper has executed the previous half step and our tx
+		// is still pending. In that case we should probably wait until it fails before sending
+		// another one.
+		dcdr.State.PendingHalfStep = nil
+	}
 	if nextHalfStep >= batchIndex*2 {
 		return // everything has been executed already
 	}
@@ -707,6 +680,12 @@ func (dcdr *Decider) maybeExecuteBatch() {
 }
 
 func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
+	if dcdr.State.PendingHalfStep != nil {
+		// Don't try to execute anything if there's already a pending transaction executing the
+		// current or another half step. Rather, wait for that tx to confirm first.
+		return
+	}
+
 	batchIndex := nextHalfStep / 2
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
@@ -751,15 +730,21 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 			transactions: batch.PlainTransactions,
 		}
 	}
+	dcdr.State.PendingHalfStep = &nextHalfStep
 	dcdr.addAction(action)
 }
 
 // maybeAppeal checks if there are any accusations against us and if so sends an appeal if possible.
 func (dcdr *Decider) maybeAppeal() {
+	dcdr.syncPendingAppeals()
+
 	accusations := dcdr.MainChain.AccusationsAgainst(dcdr.Config.Address())
 	for _, accusation := range accusations {
 		if accusation.Appealed {
 			continue
+		}
+		if _, ok := dcdr.State.PendingAppeals[accusation.HalfStep]; ok {
+			continue // don't send appeal if we've already done so and the tx is still pending
 		}
 
 		// XXX: we have to create a contract.Authorization here
@@ -767,7 +752,22 @@ func (dcdr *Decider) maybeAppeal() {
 		// action := Appeal{
 		// 	authorization: authorization,
 		// }
+		// dcdr.State.PendingAppeals[accusation.HalfStep] = struct{}{}
 		// dcdr.addAction(action)
+	}
+}
+
+// syncPendingAppeals removes any pending appeals that have been successfully handled by the main
+// chain.
+// XXX: It's possible that someone else appeals, in which case our tx would still be pending.
+// Also, we don't notice if our tx fails (but this shouldn't happen if we prepare it properly).
+func (dcdr *Decider) syncPendingAppeals() {
+	for halfStep := range dcdr.State.PendingAppeals {
+		for _, accusation := range dcdr.MainChain.Accusations {
+			if halfStep == accusation.HalfStep && accusation.Appealed {
+				delete(dcdr.State.PendingAppeals, halfStep)
+			}
+		}
 	}
 }
 

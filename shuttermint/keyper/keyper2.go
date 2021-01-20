@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
@@ -19,9 +20,16 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
-const runSleepTime = 10 * time.Second
+const (
+	runSleepTime = 10 * time.Second
+
+	// watchedTransactionsBufferSize is the maximum number of txs to watch. If this is too small,
+	// actions will stall.
+	watchedTransactionsBufferSize = 100
+)
 
 type Keyper2 struct {
 	Config    KeyperConfig
@@ -29,10 +37,11 @@ type Keyper2 struct {
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
 
-	ContractCaller ContractCaller
-	shmcl          client.Client
-	MessageSender  MessageSender
-	Interactive    bool
+	ContractCaller      ContractCaller
+	shmcl               client.Client
+	MessageSender       MessageSender
+	WatchedTransactions chan *types.Transaction
+	Interactive         bool
 }
 
 func NewKeyper2(kc KeyperConfig) Keyper2 {
@@ -41,6 +50,8 @@ func NewKeyper2(kc KeyperConfig) Keyper2 {
 		State:     &State{},
 		Shutter:   observe.NewShutter(),
 		MainChain: observe.NewMainChain(),
+
+		WatchedTransactions: make(chan *types.Transaction, watchedTransactionsBufferSize),
 	}
 }
 
@@ -156,6 +167,8 @@ func (kpr *Keyper2) Run() error {
 	}
 	ctx := context.Background()
 
+	go kpr.watchTransactions(ctx)
+
 	for {
 		err = kpr.sync(ctx)
 		if err != nil {
@@ -263,8 +276,9 @@ func (kpr *Keyper2) runOneStep(ctx context.Context) {
 	log.Printf("Running %d actions", len(decider.Actions))
 
 	runenv := RunEnv{
-		MessageSender:  kpr.MessageSender,
-		ContractCaller: &kpr.ContractCaller,
+		MessageSender:       kpr.MessageSender,
+		ContractCaller:      &kpr.ContractCaller,
+		WatchedTransactions: kpr.WatchedTransactions,
 	}
 	for _, act := range decider.Actions {
 		err := act.Run(ctx, runenv)
@@ -272,6 +286,25 @@ func (kpr *Keyper2) runOneStep(ctx context.Context) {
 		// here. We could retry the actions or feed the errors back into our state
 		if err != nil {
 			panic(err)
+		}
+	}
+}
+
+func (kpr *Keyper2) watchTransactions(ctx context.Context) {
+	for {
+		select {
+		case tx := <-kpr.WatchedTransactions:
+			receipt, err := medley.WaitMined(ctx, kpr.ContractCaller.Ethclient, tx.Hash())
+			if err != nil {
+				log.Printf("Error wating for transaction %s: %v", tx.Hash().Hex(), err)
+			}
+			if receipt.Status != types.ReceiptStatusSuccessful {
+				log.Printf("Tx %s has failed and was reverted", tx.Hash().Hex())
+			} else {
+				log.Printf("Tx %s was successful", tx.Hash().Hex())
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
