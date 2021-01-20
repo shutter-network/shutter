@@ -1,6 +1,8 @@
 package epochkg
 
 import (
+	"bytes"
+	"encoding/gob"
 	"reflect"
 	"testing"
 
@@ -8,6 +10,15 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 )
+
+func ensureGobable(t *testing.T, src, dst interface{}) {
+	buff := bytes.Buffer{}
+	err := gob.NewEncoder(&buff).Encode(src)
+	require.Nil(t, err)
+	err = gob.NewDecoder(&buff).Decode(dst)
+	require.Nil(t, err)
+	require.Equal(t, src, dst)
+}
 
 func Results(t *testing.T) []*puredkg.Result {
 	eon := uint64(5)
@@ -98,4 +109,6 @@ func TestEpochKG(t *testing.T) {
 		require.NotNil(t, key)
 		require.Equal(t, kgs[0].SecretKeys[epoch], key)
 	}
+
+	ensureGobable(t, kgs[0], new(EpochKG))
 }

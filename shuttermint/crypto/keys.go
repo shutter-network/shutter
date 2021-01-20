@@ -25,6 +25,59 @@ type EpochSecretKeyShare bn256.G1
 // EpochSecretKey represents an epoch secret key.
 type EpochSecretKey bn256.G1
 
+func (g2 *EonPublicKey) GobEncode() ([]byte, error) {
+	return (*bn256.G2)(g2).Marshal(), nil
+}
+
+func (g2 *EonPublicKey) GobDecode(data []byte) error {
+	_, err := (*bn256.G2)(g2).Unmarshal(data)
+	return err
+}
+
+func (g2 *EonPublicKeyShare) GobEncode() ([]byte, error) {
+	return (*bn256.G2)(g2).Marshal(), nil
+}
+
+func (g2 *EonPublicKeyShare) GobDecode(data []byte) error {
+	_, err := (*bn256.G2)(g2).Unmarshal(data)
+	return err
+}
+
+func (g *EpochID) GobEncode() ([]byte, error) {
+	return (*bn256.G1)(g).Marshal(), nil
+}
+
+func (g *EpochID) GobDecode(data []byte) error {
+	_, err := (*bn256.G1)(g).Unmarshal(data)
+	return err
+}
+
+func (g *EpochSecretKeyShare) GobEncode() ([]byte, error) {
+	return (*bn256.G1)(g).Marshal(), nil
+}
+
+func (g *EpochSecretKeyShare) GobDecode(data []byte) error {
+	_, err := (*bn256.G1)(g).Unmarshal(data)
+	return err
+}
+
+func (g *EpochSecretKey) GobEncode() ([]byte, error) {
+	return (*bn256.G1)(g).Marshal(), nil
+}
+
+func (g *EpochSecretKey) GobDecode(data []byte) error {
+	_, err := (*bn256.G1)(g).Unmarshal(data)
+	return err
+}
+
+func (esks *EonSecretKeyShare) GobEncode() ([]byte, error) {
+	return (*big.Int)(esks).GobEncode()
+}
+
+func (esks *EonSecretKeyShare) GobDecode(data []byte) error {
+	return (*big.Int)(esks).GobDecode(data)
+}
+
 // ComputeEonSecretKeyShare computes the a keyper's sk share from the set of poly evals received from the
 // other keypers.
 func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
