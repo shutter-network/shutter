@@ -141,17 +141,10 @@ type DKGInstance struct {
 }
 
 type (
-	Accusation     = shutterevents.Accusation
-	Apology        = shutterevents.Apology
-	BatchConfig    = shutterevents.BatchConfig
-	PolyCommitment = shutterevents.PolyCommitment
-	PolyEval       = shutterevents.PolyEval
+	Accusation          = shutterevents.Accusation
+	Apology             = shutterevents.Apology
+	BatchConfig         = shutterevents.BatchConfig
+	PolyCommitment      = shutterevents.PolyCommitment
+	PolyEval            = shutterevents.PolyEval
+	EpochSecretKeyShare = shutterevents.EpochSecretKeyShare
 )
-
-// EpochSecretKeyShareMsg represents a message containing an epoch secret key.
-type EpochSecretKeyShareMsg struct {
-	Sender              common.Address
-	Eon                 uint64
-	Epoch               uint64
-	EpochSecretKeyShare []byte
-}

@@ -45,7 +45,13 @@ func expectAttributes(ev abcitypes.Event, names ...string) error {
 
 	for i, n := range names {
 		if string(ev.Attributes[i].Key) != n {
-			return fmt.Errorf("bad attribute")
+			return fmt.Errorf(
+				"bad attribute, parsing event %s: expected %s, got %s at position %d",
+				ev.Type,
+				n,
+				string(ev.Attributes[i].Key),
+				i,
+			)
 		}
 	}
 	return nil
@@ -447,6 +453,61 @@ func makePolyEval(ev abcitypes.Event, height int64) (PolyEval, error) {
 	}, nil
 }
 
+// EpochSecretKeyShare represents a message containing an epoch secret key.
+type EpochSecretKeyShare struct {
+	Height int64
+	Sender common.Address
+	Eon    uint64
+	Epoch  uint64
+	Share  *crypto.EpochSecretKeyShare
+}
+
+func (msg EpochSecretKeyShare) MakeABCIEvent() abcitypes.Event {
+	return abcitypes.Event{
+		Type: evtype.EpochSecretKeyShare,
+		Attributes: []abcitypes.EventAttribute{
+			newAddressPair("Sender", msg.Sender),
+			newUintPair("Eon", msg.Eon),
+			newUintPair("Epoch", msg.Epoch),
+			newEpochSecretKeyShare("Share", msg.Share),
+		},
+	}
+}
+
+func makeEpochSecretKeyShare(ev abcitypes.Event, height int64) (EpochSecretKeyShare, error) {
+	err := expectAttributes(ev, "Sender", "Eon", "Epoch", "Share")
+	if err != nil {
+		return EpochSecretKeyShare{}, err
+	}
+
+	sender, err := decodeAddress(ev.Attributes[0].Value)
+	if err != nil {
+		return EpochSecretKeyShare{}, err
+	}
+
+	eon, err := decodeUint64(ev.Attributes[1].Value)
+	if err != nil {
+		return EpochSecretKeyShare{}, err
+	}
+
+	epoch, err := decodeUint64(ev.Attributes[2].Value)
+	if err != nil {
+		return EpochSecretKeyShare{}, err
+	}
+	share, err := decodeEpochSecretKeyShare(ev.Attributes[3].Value)
+	if err != nil {
+		return EpochSecretKeyShare{}, err
+	}
+
+	return EpochSecretKeyShare{
+		Height: height,
+		Sender: sender,
+		Eon:    eon,
+		Epoch:  epoch,
+		Share:  share,
+	}, nil
+}
+
 // IEvent is an interface for the event types declared above
 type IEvent interface {
 	MakeABCIEvent() abcitypes.Event
@@ -495,7 +556,8 @@ func MakeEvent(ev abcitypes.Event, height int64) (IEvent, error) {
 		return makeAccusation(ev, height)
 	case evtype.Apology:
 		return makeApology(ev, height)
-
+	case evtype.EpochSecretKeyShare:
+		return makeEpochSecretKeyShare(ev, height)
 	default:
 		return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
 	}

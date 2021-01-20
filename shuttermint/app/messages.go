@@ -135,11 +135,16 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 }
 
 // ParseEpochSecretKeyShareMsg converts a shmsg.EpochSecretKeyShareMsg to an app.EpochSecretShareMsg
-func ParseEpochSecretKeyShareMsg(msg *shmsg.EpochSecretKeyShare, sender common.Address) (*EpochSecretKeyShareMsg, error) {
-	return &EpochSecretKeyShareMsg{
-		Sender:              sender,
-		Eon:                 msg.Eon,
-		Epoch:               msg.Epoch,
-		EpochSecretKeyShare: msg.EpochSkShare,
+func ParseEpochSecretKeyShareMsg(msg *shmsg.EpochSecretKeyShare, sender common.Address) (*EpochSecretKeyShare, error) {
+	share := new(crypto.EpochSecretKeyShare)
+	err := share.GobDecode(msg.Share)
+	if err != nil {
+		return nil, err
+	}
+	return &EpochSecretKeyShare{
+		Sender: sender,
+		Eon:    msg.Eon,
+		Epoch:  msg.Epoch,
+		Share:  share,
 	}, nil
 }

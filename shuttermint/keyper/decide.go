@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -13,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/epochkg"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -227,6 +229,8 @@ type State struct {
 	DKGs                     []DKG
 	PendingHalfStep          *uint64
 	PendingAppeals           map[uint64]struct{}
+	EpochKGs                 []*epochkg.EpochKG
+	LastEpochSecretShareSent uint64
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter
@@ -404,6 +408,17 @@ func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
 
 func (a Appeal) String() string {
 	return fmt.Sprintf("-> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
+}
+
+var errEpochKGNotFound = errors.New("epochkg not found")
+
+func (st *State) FindEpochKGByEon(eon uint64) (*epochkg.EpochKG, error) {
+	for _, epochkg := range st.EpochKGs {
+		if epochkg.Eon == eon {
+			return epochkg, nil
+		}
+	}
+	return nil, errEpochKGNotFound
 }
 
 // addAction stores the given IAction to be run later
@@ -612,8 +627,7 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 		return
 	}
 	log.Printf("Success: DKG process succeeced for %s", dkg.ShortInfo())
-	// TODO
-	_ = dkgresult
+	dcdr.State.EpochKGs = append(dcdr.State.EpochKGs, epochkg.NewEpochKG(&dkgresult))
 }
 
 func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
@@ -654,6 +668,57 @@ func (dcdr *Decider) handleDKGs() {
 		dcdr.syncDKGWithEon(dkg, *eon)
 		dcdr.sendPolyEvals(dkg)
 	}
+}
+
+func (dcdr *Decider) handleEpochKG() {
+	blockNum := dcdr.MainChain.CurrentBlock
+
+	// Find the active config for the given block on the main chain
+	activeCFGIdx := dcdr.MainChain.ActiveConfigIndex(blockNum)
+	bc := dcdr.MainChain.BatchConfigs[activeCFGIdx]
+	if !bc.IsActive() {
+		return
+	}
+
+	// find the corresponding config on shutter
+	_, err := dcdr.Shutter.FindBatchConfigByConfigIndex(uint64(activeCFGIdx))
+	if err != nil {
+		return
+	}
+
+	currentBatchIndex := bc.BatchIndex(blockNum)
+	// we can publish the private epoch key share for batch indexes < batchIndex
+	if currentBatchIndex == 0 {
+		return
+	}
+	batchIndex := currentBatchIndex - 1
+
+	if batchIndex < dcdr.State.LastEpochSecretShareSent {
+		return
+	}
+
+	eon, err := dcdr.Shutter.FindEonByBatchIndex(batchIndex)
+	if err != nil {
+		return
+	}
+
+	epochKG, err := dcdr.State.FindEpochKGByEon(eon.Eon)
+	if err != nil {
+		log.Printf("Cannot find EpochKG for eon=%d", eon.Eon)
+		return
+	}
+	log.Printf("eon=%d block=%d batchIndex=%d ", eon.Eon, blockNum, batchIndex)
+
+	dcdr.sendEpochSecretKeyShare(epochKG, batchIndex)
+}
+
+func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {
+	epochSecretKeyShare := epochKG.ComputeEpochSecretKeyShare(epoch)
+	dcdr.sendShuttermintMessage(
+		fmt.Sprintf("epoch secret key share, epoch=%d in eon=%d", epoch, epochKG.Eon),
+		shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
+	)
+	dcdr.State.LastEpochSecretShareSent = epoch
 }
 
 func (dcdr *Decider) maybeExecuteBatch() {
@@ -799,7 +864,7 @@ func (dcdr *Decider) Decide() {
 	dcdr.maybeSendBatchConfig()
 	dcdr.maybeStartDKG()
 	dcdr.handleDKGs()
-
+	dcdr.handleEpochKG()
 	dcdr.maybeExecuteBatch()
 	dcdr.maybeAppeal()
 }

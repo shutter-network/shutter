@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/stretchr/testify/require"
 
+	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -89,22 +91,20 @@ func TestMessageParsing(t *testing.T) {
 		smsg = shmsg.Apology{
 			Eon:       eon,
 			Accusers:  [][]byte{badAddressBytes},
-			PolyEvals: [][]byte{[]byte{}},
+			PolyEvals: [][]byte{{}},
 		}
 		_, err = ParseApologyMsg(&smsg, sender)
 		require.NotNil(t, err)
 	})
 
 	t.Run("ParseEpochSecretKeyShareMsg", func(t *testing.T) {
-		smsg := shmsg.EpochSecretKeyShare{
-			Eon:          eon,
-			Epoch:        epoch,
-			EpochSkShare: []byte{},
-		}
-		msg, err := ParseEpochSecretKeyShareMsg(&smsg, sender)
+		share := (*crypto.EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
+		smsg := shmsg.NewEpochSecretKeyShare(eon, epoch, share).GetEpochSecretKeyShare()
+		msg, err := ParseEpochSecretKeyShareMsg(smsg, sender)
 		require.Nil(t, err)
 		require.Equal(t, sender, msg.Sender)
 		require.Equal(t, eon, msg.Eon)
 		require.Equal(t, epoch, msg.Epoch)
+		require.Equal(t, share, msg.Share)
 	})
 }

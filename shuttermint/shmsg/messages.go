@@ -164,3 +164,16 @@ func NewCheckIn(validatorPublicKey []byte, encryptionKey *ecies.PublicKey) *Mess
 		},
 	}
 }
+
+func NewEpochSecretKeyShare(eon, epoch uint64, share *shcrypto.EpochSecretKeyShare) *Message {
+	encoded, _ := share.GobEncode()
+	return &Message{
+		Payload: &Message_EpochSecretKeyShare{
+			EpochSecretKeyShare: &EpochSecretKeyShare{
+				Eon:   eon,
+				Epoch: epoch,
+				Share: encoded,
+			},
+		},
+	}
+}

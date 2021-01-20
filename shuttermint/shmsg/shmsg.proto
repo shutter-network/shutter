@@ -64,7 +64,7 @@ message Apology {
 message EpochSecretKeyShare {
         uint64 eon = 1;
         uint64 epoch = 2;
-        bytes epoch_sk_share = 3;
+        bytes share = 3;
 }
 
 message EonStartVote {
@@ -85,6 +85,7 @@ message Message {
                 Apology apology = 12;
 
                 EonStartVote eon_start_vote = 13;
+                EpochSecretKeyShare epoch_secret_key_share = 14;
         }
 }
 

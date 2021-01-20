@@ -10,4 +10,5 @@ var (
 	EonStarted          = "shutter.eon-started"
 	PolyCommitment      = "shutter.poly-commitment-registered"
 	PolyEval            = "shutter.poly-eval-registered"
+	EpochSecretKeyShare = "shutter.epoch-secret-key-share"
 )

@@ -39,13 +39,14 @@ func NewShutter() *Shutter {
 }
 
 type Eon struct {
-	Eon         uint64
-	StartHeight int64
-	StartEvent  shutterevents.EonStarted
-	Commitments []shutterevents.PolyCommitment
-	PolyEvals   []shutterevents.PolyEval
-	Accusations []shutterevents.Accusation
-	Apologies   []shutterevents.Apology
+	Eon                  uint64
+	StartHeight          int64
+	StartEvent           shutterevents.EonStarted
+	Commitments          []shutterevents.PolyCommitment
+	PolyEvals            []shutterevents.PolyEval
+	Accusations          []shutterevents.Accusation
+	Apologies            []shutterevents.Apology
+	EpochSecretKeyShares []shutterevents.EpochSecretKeyShare
 }
 
 type BatchData struct {
@@ -80,6 +81,15 @@ func (shutter *Shutter) searchEon(eon uint64) int {
 			return eon <= shutter.Eons[i].Eon
 		},
 	)
+}
+
+func (shutter *Shutter) FindEonByBatchIndex(batchIndex uint64) (*Eon, error) {
+	for i := len(shutter.Eons) - 1; i >= 0; i-- {
+		if shutter.Eons[i].StartEvent.BatchIndex <= batchIndex {
+			return &shutter.Eons[i], nil
+		}
+	}
+	return nil, errEonNotFound
 }
 
 func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
@@ -132,7 +142,12 @@ func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
 			panic(err) // XXX we should remove that later
 		}
 		eon.Apologies = append(eon.Apologies, e)
-
+	case shutterevents.EpochSecretKeyShare:
+		eon, err := shutter.FindEon(e.Eon)
+		if err != nil {
+			panic(err) // XXX we should remove that later
+		}
+		eon.EpochSecretKeyShares = append(eon.EpochSecretKeyShares, e)
 	default:
 		warn()
 		panic("applyEvent: unknown event. giving up")
@@ -178,6 +193,15 @@ func (shutter *Shutter) IsKeyper(addr common.Address) bool {
 		}
 	}
 	return false
+}
+
+func (shutter *Shutter) FindBatchConfigByConfigIndex(configIndex uint64) (shutterevents.BatchConfig, error) {
+	for _, bc := range shutter.BatchConfigs {
+		if bc.ConfigIndex == configIndex {
+			return bc, nil
+		}
+	}
+	return shutterevents.BatchConfig{}, fmt.Errorf("cannot find BatchConfig with ConfigIndex==%d", configIndex)
 }
 
 func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfig {

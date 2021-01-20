@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	shcrypto "github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/crypto"
 )
 
 //
@@ -41,9 +41,16 @@ func newUintPair(key string, value uint64) abcitypes.EventAttribute {
 	}
 }
 
-func newGammas(key string, gammas *shcrypto.Gammas) abcitypes.EventAttribute {
+func newGammas(key string, gammas *crypto.Gammas) abcitypes.EventAttribute {
 	return abcitypes.EventAttribute{
 		Key:   []byte(key),
 		Value: encodeGammas(gammas),
+	}
+}
+
+func newEpochSecretKeyShare(key string, share *crypto.EpochSecretKeyShare) abcitypes.EventAttribute {
+	return abcitypes.EventAttribute{
+		Key:   []byte(key),
+		Value: encodeEpochSecretKeyShare(share),
 	}
 }
