@@ -1,14 +1,14 @@
 package crypto
 
 import (
-	"bytes"
 	"crypto/rand"
-	"encoding/gob"
 	"math/big"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/stretchr/testify/require"
+
+	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 )
 
 func TestNewPolynomial(t *testing.T) {
@@ -171,7 +171,7 @@ func TestPi(t *testing.T) {
 	require.True(t, EqualG2(pi2, pi2Exp))
 }
 
-func TestGobable(t *testing.T) {
+func TestGammasGobable(t *testing.T) {
 	p, err := NewPolynomial([]*big.Int{
 		big.NewInt(0),
 		big.NewInt(10),
@@ -179,13 +179,7 @@ func TestGobable(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	var gammas, deserialized *Gammas
-	gammas = p.Gammas()
-	buff := bytes.Buffer{}
-	err = gob.NewEncoder(&buff).Encode(gammas)
-	require.Nil(t, err)
-
-	err = gob.NewDecoder(&buff).Decode(&deserialized)
-	require.Nil(t, err)
-	require.Equal(t, gammas, deserialized)
+	gammas := p.Gammas()
+	deserialized := new(Gammas)
+	shtest.EnsureGobable(t, gammas, deserialized)
 }
