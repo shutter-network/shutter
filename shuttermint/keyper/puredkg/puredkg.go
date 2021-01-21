@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 type (
@@ -31,9 +31,9 @@ type Result struct {
 	NumKeypers      uint64
 	Threshold       uint64
 	Keyper          KeyperIndex
-	SecretKeyShare  *crypto.EonSecretKeyShare
-	PublicKey       *crypto.EonPublicKey
-	PublicKeyShares []*crypto.EonPublicKeyShare
+	SecretKeyShare  *shcrypto.EonSecretKeyShare
+	PublicKey       *shcrypto.EonPublicKey
+	PublicKeyShares []*shcrypto.EonPublicKeyShare
 }
 
 // XXX All of the messages here carry the Eon field, which we could also remove. It's not needed
@@ -43,7 +43,7 @@ type Result struct {
 type PolyCommitmentMsg struct {
 	Eon    uint64
 	Sender KeyperIndex
-	Gammas *crypto.Gammas
+	Gammas *shcrypto.Gammas
 }
 
 // PolyEvalMsg is sent over a secure channel to a single receiver
@@ -78,8 +78,8 @@ type PureDKG struct {
 	NumKeypers  uint64
 	Threshold   uint64
 	Keyper      KeyperIndex
-	Polynomial  *crypto.Polynomial
-	Commitments []*crypto.Gammas
+	Polynomial  *shcrypto.Polynomial
+	Commitments []*shcrypto.Gammas
 	Evals       []*big.Int
 	Accusations map[accusationKey]struct{}
 	Apologies   map[accusationKey]*big.Int
@@ -92,7 +92,7 @@ func NewPureDKG(eon uint64, numKeypers uint64, threshold uint64, keyper KeyperIn
 		NumKeypers:  numKeypers,
 		Threshold:   threshold,
 		Keyper:      keyper,
-		Commitments: make([]*crypto.Gammas, numKeypers),
+		Commitments: make([]*shcrypto.Gammas, numKeypers),
 		Evals:       make([]*big.Int, numKeypers),
 		Accusations: make(map[accusationKey]struct{}),
 		Apologies:   make(map[accusationKey]*big.Int),
@@ -132,8 +132,8 @@ func (pure *PureDKG) checkEonAndPhase(eon uint64, maxPhase Phase) error {
 
 func (pure *PureDKG) StartPhase1Dealing() (PolyCommitmentMsg, []PolyEvalMsg, error) {
 	pure.setPhase(Dealing)
-	degree := crypto.DegreeFromThreshold(pure.Threshold)
-	polynomial, err := crypto.RandomPolynomial(rand.Reader, degree)
+	degree := shcrypto.DegreeFromThreshold(pure.Threshold)
+	polynomial, err := shcrypto.RandomPolynomial(rand.Reader, degree)
 	if err != nil {
 		return PolyCommitmentMsg{}, []PolyEvalMsg{}, err
 	}
@@ -176,7 +176,7 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 	for dealer = 0; dealer < pure.NumKeypers; dealer++ {
 		eval := pure.Evals[dealer]
 		c := pure.Commitments[dealer]
-		if pure.present(dealer) && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
+		if pure.present(dealer) && (eval == nil || !shcrypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
 			accusations = append(accusations, AccusationMsg{
 				Eon:     pure.Eon,
 				Accuser: pure.Keyper,
@@ -227,7 +227,7 @@ func (pure *PureDKG) ShortInfo() string {
 
 		if pure.isCorrupt(dealer) {
 			numCorrupt++
-		} else if pure.Phase > Dealing && (eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
+		} else if pure.Phase > Dealing && (eval == nil || !shcrypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
 			numCorrupt++
 		}
 	}
@@ -249,10 +249,10 @@ func (pure *PureDKG) ComputeResult() (Result, error) {
 	}
 
 	numParticipants := 0
-	commitments := []*crypto.Gammas{}
+	commitments := []*shcrypto.Gammas{}
 	evals := []*big.Int{}
 	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
-		var c *crypto.Gammas
+		var c *shcrypto.Gammas
 		var eval *big.Int
 
 		if !pure.isCorrupt(dealer) {
@@ -260,14 +260,14 @@ func (pure *PureDKG) ComputeResult() (Result, error) {
 			c = pure.Commitments[dealer]
 			eval = pure.polyEval(dealer)
 
-			if eval == nil || !crypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold) {
+			if eval == nil || !shcrypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold) {
 				// when we receive no or an invalid poly eval, we send an accusation. If this
 				// accusation does not end up in the chain, the keyper will not be considered
 				// corrupt by the other keypers. We know  they should be though, so we abort.
 				return Result{}, fmt.Errorf("corrupt keyper %d not considered corrupt", dealer)
 			}
 		} else {
-			c = crypto.ZeroGammas(crypto.DegreeFromThreshold(pure.Threshold))
+			c = shcrypto.ZeroGammas(shcrypto.DegreeFromThreshold(pure.Threshold))
 			eval = big.NewInt(0)
 		}
 		commitments = append(commitments, c)
@@ -278,13 +278,13 @@ func (pure *PureDKG) ComputeResult() (Result, error) {
 		return Result{}, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
 	}
 
-	var publicKeyShares []*crypto.EonPublicKeyShare
+	var publicKeyShares []*shcrypto.EonPublicKeyShare
 	for dealer := uint64(0); dealer < pure.NumKeypers; dealer++ {
-		publicKeyShares = append(publicKeyShares, crypto.ComputeEonPublicKeyShare(int(dealer), commitments))
+		publicKeyShares = append(publicKeyShares, shcrypto.ComputeEonPublicKeyShare(int(dealer), commitments))
 	}
 
-	eonSKShare := crypto.ComputeEonSecretKeyShare(evals)
-	eonPK := crypto.ComputeEonPublicKey(commitments)
+	eonSKShare := shcrypto.ComputeEonSecretKeyShare(evals)
+	eonPK := shcrypto.ComputeEonPublicKey(commitments)
 	return Result{
 		Eon:             pure.Eon,
 		NumKeypers:      pure.NumKeypers,
@@ -311,7 +311,7 @@ func (pure *PureDKG) isCorrupt(dealer KeyperIndex) bool {
 		if accusationKey.Accused != dealer {
 			continue
 		}
-		if !crypto.VerifyPolyEval(int(accusationKey.Accuser), polyEval, c, pure.Threshold) {
+		if !shcrypto.VerifyPolyEval(int(accusationKey.Accuser), polyEval, c, pure.Threshold) {
 			return true
 		}
 	}
@@ -349,11 +349,11 @@ func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 	if pure.Commitments[msg.Sender] != nil {
 		return fmt.Errorf("received duplicate poly commitment msg")
 	}
-	if msg.Gammas.Degree() != crypto.DegreeFromThreshold(pure.Threshold) {
+	if msg.Gammas.Degree() != shcrypto.DegreeFromThreshold(pure.Threshold) {
 		return fmt.Errorf(
 			"received poly commitment with unexpected degree %d instead of %d",
 			msg.Gammas.Degree(),
-			crypto.DegreeFromThreshold(pure.Threshold),
+			shcrypto.DegreeFromThreshold(pure.Threshold),
 		)
 	}
 
@@ -372,7 +372,7 @@ func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
 	if pure.Evals[msg.Sender] != nil {
 		return fmt.Errorf("received duplicate poly eval msg")
 	}
-	if !crypto.ValidEval(msg.Eval) {
+	if !shcrypto.ValidEval(msg.Eval) {
 		return fmt.Errorf("received invalid poly eval %d", msg.Eval)
 	}
 
@@ -403,7 +403,7 @@ func (pure *PureDKG) HandleApologyMsg(msg ApologyMsg) error {
 	if _, ok := pure.Apologies[key]; ok {
 		return fmt.Errorf("received duplicate apology")
 	}
-	if !crypto.ValidEval(msg.Eval) {
+	if !shcrypto.ValidEval(msg.Eval) {
 		return fmt.Errorf("received apology with invalid poly eval %d", msg.Eval)
 	}
 

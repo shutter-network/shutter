@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents/evtype"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 /* All of the event types defined here have a "Height" field, that is *not* being serialized when
@@ -356,7 +356,7 @@ type PolyCommitment struct {
 	Height int64
 	Eon    uint64
 	Sender common.Address
-	Gammas *crypto.Gammas
+	Gammas *shcrypto.Gammas
 }
 
 func (msg PolyCommitment) MakeABCIEvent() abcitypes.Event {
@@ -459,7 +459,7 @@ type EpochSecretKeyShare struct {
 	Sender common.Address
 	Eon    uint64
 	Epoch  uint64
-	Share  *crypto.EpochSecretKeyShare
+	Share  *shcrypto.EpochSecretKeyShare
 }
 
 func (msg EpochSecretKeyShare) MakeABCIEvent() abcitypes.Event {

@@ -14,7 +14,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 func encodeUint64(val uint64) []byte {
@@ -64,17 +64,17 @@ func decodeBytes(val []byte) ([]byte, error) {
 	return hexutil.Decode(string(val))
 }
 
-func encodeEpochSecretKeyShare(v *crypto.EpochSecretKeyShare) []byte {
+func encodeEpochSecretKeyShare(v *shcrypto.EpochSecretKeyShare) []byte {
 	d, _ := v.GobEncode()
 	return encodeBytes(d)
 }
 
-func decodeEpochSecretKeyShare(v []byte) (*crypto.EpochSecretKeyShare, error) {
+func decodeEpochSecretKeyShare(v []byte) (*shcrypto.EpochSecretKeyShare, error) {
 	decoded, err := decodeBytes(v)
 	if err != nil {
 		return nil, err
 	}
-	share := new(crypto.EpochSecretKeyShare)
+	share := new(shcrypto.EpochSecretKeyShare)
 	err = share.GobDecode(decoded)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func decodePubkey(val []byte) (*ecdsa.PublicKey, error) {
 	return ethcrypto.UnmarshalPubkey(data)
 }
 
-func encodeGammas(gammas *crypto.Gammas) []byte {
+func encodeGammas(gammas *shcrypto.Gammas) []byte {
 	var encoded []string
 	if gammas != nil {
 		for _, g := range *gammas {
@@ -133,18 +133,18 @@ func encodeGammas(gammas *crypto.Gammas) []byte {
 	return []byte(strings.Join(encoded, ","))
 }
 
-func decodeGammas(eventValue []byte) (crypto.Gammas, error) {
+func decodeGammas(eventValue []byte) (shcrypto.Gammas, error) {
 	parts := strings.Split(string(eventValue), ",")
-	var res crypto.Gammas
+	var res shcrypto.Gammas
 	for _, p := range parts {
 		marshaledG2, err := hex.DecodeString(p)
 		if err != nil {
-			return crypto.Gammas{}, err
+			return shcrypto.Gammas{}, err
 		}
 		g := new(bn256.G2)
 		_, err = g.Unmarshal(marshaledG2)
 		if err != nil {
-			return crypto.Gammas{}, err
+			return shcrypto.Gammas{}, err
 		}
 		res = append(res, g)
 	}

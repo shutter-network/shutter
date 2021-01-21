@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -55,7 +55,7 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, er
 
 // ParsePolyCommitmentMsg converts a shmsg.PolyCommitmentMsg to an app.PolyCommitmentMsg
 func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*PolyCommitment, error) {
-	gammas := crypto.Gammas{}
+	gammas := shcrypto.Gammas{}
 	for _, g := range msg.Gammas {
 		g2 := new(bn256.G2)
 		_, err := g2.Unmarshal(g)
@@ -136,7 +136,7 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 
 // ParseEpochSecretKeyShareMsg converts a shmsg.EpochSecretKeyShareMsg to an app.EpochSecretShareMsg
 func ParseEpochSecretKeyShareMsg(msg *shmsg.EpochSecretKeyShare, sender common.Address) (*EpochSecretKeyShare, error) {
-	share := new(crypto.EpochSecretKeyShare)
+	share := new(shcrypto.EpochSecretKeyShare)
 	err := share.GobDecode(msg.Share)
 	if err != nil {
 		return nil, err

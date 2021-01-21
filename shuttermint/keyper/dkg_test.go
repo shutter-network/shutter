@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	shcrypto "github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 type testInstance struct {

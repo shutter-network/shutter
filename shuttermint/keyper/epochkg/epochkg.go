@@ -5,8 +5,8 @@ package epochkg
 import (
 	"fmt"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 type (
@@ -18,19 +18,19 @@ type EpochKG struct {
 	NumKeypers      uint64
 	Threshold       uint64
 	Keyper          KeyperIndex
-	SecretKeyShare  *crypto.EonSecretKeyShare
-	PublicKey       *crypto.EonPublicKey
-	PublicKeyShares []*crypto.EonPublicKeyShare
+	SecretKeyShare  *shcrypto.EonSecretKeyShare
+	PublicKey       *shcrypto.EonPublicKey
+	PublicKeyShares []*shcrypto.EonPublicKeyShare
 
 	SecretShares map[uint64][]*EpochSecretKeyShare
-	SecretKeys   map[uint64]*crypto.EpochSecretKey
+	SecretKeys   map[uint64]*shcrypto.EpochSecretKey
 }
 
 type EpochSecretKeyShare struct {
 	Eon                 uint64
 	Epoch               uint64
 	Sender              KeyperIndex
-	EpochSecretKeyShare *crypto.EpochSecretKeyShare
+	EpochSecretKeyShare *shcrypto.EpochSecretKeyShare
 }
 
 func NewEpochKG(puredkgResult *puredkg.Result) *EpochKG {
@@ -44,23 +44,23 @@ func NewEpochKG(puredkgResult *puredkg.Result) *EpochKG {
 		PublicKeyShares: puredkgResult.PublicKeyShares,
 
 		SecretShares: make(map[uint64][]*EpochSecretKeyShare),
-		SecretKeys:   make(map[uint64]*crypto.EpochSecretKey),
+		SecretKeys:   make(map[uint64]*shcrypto.EpochSecretKey),
 	}
 }
 
-func (epochkg *EpochKG) ComputeEpochSecretKeyShare(epoch uint64) *crypto.EpochSecretKeyShare {
-	epochID := crypto.ComputeEpochID(epoch)
-	return crypto.ComputeEpochSecretKeyShare(epochkg.SecretKeyShare, epochID)
+func (epochkg *EpochKG) ComputeEpochSecretKeyShare(epoch uint64) *shcrypto.EpochSecretKeyShare {
+	epochID := shcrypto.ComputeEpochID(epoch)
+	return shcrypto.ComputeEpochSecretKeyShare(epochkg.SecretKeyShare, epochID)
 }
 
-func (epochkg *EpochKG) computeEpochSecretKey(shares []*EpochSecretKeyShare) (*crypto.EpochSecretKey, error) {
+func (epochkg *EpochKG) computeEpochSecretKey(shares []*EpochSecretKeyShare) (*shcrypto.EpochSecretKey, error) {
 	var keyperIndices []int
-	var epochSecretKeyShares []*crypto.EpochSecretKeyShare
+	var epochSecretKeyShares []*shcrypto.EpochSecretKeyShare
 	for _, s := range shares {
 		keyperIndices = append(keyperIndices, int(s.Sender))
 		epochSecretKeyShares = append(epochSecretKeyShares, s.EpochSecretKeyShare)
 	}
-	return crypto.ComputeEpochSecretKey(keyperIndices, epochSecretKeyShares, epochkg.Threshold)
+	return shcrypto.ComputeEpochSecretKey(keyperIndices, epochSecretKeyShares, epochkg.Threshold)
 }
 
 func (epochkg *EpochKG) addEpochSecretKeyShare(share *EpochSecretKeyShare) error {
@@ -90,8 +90,8 @@ func (epochkg *EpochKG) HandleEpochSecretKeyShare(share *EpochSecretKeyShare) er
 		// We already have the key for this epoch
 		return nil
 	}
-	epochID := crypto.ComputeEpochID(share.Epoch)
-	if !crypto.VerifyEpochSecretKeyShare(
+	epochID := shcrypto.ComputeEpochID(share.Epoch)
+	if !shcrypto.VerifyEpochSecretKeyShare(
 		share.EpochSecretKeyShare,
 		epochkg.PublicKeyShares[share.Sender],
 		epochID,

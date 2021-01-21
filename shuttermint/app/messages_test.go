@@ -8,7 +8,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -98,7 +98,7 @@ func TestMessageParsing(t *testing.T) {
 	})
 
 	t.Run("ParseEpochSecretKeyShareMsg", func(t *testing.T) {
-		share := (*crypto.EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
+		share := (*shcrypto.EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
 		smsg := shmsg.NewEpochSecretKeyShare(eon, epoch, share).GetEpochSecretKeyShare()
 		msg, err := ParseEpochSecretKeyShareMsg(smsg, sender)
 		require.Nil(t, err)

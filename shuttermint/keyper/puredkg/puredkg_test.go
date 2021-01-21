@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 func TestPureDKGFull(t *testing.T) {
@@ -174,7 +174,7 @@ func TestDealingSendsCorrectMsgs(t *testing.T) {
 	expectedGammas := dkg.Polynomial.Gammas()
 	require.Equal(t, len(*expectedGammas), len(*commitmentMsg.Gammas))
 	for i, g := range *commitmentMsg.Gammas {
-		require.True(t, crypto.EqualG2(g, (*expectedGammas)[i]))
+		require.True(t, shcrypto.EqualG2(g, (*expectedGammas)[i]))
 	}
 
 	require.Equal(t, int(numKeypers), 1+len(evalMsgs))
@@ -194,9 +194,9 @@ func TestAccusing(t *testing.T) {
 	_, _, err := dkg.StartPhase1Dealing()
 	require.Nil(t, err)
 
-	polys := []*crypto.Polynomial{}
+	polys := []*shcrypto.Polynomial{}
 	for i := 0; i < int(numKeypers); i++ {
-		p, err := crypto.RandomPolynomial(rand.Reader, crypto.DegreeFromThreshold(threshold))
+		p, err := shcrypto.RandomPolynomial(rand.Reader, shcrypto.DegreeFromThreshold(threshold))
 		require.Nil(t, err)
 		polys = append(polys, p)
 	}
@@ -289,7 +289,7 @@ func TestInvalidCommitmentHandling(t *testing.T) {
 	require.Nil(t, err)
 
 	makeCommitmentMsg := func() PolyCommitmentMsg {
-		p, err := crypto.RandomPolynomial(rand.Reader, crypto.DegreeFromThreshold(threshold))
+		p, err := shcrypto.RandomPolynomial(rand.Reader, shcrypto.DegreeFromThreshold(threshold))
 		require.Nil(t, err)
 		return PolyCommitmentMsg{
 			Eon:    eon,
@@ -322,7 +322,7 @@ func TestInvalidEvalHandling(t *testing.T) {
 	require.Nil(t, err)
 
 	makeEvalMsg := func() PolyEvalMsg {
-		p, err := crypto.RandomPolynomial(rand.Reader, crypto.DegreeFromThreshold(threshold))
+		p, err := shcrypto.RandomPolynomial(rand.Reader, shcrypto.DegreeFromThreshold(threshold))
 		require.Nil(t, err)
 		return PolyEvalMsg{
 			Eon:      eon,

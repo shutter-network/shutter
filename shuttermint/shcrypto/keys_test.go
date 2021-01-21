@@ -1,4 +1,4 @@
-package crypto
+package shcrypto
 
 import (
 	"crypto/rand"

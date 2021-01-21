@@ -12,13 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/stretchr/testify/require"
 
-	"github.com/brainbot-com/shutter/shuttermint/crypto"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 var (
-	polynomial *crypto.Polynomial
-	gammas     crypto.Gammas
+	polynomial *shcrypto.Polynomial
+	gammas     shcrypto.Gammas
 	eon        = uint64(64738)
 	sender     = common.BytesToAddress([]byte("foo"))
 	addresses  = []common.Address{
@@ -30,7 +30,7 @@ var (
 
 func init() {
 	var err error
-	polynomial, err = crypto.RandomPolynomial(rand.Reader, 3)
+	polynomial, err = shcrypto.RandomPolynomial(rand.Reader, 3)
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +149,7 @@ func TestEpochSecretKeyShare(t *testing.T) {
 		Sender: sender,
 		Eon:    eon,
 		Epoch:  uint64(12345),
-		Share:  (*crypto.EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111))),
+		Share:  (*shcrypto.EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111))),
 	}
 	roundtrip(t, share)
 }
