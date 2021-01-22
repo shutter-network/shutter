@@ -32,7 +32,7 @@ coverage:
 
 clean:
 	rm -rf ${TESTROOT}
-	rm -f ./shuttermint bin/shuttermint bin/multik bin/testclient bin/keyper bin/deploy bin/prepare
+	rm -f bin/shuttermint bin/testclient bin/keyper bin/deploy bin/prepare
 
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-stringer
 
