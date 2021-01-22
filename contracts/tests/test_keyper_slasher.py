@@ -2,6 +2,7 @@ from typing import Any
 from typing import List
 
 import brownie
+import eth_abi
 from brownie.network.account import Account
 from brownie.network.state import Chain
 from eth_typing import Hash32
@@ -128,8 +129,9 @@ def test_slashing(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span * 10, chain)
 
-    deposit_token_contract.send(keypers[0], 100, "0x0000000000000000", {"from": owner})
-    deposit_token_contract.send(deposit_contract, 100, "0x0000000000000000", {"from": keypers[0]})
+    data = eth_abi.encode_single("uint8", 0)  # type: ignore
+    deposit_token_contract.send(keypers[0], 100, data, {"from": owner})
+    deposit_token_contract.send(deposit_contract, 100, data, {"from": keypers[0]})
 
     executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
     tx = keyper_slasher.accuse(0, 1, {"from": keypers[1]})

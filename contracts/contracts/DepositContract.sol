@@ -71,11 +71,7 @@ contract DepositContract is IERC777Recipient {
             msg.sender == address(_token),
             "DepositContract: received invalid token"
         );
-        require(
-            userData.length == 8,
-            "DepositContract: invalid user data size"
-        );
-        uint64 withdrawalInterval = _bytesToUint64(userData);
+        uint64 withdrawalInterval = abi.decode(userData, (uint64));
         _deposit(from, amount, withdrawalInterval);
     }
 
@@ -201,15 +197,5 @@ contract DepositContract is IERC777Recipient {
             withdrawn: false,
             slashed: false
         });
-    }
-
-    function _bytesToUint64(bytes memory b) internal pure returns (uint64) {
-        uint64 number;
-        for (uint256 i = 0; i < b.length; i++) {
-            number =
-                number +
-                uint64(uint8(b[i]) * 2**(8 * (b.length - (i + 1))));
-        }
-        return number;
     }
 }
