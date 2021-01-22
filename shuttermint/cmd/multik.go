@@ -85,7 +85,7 @@ func multikMain() {
 			config.ValidatorKey = validatorKey
 			config.EncryptionKey = encryptionKey
 
-			kpr := keyper.NewKeyper(config)
+			kpr := keyper.NewKeyper2(config)
 			err := kpr.Run()
 			if err != nil {
 				panic(err)
