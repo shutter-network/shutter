@@ -221,7 +221,9 @@ func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) err
 	if err != nil {
 		return err
 	}
-
+	if latestBlock.Block == nil {
+		return fmt.Errorf("sync to head: empty blockchain: %+v", latestBlock)
+	}
 	err = shutter.fetchAndApplyEvents(ctx, shmcl, latestBlock.Block.Header.Height)
 	if err != nil {
 		return err
