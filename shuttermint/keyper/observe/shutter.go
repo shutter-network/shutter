@@ -60,7 +60,7 @@ func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 		if err != nil {
 			log.Printf("Error: malformed event: %s ev=%+v", err, ev)
 		} else {
-			shutter.applyEvent(height, x)
+			shutter.applyEvent(x)
 		}
 	}
 }
@@ -100,57 +100,102 @@ func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
 	return &shutter.Eons[idx], nil
 }
 
-func (shutter *Shutter) applyEvent(height int64, ev shutterevents.IEvent) {
-	warn := func() {
-		fmt.Printf("XXX observing event not yet implemented: %s%+v\n", reflect.TypeOf(ev), ev)
+func (shutter *Shutter) applyCheckIn(e shutterevents.CheckIn) error {
+	shutter.KeyperEncryptionKeys[e.Sender] = e.EncryptionPublicKey
+	return nil
+}
+
+func (shutter *Shutter) applyBatchConfig(e shutterevents.BatchConfig) error {
+	shutter.BatchConfigs = append(shutter.BatchConfigs, e)
+	return nil
+}
+
+func (shutter *Shutter) applyDecryptionSignature(e shutterevents.DecryptionSignature) error {
+	b := shutter.getBatchData(e.BatchIndex)
+	b.DecryptionSignatures = append(b.DecryptionSignatures, e)
+	return nil
+}
+
+func (shutter *Shutter) applyEonStarted(e shutterevents.EonStarted) error {
+	idx := shutter.searchEon(e.Eon)
+	if idx < len(shutter.Eons) {
+		return fmt.Errorf("eons should increase")
 	}
+	shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e, StartHeight: e.Height})
+	return nil
+}
+
+func (shutter *Shutter) applyPolyCommitment(e shutterevents.PolyCommitment) error {
+	eon, err := shutter.FindEon(e.Eon)
+	if err != nil {
+		return err
+	}
+	eon.Commitments = append(eon.Commitments, e)
+	return nil
+}
+
+func (shutter *Shutter) applyPolyEval(e shutterevents.PolyEval) error {
+	eon, err := shutter.FindEon(e.Eon)
+	if err != nil {
+		return err
+	}
+	eon.PolyEvals = append(eon.PolyEvals, e)
+	return nil
+}
+
+func (shutter *Shutter) applyAccusation(e shutterevents.Accusation) error {
+	eon, err := shutter.FindEon(e.Eon)
+	if err != nil {
+		return err
+	}
+	eon.Accusations = append(eon.Accusations, e)
+	return nil
+}
+
+func (shutter *Shutter) applyApology(e shutterevents.Apology) error {
+	eon, err := shutter.FindEon(e.Eon)
+	if err != nil {
+		return err
+	}
+	eon.Apologies = append(eon.Apologies, e)
+	return nil
+}
+
+func (shutter *Shutter) applyEpochSecretKeyShare(e shutterevents.EpochSecretKeyShare) error {
+	eon, err := shutter.FindEon(e.Eon)
+	if err != nil {
+		return err
+	}
+	eon.EpochSecretKeyShares = append(eon.EpochSecretKeyShares, e)
+	return nil
+}
+
+func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
+	var err error
 	switch e := ev.(type) {
 	case shutterevents.CheckIn:
-		shutter.KeyperEncryptionKeys[e.Sender] = e.EncryptionPublicKey
+		err = shutter.applyCheckIn(e)
 	case shutterevents.BatchConfig:
-		shutter.BatchConfigs = append(shutter.BatchConfigs, e)
+		err = shutter.applyBatchConfig(e)
 	case shutterevents.DecryptionSignature:
-		b := shutter.getBatchData(e.BatchIndex)
-		b.DecryptionSignatures = append(b.DecryptionSignatures, e)
+		err = shutter.applyDecryptionSignature(e)
 	case shutterevents.EonStarted:
-		idx := shutter.searchEon(e.Eon)
-		if idx < len(shutter.Eons) {
-			panic("eons should increase")
-		}
-		shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e, StartHeight: height})
+		err = shutter.applyEonStarted(e)
 	case shutterevents.PolyCommitment:
-		eon, err := shutter.FindEon(e.Eon)
-		if err != nil {
-			panic(err) // XXX we should remove that later
-		}
-		eon.Commitments = append(eon.Commitments, e)
+		err = shutter.applyPolyCommitment(e)
 	case shutterevents.PolyEval:
-		eon, err := shutter.FindEon(e.Eon)
-		if err != nil {
-			panic(err) // XXX we should remove that later
-		}
-		eon.PolyEvals = append(eon.PolyEvals, e)
+		err = shutter.applyPolyEval(e)
 	case shutterevents.Accusation:
-		eon, err := shutter.FindEon(e.Eon)
-		if err != nil {
-			panic(err) // XXX we should remove that later
-		}
-		eon.Accusations = append(eon.Accusations, e)
+		err = shutter.applyAccusation(e)
 	case shutterevents.Apology:
-		eon, err := shutter.FindEon(e.Eon)
-		if err != nil {
-			panic(err) // XXX we should remove that later
-		}
-		eon.Apologies = append(eon.Apologies, e)
+		err = shutter.applyApology(e)
 	case shutterevents.EpochSecretKeyShare:
-		eon, err := shutter.FindEon(e.Eon)
-		if err != nil {
-			panic(err) // XXX we should remove that later
-		}
-		eon.EpochSecretKeyShares = append(eon.EpochSecretKeyShares, e)
+		err = shutter.applyEpochSecretKeyShare(e)
 	default:
-		warn()
-		panic("applyEvent: unknown event. giving up")
+		err = fmt.Errorf("apply event not yet implemented for %s: %+v", reflect.TypeOf(ev), ev)
+	}
+	if err != nil {
+		log.Printf("Error in apply event: %s", err)
 	}
 }
 
