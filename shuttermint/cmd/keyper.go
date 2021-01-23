@@ -148,28 +148,28 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 	keyBroadcastContractAddress := common.HexToAddress(r.KeyBroadcastContract)
 	if r.KeyBroadcastContract != keyBroadcastContractAddress.Hex() {
 		return emptyConfig, fmt.Errorf(
-			"KeyBroadcastContract must be a valid checksummed address",
+			"field KeyBroadcastContract must be a valid checksummed address",
 		)
 	}
 
 	executorContractAddress := common.HexToAddress(r.ExecutorContract)
 	if r.ExecutorContract != executorContractAddress.Hex() {
 		return emptyConfig, fmt.Errorf(
-			"ExecutorContract must be a valid checksummed address",
+			"field ExecutorContract must be a valid checksummed address",
 		)
 	}
 
 	depositContractAddress := common.HexToAddress(r.DepositContract)
 	if r.DepositContract != depositContractAddress.Hex() {
 		return emptyConfig, fmt.Errorf(
-			"DepositContract must be a valid checksummed address",
+			"field DepositContract must be a valid checksummed address",
 		)
 	}
 
 	keyperSlasherAddress := common.HexToAddress(r.KeyperSlasher)
 	if r.KeyperSlasher != keyperSlasherAddress.Hex() {
 		return emptyConfig, fmt.Errorf(
-			"KeyperSlasher must be a valid checksummed address",
+			"field KeyperSlasher must be a valid checksummed address",
 		)
 	}
 
