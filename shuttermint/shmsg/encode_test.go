@@ -24,23 +24,6 @@ func makeMessage() *MessageWithNonce {
 	return msgWithNonce
 }
 
-func TestEncodeDecode(t *testing.T) {
-	encoded, err := URLEncodeMessage(makeMessage())
-	if err != nil {
-		t.Fatalf("Got error while encoding: %s", err)
-	}
-	t.Logf("Encoded: %s", encoded)
-	msg, err := URLDecodeMessage(encoded)
-	if err != nil {
-		t.Fatalf("Got error while decoding: %s", err)
-	}
-	t.Logf("decoded check in: %+v", msg.Msg.GetCheckIn())
-
-	if msg.Msg.GetCheckIn() == nil {
-		t.Fatal("got no check in")
-	}
-}
-
 func TestSignMessage(t *testing.T) {
 	privateKey, err := crypto.GenerateKey()
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)

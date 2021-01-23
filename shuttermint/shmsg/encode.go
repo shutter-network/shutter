@@ -2,7 +2,6 @@ package shmsg
 
 import (
 	"crypto/ecdsa"
-	"encoding/base64"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,29 +9,6 @@ import (
 	"golang.org/x/crypto/sha3"
 	"google.golang.org/protobuf/proto"
 )
-
-// URLEncodeMessage encodes Message as a string, which is safe to be used as part of an URL
-func URLEncodeMessage(msg *MessageWithNonce) (string, error) {
-	out, err := proto.Marshal(msg)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(out), nil
-}
-
-// URLDecodeMessage decodes a Message from the given string
-func URLDecodeMessage(encoded string) (*MessageWithNonce, error) {
-	msg := MessageWithNonce{}
-	out, err := base64.RawURLEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := proto.Unmarshal(out, &msg); err != nil {
-		return nil, err
-	}
-	return &msg, nil
-}
 
 // Instead of relying on protocol buffers we simply send a signature, followed by the marshaled message
 
