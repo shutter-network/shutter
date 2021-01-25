@@ -691,9 +691,11 @@ func (dcdr *Decider) handleEpochKG() {
 	if currentBatchIndex == 0 {
 		return
 	}
-	batchIndex := currentBatchIndex - 1
 
-	if batchIndex < dcdr.State.LastEpochSecretShareSent {
+	batchIndex := currentBatchIndex - 1
+	epoch := batchIndex + 1
+
+	if epoch <= dcdr.State.LastEpochSecretShareSent {
 		return
 	}
 
@@ -709,10 +711,13 @@ func (dcdr *Decider) handleEpochKG() {
 	}
 	log.Printf("eon=%d block=%d batchIndex=%d ", eon.Eon, blockNum, batchIndex)
 
-	dcdr.sendEpochSecretKeyShare(epochKG, batchIndex)
+	dcdr.sendEpochSecretKeyShare(epochKG, epoch)
 }
 
 func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {
+	if epoch == 0 {
+		panic("epoch must be positive")
+	}
 	epochSecretKeyShare := epochKG.ComputeEpochSecretKeyShare(epoch)
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("epoch secret key share, epoch=%d in eon=%d", epoch, epochKG.Eon),
