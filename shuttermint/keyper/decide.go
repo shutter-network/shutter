@@ -670,6 +670,21 @@ func (dcdr *Decider) handleDKGs() {
 	}
 }
 
+func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
+	epoch := batchIndex + 1
+	eon, err := dcdr.Shutter.FindEonByBatchIndex(batchIndex)
+	if err != nil {
+		return
+	}
+
+	epochKG, err := dcdr.State.FindEpochKGByEon(eon.Eon)
+	if err != nil {
+		log.Printf("Cannot find EpochKG for eon=%d", eon.Eon)
+		return
+	}
+	dcdr.sendEpochSecretKeyShare(epochKG, epoch)
+}
+
 func (dcdr *Decider) handleEpochKG() {
 	blockNum := dcdr.MainChain.CurrentBlock
 
@@ -687,31 +702,12 @@ func (dcdr *Decider) handleEpochKG() {
 	}
 
 	currentBatchIndex := bc.BatchIndex(blockNum)
-	// we can publish the private epoch key share for batch indexes < batchIndex
-	if currentBatchIndex == 0 {
-		return
+	// publish the private epoch key share for batch indexes < currentBatchIndex
+	// TODO Limit the number of messages we sent. It doesn't make sense to publish the secret
+	// key share, if the batch already finished/failed.
+	for batchIndex := dcdr.State.LastEpochSecretShareSent; batchIndex < currentBatchIndex; batchIndex++ {
+		dcdr.publishEpochSecretKeyShare(batchIndex)
 	}
-
-	batchIndex := currentBatchIndex - 1
-	epoch := batchIndex + 1
-
-	if epoch <= dcdr.State.LastEpochSecretShareSent {
-		return
-	}
-
-	eon, err := dcdr.Shutter.FindEonByBatchIndex(batchIndex)
-	if err != nil {
-		return
-	}
-
-	epochKG, err := dcdr.State.FindEpochKGByEon(eon.Eon)
-	if err != nil {
-		log.Printf("Cannot find EpochKG for eon=%d", eon.Eon)
-		return
-	}
-	log.Printf("eon=%d block=%d batchIndex=%d ", eon.Eon, blockNum, batchIndex)
-
-	dcdr.sendEpochSecretKeyShare(epochKG, epoch)
 }
 
 func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {
