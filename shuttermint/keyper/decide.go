@@ -35,10 +35,7 @@ type IAction interface {
 	Run(ctx context.Context, runenv IRunEnv) error
 }
 
-var (
-	_ IAction = FakeAction{}
-	_ IAction = SendShuttermintMessage{}
-)
+var _ IAction = SendShuttermintMessage{}
 
 // DKG is used to store local state about active DKG processes. Each DKG has a corresponding
 // observe.Eon struct stored in observe.Shutter, which we can find with Shutter's FindEon method.
@@ -242,17 +239,6 @@ type Decider struct {
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
 	Actions   []IAction
-}
-
-// FakeAction only prints a message to the log. It's useful only during development as a
-// placeholder for the real action.  XXX needs to be removed!
-type FakeAction struct {
-	msg string
-}
-
-func (a FakeAction) Run(_ context.Context, _ IRunEnv) error {
-	log.Printf("Run: %s", a.msg)
-	return nil
 }
 
 // SendShuttermintMessage is an Action that sends a message to shuttermint
