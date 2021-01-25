@@ -287,3 +287,13 @@ def test_get_active_after_inactive_config(config_contract: Any, owner: Account) 
 
     for batch_index in range(5, 10):
         assert fetch_config(config_contract, batch_index) == config3
+
+
+def test_disallow_duplicate_keypers(config_contract: Any, owner: Account) -> None:
+    config = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=2)
+    set_next_config(config_contract, config, owner=owner)
+
+    numKeypersBefore = config_contract.nextConfigNumKeypers()
+    config_contract.nextConfigAddKeypers(config.keypers, {"from": owner})
+    numKeypersAfter = config_contract.nextConfigNumKeypers()
+    assert numKeypersBefore == numKeypersAfter

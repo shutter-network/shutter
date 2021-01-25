@@ -40,6 +40,7 @@ contract ConfigContract is Ownable {
 
     BatchConfig[] public configs;
     BatchConfig public nextConfig;
+    mapping(address => bool) public nextConfigKeypersSeen;
 
     uint64 public immutable configChangeHeadsUpBlocks;
 
@@ -190,8 +191,12 @@ contract ConfigContract is Ownable {
             nextConfig.keypers.length <= type(uint64).max - _newKeypers.length,
             "ConfigContract: number of keypers exceeds uint64"
         );
+
         for (uint64 i = 0; i < _newKeypers.length; i++) {
-            nextConfig.keypers.push(_newKeypers[i]);
+            if (!nextConfigKeypersSeen[_newKeypers[i]]) {
+                nextConfig.keypers.push(_newKeypers[i]);
+                nextConfigKeypersSeen[_newKeypers[i]] = true;
+            }
         }
     }
 
@@ -199,9 +204,15 @@ contract ConfigContract is Ownable {
         uint256 currentLength = nextConfig.keypers.length;
         if (n <= currentLength) {
             for (uint64 i = 0; i < n; i++) {
+                nextConfigKeypersSeen[nextConfig.keypers[nextConfig
+                    .keypers
+                    .length - 1]] = false;
                 nextConfig.keypers.pop();
             }
         } else {
+            for (uint64 i = 0; i < nextConfig.keypers.length; i++) {
+                nextConfigKeypersSeen[nextConfig.keypers[i]] = false;
+            }
             delete nextConfig.keypers;
         }
     }
@@ -260,6 +271,10 @@ contract ConfigContract is Ownable {
         }
 
         configs.push(nextConfig);
+        for (uint64 i = 0; i < nextConfig.keypers.length; i++) {
+            nextConfigKeypersSeen[nextConfig.keypers[i]] = false;
+        }
+
         nextConfig = zeroConfig();
 
         emit ConfigScheduled(uint64(configs.length));
