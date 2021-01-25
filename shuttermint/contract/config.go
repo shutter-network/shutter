@@ -8,6 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 // BatchParams desribes the parameters to be used for a single batch
@@ -164,7 +166,7 @@ func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint
 		TargetAddress:          config.TargetAddress,
 		TargetFunctionSelector: config.TargetFunctionSelector,
 		ExecutionTimeout:       config.ExecutionTimeout,
-		Keypers:                keypers,
+		Keypers:                medley.DedupAddresses(keypers),
 	}, nil
 }
 

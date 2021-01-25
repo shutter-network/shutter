@@ -4,6 +4,7 @@ package medley
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -41,4 +42,32 @@ func WaitMined(ctx context.Context, client *ethclient.Client, txHash common.Hash
 		}
 		return receipt, nil
 	}
+}
+
+// EnsureUniqueAddresses makes sure the slice of addresses doesn't contain duplicate addresses
+func EnsureUniqueAddresses(addrs []common.Address) error {
+	seen := make(map[common.Address]struct{})
+	for _, a := range addrs {
+		if _, ok := seen[a]; ok {
+			return fmt.Errorf("duplicate address: %s", a.Hex())
+		}
+		seen[a] = struct{}{}
+	}
+	return nil
+}
+
+// DedupAddresses returns a new slice containing only unique addresses
+func DedupAddresses(addrs []common.Address) []common.Address {
+	var res []common.Address
+	seen := make(map[common.Address]struct{})
+
+	for _, a := range addrs {
+		if _, ok := seen[a]; ok {
+			continue
+		}
+		seen[a] = struct{}{}
+		res = append(res, a)
+	}
+
+	return res
 }

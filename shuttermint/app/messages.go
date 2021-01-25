@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -30,19 +31,16 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, er
 	}
 
 	receivers := []common.Address{}
-	receiverMap := make(map[common.Address]bool)
 	for _, receiver := range msg.Receivers {
 		address, err := validateAddress(receiver)
 		if err != nil {
 			return nil, err
 		}
-
-		if receiverMap[address] {
-			return nil, fmt.Errorf("duplicate receiver address %s", address.Hex())
-		}
-		receiverMap[address] = true
-
 		receivers = append(receivers, address)
+	}
+
+	if err := medley.EnsureUniqueAddresses(receivers); err != nil {
+		return nil, err
 	}
 
 	return &PolyEval{
@@ -74,19 +72,16 @@ func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*
 // ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg
 func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusation, error) {
 	accused := []common.Address{}
-	accusedMap := make(map[common.Address]bool)
 	for _, acc := range msg.Accused {
 		address, err := validateAddress(acc)
 		if err != nil {
 			return nil, err
 		}
-
-		if accusedMap[address] {
-			return nil, fmt.Errorf("duplicate accusation from %s against %s", sender.Hex(), address.Hex())
-		}
-		accusedMap[address] = true
-
 		accused = append(accused, address)
+	}
+
+	if err := medley.EnsureUniqueAddresses(accused); err != nil {
+		return nil, err
 	}
 
 	return &Accusation{
@@ -103,7 +98,6 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 	}
 
 	accusers := []common.Address{}
-	accuserMap := make(map[common.Address]bool)
 
 	for _, acc := range msg.Accusers {
 		accuser, err := validateAddress(acc)
@@ -111,12 +105,11 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 			return nil, err
 		}
 
-		if accuserMap[accuser] {
-			return nil, fmt.Errorf("duplicate accuser %s", accuser.Hex())
-		}
-		accuserMap[accuser] = true
-
 		accusers = append(accusers, accuser)
+	}
+
+	if err := medley.EnsureUniqueAddresses(accusers); err != nil {
+		return nil, err
 	}
 
 	var polyEval []*big.Int

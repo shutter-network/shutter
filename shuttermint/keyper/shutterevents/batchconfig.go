@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -39,18 +40,6 @@ func (bc *BatchConfig) EnsureValid() error {
 	return nil
 }
 
-// Message converts the batch config to a shmsg.Message
-func (bc *BatchConfig) Message() *shmsg.Message {
-	return shmsg.NewBatchConfig(
-		bc.StartBatchIndex,
-		bc.Keypers,
-		bc.Threshold,
-		bc.ConfigContractAddress,
-		bc.ConfigIndex,
-		bc.Started,
-		bc.ValidatorsUpdated)
-}
-
 // BatchConfigFromMessage extracts the batch config received in a message
 func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 	var keypers []common.Address
@@ -59,6 +48,10 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 			return BatchConfig{}, fmt.Errorf("keyper address has invalid length")
 		}
 		keypers = append(keypers, common.BytesToAddress(b))
+	}
+
+	if err := medley.EnsureUniqueAddresses(keypers); err != nil {
+		return BatchConfig{}, err
 	}
 
 	if len(m.ConfigContractAddress) != common.AddressLength {
