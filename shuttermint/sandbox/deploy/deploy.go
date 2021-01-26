@@ -39,8 +39,8 @@ const (
 	fundAmount                       = 1000000000000000000 // 1 eth
 	dialDefaultTimeout               = 5 * time.Second
 	getconfigDefaultTimeout          = 10 * time.Second
-	deployDefaultTimeout             = 30 * time.Second
-	scheduleDefaultTimeout           = 60 * time.Second
+	deployDefaultTimeout             = 300 * time.Second
+	scheduleDefaultTimeout           = 600 * time.Second
 )
 
 var (
@@ -354,6 +354,9 @@ func deploy(ctx context.Context) {
 	)
 	addTx()
 
+	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
+	addTx()
+
 	_, err = waitForTransactions(ctx, client, txs)
 	if err != nil {
 		panic(err)
@@ -366,6 +369,7 @@ func deploy(ctx context.Context) {
 	fmt.Println("TokenContract address:", tokenAddress.Hex())
 	fmt.Println("DepositContract address:", depositAddress.Hex())
 	fmt.Println("KeyperSlasher address:", keyperSlasherAddress.Hex())
+	fmt.Println("TargetContract address:", targetAddress.Hex())
 }
 
 func checkContractExists(ctx context.Context, configContractAddress common.Address) {

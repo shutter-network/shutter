@@ -10,7 +10,9 @@ import "./ExecutorContract.sol";
 import "./FeeBankContract.sol";
 import "./KeyBroadcastContract.sol";
 import "./KeyperSlasher.sol";
+
 import "./TestDepositTokenContract.sol";
+import "./TestTargetContract.sol";
 
 import "./MockBatcherContract.sol";
 import "./MockTargetContract.sol";
