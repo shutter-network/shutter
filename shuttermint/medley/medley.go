@@ -2,7 +2,9 @@
 package medley
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"time"
@@ -70,4 +72,17 @@ func DedupAddresses(addrs []common.Address) []common.Address {
 	}
 
 	return res
+}
+
+// CloneWithGob clones the given object by serializing/deserializing with gob
+func CloneWithGob(src, dst interface{}) {
+	buff := bytes.Buffer{}
+	err := gob.NewEncoder(&buff).Encode(src)
+	if err != nil {
+		panic(err)
+	}
+	err = gob.NewDecoder(&buff).Decode(dst)
+	if err != nil {
+		panic(err)
+	}
 }

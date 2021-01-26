@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 // MainChain let's a keyper fetch all necessary information from an ethereum node to do it's
@@ -61,6 +62,12 @@ func NewMainChain() *MainChain {
 		Deposits:                make(map[common.Address]*Deposit),
 		Accusations:             make(map[uint64]*Accusation),
 	}
+}
+
+func (mainchain *MainChain) Clone() *MainChain {
+	clone := new(MainChain)
+	medley.CloneWithGob(mainchain, clone)
+	return clone
 }
 
 // IsActiveKeyper checks if the given address is registered as a keyper in one of the active batch
@@ -312,8 +319,8 @@ func (mainchain *MainChain) AccusationsAgainst(account common.Address) []*Accusa
 	return accusations
 }
 
-// SyncToHead fetches the latest state from the ethereum node.
-// XXX this mutates the object in place. we may want to control mutation of the MainChain struct.
+// SyncToHead fetches the latest state from the ethereum node. It returns a new object with the
+// latest state.
 // XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
 func (mainchain *MainChain) SyncToHead(
 	ctx context.Context,
@@ -323,16 +330,18 @@ func (mainchain *MainChain) SyncToHead(
 	executorContract *contract.ExecutorContract,
 	depositContract *contract.DepositContract,
 	keyperSlasher *contract.KeyperSlasher,
-) error {
+) (*MainChain, error) {
 	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	latestBlockNumber := latestBlockHeader.Number.Uint64()
 	if latestBlockNumber == mainchain.CurrentBlock {
-		return nil
+		return mainchain, nil
 	}
+
+	mainchain = mainchain.Clone()
 
 	opts := &bind.CallOpts{
 		BlockNumber: latestBlockHeader.Number,
@@ -345,29 +354,29 @@ func (mainchain *MainChain) SyncToHead(
 
 	err = mainchain.syncConfigs(configContract, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = mainchain.syncBatches(batcherContract, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = mainchain.syncExecutionState(executorContract, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = mainchain.syncDeposits(depositContract, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = mainchain.syncSlashings(keyperSlasher, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	mainchain.CurrentBlock = latestBlockNumber
-	return nil
+	return mainchain, nil
 }

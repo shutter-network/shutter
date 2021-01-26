@@ -132,7 +132,7 @@ func (kpr *Keyper) init() error {
 }
 
 func (kpr *Keyper) syncMain(ctx context.Context) error {
-	return kpr.MainChain.SyncToHead(
+	newMainChain, err := kpr.MainChain.SyncToHead(
 		ctx,
 		kpr.ContractCaller.Ethclient,
 		kpr.ContractCaller.ConfigContract,
@@ -141,10 +141,20 @@ func (kpr *Keyper) syncMain(ctx context.Context) error {
 		kpr.ContractCaller.DepositContract,
 		kpr.ContractCaller.KeyperSlasher,
 	)
+	if err != nil {
+		return err
+	}
+	kpr.MainChain = newMainChain
+	return nil
 }
 
 func (kpr *Keyper) syncShutter(ctx context.Context) error {
-	return kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+	newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+	if err != nil {
+		return err
+	}
+	kpr.Shutter = newShutter
+	return nil
 }
 
 func (kpr *Keyper) sync(ctx context.Context) error {
@@ -185,11 +195,12 @@ func (kpr *Keyper) Run() error {
 	for {
 		err = kpr.sync(ctx)
 		if err != nil {
-			return err
+			log.Printf("Error in sync: %s", err)
+		} else {
+			log.Println(kpr.ShortInfo())
+			kpr.runOneStep(ctx)
 		}
 
-		log.Println(kpr.ShortInfo())
-		kpr.runOneStep(ctx)
 		time.Sleep(runSleepTime)
 	}
 }

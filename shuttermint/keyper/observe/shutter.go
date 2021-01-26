@@ -14,6 +14,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 var errEonNotFound = errors.New("eon not found")
@@ -258,21 +259,28 @@ func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterev
 	return shutterevents.BatchConfig{}
 }
 
+func (shutter *Shutter) Clone() *Shutter {
+	clone := new(Shutter)
+	medley.CloneWithGob(shutter, clone)
+	return clone
+}
+
 // SyncToHead syncs the state with the remote state. It fetches events from new blocks since the
-// last sync and updates the state by calling applyEvent for each event.
-// XXX this mutates the object in place. we may want to control mutation of the Shutter struct.
-func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) error {
+// last sync and updates the state by calling applyEvent for each event. This method does not
+// mutate the object in place, it rather returns a new object.
+func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*Shutter, error) {
 	latestBlock, err := shmcl.Block(ctx, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if latestBlock.Block == nil {
-		return fmt.Errorf("sync to head: empty blockchain: %+v", latestBlock)
+		return nil, fmt.Errorf("sync to head: empty blockchain: %+v", latestBlock)
 	}
-	err = shutter.fetchAndApplyEvents(ctx, shmcl, latestBlock.Block.Header.Height)
+	clone := shutter.Clone()
+	err = clone.fetchAndApplyEvents(ctx, shmcl, latestBlock.Block.Header.Height)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	shutter.CurrentBlock = latestBlock.Block.Header.Height
-	return nil
+	clone.CurrentBlock = latestBlock.Block.Header.Height
+	return clone, nil
 }
