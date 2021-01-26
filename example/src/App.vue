@@ -1,28 +1,33 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title">Shutter Example Dapp</h1>
+        </div>
+      </div>
+    </section>
+    <div class="container">
+      <SubmitSection />
+      <BatchSection />
+      <TargetSection />
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
+import SubmitSection from "./components/SubmitSection.vue";
+import TargetSection from "./components/TargetSection.vue";
+import BatchSection from "./components/BatchSection.vue";
 
 export default {
   name: "App",
   components: {
-    HelloWorld,
+    SubmitSection,
+    TargetSection,
+    BatchSection,
   },
 };
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+<style></style>
