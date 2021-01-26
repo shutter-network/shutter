@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
@@ -49,11 +50,13 @@ var configFlags struct {
 }
 
 var scheduleFlags struct {
-	Dir                  string
-	OwnerKey             string
-	BatchSpan            int
-	TransactionSizeLimit int
-	BatchSizeLimit       int
+	Dir                    string
+	OwnerKey               string
+	TargetContractAddress  string
+	TargetFunctionSelector string
+	BatchSpan              int
+	TransactionSizeLimit   int
+	BatchSizeLimit         int
 }
 
 var fundFlags struct {
@@ -233,6 +236,18 @@ func initScheduleFlags() {
 		"b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773",
 		"private key of the config contract owner",
 	)
+	scheduleCmd.Flags().StringVar(
+		&scheduleFlags.TargetContractAddress,
+		"target-contract",
+		"0x25f96B23947F3e57b29d15760Fd8Af926694Fa81",
+		"address of the target contract",
+	)
+	scheduleCmd.Flags().StringVar(
+		&scheduleFlags.TargetFunctionSelector,
+		"target-selector",
+		"0x943d7209",
+		"selector for the execute function in the target contract",
+	)
 	scheduleCmd.Flags().IntVarP(
 		&scheduleFlags.BatchSpan,
 		"batch-span",
@@ -313,6 +328,12 @@ func validateScheduleFlags() (string, error) {
 		return "owner-key", err
 	}
 
+	if err := validateAddress(scheduleFlags.TargetContractAddress); err != nil {
+		return "target-contract", err
+	}
+	if err := validateFunctionSelector(scheduleFlags.TargetFunctionSelector); err != nil {
+		return "target-selector", err
+	}
 	if scheduleFlags.BatchSpan < 0 {
 		return "batch-span", fmt.Errorf("must not be negative")
 	}
@@ -353,6 +374,17 @@ func validateAddress(address string) error {
 func validatePrivateKey(key string) error {
 	if _, err := crypto.HexToECDSA(key); err != nil {
 		return fmt.Errorf("invalid private key: %w", err)
+	}
+	return nil
+}
+
+func validateFunctionSelector(selector string) error {
+	selectorBytes, err := hexutil.Decode(selector)
+	if err != nil {
+		return err
+	}
+	if len(selectorBytes) != 4 {
+		return fmt.Errorf("function selector must be 4 bytes, got %d", len(selectorBytes))
 	}
 	return nil
 }
@@ -465,7 +497,6 @@ func schedule() error {
 	}
 
 	if len(configs) < 3 {
-		// TODO: check if two (or even three) keypers are required
 		return fmt.Errorf("3 keypers required, but only %d config files found in %s", len(configs), scheduleFlags.Dir)
 	}
 
@@ -568,6 +599,24 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	addTx()
 
 	tx, err = cc.NextConfigSetThreshold(auth, threshold)
+	if err != nil {
+		return err
+	}
+	addTx()
+
+	tx, err = cc.NextConfigSetTargetAddress(auth, common.HexToAddress(scheduleFlags.TargetContractAddress))
+	if err != nil {
+		return err
+	}
+	addTx()
+
+	selectorBytesSlice, err := hexutil.Decode(scheduleFlags.TargetFunctionSelector)
+	if err != nil {
+		return err // this should already be catched during flag validation
+	}
+	var selectorBytes [4]byte
+	copy(selectorBytes[:], selectorBytesSlice)
+	tx, err = cc.NextConfigSetTargetFunctionSelector(auth, selectorBytes)
 	if err != nil {
 		return err
 	}
