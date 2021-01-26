@@ -753,7 +753,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 		return // only keypers can execute
 	}
 
-	delay, err := dcdr.executionDelay(batchIndex)
+	delay, err := dcdr.executionDelay(nextHalfStep)
 	if err != nil {
 		return // shouldn't happen
 	}
@@ -823,9 +823,10 @@ func (dcdr *Decider) syncPendingAppeals() {
 	}
 }
 
-// ExecutionDelay returns the number of main chain blocks to wait before sending a tx. This makes
-// sure not all keypers try to send the same tx at the same time.
-func (dcdr *Decider) executionDelay(batchIndex uint64) (uint64, error) {
+// ExecutionDelay returns the number of main chain blocks to wait before sending an execution tx.
+// This makes sure not all keypers try to send the same tx at the same time.
+func (dcdr *Decider) executionDelay(halfStep uint64) (uint64, error) {
+	batchIndex := halfStep / 2
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
 	if !ok {
 		return 0, fmt.Errorf("config is not active")
@@ -836,7 +837,7 @@ func (dcdr *Decider) executionDelay(batchIndex uint64) (uint64, error) {
 		return 0, fmt.Errorf("not a keyper")
 	}
 
-	place := (batchIndex + keyperIndex) % uint64(len(config.Keypers))
+	place := (halfStep + keyperIndex) % uint64(len(config.Keypers))
 	return place * dcdr.Config.ExecutionStaggering, nil
 }
 
