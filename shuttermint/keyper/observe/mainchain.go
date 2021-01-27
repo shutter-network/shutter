@@ -173,8 +173,9 @@ func (mainchain *MainChain) syncBatches(batcherContract *contract.BatcherContrac
 func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransactionAdded) {
 	batch, ok := mainchain.Batches[event.BatchIndex]
 	if !ok {
-		batch.BatchIndex = event.BatchIndex
+		batch = &Batch{BatchIndex: event.BatchIndex}
 		// for the rest of the fields, the zero values are fine
+		mainchain.Batches[event.BatchIndex] = batch
 	}
 
 	switch event.TransactionType {
@@ -187,8 +188,6 @@ func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransa
 	default:
 		panic("unknown transaction type")
 	}
-
-	mainchain.Batches[event.BatchIndex] = batch
 }
 
 func (mainchain *MainChain) syncExecutionState(executorContract *contract.ExecutorContract, opts *bind.CallOpts) error {
