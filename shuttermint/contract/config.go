@@ -53,13 +53,14 @@ func (bc *BatchConfig) BatchStartBlock(batchIndex uint64) uint64 {
 }
 
 // BatchIndex returns the BatchIndex for the given blockNumber. This function will panic if the
-// blockNumber is less than the BatchConfig's StartBlockNumber or if the BatchConfig is not active
+// blockNumber is less than the BatchConfig's StartBlockNumber. If the BatchConfig is not active,
+// i.e. it's BatchSpan is zero, it will return the StartBatchIndex for all blockNumbers.
 func (bc *BatchConfig) BatchIndex(blockNumber uint64) uint64 {
-	if bc.BatchSpan == 0 {
-		panic("internal error: Config is not active")
-	}
 	if blockNumber < bc.StartBlockNumber {
 		panic("internal error: BatchIndex called with bad blockNumber")
+	}
+	if bc.BatchSpan == 0 {
+		return bc.StartBatchIndex
 	}
 	return bc.StartBatchIndex + (blockNumber-bc.StartBlockNumber)/bc.BatchSpan
 }

@@ -677,9 +677,6 @@ func (dcdr *Decider) handleEpochKG() {
 	// Find the active config for the given block on the main chain
 	activeCFGIdx := dcdr.MainChain.ActiveConfigIndex(blockNum)
 	bc := dcdr.MainChain.BatchConfigs[activeCFGIdx]
-	if !bc.IsActive() {
-		return
-	}
 
 	// find the corresponding config on shutter
 	_, err := dcdr.Shutter.FindBatchConfigByConfigIndex(uint64(activeCFGIdx))
