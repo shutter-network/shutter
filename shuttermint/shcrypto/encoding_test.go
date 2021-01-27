@@ -78,7 +78,7 @@ func TestPointEncoding(t *testing.T) {
 	require.NotNil(t, err)
 }
 
-func TestMessageEncoding(t *testing.T) {
+func encryptedMessage() *EncryptedMessage {
 	blocks := []Block{}
 	for i := 0; i < 3; i++ {
 		s := bytes.Repeat([]byte{byte(i)}, 32)
@@ -87,11 +87,15 @@ func TestMessageEncoding(t *testing.T) {
 		blocks = append(blocks, b)
 	}
 
-	m1 := EncryptedMessage{
+	return &EncryptedMessage{
 		C1: new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
 		C2: blocks[0],
 		C3: blocks[1:],
 	}
+}
+
+func TestMessageEncoding(t *testing.T) {
+	m1 := encryptedMessage()
 	encoded, err := rlp.EncodeToBytes(m1)
 	require.Nil(t, err)
 
@@ -101,4 +105,29 @@ func TestMessageEncoding(t *testing.T) {
 	require.True(t, reflect.DeepEqual(m1.C1, m2.C1))
 	require.True(t, reflect.DeepEqual(m1.C2, m2.C2))
 	require.True(t, reflect.DeepEqual(m1.C3, m2.C3))
+}
+
+func TestMarshalUnmarshal(t *testing.T) {
+	m1 := encryptedMessage()
+	m2 := &EncryptedMessage{}
+	err := m2.Unmarshal(m1.Marshal())
+	require.Nil(t, err)
+	require.Equal(t, m1, m2)
+}
+
+func TestUnmarshalBroken(t *testing.T) {
+	d := encryptedMessage().Marshal()
+	m := EncryptedMessage{}
+
+	err := m.Unmarshal(d[:16])
+	require.NotNil(t, err)
+
+	err = m.Unmarshal(d[:32])
+	require.NotNil(t, err)
+
+	err = m.Unmarshal(d[:65])
+	require.NotNil(t, err)
+
+	err = m.Unmarshal(d[:len(d)-1])
+	require.NotNil(t, err)
 }
