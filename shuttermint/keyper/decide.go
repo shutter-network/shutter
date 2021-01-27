@@ -50,6 +50,14 @@ type DKG struct {
 	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
 }
 
+// EKG is used to store local state about the epoch key generation process.
+type EKG struct {
+	Eon                       uint64
+	Keypers                   []common.Address
+	EpochKG                   *epochkg.EpochKG
+	EpochSecretKeySharesIndex int
+}
+
 func (dkg *DKG) ShortInfo() string {
 	return fmt.Sprintf("eon=%d, #keypers=%d, %s", dkg.Eon, len(dkg.Keypers), dkg.Pure.ShortInfo())
 }
@@ -224,9 +232,9 @@ type State struct {
 	LastSentBatchConfigIndex uint64
 	LastEonStarted           uint64
 	DKGs                     []DKG
+	EKGs                     []*EKG
 	PendingHalfStep          *uint64
 	PendingAppeals           map[uint64]struct{}
-	EpochKGs                 []*epochkg.EpochKG
 	LastEpochSecretShareSent uint64
 }
 
@@ -396,15 +404,15 @@ func (a Appeal) String() string {
 	return fmt.Sprintf("-> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
 }
 
-var errEpochKGNotFound = errors.New("epochkg not found")
+var errEKGNotFound = errors.New("EKG not found")
 
-func (st *State) FindEpochKGByEon(eon uint64) (*epochkg.EpochKG, error) {
-	for _, epochkg := range st.EpochKGs {
+func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
+	for _, epochkg := range st.EKGs {
 		if epochkg.Eon == eon {
 			return epochkg, nil
 		}
 	}
-	return nil, errEpochKGNotFound
+	return nil, errEKGNotFound
 }
 
 // addAction stores the given IAction to be run later
@@ -613,7 +621,12 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 		return
 	}
 	log.Printf("Success: DKG process succeeced for %s", dkg.ShortInfo())
-	dcdr.State.EpochKGs = append(dcdr.State.EpochKGs, epochkg.NewEpochKG(&dkgresult))
+	ekg := &EKG{
+		Eon:     dkg.Eon,
+		Keypers: dkg.Keypers,
+		EpochKG: epochkg.NewEpochKG(&dkgresult),
+	}
+	dcdr.State.EKGs = append(dcdr.State.EKGs, ekg)
 }
 
 func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
@@ -663,15 +676,55 @@ func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
 		return
 	}
 
-	epochKG, err := dcdr.State.FindEpochKGByEon(eon.Eon)
+	ekg, err := dcdr.State.FindEKGByEon(eon.Eon)
 	if err != nil {
 		log.Printf("Cannot find EpochKG for eon=%d", eon.Eon)
 		return
 	}
-	dcdr.sendEpochSecretKeyShare(epochKG, epoch)
+	dcdr.sendEpochSecretKeyShare(ekg.EpochKG, epoch)
 }
 
-func (dcdr *Decider) handleEpochKG() {
+func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
+	for i := ekg.EpochSecretKeySharesIndex; i < len(eon.EpochSecretKeyShares); i++ {
+		share := eon.EpochSecretKeyShares[i]
+		sender, err := medley.FindAddressIndex(ekg.Keypers, share.Sender)
+		if err != nil {
+			continue
+		}
+		if _, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
+			continue
+		}
+		err = ekg.EpochKG.HandleEpochSecretKeyShare(
+			&epochkg.EpochSecretKeyShare{
+				Eon:    share.Eon,
+				Epoch:  share.Epoch,
+				Sender: uint64(sender),
+				Share:  share.Share,
+			},
+		)
+		if err != nil {
+			log.Printf("Error while handling epoch secret key share: %s", err)
+			continue
+		}
+		if key, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
+			log.Printf("Epoch secret key generated for epoch %d", share.Epoch)
+			_ = key
+		}
+	}
+	ekg.EpochSecretKeySharesIndex = len(eon.EpochSecretKeyShares)
+}
+
+func (dcdr *Decider) syncEKGs() {
+	for _, ekg := range dcdr.State.EKGs {
+		eon, err := dcdr.Shutter.FindEon(ekg.Eon)
+		if err != nil {
+			panic(err)
+		}
+		dcdr.syncEKGWithEon(ekg, eon)
+	}
+}
+
+func (dcdr *Decider) publishEpochSecretKeyShares() {
 	blockNum := dcdr.MainChain.CurrentBlock
 
 	// Find the active config for the given block on the main chain
@@ -691,6 +744,11 @@ func (dcdr *Decider) handleEpochKG() {
 	for batchIndex := dcdr.State.LastEpochSecretShareSent; batchIndex < currentBatchIndex; batchIndex++ {
 		dcdr.publishEpochSecretKeyShare(batchIndex)
 	}
+}
+
+func (dcdr *Decider) handleEpochKG() {
+	dcdr.publishEpochSecretKeyShares()
+	dcdr.syncEKGs()
 }
 
 func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {

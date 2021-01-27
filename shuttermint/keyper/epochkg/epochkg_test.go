@@ -79,10 +79,10 @@ func TestEpochKG(t *testing.T) {
 	epoch := uint64(50)
 	for sender, kg := range kgs {
 		share := EpochSecretKeyShare{
-			Eon:                 kg.Eon,
-			Epoch:               epoch,
-			Sender:              uint64(sender),
-			EpochSecretKeyShare: kg.ComputeEpochSecretKeyShare(epoch),
+			Eon:    kg.Eon,
+			Epoch:  epoch,
+			Sender: uint64(sender),
+			Share:  kg.ComputeEpochSecretKeyShare(epoch),
 		}
 		for _, k := range kgs {
 			err := k.HandleEpochSecretKeyShare(&share)

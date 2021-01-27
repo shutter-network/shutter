@@ -27,10 +27,10 @@ type EpochKG struct {
 }
 
 type EpochSecretKeyShare struct {
-	Eon                 uint64
-	Epoch               uint64
-	Sender              KeyperIndex
-	EpochSecretKeyShare *shcrypto.EpochSecretKeyShare
+	Eon    uint64
+	Epoch  uint64
+	Sender KeyperIndex
+	Share  *shcrypto.EpochSecretKeyShare
 }
 
 func NewEpochKG(puredkgResult *puredkg.Result) *EpochKG {
@@ -58,7 +58,7 @@ func (epochkg *EpochKG) computeEpochSecretKey(shares []*EpochSecretKeyShare) (*s
 	var epochSecretKeyShares []*shcrypto.EpochSecretKeyShare
 	for _, s := range shares {
 		keyperIndices = append(keyperIndices, int(s.Sender))
-		epochSecretKeyShares = append(epochSecretKeyShares, s.EpochSecretKeyShare)
+		epochSecretKeyShares = append(epochSecretKeyShares, s.Share)
 	}
 	return shcrypto.ComputeEpochSecretKey(keyperIndices, epochSecretKeyShares, epochkg.Threshold)
 }
@@ -92,7 +92,7 @@ func (epochkg *EpochKG) HandleEpochSecretKeyShare(share *EpochSecretKeyShare) er
 	}
 	epochID := shcrypto.ComputeEpochID(share.Epoch)
 	if !shcrypto.VerifyEpochSecretKeyShare(
-		share.EpochSecretKeyShare,
+		share.Share,
 		epochkg.PublicKeyShares[share.Sender],
 		epochID,
 	) {
