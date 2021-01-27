@@ -283,7 +283,9 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 
 	tx, err := cc.ExecutorContract.ExecuteCipherBatch(auth, a.cipherBatchHash, a.transactions, a.keyperIndex)
 	if err != nil {
-		return err
+		// XXX consider handling the error somehow
+		log.Printf("Error creating cipher batch execution tx: %s", err)
+		return nil
 	}
 	runenv.WatchTransaction(tx)
 
@@ -311,7 +313,9 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 
 	tx, err := cc.ExecutorContract.ExecutePlainBatch(auth, a.transactions)
 	if err != nil {
-		return err
+		// XXX consider handling the error somehow
+		log.Printf("Error creating plain batch execution tx: %s", err)
+		return nil
 	}
 	runenv.WatchTransaction(tx)
 
@@ -338,7 +342,9 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 
 	tx, err := cc.ExecutorContract.SkipCipherExecution(auth)
 	if err != nil {
-		return err
+		// XXX consider handling the error somehow
+		log.Printf("Error creating skip cipher execution tx: %s", err)
+		return nil
 	}
 	runenv.WatchTransaction(tx)
 
