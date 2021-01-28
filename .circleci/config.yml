@@ -182,7 +182,7 @@ jobs:
       - restore_cache:
           keys:
             - wasm-go-v1-{{ checksum "go.sum" }}
-      - run: go get -t -v shcryptowasm
+      - run: GOARCH=wasm GOOS=js go get -t -v ./shcryptowasm
       - run: make wasm
       - save_cache:
           key: wasm-go-v1-{{ checksum "go.sum" }}
