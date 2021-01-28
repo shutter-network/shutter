@@ -8,10 +8,20 @@
   </head>
 
   <body>
+    <script src="wasm_exec.js"></script>
+    <script>
+      const go = new Go();
+      WebAssembly.instantiateStreaming(
+        fetch("shcrypto.wasm"),
+        go.importObject
+      ).then((result) => {
+        go.run(result.instance);
+      });
+    </script>
     <noscript>
       <strong>Please enable javascript.</strong>
     </noscript>
     <div id="app"></div>
-    <!-- built files will be auto injected -->
+    <!--built files will be auto injected-->
   </body>
 </html>
