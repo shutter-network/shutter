@@ -160,7 +160,7 @@ jobs:
       - restore_cache:
           keys:
             - shuttermint-go-v5-{{ checksum "go.sum" }}
-      - run: go get -t -v ./...
+      - run: go get -t -v $(go list ./... | grep -v shcryptowasm)
       - install-ganache
       - run: make build
       - save_cache:
