@@ -169,7 +169,7 @@ jobs:
             - "~/go/pkg/mod"
             - "~/.cache/go-build/"
       - run: mkdir report
-      - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
+      - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml $(go list ./... | grep -v shcryptowasm)
       - store_test_results:
           path: report
 
