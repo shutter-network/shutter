@@ -173,6 +173,23 @@ jobs:
       - store_test_results:
           path: report
 
+  wasm-build:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - wasm-go-v1-{{ checksum "go.sum" }}
+      - run: go get -t -v shcryptowasm
+      - run: make wasm
+      - save_cache:
+          key: wasm-go-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build/"
+
   mint-lint:
     executor: go
     working_directory: ~/shutter/shuttermint
@@ -203,6 +220,7 @@ workflows:
   shuttermint:
     jobs:
       - mint-build
+      - wasm-build
       - mint-lint:
           filters:
             branches:
