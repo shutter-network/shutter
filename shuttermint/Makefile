@@ -10,7 +10,7 @@ build:
 	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./sandbox/testclient ./sandbox/deploy ./sandbox/prepare
 
 wasm:
-	GOARCH=wasm GOOS=js go build -o bin/shcrypto.wasm ./shcryptowasm/main.go
+	GOARCH=wasm GOOS=js go build -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
