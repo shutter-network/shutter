@@ -1,4 +1,4 @@
-import {BigNumber} from "ethers";
+import {BigNumber, ethers} from "ethers";
 
 async function getConfigIndexAtBlock(blockNumber, configContract) {
   let numConfigs = await configContract.numConfigs();
@@ -46,7 +46,6 @@ function configArrayToObject(configArray, keypers) {
 }
 
 function getBatchIndexAtBlock(blockNumber, config) {
-  console.log(config);
   let blockNumberBig = BigNumber.from(blockNumber);
   console.assert(config.batchSpan.gt(0), "config is inactive");
   let blocksSinceStart = blockNumberBig.sub(config.startBlockNumber);
@@ -55,4 +54,20 @@ function getBatchIndexAtBlock(blockNumber, config) {
   return batchIndex;
 }
 
-export {getConfigAtBlock, getBatchIndexAtBlock};
+async function encodeMessage(message, nonce, privateKey) {
+  let messageBytes = ethers.utils.toUtf8Bytes(message);
+  let payload = ethers.utils.defaultAbiCoder.encode(
+    ["uint64", "bytes"],
+    [nonce, messageBytes]
+  );
+  let wallet = new ethers.Wallet(privateKey);
+  let flatSig = await wallet.signMessage(payload);
+  let sig = ethers.utils.splitSignature(flatSig);
+  let encoded = ethers.utils.defaultAbiCoder.encode(
+    ["bytes", "uint8", "bytes32", "bytes32"],
+    [payload, sig.v, sig.r, sig.s]
+  );
+  return encoded;
+}
+
+export {getConfigAtBlock, getBatchIndexAtBlock, encodeMessage};
