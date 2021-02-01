@@ -10,15 +10,17 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"os"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -27,7 +29,6 @@ import (
 
 const (
 	startBlockNumberOffset           = 30
-	defaultGasLimit                  = 5000000
 	defaultConfigChangeHeadsUpBlocks = 20
 	defaultAppealBlocks              = 20
 	ganacheKeyIdx                    = 9
@@ -36,7 +37,7 @@ const (
 	transactionSizeLimit             = 100
 	batchSizeLimit                   = 100 * 100
 	baseGasLimit                     = 21000
-	fundAmount                       = 1000000000000000000 // 1 eth
+	fundAmount                       = 1 * params.Ether
 	dialDefaultTimeout               = 5 * time.Second
 	getconfigDefaultTimeout          = 10 * time.Second
 	deployDefaultTimeout             = 300 * time.Second
@@ -44,9 +45,16 @@ const (
 )
 
 var (
-	key    *ecdsa.PrivateKey
-	client *ethclient.Client
+	key      *ecdsa.PrivateKey
+	client   *ethclient.Client
+	gasPrice *big.Int
 )
+
+var rootFlags struct {
+	Key         string
+	GasPrice    string
+	EthereumURL string
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "deploy",
@@ -54,14 +62,39 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), dialDefaultTimeout)
 		defer cancel()
-		key = sandbox.GanacheKey(ganacheKeyIdx)
+		var err error
 
-		cl, err := ethclient.DialContext(ctx, "http://localhost:8545")
-		if err != nil {
-			log.Fatal(err)
-		}
+		key, err = crypto.HexToECDSA(strings.TrimPrefix(rootFlags.Key, "0x"))
+		failIfError(err)
+
+		cl, err := ethclient.DialContext(ctx, rootFlags.EthereumURL)
+		failIfError(err)
 		client = cl
+
+		if rootFlags.GasPrice == "" {
+			gasPrice, err = client.SuggestGasPrice(ctx)
+			failIfError(err)
+		} else {
+			gasPriceGWei, ok := new(big.Int).SetString(rootFlags.GasPrice, 10)
+			if !ok {
+				log.Fatalf("Invalid gas price %s", rootFlags.GasPrice)
+			}
+			gasPrice = gweiToWei(gasPriceGWei)
+		}
+
+		address := crypto.PubkeyToAddress(key.PublicKey)
+		balance, err := client.BalanceAt(ctx, address, nil)
+		failIfError(err)
+
+		log.Printf("Deploy Address: %s", address)
+		log.Printf("Balance: %f ETH", weiToEther(balance))
+		log.Printf("Gas Price: %f GWei", weiToGwei(gasPrice))
+		log.Printf("Available gas: %d", new(big.Int).Quo(balance, gasPrice))
 	},
+}
+
+var deployFlags struct {
+	NoERC1820 bool
 }
 
 var deployCmd = &cobra.Command{
@@ -70,6 +103,7 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
 		defer cancel()
+
 		deploy(ctx)
 	},
 }
@@ -138,8 +172,40 @@ func init() {
 	rootCmd.AddCommand(getconfigCmd)
 	rootCmd.AddCommand(fundCmd)
 
+	initRootFlags()
+	initDeployFlags()
 	initScheduleFlags()
 	initGetconfigFlags()
+}
+
+func initRootFlags() {
+	rootCmd.PersistentFlags().StringVar(
+		&rootFlags.Key,
+		"key",
+		hexutil.Encode(crypto.FromECDSA(sandbox.GanacheKey(ganacheKeyIdx))),
+		"private key of deployer account",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&rootFlags.GasPrice,
+		"gas-price",
+		"",
+		"gas price in GWei (default: use suggested one)",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&rootFlags.EthereumURL,
+		"ethereum-url",
+		"ws://localhost:8545/websocket",
+		"Ethereum RPC URL",
+	)
+}
+
+func initDeployFlags() {
+	deployCmd.Flags().BoolVar(
+		&deployFlags.NoERC1820,
+		"no-erc1820",
+		false,
+		"don't deploy the ERC1820 contract",
+	)
 }
 
 func initScheduleFlags() {
@@ -151,9 +217,7 @@ func initScheduleFlags() {
 		"address of config contract",
 	)
 	err := scheduleCmd.MarkFlagRequired("config-contract")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.StartBatchIndex,
@@ -162,9 +226,7 @@ func initScheduleFlags() {
 		"the start batch index",
 	)
 	err = scheduleCmd.MarkFlagRequired("start-batch-index")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.BatchSpan,
@@ -173,9 +235,7 @@ func initScheduleFlags() {
 		"the batch span",
 	)
 	err = scheduleCmd.MarkFlagRequired("batch-span")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.StartBlockNumber,
@@ -184,9 +244,7 @@ func initScheduleFlags() {
 		"the start block number",
 	)
 	err = scheduleCmd.MarkFlagRequired("start-block-number")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 }
 
 func initGetconfigFlags() {
@@ -198,9 +256,7 @@ func initGetconfigFlags() {
 		"address of config contract",
 	)
 	err := getconfigCmd.MarkFlagRequired("config-contract")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	getconfigCmd.Flags().IntVarP(
 		&getconfigFlags.ConfigIndex,
@@ -210,16 +266,11 @@ func initGetconfigFlags() {
 		"the config index",
 	)
 	err = getconfigCmd.MarkFlagRequired("config-index")
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 }
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	failIfError(rootCmd.Execute())
 }
 
 func waitForTransactionReceipt(ctx context.Context, cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
@@ -253,6 +304,10 @@ func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*t
 	}
 
 	if len(failedTxs) > 0 {
+		log.Printf("The following transactions have failed:")
+		for _, i := range failedTxs {
+			log.Printf("%s", txs[i].Hash().Hex())
+		}
 		return res, errors.New("some txs have failed")
 	}
 
@@ -275,11 +330,6 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 		return nil, err
 	}
 
-	gasPrice, err := client.SuggestGasPrice(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, err
@@ -291,30 +341,27 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0) // in wei
-	auth.GasLimit = defaultGasLimit
+	auth.Value = big.NewInt(0)
 	auth.GasPrice = gasPrice
 	return auth, nil
 }
 
 func deploy(ctx context.Context) {
-	err := contract.DeployERC1820Contract(ctx, client, key)
-	if err != nil {
-		panic(err)
+	if !deployFlags.NoERC1820 {
+		err := contract.DeployERC1820Contract(ctx, client, key)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	auth, err := makeAuth(ctx, client, key)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	auth.Context = ctx
 	var txs []*types.Transaction
 	var tx *types.Transaction
 
 	addTx := func() {
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 		txs = append(txs, tx)
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
@@ -344,6 +391,12 @@ func deploy(ctx context.Context) {
 	depositAddress, tx, _, err := contract.DeployDepositContract(auth, client, tokenAddress)
 	addTx()
 
+	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
+	addTx()
+
+	// The keyper slasher requires the deposit contract to exist. Since at this point it doesn't,
+	// gas estimation will fail, so we simply set it manually.
+	auth.GasLimit = 2000000
 	keyperSlasherAddress, tx, _, err := contract.DeployKeyperSlasher(
 		auth,
 		client,
@@ -352,15 +405,18 @@ func deploy(ctx context.Context) {
 		executorAddress,
 		depositAddress,
 	)
+	auth.GasLimit = 0
 	addTx()
 
-	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
-	addTx()
+	receipts, err := waitForTransactions(ctx, client, txs)
+	failIfError(err)
 
-	_, err = waitForTransactions(ctx, client, txs)
-	if err != nil {
-		panic(err)
+	totalGasUsed := uint64(0)
+	for _, receipt := range receipts {
+		totalGasUsed += receipt.GasUsed
 	}
+	fmt.Println("Gas used:", totalGasUsed)
+
 	fmt.Println("ConfigContract address:", configAddress.Hex())
 	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
 	fmt.Println("FeeBankContract address:", feeAddress.Hex())
@@ -374,9 +430,7 @@ func deploy(ctx context.Context) {
 
 func checkContractExists(ctx context.Context, configContractAddress common.Address) {
 	code, err := client.CodeAt(ctx, configContractAddress, nil)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	if len(code) == 0 {
 		log.Fatalf("No contract deployed at address %s", configContractAddress.Hex())
 	}
@@ -388,27 +442,21 @@ func schedule(
 	startBatchIndex, batchSpan, startBlockNumber uint64,
 ) {
 	auth, err := makeAuth(ctx, client, sandbox.GanacheKey(ganacheKeyIdx))
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	auth.Context = ctx
 
 	var txs []*types.Transaction
 	var tx *types.Transaction
 
 	addTx := func() {
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 		txs = append(txs, tx)
 		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
 	}
 
 	checkContractExists(ctx, configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	tx, err = cc.NextConfigSetStartBatchIndex(auth, startBatchIndex)
 	addTx()
@@ -432,9 +480,7 @@ func schedule(
 	addTx()
 
 	header, err := client.HeaderByNumber(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	minStartBlockNumber := header.Number.Uint64() + startBlockNumberOffset
 	if startBlockNumber < minStartBlockNumber {
 		log.Fatalf(
@@ -451,22 +497,16 @@ func schedule(
 	addTx()
 
 	_, err = waitForTransactions(ctx, client, txs)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	fmt.Printf("start block of config: %d\n", startBlockNumber)
 }
 
 func getconfig(ctx context.Context, configContractAddress common.Address, index int) {
 	checkContractExists(ctx, configContractAddress)
 	cc, err := contract.NewConfigContract(configContractAddress, client)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 	c, err := cc.GetConfigByIndex(&bind.CallOpts{Context: ctx}, uint64(index))
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	printConfig(c)
 }
@@ -501,26 +541,18 @@ func fund(ctx context.Context) {
 	var tx *types.Transaction
 
 	chainID, err := client.NetworkID(ctx)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	amount := big.NewInt(fundAmount) // 1 eth
 	gasLimit := uint64(baseGasLimit)
 	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	addTx := func() {
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 		txs = append(txs, tx)
 		nonce++
 	}
@@ -533,28 +565,38 @@ func fund(ctx context.Context) {
 		tx = types.NewTransaction(nonce, receiver, amount, gasLimit, gasPrice, data)
 
 		tx, err = types.SignTx(tx, signer, key)
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 
 		err = client.SendTransaction(ctx, tx)
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 		addTx()
 	}
 
 	_, err = waitForTransactions(ctx, client, txs)
-	if err != nil {
-		panic(err)
-	}
+	failIfError(err)
 
 	for i := 0; i < sandbox.NumGanacheKeys(); i++ {
 		addr := crypto.PubkeyToAddress(sandbox.GanacheKey(i).PublicKey)
 		balance, err := client.BalanceAt(context.Background(), addr, nil)
-		if err != nil {
-			panic(err)
-		}
+		failIfError(err)
 		fmt.Printf("%s: %s\n", addr.Hex(), balance)
+	}
+}
+
+func weiToEther(wei *big.Int) *big.Float {
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.Ether))
+}
+
+func weiToGwei(wei *big.Int) *big.Float {
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.GWei))
+}
+
+func gweiToWei(gwei *big.Int) *big.Int {
+	return new(big.Int).Mul(gwei, big.NewInt(params.GWei))
+}
+
+func failIfError(err error) {
+	if err != nil {
+		log.Fatal(err)
 	}
 }
