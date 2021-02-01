@@ -11,13 +11,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/epochkg"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -697,6 +700,7 @@ func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
 		if err != nil {
 			continue
 		}
+		// Ignore this epoch secret key share, if we already have the secret key
 		if _, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
 			continue
 		}
@@ -714,10 +718,75 @@ func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
 		}
 		if key, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
 			log.Printf("Epoch secret key generated for epoch %d", share.Epoch)
-			_ = key
+			dcdr.sendDecryptionSignature(key, share.Epoch)
 		}
 	}
 	ekg.EpochSecretKeySharesIndex = len(eon.EpochSecretKeyShares)
+}
+
+// Add a prefix to avoid accidentally signing data with special meaning in different context, in
+// particular Ethereum transactions (c.f. EIP191 https://eips.ethereum.org/EIPS/eip-191).
+var hashPrefix = []byte{0x19, 'd', 'e', 'c', 't', 'x'}
+
+func transactionsHash(txs [][]byte) []byte {
+	keccak := sha3.NewLegacyKeccak256()
+	hash := make([]byte, keccak.Size())
+
+	for _, tx := range txs {
+		keccak.Reset()
+		if _, err := keccak.Write(tx); err != nil {
+			panic(err)
+		}
+		if _, err := keccak.Write(hash); err != nil {
+			panic(err)
+		}
+		hash = keccak.Sum(nil)
+	}
+	return hash
+}
+
+// computeDecryptionSignatureHash computes a cryptographic hash over the encrypted transactions,
+// the decrypted transactions, the batcher contracts address and the batch index.
+// It's the same hash we compute in the KeyperSlasher.sol's verifyAuthorization
+func (dcdr *Decider) computeDecryptionSignatureHash(cipherBatchHash, batchHash []byte) []byte {
+	keccak := sha3.NewLegacyKeccak256()
+	if _, err := keccak.Write(hashPrefix); err != nil {
+		panic(err)
+	}
+
+	if _, err := keccak.Write(dcdr.Config.BatcherContractAddress.Bytes()); err != nil {
+		panic(err)
+	}
+	if _, err := keccak.Write(cipherBatchHash); err != nil {
+		panic(err)
+	}
+	if _, err := keccak.Write(batchHash); err != nil {
+		panic(err)
+	}
+	return keccak.Sum(nil)
+}
+
+func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch uint64) {
+	batchIndex := epoch - 1
+	batch, ok := dcdr.MainChain.Batches[batchIndex]
+	if !ok {
+		// We may run into this case if our main chain node is lagging behind or if the
+		// batch is empty. XXX The former case is not being handled here.
+		log.Printf("batch missing for batch index=%d", batchIndex)
+		batch = &observe.Batch{BatchIndex: batchIndex}
+	}
+	txs := batch.DecryptTransactions(key)
+	decryptedTxsHash := transactionsHash(txs)
+	hash := dcdr.computeDecryptionSignatureHash(batch.EncryptedBatchHash.Bytes(), decryptedTxsHash)
+
+	signature, err := crypto.Sign(hash, dcdr.Config.SigningKey)
+	if err != nil {
+		log.Panicf("Cannot sign the decryption signature: %s", err)
+	}
+	decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
+	dcdr.sendShuttermintMessage(
+		fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
+		decryptionSignature)
 }
 
 func (dcdr *Decider) syncEKGs() {

@@ -3,6 +3,7 @@ package observe
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 // MainChain let's a keyper fetch all necessary information from an ethereum node to do it's
@@ -378,4 +380,25 @@ func (mainchain *MainChain) SyncToHead(
 
 	mainchain.CurrentBlock = latestBlockNumber
 	return mainchain, nil
+}
+
+// DecryptTransactions decrypts the encrypted transactions. It will log an error message for
+// transactions that cannot be decrypted and skip over them.
+func (batch *Batch) DecryptTransactions(key *shcrypto.EpochSecretKey) [][]byte {
+	var res [][]byte
+	for idx, encTx := range batch.EncryptedTransactions {
+		m := shcrypto.EncryptedMessage{}
+		err := m.Unmarshal(encTx)
+		if err != nil {
+			log.Printf("Error: cannot unmarshal encrypted transaction #%d for batch index=%d: %s", idx, batch.BatchIndex, err)
+			continue
+		}
+		decrypted, err := m.Decrypt(key)
+		if err != nil {
+			log.Printf("Error: cannot decrypt encrypted transaction #%d for batch index=%d: %s", idx, batch.BatchIndex, err)
+			continue
+		}
+		res = append(res, decrypted)
+	}
+	return res
 }
