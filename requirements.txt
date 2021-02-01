@@ -56,7 +56,7 @@ eth-account==0.5.2
     # via
     #   eth-brownie
     #   web3
-eth-brownie==1.13.0
+eth-brownie==1.13.1
     # via -r requirements.in
 eth-event==1.2.0
     # via eth-brownie

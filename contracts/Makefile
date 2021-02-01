@@ -11,11 +11,11 @@ SRCS = $(wildcard contracts/*.sol)
 compile: build/compile
 
 build/compile: ${SRCS}
-	./brownie compile --all
+	brownie compile --all
 	@touch build/compile
 
 test: compile
-	./brownie test
+	brownie test
 
 clean:
 	rm -f build/*.sol build/compile
