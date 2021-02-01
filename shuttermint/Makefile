@@ -70,7 +70,7 @@ ${OPENZEPPELIN_CONTRACTS_DIR}:
 	cd ../contracts; ./brownie compile
 
 abigen: ${OPENZEPPELIN_CONTRACTS_DIR}
-	solc ${OPENZEPPELIN_CONTRACTS}=${OPENZEPPELIN_CONTRACTS_DIR} --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout ../contracts/contracts/binding.sol > contract/combined.json
+	solc ${OPENZEPPELIN_CONTRACTS}=${OPENZEPPELIN_CONTRACTS_DIR} --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout --optimize ../contracts/contracts/binding.sol > contract/combined.json
 	abigen --pkg contract --out contract/binding.go --combined-json contract/combined.json
 
 deploy-ganache:
