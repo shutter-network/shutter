@@ -30,14 +30,31 @@ export default {
     };
   },
 
-  mounted() {
-    this.$targetContract.on("ExecutedTransaction", (sender, data, nonce) => {
+  async mounted() {
+    // get events from recent blocks
+    let blockNumber = await this.$provider.getBlockNumber();
+    let events = await this.$targetContract.queryFilter(
+      "ExecutedTransaction",
+      blockNumber - 100
+    );
+    for (let event of events) {
+      this.handleExecutedTransaction(...event.args);
+    }
+
+    this.$targetContract.on(
+      "ExecutedTransaction",
+      this.handleExecutedTransaction
+    );
+  },
+
+  methods: {
+    handleExecutedTransaction(sender, data, nonce) {
       this.txs.push({
         sender: sender,
         nonce: nonce,
         data: data,
       });
-    });
+    },
   },
 };
 </script>

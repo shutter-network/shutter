@@ -96,10 +96,6 @@ export default {
     let signer = this.$provider.getSigner();
     this.configContract = this.$configContract.connect(signer);
     this.batcherContract = this.$batcherContract.connect(signer);
-
-    this.$provider.on("block", (n) => {
-      console.log(n);
-    });
   },
 
   methods: {
@@ -120,27 +116,20 @@ export default {
       );
 
       let blockNumber = (await this.$provider.getBlockNumber()) + 1;
-      console.log("block", blockNumber, "nonce", nonce);
       let config = await getConfigAtBlock(blockNumber, this.configContract);
       let batchIndex = getBatchIndexAtBlock(blockNumber, config);
-      console.log(
-        "start block",
-        config.startBlockNumber.toString(),
-        "batch span",
-        config.batchSpan.toString(),
-        "start batch",
-        config.startBatchIndex.toString()
-      );
-      console.log(
-        "sending tx for batch",
-        batchIndex.toString(),
-        "at block",
-        blockNumber.toString()
-      );
       let tx = await this.batcherContract.addTransaction(
         batchIndex,
         type,
         encodedMessage
+      );
+      console.log(
+        "tx",
+        tx.hash,
+        "sent for batch",
+        batchIndex.toString(),
+        "in block",
+        blockNumber.toString()
       );
       await tx.wait();
     },

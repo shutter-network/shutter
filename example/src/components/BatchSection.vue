@@ -13,7 +13,9 @@
         <tr v-for="(tx, index) in txs" v-bind:key="index">
           <td>{{ tx.batchIndex }}</td>
           <td>{{ formatType(tx.type) }}</td>
-          <td>{{ tx.transaction }}</td>
+          <td style="overflow-wrap: break-word; max-width: 200px">
+            {{ tx.transaction }}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -29,17 +31,18 @@ export default {
     };
   },
 
-  mounted() {
-    this.$batcherContract.on(
+  async mounted() {
+    // get events from recent blocks
+    let blockNumber = await this.$provider.getBlockNumber();
+    let events = await this.$batcherContract.queryFilter(
       "TransactionAdded",
-      (batchIndex, type, transaction) => {
-        this.txs.push({
-          batchIndex: batchIndex,
-          type: type,
-          transaction: transaction,
-        });
-      }
+      blockNumber - 100
     );
+    for (let event of events) {
+      this.handleTransactionAdded(...event.args);
+    }
+
+    this.$batcherContract.on("TransactionAdded", this.handleTransactionAdded);
   },
 
   methods: {
@@ -51,6 +54,13 @@ export default {
       } else {
         return "unknown";
       }
+    },
+    handleTransactionAdded(batchIndex, type, transaction) {
+      this.txs.push({
+        batchIndex: batchIndex,
+        type: type,
+        transaction: transaction,
+      });
     },
   },
 };
