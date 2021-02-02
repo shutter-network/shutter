@@ -1,5 +1,6 @@
 compiler:
   solc:
+    # Please keep the version in sync with contracts/binding.sol
     version: 0.7.6
 
 dependencies:
