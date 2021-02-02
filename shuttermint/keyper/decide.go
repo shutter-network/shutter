@@ -816,10 +816,12 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 
 	delay, err := dcdr.executionDelay(nextHalfStep)
 	if err != nil {
+		log.Printf("unexpected error: %w", err)
 		return // shouldn't happen
 	}
 	batchParams, err := contract.MakeBatchParams(&config, batchIndex)
 	if err != nil {
+		log.Printf("unexpected error: %w", err)
 		return // shouldn't happen
 	}
 	executionBlock := batchParams.EndBlock + delay
