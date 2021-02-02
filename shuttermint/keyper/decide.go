@@ -40,6 +40,25 @@ type IAction interface {
 
 var _ IAction = SendShuttermintMessage{}
 
+// Batch is used to store local state about a single Batch
+type Batch struct {
+	BatchIndex               uint64
+	DecryptionSignatureHash  []byte
+	DecryptedTransactions    [][]byte
+	DecryptionSignatureIndex int
+	SignatureCount           int // number of valid signatures
+}
+
+// Verify if the sender signed the batches' DecryptionSignatureHash
+func (batch *Batch) VerifySignature(sender common.Address, signature []byte) bool {
+	pubkey, err := crypto.SigToPub(batch.DecryptionSignatureHash, signature)
+	if err != nil {
+		return false
+	}
+	signer := crypto.PubkeyToAddress(*pubkey)
+	return signer == sender
+}
+
 // DKG is used to store local state about active DKG processes. Each DKG has a corresponding
 // observe.Eon struct stored in observe.Shutter, which we can find with Shutter's FindEon method.
 type DKG struct {
@@ -239,6 +258,15 @@ type State struct {
 	PendingHalfStep          *uint64
 	PendingAppeals           map[uint64]struct{}
 	LastEpochSecretShareSent uint64
+	Batches                  map[uint64]*Batch
+}
+
+// NewState creates an empty State object
+func NewState() *State {
+	return &State{
+		PendingAppeals: make(map[uint64]struct{}),
+		Batches:        make(map[uint64]*Batch),
+	}
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter
@@ -783,6 +811,11 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 	if err != nil {
 		log.Panicf("Cannot sign the decryption signature: %s", err)
 	}
+	dcdr.State.Batches[batchIndex] = &Batch{
+		BatchIndex:              batchIndex,
+		DecryptionSignatureHash: hash,
+		DecryptedTransactions:   txs,
+	}
 	decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
@@ -836,6 +869,29 @@ func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uin
 		shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
 	)
 	dcdr.State.LastEpochSecretShareSent = epoch
+}
+
+func (dcdr *Decider) syncBatch(batch *Batch, shBatch *observe.BatchData) {
+	for i := batch.DecryptionSignatureIndex; i < len(shBatch.DecryptionSignatures); i++ {
+		ev := shBatch.DecryptionSignatures[i]
+		if batch.VerifySignature(ev.Sender, ev.Signature) {
+			batch.SignatureCount++
+			log.Printf("Verified signature from %s for batch %d, total %d signatures", ev.Sender.Hex(), batch.BatchIndex, batch.SignatureCount)
+		} else {
+			log.Printf("Bad signature from %s for batch %d", ev.Sender.Hex(), batch.BatchIndex)
+		}
+	}
+	batch.DecryptionSignatureIndex = len(shBatch.DecryptionSignatures)
+}
+
+func (dcdr *Decider) handleDecryptionSignatures() {
+	for _, batch := range dcdr.State.Batches {
+		shBatch, ok := dcdr.Shutter.Batches[batch.BatchIndex]
+		if !ok {
+			continue
+		}
+		dcdr.syncBatch(batch, shBatch)
+	}
 }
 
 func (dcdr *Decider) maybeExecuteBatch() {
@@ -985,6 +1041,7 @@ func (dcdr *Decider) Decide() {
 	dcdr.maybeStartDKG()
 	dcdr.handleDKGs()
 	dcdr.handleEpochKG()
+	dcdr.handleDecryptionSignatures()
 	dcdr.maybeExecuteBatch()
 	dcdr.maybeAppeal()
 }

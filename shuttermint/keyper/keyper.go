@@ -60,7 +60,7 @@ type Keyper struct {
 func NewKeyper(kc KeyperConfig) Keyper {
 	return Keyper{
 		Config:    kc,
-		State:     &State{},
+		State:     NewState(),
 		Shutter:   observe.NewShutter(),
 		MainChain: observe.NewMainChain(),
 
