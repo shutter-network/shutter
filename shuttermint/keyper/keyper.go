@@ -192,7 +192,13 @@ func (kpr *Keyper) Run() error {
 
 	go kpr.watchTransactions(ctx)
 
-	for {
+	headers := make(chan *types.Header)
+	sub, err := kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
+	if err != nil {
+		return err
+	}
+
+	step := func() {
 		err = kpr.sync(ctx)
 		if err != nil {
 			log.Printf("Error in sync: %s", err)
@@ -200,8 +206,17 @@ func (kpr *Keyper) Run() error {
 			log.Println(kpr.ShortInfo())
 			kpr.runOneStep(ctx)
 		}
+	}
 
-		time.Sleep(runSleepTime)
+	for {
+		select {
+		case <-headers:
+			step()
+		case <-time.After(runSleepTime):
+			step()
+		case err := <-sub.Err():
+			return err
+		}
 	}
 }
 
