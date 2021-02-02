@@ -320,7 +320,7 @@ func (kpr *Keyper) watchTransactions(ctx context.Context) {
 		case tx := <-kpr.WatchedTransactions:
 			receipt, err := medley.WaitMined(ctx, kpr.ContractCaller.Ethclient, tx.Hash())
 			if err != nil {
-				log.Printf("Error wating for transaction %s: %v", tx.Hash().Hex(), err)
+				log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
 			}
 			if receipt.Status != types.ReceiptStatusSuccessful {
 				log.Printf("Tx %s has failed and was reverted", tx.Hash().Hex())

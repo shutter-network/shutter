@@ -354,7 +354,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 
 	err = app.ConfigVoting.AddVote(sender, bc)
 	if err != nil {
-		return makeErrorResponse(fmt.Sprintf("Error in addConfig: %s", err))
+		return makeErrorResponse(fmt.Sprintf("Error adding vote: %s", err))
 	}
 
 	_, ok := app.ConfigVoting.Outcome(int(app.LastConfig().Threshold))
