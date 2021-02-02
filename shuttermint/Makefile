@@ -1,3 +1,4 @@
+GO ?= go
 SHROOT ?= $(CURDIR)
 TESTROOT=$(SHROOT)/testchain
 
@@ -7,10 +8,10 @@ OPENZEPPELIN_CONTRACTS=OpenZeppelin/openzeppelin-contracts@3.3.0
 OPENZEPPELIN_CONTRACTS_DIR=${HOME}/.brownie/packages/${OPENZEPPELIN_CONTRACTS}
 
 build:
-	go build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./sandbox/testclient ./sandbox/deploy ./sandbox/prepare
+	${GO} build -o bin -ldflags "-X main.version=${VERSION} -X github.com/brainbot-com/shutter/shuttermint/cmd.version=${VERSION}" . ./sandbox/testclient ./sandbox/deploy ./sandbox/prepare
 
 wasm:
-	GOARCH=wasm GOOS=js go build -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
+	GOARCH=wasm GOOS=js ${GO} build -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
@@ -24,14 +25,14 @@ run: build init
 	./bin/shuttermint run --config ${TESTROOT}/config/config.toml
 
 test:
-	go test ./...
+	${GO} test ./...
 
 generate:
-	go generate ./...
+	${GO} generate ./...
 
 coverage:
-	go test -covermode=count -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out
+	${GO} test -covermode=count -coverprofile=coverage.out ./...
+	${GO} tool cover -html=coverage.out
 
 clean:
 	rm -rf ${TESTROOT}
@@ -40,25 +41,25 @@ clean:
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-stringer
 
 install-geth:
-	go install github.com/ethereum/go-ethereum/cmd/geth
+	${GO} install github.com/ethereum/go-ethereum/cmd/geth
 
 install-abigen:
-	go install github.com/ethereum/go-ethereum/cmd/abigen
+	${GO} install github.com/ethereum/go-ethereum/cmd/abigen
 
 install-protoc-gen-go:
-	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	${GO} install google.golang.org/protobuf/cmd/protoc-gen-go
 
 install-golangci-lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	${GO} install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 install-cobra:
-	go install github.com/spf13/cobra/cobra
+	${GO} install github.com/spf13/cobra/cobra
 
 install-gofumports:
-	go install mvdan.cc/gofumpt/gofumports
+	${GO} install mvdan.cc/gofumpt/gofumports
 
 install-stringer:
-	go install golang.org/x/tools/cmd/stringer
+	${GO} install golang.org/x/tools/cmd/stringer
 
 lint:
 	golangci-lint run --tests
@@ -74,6 +75,6 @@ abigen: ${OPENZEPPELIN_CONTRACTS_DIR}
 	abigen --pkg contract --out contract/binding.go --combined-json contract/combined.json
 
 deploy-ganache:
-	go run ./sandbox/deploy/deploy.go deploy
+	${GO} run ./sandbox/deploy/deploy.go deploy
 
 .PHONY: build run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen coverage
