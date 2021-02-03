@@ -37,6 +37,8 @@ const (
 	// node is lost if no new block is received
 	mainChainTimeout           = 30 * time.Second
 	mainChainReconnectInterval = 5 * time.Second // time between two reconnection attempts
+	shuttermintTimeout         = 10 * time.Second
+	shutterReconnectInterval   = 5 * time.Second
 )
 
 // IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
@@ -151,7 +153,7 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 	reconnect := func() {
 		sub.Unsubscribe()
 		for {
-			log.Println("Attempting main chain reconnect")
+			log.Println("Attempting reconnection to main chain")
 			sub, err = kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
 			if err != nil {
 				select {
@@ -191,16 +193,41 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 			log.Println("Main chain connection lost:", err)
 			reconnect()
 		case <-time.After(mainChainTimeout):
-			log.Println("No new main chain blocks received in a long time")
+			log.Println("No main chain blocks received in a long time")
+			reconnect()
 		}
 	}
 }
 
 func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shutter, syncErrors chan<- error) error {
+	name := "keyper"
 	query := "tm.event = 'NewBlock'"
-	events, err := kpr.shmcl.Subscribe(ctx, "keyper", query)
+	events, err := kpr.shmcl.Subscribe(ctx, name, query)
 	if err != nil {
 		return err
+	}
+
+	reconnect := func() {
+		for {
+			log.Println("Attempting reconnection to Shuttermint")
+
+			ctx2, cancel2 := context.WithTimeout(ctx, shutterReconnectInterval)
+			events, err = kpr.shmcl.Subscribe(ctx2, name, query)
+			cancel2()
+
+			if err != nil {
+				// try again, unless context is canceled
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					continue
+				}
+			} else {
+				log.Println("Shuttermint connection regained")
+				return
+			}
+		}
 	}
 
 	for {
@@ -214,6 +241,9 @@ func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shu
 			} else {
 				shutters <- newShutter
 			}
+		case <-time.After(shuttermintTimeout):
+			log.Println("No Shuttermint blocks received in a long time")
+			reconnect()
 		}
 	}
 }
