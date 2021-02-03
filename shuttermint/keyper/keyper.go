@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
@@ -124,6 +123,10 @@ func (kpr *Keyper) init() error {
 	if err != nil {
 		return errors.Wrapf(err, "create shuttermint client at %s", kpr.Config.ShuttermintURL)
 	}
+	err = kpr.shmcl.Start()
+	if err != nil {
+		return errors.Wrapf(err, "start shuttermint client")
+	}
 	ms := NewRPCMessageSender(kpr.shmcl, kpr.Config.SigningKey)
 	kpr.MessageSender = &ms
 
@@ -131,42 +134,63 @@ func (kpr *Keyper) init() error {
 	return err
 }
 
-func (kpr *Keyper) syncMain(ctx context.Context) error {
-	newMainChain, err := kpr.MainChain.SyncToHead(
-		ctx,
-		kpr.ContractCaller.Ethclient,
-		kpr.ContractCaller.ConfigContract,
-		kpr.ContractCaller.BatcherContract,
-		kpr.ContractCaller.ExecutorContract,
-		kpr.ContractCaller.DepositContract,
-		kpr.ContractCaller.KeyperSlasher,
-	)
+func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.MainChain, errorChannel chan<- error) {
+	headers := make(chan *types.Header)
+	sub, err := kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		return err
+		errorChannel <- err
+		return
 	}
-	kpr.MainChain = newMainChain
-	return nil
+
+	for {
+		select {
+		case <-ctx.Done():
+			sub.Unsubscribe()
+			return
+		case <-headers:
+			newMainChain, err := kpr.MainChain.SyncToHead(
+				ctx,
+				kpr.ContractCaller.Ethclient,
+				kpr.ContractCaller.ConfigContract,
+				kpr.ContractCaller.BatcherContract,
+				kpr.ContractCaller.ExecutorContract,
+				kpr.ContractCaller.DepositContract,
+				kpr.ContractCaller.KeyperSlasher,
+			)
+			if err != nil {
+				errorChannel <- err
+			} else {
+				mainChains <- newMainChain
+			}
+		case err := <-sub.Err():
+			errorChannel <- err
+			log.Println("main chain syncing stopped")
+			return
+		}
+	}
 }
 
-func (kpr *Keyper) syncShutter(ctx context.Context) error {
-	newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shutter, errorChannel chan<- error) {
+	query := "tm.event = 'NewBlock'"
+	events, err := kpr.shmcl.Subscribe(ctx, "keyper", query)
 	if err != nil {
-		return err
+		errorChannel <- err
+		return
 	}
-	kpr.Shutter = newShutter
-	return nil
-}
 
-func (kpr *Keyper) sync(ctx context.Context) error {
-	group, ctx := errgroup.WithContext(ctx)
-	group.Go(func() error {
-		return kpr.syncShutter(ctx)
-	})
-	group.Go(func() error {
-		return kpr.syncMain(ctx)
-	})
-	err := group.Wait()
-	return err
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-events:
+			newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+			if err != nil {
+				errorChannel <- err
+			} else {
+				shutters <- newShutter
+			}
+		}
+	}
 }
 
 func (kpr *Keyper) ShortInfo() string {
@@ -192,29 +216,23 @@ func (kpr *Keyper) Run() error {
 
 	go kpr.watchTransactions(ctx)
 
-	headers := make(chan *types.Header)
-	sub, err := kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
-	if err != nil {
-		return err
-	}
-
-	step := func() {
-		err = kpr.sync(ctx)
-		if err != nil {
-			log.Printf("Error in sync: %s", err)
-		} else {
-			log.Println(kpr.ShortInfo())
-			kpr.runOneStep(ctx)
-		}
-	}
+	mainChains := make(chan *observe.MainChain)
+	shutters := make(chan *observe.Shutter)
+	syncErrors := make(chan error)
+	go kpr.syncMain(ctx, mainChains, syncErrors)
+	go kpr.syncShutter(ctx, shutters, syncErrors)
 
 	for {
 		select {
-		case <-headers:
-			step()
-		case <-time.After(runSleepTime):
-			step()
-		case err := <-sub.Err():
+		case mainChain := <-mainChains:
+			kpr.MainChain = mainChain
+			log.Println(kpr.ShortInfo())
+			kpr.runOneStep(ctx)
+		case shutter := <-shutters:
+			kpr.Shutter = shutter
+			log.Println(kpr.ShortInfo())
+			kpr.runOneStep(ctx)
+		case err := <-syncErrors:
 			return err
 		}
 	}

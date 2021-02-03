@@ -32,7 +32,6 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 	golang.org/x/mod v0.4.1 // indirect
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.0.0-20210106214847-113979e3529a
 	google.golang.org/protobuf v1.25.0
