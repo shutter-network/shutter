@@ -969,12 +969,20 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 
 	var action IAction
 	if nextHalfStep%2 == 0 {
-		// XXX: use transactions from voting here and make sure there are enough votes
-		decryptedTransactions := [][]byte{}
+		stBatch, ok := dcdr.State.Batches[batchIndex]
+		if !ok {
+			log.Printf("Error: maybeExecuteHalfStep: no batch for %d", batchIndex)
+			return
+		}
+
+		if uint64(stBatch.SignatureCount) < config.Threshold {
+			log.Printf("Error: not enough votes for batch %d", batchIndex)
+			return
+		}
 		action = ExecuteCipherBatch{
 			halfStep:        nextHalfStep,
 			cipherBatchHash: batch.EncryptedBatchHash,
-			transactions:    decryptedTransactions,
+			transactions:    stBatch.DecryptedTransactions,
 			keyperIndex:     keyperIndex,
 		}
 	} else {
