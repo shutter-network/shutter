@@ -800,7 +800,7 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 	if !ok {
 		// We may run into this case if our main chain node is lagging behind or if the
 		// batch is empty. XXX The former case is not being handled here.
-		log.Printf("batch missing for batch index=%d", batchIndex)
+		log.Printf("Batch missing for batch index=%d", batchIndex)
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
 	txs := batch.DecryptTransactions(key)
@@ -872,14 +872,27 @@ func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uin
 }
 
 func (dcdr *Decider) syncBatch(batch *Batch, shBatch *observe.BatchData) {
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batch.BatchIndex)
+	if !ok {
+		panic("Error in syncBatch: config is not active")
+	}
+
+	signatureCount := 0
 	for i := batch.DecryptionSignatureIndex; i < len(shBatch.DecryptionSignatures); i++ {
 		ev := shBatch.DecryptionSignatures[i]
+		if !config.IsKeyper(ev.Sender) {
+			log.Printf("Error: received signature for batch %d from non-keyper %s", batch.BatchIndex, ev.Sender.Hex())
+			continue
+		}
 		if batch.VerifySignature(ev.Sender, ev.Signature) {
-			batch.SignatureCount++
-			log.Printf("Verified signature from %s for batch %d, total %d signatures", ev.Sender.Hex(), batch.BatchIndex, batch.SignatureCount)
+			signatureCount++
 		} else {
 			log.Printf("Bad signature from %s for batch %d", ev.Sender.Hex(), batch.BatchIndex)
 		}
+	}
+	if signatureCount > 0 {
+		batch.SignatureCount += signatureCount
+		log.Printf("Verified %d signatures for batch %d, total %d signatures", signatureCount, batch.BatchIndex, batch.SignatureCount)
 	}
 	batch.DecryptionSignatureIndex = len(shBatch.DecryptionSignatures)
 }
