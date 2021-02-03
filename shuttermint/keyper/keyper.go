@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -134,19 +136,18 @@ func (kpr *Keyper) init() error {
 	return err
 }
 
-func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.MainChain, errorChannel chan<- error) {
+func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.MainChain, syncErrors chan<- error) error {
 	headers := make(chan *types.Header)
 	sub, err := kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
 	if err != nil {
-		errorChannel <- err
-		return
+		return err
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			sub.Unsubscribe()
-			return
+			return nil
 		case <-headers:
 			newMainChain, err := kpr.MainChain.SyncToHead(
 				ctx,
@@ -158,34 +159,31 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 				kpr.ContractCaller.KeyperSlasher,
 			)
 			if err != nil {
-				errorChannel <- err
+				syncErrors <- err
 			} else {
 				mainChains <- newMainChain
 			}
 		case err := <-sub.Err():
-			errorChannel <- err
-			log.Println("main chain syncing stopped")
-			return
+			return err
 		}
 	}
 }
 
-func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shutter, errorChannel chan<- error) {
+func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shutter, syncErrors chan<- error) error {
 	query := "tm.event = 'NewBlock'"
 	events, err := kpr.shmcl.Subscribe(ctx, "keyper", query)
 	if err != nil {
-		errorChannel <- err
-		return
+		return err
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-events:
 			newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
 			if err != nil {
-				errorChannel <- err
+				syncErrors <- err
 			} else {
 				shutters <- newShutter
 			}
@@ -207,20 +205,47 @@ func (kpr *Keyper) ShortInfo() string {
 	)
 }
 
+func (kpr *Keyper) syncOnce(ctx context.Context) error {
+	newMain, err := kpr.MainChain.SyncToHead(ctx, kpr.ContractCaller.Ethclient,
+		kpr.ContractCaller.ConfigContract,
+		kpr.ContractCaller.BatcherContract,
+		kpr.ContractCaller.ExecutorContract,
+		kpr.ContractCaller.DepositContract,
+		kpr.ContractCaller.KeyperSlasher)
+	if err != nil {
+		return err
+	}
+	kpr.MainChain = newMain
+
+	newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+	if err != nil {
+		return err
+	}
+	kpr.Shutter = newShutter
+
+	return nil
+}
+
 func (kpr *Keyper) Run() error {
 	err := kpr.init()
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	g, ctx := errgroup.WithContext(context.Background())
 
-	go kpr.watchTransactions(ctx)
+	// Sync main and shutter chain once. Otherwise, the state of one of the two will be much more
+	// recent than the other one when the first block appears.
+	err = kpr.syncOnce(ctx)
+	if err != nil {
+		return err
+	}
 
 	mainChains := make(chan *observe.MainChain)
 	shutters := make(chan *observe.Shutter)
 	syncErrors := make(chan error)
-	go kpr.syncMain(ctx, mainChains, syncErrors)
-	go kpr.syncShutter(ctx, shutters, syncErrors)
+	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
+	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
+	g.Go(func() error { kpr.watchTransactions(ctx); return nil })
 
 	for {
 		select {
@@ -234,6 +259,8 @@ func (kpr *Keyper) Run() error {
 			kpr.runOneStep(ctx)
 		case err := <-syncErrors:
 			return err
+		case <-ctx.Done():
+			return g.Wait()
 		}
 	}
 }
@@ -354,6 +381,11 @@ func (kpr *Keyper) watchTransactions(ctx context.Context) {
 			receipt, err := medley.WaitMined(ctx, kpr.ContractCaller.Ethclient, tx.Hash())
 			if err != nil {
 				log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
+			}
+			if receipt == nil {
+				// This happens if the context is canceled. By continuing, we end up in the
+				// ctx.Done case
+				continue
 			}
 			if receipt.Status != types.ReceiptStatusSuccessful {
 				log.Printf("Tx %s has failed and was reverted", tx.Hash().Hex())
