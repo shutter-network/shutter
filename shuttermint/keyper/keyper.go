@@ -32,6 +32,11 @@ const (
 	// watchedTransactionsBufferSize is the maximum number of txs to watch. If this is too small,
 	// actions will stall.
 	watchedTransactionsBufferSize = 100
+
+	// mainChainTimeout is the time after which we assume the connection to the main chain
+	// node is lost if no new block is received
+	mainChainTimeout           = 30 * time.Second
+	mainChainReconnectInterval = 5 * time.Second // time between two reconnection attempts
 )
 
 // IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
@@ -143,6 +148,25 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 		return err
 	}
 
+	reconnect := func() {
+		sub.Unsubscribe()
+		for {
+			log.Println("Attempting main chain reconnect")
+			sub, err = kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
+			if err != nil {
+				select {
+				case <-time.After(mainChainReconnectInterval):
+					continue
+				case <-ctx.Done():
+					return
+				}
+			} else {
+				log.Println("Main chain connection regained")
+				return
+			}
+		}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -164,7 +188,10 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 				mainChains <- newMainChain
 			}
 		case err := <-sub.Err():
-			return err
+			log.Println("Main chain connection lost:", err)
+			reconnect()
+		case <-time.After(mainChainTimeout):
+			log.Println("No new main chain blocks received in a long time")
 		}
 	}
 }
