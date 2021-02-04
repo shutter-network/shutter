@@ -6,8 +6,10 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"strings"
@@ -43,6 +45,19 @@ const (
 	deployDefaultTimeout             = 300 * time.Second
 	scheduleDefaultTimeout           = 600 * time.Second
 )
+
+// ContractJSON stores the hex encoded addresses of all contracts.
+type ContractsJSON struct {
+	ConfigContract        string
+	KeyBroadcastContract  string
+	FeeBankContract       string
+	BatcherContract       string
+	ExecutorContract      string
+	TokenContract         string
+	DepositContract       string
+	KeyperSlasherContract string
+	TargetContract        string
+}
 
 var (
 	key      *ecdsa.PrivateKey
@@ -94,7 +109,8 @@ var rootCmd = &cobra.Command{
 }
 
 var deployFlags struct {
-	NoERC1820 bool
+	NoERC1820  bool
+	OutputFile string
 }
 
 var deployCmd = &cobra.Command{
@@ -205,6 +221,13 @@ func initDeployFlags() {
 		"no-erc1820",
 		false,
 		"don't deploy the ERC1820 contract",
+	)
+	deployCmd.Flags().StringVarP(
+		&deployFlags.OutputFile,
+		"output",
+		"o",
+		"",
+		"if given, store the contract addresses as a JSON file at this path",
 	)
 }
 
@@ -426,6 +449,25 @@ func deploy(ctx context.Context) {
 	fmt.Println("DepositContract address:", depositAddress.Hex())
 	fmt.Println("KeyperSlasher address:", keyperSlasherAddress.Hex())
 	fmt.Println("TargetContract address:", targetAddress.Hex())
+
+	if deployFlags.OutputFile != "" {
+		j := ContractsJSON{
+			ConfigContract:        configAddress.Hex(),
+			KeyBroadcastContract:  broadcastAddress.Hex(),
+			FeeBankContract:       feeAddress.Hex(),
+			BatcherContract:       batcherAddress.Hex(),
+			ExecutorContract:      executorAddress.Hex(),
+			TokenContract:         tokenAddress.Hex(),
+			DepositContract:       depositAddress.Hex(),
+			KeyperSlasherContract: keyperSlasherAddress.Hex(),
+			TargetContract:        targetAddress.Hex(),
+		}
+		s, err := json.MarshalIndent(j, "", "    ")
+		failIfError(err)
+		err = ioutil.WriteFile(deployFlags.OutputFile, s, 0644)
+		failIfError(err)
+		fmt.Println("addresses written to", deployFlags.OutputFile)
+	}
 }
 
 func checkContractExists(ctx context.Context, configContractAddress common.Address) {
