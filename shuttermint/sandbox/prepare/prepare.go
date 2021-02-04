@@ -6,6 +6,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -31,22 +32,18 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/cmd"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 var configFlags struct {
-	Dir                         string
-	NumKeypers                  int
-	EthereumURL                 string
-	ShuttermintURLBase          string
-	FirstShuttermintPort        int
-	ConfigContractAddress       string
-	BatcherContractAddress      string
-	KeyBroadcastContractAddress string
-	ExecutorContractAddress     string
-	DepositContractAddress      string
-	KeyperSlasherAddress        string
-	Bin                         string
-	FixedShuttermintPort        bool
+	Dir                  string
+	NumKeypers           int
+	EthereumURL          string
+	ShuttermintURLBase   string
+	FirstShuttermintPort int
+	ContractsPath        string
+	Bin                  string
+	FixedShuttermintPort bool
 }
 
 var scheduleFlags struct {
@@ -64,6 +61,8 @@ var fundFlags struct {
 	OwnerKey string
 }
 
+var contractsJSON sandbox.ContractsJSON
+
 var rootCmd = &cobra.Command{
 	Use:   "prepare",
 	Short: "Prepare everything needed to test shutter.",
@@ -75,6 +74,10 @@ var configCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if flag, err := validateConfigFlags(); err != nil {
 			fmt.Printf("Invalid flag %s: %s\n", flag, err)
+			os.Exit(1)
+		}
+		if err := loadContractsJSON(configFlags.ContractsPath); err != nil {
+			fmt.Printf("Error loading contracts JSON file: %s\n", err)
 			os.Exit(1)
 		}
 		if err := configs(); err != nil {
@@ -171,41 +174,12 @@ func initConfigFlags() {
 		26657,
 		"port number of the shuttermint node for keyper 0",
 	)
-	configCmd.Flags().StringVar(
-		&configFlags.ConfigContractAddress,
-		"config-contract",
-		"0xFA33c8EF8b5c4f3003361c876a298D1DB61ccA4e",
-		"address of the config contract",
-	)
-	configCmd.Flags().StringVar(
-		&configFlags.BatcherContractAddress,
-		"batcher-contract",
-		"0x5d18dED3c0A476fCbc9E67Fc1C613cfc5DD0d34B",
-		"address of the batcher contract",
-	)
-	configCmd.Flags().StringVar(
-		&configFlags.KeyBroadcastContractAddress,
-		"key-broadcast-contract",
-		"0xBe0B0f08A599F07699E98A9D001084e97b9a900A",
-		"address of the key broadcast contract",
-	)
-	configCmd.Flags().StringVar(
-		&configFlags.ExecutorContractAddress,
-		"executor-contract",
-		"0x6fe6FFcD4dDE9dB11f887bD3320424CcAb50eE3f",
-		"address of the executor contract",
-	)
-	configCmd.Flags().StringVar(
-		&configFlags.DepositContractAddress,
-		"deposit-contract",
-		"0x791c3f20f865c582A204134E0A64030Fc22D2E38",
-		"address of the deposit contract",
-	)
-	configCmd.Flags().StringVar(
-		&configFlags.KeyperSlasherAddress,
-		"keyper-slasher",
-		"0x2adf8B30d4Dd24a05Ccd9aFbDc06A5b49C9c758d",
-		"address of the keyper slasher",
+	configCmd.Flags().StringVarP(
+		&configFlags.ContractsPath,
+		"contracts",
+		"c",
+		"",
+		"path to the contracts.json file",
 	)
 	configCmd.Flags().StringVar(
 		&configFlags.Bin,
@@ -219,6 +193,11 @@ func initConfigFlags() {
 		false,
 		"use a fixed shuttermint port",
 	)
+
+	err := configCmd.MarkFlagRequired("contracts")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func initScheduleFlags() {
@@ -289,21 +268,6 @@ func initFundFlags() {
 func validateConfigFlags() (string, error) {
 	if configFlags.NumKeypers <= 0 {
 		return "num-keypers", fmt.Errorf("must be at least 1")
-	}
-	if err := validateAddress(configFlags.ConfigContractAddress); err != nil {
-		return "config-contract", err
-	}
-	if err := validateAddress(configFlags.BatcherContractAddress); err != nil {
-		return "batcher-contract", err
-	}
-	if err := validateAddress(configFlags.KeyBroadcastContractAddress); err != nil {
-		return "key-broadcast-contract", err
-	}
-	if err := validateAddress(configFlags.ExecutorContractAddress); err != nil {
-		return "executor-contract", err
-	}
-	if err := validateAddress(configFlags.DepositContractAddress); err != nil {
-		return "deposit-contract", err
 	}
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
 		return "dir", fmt.Errorf("output directory %s already exists", configFlags.Dir)
@@ -389,6 +353,25 @@ func validateFunctionSelector(selector string) error {
 	return nil
 }
 
+func loadContractsJSON(path string) error {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(d, &contractsJSON)
+	if err != nil {
+		return err
+	}
+
+	err = contractsJSON.Validate()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func configs() error {
 	configs := []*cmd.RawKeyperConfig{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
@@ -430,12 +413,12 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		SigningKey:           hex.EncodeToString(crypto.FromECDSA(signingKey)),
 		ValidatorSeed:        validatorSeed,
 		EncryptionKey:        hex.EncodeToString(crypto.FromECDSA(encryptionKey.ExportECDSA())),
-		ConfigContract:       configFlags.ConfigContractAddress,
-		BatcherContract:      configFlags.BatcherContractAddress,
-		KeyBroadcastContract: configFlags.KeyBroadcastContractAddress,
-		ExecutorContract:     configFlags.ExecutorContractAddress,
-		DepositContract:      configFlags.DepositContractAddress,
-		KeyperSlasher:        configFlags.KeyperSlasherAddress,
+		ConfigContract:       contractsJSON.ConfigContract,
+		BatcherContract:      contractsJSON.BatcherContract,
+		KeyBroadcastContract: contractsJSON.KeyBroadcastContract,
+		ExecutorContract:     contractsJSON.ExecutorContract,
+		DepositContract:      contractsJSON.DepositContract,
+		KeyperSlasher:        contractsJSON.KeyperSlasherContract,
 		ExecutionStaggering:  "5",
 	}
 	return &config, nil

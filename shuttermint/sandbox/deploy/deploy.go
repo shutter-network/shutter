@@ -46,19 +46,6 @@ const (
 	scheduleDefaultTimeout           = 600 * time.Second
 )
 
-// ContractJSON stores the hex encoded addresses of all contracts.
-type ContractsJSON struct {
-	ConfigContract        string
-	KeyBroadcastContract  string
-	FeeBankContract       string
-	BatcherContract       string
-	ExecutorContract      string
-	TokenContract         string
-	DepositContract       string
-	KeyperSlasherContract string
-	TargetContract        string
-}
-
 var (
 	key      *ecdsa.PrivateKey
 	client   *ethclient.Client
@@ -451,7 +438,7 @@ func deploy(ctx context.Context) {
 	fmt.Println("TargetContract address:", targetAddress.Hex())
 
 	if deployFlags.OutputFile != "" {
-		j := ContractsJSON{
+		j := sandbox.ContractsJSON{
 			ConfigContract:        configAddress.Hex(),
 			KeyBroadcastContract:  broadcastAddress.Hex(),
 			FeeBankContract:       feeAddress.Hex(),
