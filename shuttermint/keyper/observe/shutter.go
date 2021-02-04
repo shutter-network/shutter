@@ -2,13 +2,16 @@ package observe
 
 import (
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"reflect"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
@@ -19,12 +22,37 @@ import (
 
 var errEonNotFound = errors.New("eon not found")
 
+func init() {
+	gob.Register(ethcrypto.S256()) // Allow gob to serialize ecsda.PrivateKey
+}
+
+// EncryptionPublicKey is a gob serializable version of ecies.PublicKey
+type EncryptionPublicKey ecies.PublicKey
+
+func (epk *EncryptionPublicKey) GobEncode() ([]byte, error) {
+	return ethcrypto.FromECDSAPub((*ecies.PublicKey)(epk).ExportECDSA()), nil
+}
+
+func (epk *EncryptionPublicKey) GobDecode(data []byte) error {
+	pubkey, err := ethcrypto.UnmarshalPubkey(data)
+	if err != nil {
+		return err
+	}
+	*epk = *(*EncryptionPublicKey)(ecies.ImportECDSAPublic(pubkey))
+	return nil
+}
+
+// Encrypt the given message m
+func (epk *EncryptionPublicKey) Encrypt(rand io.Reader, m []byte) ([]byte, error) {
+	return ecies.Encrypt(rand, (*ecies.PublicKey)(epk), m, nil, nil)
+}
+
 // Shutter let's a keyper fetch all necessary information from a shuttermint node. The only source
 // for the data stored in this struct should be the shutter node.  The SyncToHead method can be
 // used to update the data. All other accesses should be read-only.
 type Shutter struct {
 	CurrentBlock         int64
-	KeyperEncryptionKeys map[common.Address]*ecies.PublicKey
+	KeyperEncryptionKeys map[common.Address]*EncryptionPublicKey
 	BatchConfigs         []shutterevents.BatchConfig
 	Batches              map[uint64]*BatchData
 	Eons                 []Eon
@@ -34,7 +62,7 @@ type Shutter struct {
 func NewShutter() *Shutter {
 	return &Shutter{
 		CurrentBlock:         -1,
-		KeyperEncryptionKeys: make(map[common.Address]*ecies.PublicKey),
+		KeyperEncryptionKeys: make(map[common.Address]*EncryptionPublicKey),
 		Batches:              make(map[uint64]*BatchData),
 	}
 }
@@ -102,7 +130,7 @@ func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
 }
 
 func (shutter *Shutter) applyCheckIn(e shutterevents.CheckIn) error {
-	shutter.KeyperEncryptionKeys[e.Sender] = e.EncryptionPublicKey
+	shutter.KeyperEncryptionKeys[e.Sender] = (*EncryptionPublicKey)(e.EncryptionPublicKey)
 	return nil
 }
 

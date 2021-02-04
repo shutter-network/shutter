@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -602,7 +601,7 @@ func (dcdr *Decider) sendPolyEvals(dkg *DKG) {
 		receiver := dkg.Keypers[p.Receiver]
 		encryptionKey, ok := dcdr.Shutter.KeyperEncryptionKeys[receiver]
 		if ok {
-			encrypted, err := ecies.Encrypt(rand.Reader, encryptionKey, p.Eval.Bytes(), nil, nil)
+			encrypted, err := encryptionKey.Encrypt(rand.Reader, p.Eval.Bytes())
 			if err != nil {
 				panic(err)
 			}
