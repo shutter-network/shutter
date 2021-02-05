@@ -175,15 +175,7 @@ func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.Main
 			sub.Unsubscribe()
 			return nil
 		case <-headers:
-			newMainChain, err := kpr.MainChain.SyncToHead(
-				ctx,
-				kpr.ContractCaller.Ethclient,
-				kpr.ContractCaller.ConfigContract,
-				kpr.ContractCaller.BatcherContract,
-				kpr.ContractCaller.ExecutorContract,
-				kpr.ContractCaller.DepositContract,
-				kpr.ContractCaller.KeyperSlasher,
-			)
+			newMainChain, err := kpr.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
 			if err != nil {
 				syncErrors <- err
 			} else {
@@ -264,12 +256,7 @@ func (kpr *Keyper) ShortInfo() string {
 }
 
 func (kpr *Keyper) syncOnce(ctx context.Context) error {
-	newMain, err := kpr.MainChain.SyncToHead(ctx, kpr.ContractCaller.Ethclient,
-		kpr.ContractCaller.ConfigContract,
-		kpr.ContractCaller.BatcherContract,
-		kpr.ContractCaller.ExecutorContract,
-		kpr.ContractCaller.DepositContract,
-		kpr.ContractCaller.KeyperSlasher)
+	newMain, err := kpr.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
 	if err != nil {
 		return err
 	}

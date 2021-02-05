@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -135,13 +134,13 @@ func (mainchain *MainChain) ConfigForBatchIndex(batchIndex uint64) (contract.Bat
 	return mainchain.BatchConfigs[index], true
 }
 
-func (mainchain *MainChain) syncConfigs(configContract *contract.ConfigContract, opts *bind.CallOpts) error {
-	numConfigs, err := configContract.NumConfigs(opts)
+func (mainchain *MainChain) syncConfigs(cc *contract.Caller, opts *bind.CallOpts) error {
+	numConfigs, err := cc.ConfigContract.NumConfigs(opts)
 	if err != nil {
 		return err
 	}
 	for configIndex := uint64(len(mainchain.BatchConfigs)); configIndex < numConfigs; configIndex++ {
-		config, err := configContract.GetConfigByIndex(opts, configIndex)
+		config, err := cc.ConfigContract.GetConfigByIndex(opts, configIndex)
 		if err != nil {
 			return err
 		}
@@ -150,8 +149,8 @@ func (mainchain *MainChain) syncConfigs(configContract *contract.ConfigContract,
 	return nil
 }
 
-func (mainchain *MainChain) syncBatches(batcherContract *contract.BatcherContract, filter *bind.FilterOpts) error {
-	it, err := batcherContract.FilterTransactionAdded(filter)
+func (mainchain *MainChain) syncBatches(cc *contract.Caller, filter *bind.FilterOpts) error {
+	it, err := cc.BatcherContract.FilterTransactionAdded(filter)
 	if err != nil {
 		return err
 	}
@@ -192,10 +191,10 @@ func (mainchain *MainChain) addTransaction(event *contract.BatcherContractTransa
 	}
 }
 
-func (mainchain *MainChain) syncExecutionState(executorContract *contract.ExecutorContract, opts *bind.CallOpts) error {
+func (mainchain *MainChain) syncExecutionState(cc *contract.Caller, opts *bind.CallOpts) error {
 	lastNumExecutionHalfSteps := mainchain.NumExecutionHalfSteps
 
-	numExecutionHalfSteps, err := executorContract.NumExecutionHalfSteps(opts)
+	numExecutionHalfSteps, err := cc.ExecutorContract.NumExecutionHalfSteps(opts)
 	if err != nil {
 		return err
 	}
@@ -207,7 +206,7 @@ func (mainchain *MainChain) syncExecutionState(executorContract *contract.Execut
 			continue
 		}
 
-		receipt, err := executorContract.CipherExecutionReceipts(opts, i)
+		receipt, err := cc.ExecutorContract.CipherExecutionReceipts(opts, i)
 		if err != nil {
 			return err
 		}
@@ -222,8 +221,8 @@ func (mainchain *MainChain) syncExecutionState(executorContract *contract.Execut
 	return nil
 }
 
-func (mainchain *MainChain) syncDeposits(depositContract *contract.DepositContract, filter *bind.FilterOpts) error {
-	eventIt, err := depositContract.FilterDepositChanged(filter, []common.Address{})
+func (mainchain *MainChain) syncDeposits(cc *contract.Caller, filter *bind.FilterOpts) error {
+	eventIt, err := cc.DepositContract.FilterDepositChanged(filter, []common.Address{})
 	if err != nil {
 		return err
 	}
@@ -248,12 +247,12 @@ func (mainchain *MainChain) syncDeposits(depositContract *contract.DepositContra
 	return nil
 }
 
-func (mainchain *MainChain) syncSlashings(keyperSlasher *contract.KeyperSlasher, filter *bind.FilterOpts) error {
-	accusedIt, err := keyperSlasher.FilterAccused(filter, []uint64{}, []common.Address{}, []common.Address{})
+func (mainchain *MainChain) syncSlashings(cc *contract.Caller, filter *bind.FilterOpts) error {
+	accusedIt, err := cc.KeyperSlasher.FilterAccused(filter, []uint64{}, []common.Address{}, []common.Address{})
 	if err != nil {
 		return err
 	}
-	appealedIt, err := keyperSlasher.FilterAppealed(filter, []uint64{}, []common.Address{})
+	appealedIt, err := cc.KeyperSlasher.FilterAppealed(filter, []uint64{}, []common.Address{})
 	if err != nil {
 		return err
 	}
@@ -322,17 +321,11 @@ func (mainchain *MainChain) AccusationsAgainst(account common.Address) []*Accusa
 
 // SyncToHead fetches the latest state from the ethereum node. It returns a new object with the
 // latest state.
-// XXX We can't use keyper.ContractCaller here because we would end up with an import cycle.
 func (mainchain *MainChain) SyncToHead(
 	ctx context.Context,
-	ethcl *ethclient.Client,
-	configContract *contract.ConfigContract,
-	batcherContract *contract.BatcherContract,
-	executorContract *contract.ExecutorContract,
-	depositContract *contract.DepositContract,
-	keyperSlasher *contract.KeyperSlasher,
+	cc *contract.Caller,
 ) (*MainChain, error) {
-	latestBlockHeader, err := ethcl.HeaderByNumber(ctx, nil)
+	latestBlockHeader, err := cc.Ethclient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -353,27 +346,27 @@ func (mainchain *MainChain) SyncToHead(
 		End:   &latestBlockNumber,
 	}
 
-	err = mainchain.syncConfigs(configContract, opts)
+	err = mainchain.syncConfigs(cc, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mainchain.syncBatches(batcherContract, filter)
+	err = mainchain.syncBatches(cc, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mainchain.syncExecutionState(executorContract, opts)
+	err = mainchain.syncExecutionState(cc, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mainchain.syncDeposits(depositContract, filter)
+	err = mainchain.syncDeposits(cc, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	err = mainchain.syncSlashings(keyperSlasher, filter)
+	err = mainchain.syncSlashings(cc, filter)
 	if err != nil {
 		return nil, err
 	}
