@@ -43,6 +43,7 @@ repos:
         language_version: "12.18.0"
         additional_dependencies: ["prettier-plugin-solidity@1.0.0-alpha.59"]
         args: ["--plugin=prettier-plugin-solidity"]
+        exclude: "^contracts/openzeppelin/.*"
 
   - repo: https://github.com/psf/black
     rev: 19.10b0
