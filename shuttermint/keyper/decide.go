@@ -28,7 +28,7 @@ type decryptfn func(encrypted []byte) ([]byte, error)
 // IRunEnv is passed as a parameter to IAction's Run function.
 type IRunEnv interface {
 	MessageSender
-	GetContractCaller(ctx context.Context) *ContractCaller
+	GetContractCaller(ctx context.Context) *contract.Caller
 	WatchTransaction(tx *types.Transaction)
 }
 

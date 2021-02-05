@@ -58,7 +58,7 @@ type Keyper struct {
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
 
-	ContractCaller      ContractCaller
+	ContractCaller      contract.Caller
 	shmcl               client.Client
 	MessageSender       MessageSender
 	WatchedTransactions chan *types.Transaction
@@ -76,42 +76,42 @@ func NewKeyper(kc KeyperConfig) Keyper {
 	}
 }
 
-func NewContractCallerFromConfig(config KeyperConfig) (ContractCaller, error) {
+func NewContractCallerFromConfig(config KeyperConfig) (contract.Caller, error) {
 	ethcl, err := ethclient.Dial(config.EthereumURL)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 	configContract, err := contract.NewConfigContract(config.ConfigContractAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
 	keyBroadcastContract, err := contract.NewKeyBroadcastContract(config.KeyBroadcastContractAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
 	batcherContract, err := contract.NewBatcherContract(config.BatcherContractAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
 	executorContract, err := contract.NewExecutorContract(config.ExecutorContractAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
 	depositContract, err := contract.NewDepositContract(config.DepositContractAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
 	keyperSlasher, err := contract.NewKeyperSlasher(config.KeyperSlasherAddress, ethcl)
 	if err != nil {
-		return ContractCaller{}, err
+		return contract.Caller{}, err
 	}
 
-	return NewContractCaller(
+	return contract.NewContractCaller(
 		ethcl,
 		config.SigningKey,
 		configContract,
