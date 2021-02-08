@@ -357,7 +357,6 @@ func (kpr *Keyper) LoadState() error {
 
 func (kpr *Keyper) saveState() error {
 	gobpath := kpr.gobpath()
-	log.Printf("Saving state to %s", gobpath)
 	tmppath := gobpath + ".tmp"
 	file, err := os.Create(tmppath)
 	if err != nil {
@@ -402,7 +401,9 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Running %d actions", len(decider.Actions))
+	if len(decider.Actions) > 0 {
+		log.Printf("Running %d actions", len(decider.Actions))
+	}
 
 	runenv := RunEnv{
 		MessageSender:       kpr.MessageSender,
