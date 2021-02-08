@@ -293,18 +293,26 @@ func (shutter *Shutter) Clone() *Shutter {
 	return clone
 }
 
+func (shutter *Shutter) LastCommittedHeight(ctx context.Context, shmcl client.Client) (int64, error) {
+	latestBlock, err := shmcl.Block(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	if latestBlock.Block == nil || latestBlock.Block.LastCommit == nil {
+		return 0, fmt.Errorf("empty blockchain: %+v", latestBlock)
+	}
+	return latestBlock.Block.LastCommit.Height, nil
+}
+
 // SyncToHead syncs the state with the remote state. It fetches events from new blocks since the
 // last sync and updates the state by calling applyEvent for each event. This method does not
 // mutate the object in place, it rather returns a new object.
 func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*Shutter, error) {
-	latestBlock, err := shmcl.Block(ctx, nil)
+	height, err := shutter.LastCommittedHeight(ctx, shmcl)
 	if err != nil {
 		return nil, err
 	}
-	if latestBlock.Block == nil {
-		return nil, fmt.Errorf("sync to head: empty blockchain: %+v", latestBlock)
-	}
-	return shutter.SyncToHeight(ctx, shmcl, latestBlock.Block.Header.Height)
+	return shutter.SyncToHeight(ctx, shmcl, height)
 }
 
 // SyncToHeight syncs the state with the remote state until the given height
