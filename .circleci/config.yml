@@ -26,7 +26,7 @@ commands:
       - run:
           name: Install go
           command: |
-            curl -sSL "https://golang.org/dl/go1.15.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            curl -sSL "https://golang.org/dl/go1.15.8.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
       - run:
           name: Configure go
           command: |
