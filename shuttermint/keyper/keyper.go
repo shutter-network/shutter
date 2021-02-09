@@ -65,6 +65,7 @@ type Keyper struct {
 	MessageSender       MessageSender
 	WatchedTransactions chan *types.Transaction
 	Interactive         bool
+	lastlogTime         time.Time
 }
 
 func NewKeyper(kc KeyperConfig) Keyper {
@@ -305,11 +306,9 @@ func (kpr *Keyper) Run() error {
 			pretty.Println("State:", kpr.State)
 		case mainChain := <-mainChains:
 			kpr.MainChain = mainChain
-			log.Println(kpr.ShortInfo())
 			kpr.runOneStep(ctx)
 		case shutter := <-shutters:
 			kpr.Shutter = shutter
-			log.Println(kpr.ShortInfo())
 			kpr.runOneStep(ctx)
 		case err := <-syncErrors:
 			return err
@@ -406,6 +405,13 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 		}
 		readline()
 	}
+
+	now := time.Now()
+	if len(decider.Actions) > 0 || now.Sub(kpr.lastlogTime) > 10*time.Second {
+		log.Println(kpr.ShortInfo())
+		kpr.lastlogTime = now
+	}
+
 	err := kpr.saveState()
 	if err != nil {
 		panic(err)
