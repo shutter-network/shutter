@@ -62,6 +62,7 @@ func (batch *Batch) VerifySignature(sender common.Address, signature []byte) boo
 // observe.Eon struct stored in observe.Shutter, which we can find with Shutter's FindEon method.
 type DKG struct {
 	Eon                  uint64
+	StartBatchIndex      uint64
 	Keypers              []common.Address
 	Pure                 *puredkg.PureDKG
 	CommitmentsIndex     int
@@ -517,11 +518,6 @@ func (dcdr *Decider) maybeSendBatchConfig() {
 	}
 }
 
-func (dcdr *Decider) sendEonStartVoting(startBatchIndex uint64) {
-	msg := shmsg.NewEonStartVote(startBatchIndex)
-	dcdr.sendShuttermintMessage(fmt.Sprintf("eon start voting, startBatchIndex=%d", startBatchIndex), msg)
-}
-
 func (dcdr *Decider) startDKG(eon observe.Eon) {
 	batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(eon.StartEvent.BatchIndex)
 	keyperIndex, err := medley.FindAddressIndex(batchConfig.Keypers, dcdr.Config.Address())
@@ -530,7 +526,12 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 	}
 
 	pure := puredkg.NewPureDKG(eon.Eon, uint64(len(batchConfig.Keypers)), batchConfig.Threshold, uint64(keyperIndex))
-	dkg := DKG{Eon: eon.Eon, Pure: &pure, Keypers: batchConfig.Keypers}
+	dkg := DKG{
+		Eon:             eon.Eon,
+		StartBatchIndex: eon.StartEvent.BatchIndex,
+		Pure:            &pure,
+		Keypers:         batchConfig.Keypers,
+	}
 	dcdr.State.DKGs = append(dcdr.State.DKGs, dkg)
 }
 
@@ -654,6 +655,10 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 	dkgresult, err := dkg.Pure.ComputeResult()
 	if err != nil {
 		log.Printf("Error: DKG process failed for %s: %s", dkg.ShortInfo(), err)
+		dcdr.sendShuttermintMessage(
+			"requesting DKG restart",
+			shmsg.NewEonStartVote(dkg.StartBatchIndex),
+		)
 		return
 	}
 	log.Printf("Success: DKG process succeeced for %s", dkg.ShortInfo())
