@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
@@ -287,12 +290,19 @@ func (kpr *Keyper) Run() error {
 	mainChains := make(chan *observe.MainChain)
 	shutters := make(chan *observe.Shutter)
 	syncErrors := make(chan error)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGUSR1)
 	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
 	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
 	g.Go(func() error { kpr.watchTransactions(ctx); return nil })
 
 	for {
 		select {
+		case sig := <-signals:
+			log.Printf("Received %s. Dumping internal state", sig)
+			pretty.Println("Shutter:", kpr.Shutter)
+			pretty.Println("Mainchain:", kpr.MainChain)
+			pretty.Println("State:", kpr.State)
 		case mainChain := <-mainChains:
 			kpr.MainChain = mainChain
 			log.Println(kpr.ShortInfo())
