@@ -170,7 +170,7 @@ jobs:
           key: shuttermint-go-v6-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
-            - "~/.cache/go-build/"
+            - "~/.cache/go-build"
 
   wasm-build:
     executor: go
@@ -187,7 +187,7 @@ jobs:
           key: wasm-go-v1-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
-            - "~/.cache/go-build/"
+            - "~/.cache/go-build"
 
   mint-lint:
     executor: go
@@ -197,15 +197,15 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - lint-shuttermint-go-v1-{{ checksum "go.sum" }}
+            - lint-shuttermint-go-v2-{{ checksum "go.sum" }}
       - run: make install-golangci-lint
+      - run: make lint-changes
       - save_cache:
-          key: lint-shuttermint-go-v1-{{ checksum "go.sum" }}
+          key: lint-shuttermint-go-v2-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
-            - "~/.cache/go-build/"
-      - run: make lint-changes
-
+            - "~/.cache/go-build"
+            - "~/.cache/golangci-lint"
 workflows:
   version: 2
   main:
