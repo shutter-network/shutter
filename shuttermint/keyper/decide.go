@@ -815,15 +815,27 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 	if err != nil {
 		log.Panicf("Cannot sign the decryption signature: %s", err)
 	}
-	dcdr.State.Batches[batchIndex] = &Batch{
+	stBatch := &Batch{
 		BatchIndex:              batchIndex,
 		DecryptionSignatureHash: hash,
 		DecryptedTransactions:   txs,
 	}
-	decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
-	dcdr.sendShuttermintMessage(
-		fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
-		decryptionSignature)
+	dcdr.State.Batches[batchIndex] = stBatch
+
+	// Let's sync this with shutter to see if we still need to send a decryption message
+	dcdr.syncBatch(stBatch)
+
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
+	if !ok {
+		log.Panicf("no main chain config for batch %d", batchIndex)
+	}
+
+	if uint64(stBatch.SignatureCount) < config.Threshold {
+		decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
+		dcdr.sendShuttermintMessage(
+			fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
+			decryptionSignature)
+	}
 }
 
 func (dcdr *Decider) syncEKGs() {
@@ -877,7 +889,11 @@ func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uin
 	dcdr.State.LastEpochSecretShareSent = epoch
 }
 
-func (dcdr *Decider) syncBatch(batch *Batch, shBatch *observe.BatchData) {
+func (dcdr *Decider) syncBatch(batch *Batch) {
+	shBatch, ok := dcdr.Shutter.Batches[batch.BatchIndex]
+	if !ok {
+		return
+	}
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batch.BatchIndex)
 	if !ok {
 		panic("Error in syncBatch: config is not active")
@@ -905,11 +921,7 @@ func (dcdr *Decider) syncBatch(batch *Batch, shBatch *observe.BatchData) {
 
 func (dcdr *Decider) handleDecryptionSignatures() {
 	for _, batch := range dcdr.State.Batches {
-		shBatch, ok := dcdr.Shutter.Batches[batch.BatchIndex]
-		if !ok {
-			continue
-		}
-		dcdr.syncBatch(batch, shBatch)
+		dcdr.syncBatch(batch)
 	}
 }
 
