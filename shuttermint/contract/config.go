@@ -143,6 +143,26 @@ func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint
 	return keypers, nil
 }
 
+// GetNextConfigKeypers queries the list of keypers set for the next config to be scheduled
+func (cc *ConfigContract) GetNextConfigKeypers(opts *bind.CallOpts) ([]common.Address, error) {
+	var keypers []common.Address
+
+	numKeypers, err := cc.NextConfigNumKeypers(opts)
+	if err != nil {
+		return keypers, err
+	}
+
+	for i := uint64(0); i < numKeypers; i++ {
+		keyper, err := cc.NextConfigKeypers(opts, i)
+		if err != nil {
+			return keypers, err
+		}
+		keypers = append(keypers, keyper)
+	}
+
+	return keypers, nil
+}
+
 // GetConfigByIndex queries the batch config by its index (not the batch index, but the config index)
 func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint64) (BatchConfig, error) {
 	config, err := cc.Configs(opts, big.NewInt(0).SetUint64(configIndex))
@@ -151,6 +171,34 @@ func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint
 	}
 
 	keypers, err := cc.GetConfigKeypers(opts, configIndex)
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	return BatchConfig{
+		StartBatchIndex:        config.StartBatchIndex,
+		StartBlockNumber:       config.StartBlockNumber,
+		Threshold:              config.Threshold,
+		BatchSpan:              config.BatchSpan,
+		BatchSizeLimit:         config.BatchSizeLimit,
+		TransactionSizeLimit:   config.TransactionSizeLimit,
+		TransactionGasLimit:    config.TransactionGasLimit,
+		FeeReceiver:            config.FeeReceiver,
+		TargetAddress:          config.TargetAddress,
+		TargetFunctionSelector: config.TargetFunctionSelector,
+		ExecutionTimeout:       config.ExecutionTimeout,
+		Keypers:                medley.DedupAddresses(keypers),
+	}, nil
+}
+
+// GetNextConfig queries the next batch config.
+func (cc *ConfigContract) GetNextConfig(opts *bind.CallOpts) (BatchConfig, error) {
+	config, err := cc.NextConfig(opts)
+	if err != nil {
+		return BatchConfig{}, err
+	}
+
+	keypers, err := cc.GetNextConfigKeypers(opts)
 	if err != nil {
 		return BatchConfig{}, err
 	}

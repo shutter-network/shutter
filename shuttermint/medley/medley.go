@@ -46,6 +46,33 @@ func WaitMined(ctx context.Context, client *ethclient.Client, txHash common.Hash
 	}
 }
 
+func WaitMinedMany(ctx context.Context, client *ethclient.Client, txHashes []common.Hash) ([]*types.Receipt, error) {
+	defer fmt.Print("\n")
+	var res []*types.Receipt
+
+	failedTxs := []int{}
+	for i, txHash := range txHashes {
+		receipt, err := WaitMined(ctx, client, txHash)
+		if err != nil {
+			return res, err
+		}
+		res = append(res, receipt)
+		if receipt.Status != 1 {
+			fmt.Print("X")
+			failedTxs = append(failedTxs, i)
+		} else {
+			fmt.Print(".")
+		}
+	}
+
+	if len(failedTxs) > 0 {
+		firstFailed := failedTxs[0]
+		return res, fmt.Errorf("some txs have failed, the first being %s", txHashes[firstFailed])
+	}
+
+	return res, nil
+}
+
 // EnsureUniqueAddresses makes sure the slice of addresses doesn't contain duplicate addresses
 func EnsureUniqueAddresses(addrs []common.Address) error {
 	seen := make(map[common.Address]struct{})
