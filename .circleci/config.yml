@@ -160,7 +160,6 @@ jobs:
       - restore_cache:
           keys:
             - shuttermint-go-v6-{{ checksum "go.sum" }}
-      - install-ganache
       - run: make build
       - run: mkdir report
       - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
