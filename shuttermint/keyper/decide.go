@@ -859,19 +859,21 @@ func (dcdr *Decider) publishEpochSecretKeyShares() {
 }
 
 func (dcdr *Decider) handleEpochKG() {
-	dcdr.publishEpochSecretKeyShares()
 	dcdr.syncEKGs()
+	dcdr.publishEpochSecretKeyShares()
 }
 
 func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {
 	if epoch == 0 {
 		panic("epoch must be positive")
 	}
-	epochSecretKeyShare := epochKG.ComputeEpochSecretKeyShare(epoch)
-	dcdr.sendShuttermintMessage(
-		fmt.Sprintf("epoch secret key share, epoch=%d in eon=%d", epoch, epochKG.Eon),
-		shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
-	)
+	if _, ok := epochKG.SecretKeys[epoch]; !ok {
+		epochSecretKeyShare := epochKG.ComputeEpochSecretKeyShare(epoch)
+		dcdr.sendShuttermintMessage(
+			fmt.Sprintf("epoch secret key share, epoch=%d in eon=%d", epoch, epochKG.Eon),
+			shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
+		)
+	}
 	dcdr.State.LastEpochSecretShareSent = epoch
 }
 
