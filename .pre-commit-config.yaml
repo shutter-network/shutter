@@ -13,8 +13,8 @@ repos:
         files: '\.go$'
         language: script
 
-  - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=1000"]
@@ -29,8 +29,8 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: git://github.com/dnephin/pre-commit-golang
-    rev: master
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: ac0f6582d2484b3aa90b05d568e70f9f3c1374c7
     hooks:
       - id: go-fmt
 
