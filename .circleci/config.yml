@@ -159,19 +159,18 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v5-{{ checksum "go.sum" }}
-      - run: go get -t -v ./...
+            - shuttermint-go-v6-{{ checksum "go.sum" }}
       - install-ganache
       - run: make build
-      - save_cache:
-          key: shuttermint-go-v5-{{ checksum "go.sum" }}
-          paths:
-            - "~/go/pkg/mod"
-            - "~/.cache/go-build/"
       - run: mkdir report
       - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
       - store_test_results:
           path: report
+      - save_cache:
+          key: shuttermint-go-v6-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build/"
 
   wasm-build:
     executor: go
