@@ -2,3 +2,5 @@
 .nox/*
 shuttermint/contract/combined.json
 contracts/openzeppelin/*
+contracts/build/*
+.pytest_cache/*
