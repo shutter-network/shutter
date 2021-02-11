@@ -19,7 +19,7 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=1000"]
       - id: check-ast
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: check-case-conflict
       - id: check-json
       - id: check-merge-conflict
