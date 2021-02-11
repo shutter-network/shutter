@@ -77,6 +77,14 @@ contract ExecutorContract {
                     (_batchIndex + 1),
             "ExecutorContract: batch is not closed yet"
         );
+        require(
+            block.number <
+                _config.startBlockNumber +
+                    _config.batchSpan *
+                    (_batchIndex + 1) +
+                    _config.executionTimeout,
+            "ExecutorContract: execution timeout already reached"
+        );
 
         // Check that caller is keyper
         require(
@@ -136,7 +144,7 @@ contract ExecutorContract {
                     _config.batchSpan *
                     (_batchIndex + 1) +
                     _config.executionTimeout,
-            "ExecutorContract: batch is not closed yet"
+            "ExecutorContract: execution timeout not reached yet"
         );
 
         numExecutionHalfSteps++;

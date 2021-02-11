@@ -310,6 +310,52 @@ def test_cipher_execution_stores_receipt(
     assert bytes(receipt[3]) == ZERO_HASH32  # batch hash
 
 
+def test_cipher_execution_forbidden(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+    keypers: List[Account],
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=20,
+        execution_timeout=30,
+        keypers=keypers,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    batch_index = 0
+    forbidden_from_block = (
+        config.start_block_number
+        + (batch_index + 1) * config.batch_span
+        + config.execution_timeout
+    )
+
+    mine_until(
+        forbidden_from_block - 2, chain,
+    )
+    chain.snapshot()
+
+    # test that skipCipherExecution still fails
+    with brownie.reverts("ExecutorContract: execution timeout not reached yet"):
+        executor_contract.skipCipherExecution()
+
+    # test that we could still executeCipherBatch for block forbidden_from_block -1
+    chain.revert()
+    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+
+    # test that we cannot call executeCipherBatch for block forbidden_from_block
+    chain.revert()
+    mine_until(
+        forbidden_from_block - 1, chain,
+    )
+    with brownie.reverts("ExecutorContract: execution timeout already reached"):
+        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+
+
 def test_skip_cipher_execution(
     executor_contract: Any,
     config_contract: Any,
