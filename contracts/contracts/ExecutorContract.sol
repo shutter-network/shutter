@@ -107,14 +107,17 @@ contract ExecutorContract {
         );
 
         // Execute the batch
-        bytes32 _batchHash = executeTransactions(
-            _config.targetAddress,
-            _config.targetFunctionSelector,
-            _config.transactionGasLimit,
-            _transactions
-        );
+        bytes32 _batchHash =
+            executeTransactions(
+                _config.targetAddress,
+                _config.targetFunctionSelector,
+                _config.transactionGasLimit,
+                _transactions
+            );
 
-        cipherExecutionReceipts[numExecutionHalfSteps] = CipherExecutionReceipt({
+        cipherExecutionReceipts[
+            numExecutionHalfSteps
+        ] = CipherExecutionReceipt({
             executed: true,
             executor: msg.sender,
             halfStep: numExecutionHalfSteps,
@@ -174,12 +177,13 @@ contract ExecutorContract {
                 _config.startBlockNumber + _config.batchSpan * (_batchIndex + 1)
         );
 
-        bytes32 _batchHash = executeTransactions(
-            _config.targetAddress,
-            _config.targetFunctionSelector,
-            _config.transactionGasLimit,
-            _transactions
-        );
+        bytes32 _batchHash =
+            executeTransactions(
+                _config.targetAddress,
+                _config.targetFunctionSelector,
+                _config.transactionGasLimit,
+                _transactions
+            );
 
         require(
             _batchHash ==
@@ -200,10 +204,11 @@ contract ExecutorContract {
     ) private returns (bytes32) {
         bytes32 _batchHash;
         for (uint64 _i = 0; _i < _transactions.length; _i++) {
-            bytes memory _calldata = abi.encodeWithSelector(
-                _targetFunctionSelector,
-                _transactions[_i]
-            );
+            bytes memory _calldata =
+                abi.encodeWithSelector(
+                    _targetFunctionSelector,
+                    _transactions[_i]
+                );
 
             // call target function, ignoring any errors
             (bool _, ) = _targetAddress.call{gas: _gasLimit}(_calldata);

@@ -65,9 +65,8 @@ contract BatcherContract is Ownable {
         // check given batch is current
         assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
         uint64 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
-        uint64 _batchStartBlock = config.startBlockNumber +
-            _relativeBatchIndex *
-            config.batchSpan;
+        uint64 _batchStartBlock =
+            config.startBlockNumber + _relativeBatchIndex * config.batchSpan;
         uint64 _batchEndBlock = _batchStartBlock + config.batchSpan;
         require(
             block.number >= _batchStartBlock,
@@ -97,10 +96,8 @@ contract BatcherContract is Ownable {
         require(msg.value >= minFee, "BatcherContract: fee too small");
 
         // add tx to batch
-        bytes memory _batchHashPreimage = abi.encodePacked(
-            _transaction,
-            batchHashes[_batchIndex][_type]
-        );
+        bytes memory _batchHashPreimage =
+            abi.encodePacked(_transaction, batchHashes[_batchIndex][_type]);
         bytes32 _newBatchHash = keccak256(_batchHashPreimage);
         batchHashes[_batchIndex][_type] = _newBatchHash;
         batchSizes[_batchIndex] += uint64(_transaction.length);

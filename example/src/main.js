@@ -1,5 +1,5 @@
 import Vue from "vue";
-import {ethers} from "ethers";
+import { ethers } from "ethers";
 
 import App from "./App.vue";
 import {

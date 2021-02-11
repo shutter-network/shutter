@@ -1,4 +1,4 @@
-import {BigNumber, ethers} from "ethers";
+import { BigNumber, ethers } from "ethers";
 
 async function getConfigIndexAtBlock(blockNumber, configContract) {
   let numConfigs = await configContract.numConfigs();
@@ -70,4 +70,4 @@ async function encodeMessage(message, nonce, privateKey) {
   return encoded;
 }
 
-export {getConfigAtBlock, getBatchIndexAtBlock, encodeMessage};
+export { getConfigAtBlock, getBatchIndexAtBlock, encodeMessage };

@@ -77,9 +77,8 @@ contract KeyperSlasher {
             "KeyperSlasher: sender does not match keyper"
         );
 
-        CipherExecutionReceipt memory _receipt = executorContract.getReceipt(
-            _halfStep
-        );
+        CipherExecutionReceipt memory _receipt =
+            executorContract.getReceipt(_halfStep);
         require(_receipt.executed, "KeyperSlasher: half step not yet executed");
 
         accusations[_halfStep] = Accusation({
@@ -102,9 +101,8 @@ contract KeyperSlasher {
         Accusation memory _accusation = accusations[_authorization.halfStep];
         require(_accusation.accused, "KeyperSlasher: no accusation");
         require(!_accusation.appealed, "KeyperSlasher: already appealed");
-        CipherExecutionReceipt memory _receipt = executorContract.getReceipt(
-            _authorization.halfStep
-        );
+        CipherExecutionReceipt memory _receipt =
+            executorContract.getReceipt(_authorization.halfStep);
 
         verifyAuthorization(_authorization, _receipt);
 
@@ -121,9 +119,8 @@ contract KeyperSlasher {
         Authorization memory _authorization,
         CipherExecutionReceipt memory _receipt
     ) internal view {
-        BatchConfig memory _config = configContract.getConfig(
-            _receipt.halfStep / 2
-        );
+        BatchConfig memory _config =
+            configContract.getConfig(_receipt.halfStep / 2);
 
         require(
             _authorization.signatures.length >= _config.threshold,
@@ -134,13 +131,14 @@ contract KeyperSlasher {
                 _authorization.signerIndices.length,
             "KeyperSlasher: number of signatures and indices does not match"
         );
-        bytes32 _decryptionSignatureHash = keccak256(
-            abi.encodePacked(
-                address(executorContract.batcherContract()),
-                _receipt.cipherBatchHash,
-                _receipt.batchHash
-            )
-        );
+        bytes32 _decryptionSignatureHash =
+            keccak256(
+                abi.encodePacked(
+                    address(executorContract.batcherContract()),
+                    _receipt.cipherBatchHash,
+                    _receipt.batchHash
+                )
+            );
         for (uint64 _i = 0; _i < _authorization.signatures.length; _i++) {
             bytes memory _signature = _authorization.signatures[_i];
             uint64 _signerIndex = _authorization.signerIndices[_i];
@@ -155,10 +153,8 @@ contract KeyperSlasher {
                 "KeyperSlasher: signer indices not ordered"
             );
 
-            address _signer = ECDSA.recover(
-                _decryptionSignatureHash,
-                _signature
-            );
+            address _signer =
+                ECDSA.recover(_decryptionSignatureHash, _signature);
             require(
                 _signer == _config.keypers[_signerIndex],
                 "KeyperSlasher: wrong signer"

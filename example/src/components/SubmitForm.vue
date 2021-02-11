@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import {ethers} from "ethers";
+import { ethers } from "ethers";
 import {
   getConfigAtBlock,
   getBatchIndexAtBlock,

@@ -7,4 +7,4 @@ let configAddress = "0x0389AA3AA50A43Fccd80E779f50d0076E9c2e672";
 let batcherAddress = "0x6231D2bc4Ff51Be7ad593ECCf6d5a7b9911A05cA";
 let targetAddress = "0x4CaDde3E9E2eC2378373879443be60F615Ba8Ef0";
 
-export {configAddress, batcherAddress, targetAddress};
+export { configAddress, batcherAddress, targetAddress };

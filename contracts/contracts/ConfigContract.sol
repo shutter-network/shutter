@@ -245,8 +245,8 @@ contract ConfigContract is Ownable {
                 nextConfig.startBatchIndex > _config.startBatchIndex,
                 "ConfigContract: start batch index too small"
             );
-            uint64 _batchDelta = nextConfig.startBatchIndex -
-                _config.startBatchIndex;
+            uint64 _batchDelta =
+                nextConfig.startBatchIndex - _config.startBatchIndex;
             require(
                 _config.startBlockNumber + _config.batchSpan * _batchDelta ==
                     nextConfig.startBlockNumber,

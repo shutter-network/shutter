@@ -646,7 +646,7 @@
     _makeFuncWrapper(id) {
       const go = this;
       return function () {
-        const event = {id: id, this: this, args: arguments};
+        const event = { id: id, this: this, args: arguments };
         go._pendingEvent = event;
         go._resume();
         return event.result;
@@ -668,7 +668,7 @@
 
     const go = new Go();
     go.argv = process.argv.slice(2);
-    go.env = Object.assign({TMPDIR: require("os").tmpdir()}, process.env);
+    go.env = Object.assign({ TMPDIR: require("os").tmpdir() }, process.env);
     go.exit = process.exit;
     WebAssembly.instantiate(fs.readFileSync(process.argv[2]), go.importObject)
       .then((result) => {
@@ -676,7 +676,7 @@
           // Node.js exits if no event handler is pending
           if (code === 0 && !go.exited) {
             // deadlock, make Go print error and stack traces
-            go._pendingEvent = {id: 0};
+            go._pendingEvent = { id: 0 };
             go._resume();
           }
         });

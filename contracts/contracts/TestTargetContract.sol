@@ -19,16 +19,12 @@ contract TestTargetContract {
             "TestTargetContract: only executor can execute"
         );
 
-        (bytes memory payload, uint8 v, bytes32 r, bytes32 s) = abi.decode(
-            txData,
-            (bytes, uint8, bytes32, bytes32)
-        );
+        (bytes memory payload, uint8 v, bytes32 r, bytes32 s) =
+            abi.decode(txData, (bytes, uint8, bytes32, bytes32));
         bytes32 payloadHash = keccak256(payload);
         address sender = ecrecover(payloadHash, v, r, s);
-        (uint64 nonce, bytes memory data) = abi.decode(
-            payload,
-            (uint64, bytes)
-        );
+        (uint64 nonce, bytes memory data) =
+            abi.decode(payload, (uint64, bytes));
 
         require(nonce == _nonces[sender], "TestTargetContract: wrong nonce");
         _nonces[sender] = nonce + 1;
