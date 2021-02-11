@@ -6,7 +6,9 @@
 #
 # This Makefile makes sure we always recompile all contracts.
 
-SRCS = $(wildcard contracts/*.sol)
+.POSIX:
+
+SRCS = ./contracts/BatcherContract.sol ./contracts/binding.sol ./contracts/ConfigContract.sol ./contracts/DepositContract.sol ./contracts/ExecutorContract.sol ./contracts/FeeBankContract.sol ./contracts/KeyBroadcastContract.sol ./contracts/KeyperSlasher.sol ./contracts/MockBatcherContract.sol ./contracts/MockTargetContract.sol ./contracts/TestDepositTokenContract.sol ./contracts/TestTargetContract.sol ./openzeppelin/contracts/access/Ownable.sol ./openzeppelin/contracts/cryptography/ECDSA.sol ./openzeppelin/contracts/GSN/Context.sol ./openzeppelin/contracts/introspection/IERC1820Registry.sol ./openzeppelin/contracts/math/SafeMath.sol ./openzeppelin/contracts/token/ERC20/IERC20.sol ./openzeppelin/contracts/token/ERC777/ERC777.sol ./openzeppelin/contracts/token/ERC777/IERC777Recipient.sol ./openzeppelin/contracts/token/ERC777/IERC777Sender.sol ./openzeppelin/contracts/token/ERC777/IERC777.sol ./openzeppelin/contracts/utils/Address.sol
 
 compile: build/compile
 
@@ -18,6 +20,6 @@ test: compile
 	brownie test
 
 clean:
-	rm -f build/*.sol build/compile
+	rm -rf build
 
 .PHONY: compile test clean
