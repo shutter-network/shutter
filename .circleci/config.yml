@@ -38,7 +38,7 @@ commands:
       - run:
           name: Install ganache-cli
           command: |
-            sudo npm install -g ganache-cli@6.12.1
+            sudo npm install -g ganache-cli@6.12.2
 
 executors:
   py37:
@@ -100,14 +100,14 @@ jobs:
             sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
 
       - restore_cache:
-          key: pre-commit-cache-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
       - run:
           name: Install pre-commit
           command: |
             pip install --user -c requirements.txt pre-commit
             pre-commit install-hooks -c pre-commit-config
       - save_cache:
-          key: pre-commit-cache-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
           paths:
             - ~/.cache/pre-commit
             - ~/.local
@@ -120,13 +120,13 @@ jobs:
       - checkout
       - install-nox
       - restore_cache:
-          key: prettier-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: prettier-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
       - run:
           name: "Run prettier with nox"
           command: |
             nox -s prettier
       - save_cache:
-          key: prettier-v3-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: prettier-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
 

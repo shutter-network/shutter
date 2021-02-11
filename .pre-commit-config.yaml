@@ -40,7 +40,6 @@ repos:
     rev: v2.2.1
     hooks:
       - id: prettier
-        language_version: "12.18.0"
         additional_dependencies: ["prettier-plugin-solidity@1.0.0-beta.5"]
         args: ["--plugin=prettier-plugin-solidity"]
         exclude: "^contracts/openzeppelin/.*"

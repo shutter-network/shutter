@@ -11,9 +11,6 @@ import nox
 from nox.sessions import Session
 
 
-NODE_VERSION = "12.19.0"
-
-
 nox.options.sessions = ["black", "flake8", "mypy", "test_contracts"]
 
 python_paths = [
@@ -42,13 +39,13 @@ def install_ganache(session: Session) -> None:
         if nodeenv_dir.exists():
             shutil.rmtree(nodeenv_dir)
 
-        session.run("nodeenv", "--node", NODE_VERSION, str(nodeenv_dir))
+        session.run("nodeenv", str(nodeenv_dir))
 
         session.run(
             str(bindir.joinpath("npm")),
             "install",
             "-g",
-            "ganache-cli@6.12.1",
+            "ganache-cli@6.12.2",
             silent=True,
             external=True,
         )
@@ -69,7 +66,7 @@ def install_prettier(session: Session) -> None:
         if nodeenv_dir.exists():
             shutil.rmtree(nodeenv_dir)
 
-        session.run("nodeenv", "--node", NODE_VERSION, str(nodeenv_dir))
+        session.run("nodeenv", str(nodeenv_dir))
 
         for pkg in ["prettier@2.2.1", "prettier-plugin-solidity@1.0.0-beta.5"]:
             session.run(
