@@ -49,23 +49,28 @@ contract ExecutorContract {
     }
 
     /// @notice Execute the cipher portion of a batch.
+    /// @param _batchIndex The index of the batch
     /// @param _cipherBatchHash The hash of the batch (consisting of encrypted transactions)
     /// @param _transactions The sequence of (decrypted) transactions to execute.
     /// @param _keyperIndex The index of the keyper calling the function.
     /// @notice Execution is only performed if `_cipherBatchHash` matches the hash in the batcher
     ///     contract and the batch is active and completed.
     function executeCipherBatch(
+        uint64 _batchIndex,
         bytes32 _cipherBatchHash,
         bytes[] calldata _transactions,
         uint64 _keyperIndex
     ) external {
+        require(
+            numExecutionHalfSteps / 2 == _batchIndex,
+            "ExecutorContract: unexpected batch index"
+        );
         // Check that it's a cipher batch turn
         require(
             numExecutionHalfSteps % 2 == 0,
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Check that batching is active and the batch is closed
@@ -131,13 +136,17 @@ contract ExecutorContract {
     /// @notice Skip execution of the cipher portion of a batch.
     /// @notice This is only possible if successful execution has not been carried out in time
     ///     (according to the execution timeout defined in the config)
-    function skipCipherExecution() external {
+    function skipCipherExecution(uint64 _batchIndex) external {
+        require(
+            numExecutionHalfSteps / 2 == _batchIndex,
+            "ExecutorContract: unexpected batch index"
+        );
+
         require(
             numExecutionHalfSteps % 2 == 0,
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         require(_config.batchSpan > 0, "ExecutorContract: config is inactive");
@@ -156,16 +165,23 @@ contract ExecutorContract {
     }
 
     /// @notice Execute the plaintext portion of a batch.
+    /// @param _batchIndex The index of the batch
     /// @param _transactions The array of plaintext transactions in the batch.
     /// @notice This is a trustless operation since `_transactions` will be checked against the
     ///     (plaintext) batch hash from the batcher contract.
-    function executePlainBatch(bytes[] calldata _transactions) external {
+    function executePlainBatch(
+        uint64 _batchIndex,
+        bytes[] calldata _transactions
+    ) external {
+        require(
+            numExecutionHalfSteps / 2 == _batchIndex,
+            "ExecutorContract: unexpected batch index"
+        );
         require(
             numExecutionHalfSteps % 2 == 1,
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 _batchIndex = numExecutionHalfSteps / 2;
         BatchConfig memory _config = configContract.getConfig(_batchIndex);
 
         // Since the cipher part of the batch has already been executed or skipped and the

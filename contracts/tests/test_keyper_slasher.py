@@ -36,7 +36,7 @@ def test_accusing(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span * 10, chain)
 
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
     tx = keyper_slasher.accuse(0, 1, {"from": keypers[1]})
 
     assert "Accused" in tx.events and len(tx.events["Accused"]) == 1
@@ -86,7 +86,7 @@ def test_appealing(
     signatures = [ecdsa.sign(key, decryption_signature_preimage) for key in keyper_private_keys]
 
     executor_contract.executeCipherBatch(
-        cipher_batch_hash, decrypted_transactions, 0, {"from": keypers[0]}
+        0, cipher_batch_hash, decrypted_transactions, 0, {"from": keypers[0]}
     )
     keyper_slasher.accuse(0, 1, {"from": keypers[1]})
 
@@ -133,7 +133,7 @@ def test_slashing(
     deposit_token_contract.send(keypers[0], 100, data, {"from": owner})
     deposit_token_contract.send(deposit_contract, 100, data, {"from": keypers[0]})
 
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
     tx = keyper_slasher.accuse(0, 1, {"from": keypers[1]})
     mine_until(tx.block_number + appeal_blocks, chain)
     tx = keyper_slasher.slash(0)

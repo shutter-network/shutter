@@ -58,7 +58,7 @@ def execute_cipher_batch(
     decrypted_transactions = [make_bytes(tx_size) for _ in range(batch_size)]
 
     return executor_contract.executeCipherBatch(
-        cipher_batch_hash, decrypted_transactions, 0, {"from": keypers[0]}
+        0, cipher_batch_hash, decrypted_transactions, 0, {"from": keypers[0]}
     )
 
 

@@ -34,20 +34,22 @@ def test_check_and_increment_half_steps(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span * 10, chain)
 
-    for i in range(3):
-        assert executor_contract.numExecutionHalfSteps() == 2 * i
+    for batch_index in range(3):
+        assert executor_contract.numExecutionHalfSteps() == 2 * batch_index
 
-        with brownie.reverts():
-            executor_contract.executePlainBatch([])
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+        with brownie.reverts("ExecutorContract: unexpected half step"):
+            executor_contract.executePlainBatch(batch_index, [])
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
 
-        assert executor_contract.numExecutionHalfSteps() == 2 * i + 1
+        assert executor_contract.numExecutionHalfSteps() == 2 * batch_index + 1
 
-        with brownie.reverts():
-            executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
-        executor_contract.executePlainBatch([])
+        with brownie.reverts("ExecutorContract: unexpected half step"):
+            executor_contract.executeCipherBatch(
+                batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}
+            )
+        executor_contract.executePlainBatch(batch_index, [])
 
-    assert executor_contract.numExecutionHalfSteps() == 2 * (i + 1)
+    assert executor_contract.numExecutionHalfSteps() == 2 * (batch_index + 1)
 
 
 def test_check_batching_is_active(
@@ -68,8 +70,8 @@ def test_check_batching_is_active(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span, chain)
 
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0)
+    with brownie.reverts("ExecutorContract: config is inactive"):
+        executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0)
 
 
 def test_check_batching_period_is_over(
@@ -93,12 +95,14 @@ def test_check_batching_period_is_over(
     for batch_index in range(3):
         mine_until(config.start_block_number + (batch_index + 1) * config.batch_span - 2, chain)
         with brownie.reverts():
-            executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+            executor_contract.executeCipherBatch(
+                batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}
+            )
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
 
         plain_batch = make_batch()
         mock_batcher_contract.setBatchHash(batch_index, 1, compute_batch_hash(plain_batch))
-        executor_contract.executePlainBatch(plain_batch)
+        executor_contract.executePlainBatch(batch_index, plain_batch)
 
 
 def test_call_target_function(
@@ -126,7 +130,7 @@ def test_call_target_function(
     mine_until(config.start_block_number + config.batch_span, chain)
 
     batch = make_batch(3)
-    tx = executor_contract.executeCipherBatch(ZERO_HASH32, batch, 0, {"from": keypers[0]})
+    tx = executor_contract.executeCipherBatch(0, ZERO_HASH32, batch, 0, {"from": keypers[0]})
     assert len(tx.events["Called"]) == len(batch)
     for i, transaction in enumerate(batch):
         assert tx.events["Called"][i]["transaction"] == encode_hex(transaction)
@@ -138,7 +142,7 @@ def test_call_target_function(
 
     batch = make_batch(3)
     mock_batcher_contract.setBatchHash(0, 1, compute_batch_hash(batch))
-    tx = executor_contract.executePlainBatch(batch)
+    tx = executor_contract.executePlainBatch(0, batch)
     assert len(tx.events["Called"]) == len(batch)
     for i, transaction in enumerate(batch):
         assert tx.events["Called"][i]["transaction"] == encode_hex(transaction)
@@ -171,7 +175,7 @@ def test_emit_event(
     for batch_index in range(3):
         cipher_batch = make_batch(3)
         tx = executor_contract.executeCipherBatch(
-            ZERO_HASH32, cipher_batch, 0, {"from": keypers[0]}
+            batch_index, ZERO_HASH32, cipher_batch, 0, {"from": keypers[0]}
         )
         assert len(tx.events["BatchExecuted"]) == 1
         assert tx.events["BatchExecuted"][0] == {
@@ -181,7 +185,7 @@ def test_emit_event(
 
         plain_batch = make_batch(3)
         mock_batcher_contract.setBatchHash(batch_index, 1, compute_batch_hash(plain_batch))
-        tx = executor_contract.executePlainBatch(plain_batch)
+        tx = executor_contract.executePlainBatch(batch_index, plain_batch)
         assert len(tx.events["BatchExecuted"]) == 1
         assert tx.events["BatchExecuted"][0] == {
             "numExecutionHalfSteps": batch_index * 2 + 2,
@@ -212,15 +216,15 @@ def test_check_plain_batch_hash(
     mock_batcher_contract.setBatchHash(0, 1, compute_batch_hash(batch))
 
     mine_until(config.start_block_number + config.batch_span - 1, chain)
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
 
-    with brownie.reverts():
-        executor_contract.executePlainBatch([])
-    with brownie.reverts():
-        executor_contract.executePlainBatch(batch[:-1])
-    with brownie.reverts():
-        executor_contract.executePlainBatch(batch + [make_bytes()])
-    executor_contract.executePlainBatch(batch)
+    with brownie.reverts("ExecutorContract: batch hash does not match"):
+        executor_contract.executePlainBatch(0, [])
+    with brownie.reverts("ExecutorContract: batch hash does not match"):
+        executor_contract.executePlainBatch(0, batch[:-1])
+    with brownie.reverts("ExecutorContract: batch hash does not match"):
+        executor_contract.executePlainBatch(0, batch + [make_bytes()])
+    executor_contract.executePlainBatch(0, batch)
 
 
 def test_check_cipher_batch_hash(
@@ -247,11 +251,11 @@ def test_check_cipher_batch_hash(
 
     mine_until(config.start_block_number + config.batch_span - 1, chain)
 
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(make_bytes(32), [], 0, {"from": keypers[0]})
-    executor_contract.executeCipherBatch(batch_hash, [], 0, {"from": keypers[0]})
+    with brownie.reverts("ExecutorContract: incorrect cipher batch hash"):
+        executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
+    with brownie.reverts("ExecutorContract: incorrect cipher batch hash"):
+        executor_contract.executeCipherBatch(0, make_bytes(32), [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, batch_hash, [], 0, {"from": keypers[0]})
 
 
 def test_check_keyper(
@@ -273,14 +277,14 @@ def test_check_keyper(
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span, chain)
-
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 1, {"from": keypers[0]})
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[1]})
-    with brownie.reverts():
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": non_owner})
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 1, {"from": keypers[1]})
+    batch_index = 0
+    with brownie.reverts("ExecutorContract: sender is not specified keyper"):
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 1, {"from": keypers[0]})
+    with brownie.reverts("ExecutorContract: sender is not specified keyper"):
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[1]})
+    with brownie.reverts("ExecutorContract: sender is not specified keyper"):
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": non_owner})
+    executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 1, {"from": keypers[1]})
 
 
 def test_cipher_execution_stores_receipt(
@@ -302,7 +306,7 @@ def test_cipher_execution_stores_receipt(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span, chain)
 
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
     receipt = executor_contract.cipherExecutionReceipts(0)
     assert receipt[0] is True  # executed
     assert receipt[1] == keypers[0]  # executor
@@ -341,11 +345,11 @@ def test_cipher_execution_forbidden(
 
     # test that skipCipherExecution still fails
     with brownie.reverts("ExecutorContract: execution timeout not reached yet"):
-        executor_contract.skipCipherExecution()
+        executor_contract.skipCipherExecution(batch_index)
 
     # test that we could still executeCipherBatch for block forbidden_from_block -1
     chain.revert()
-    executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
 
     # test that we cannot call executeCipherBatch for block forbidden_from_block
     chain.revert()
@@ -353,7 +357,7 @@ def test_cipher_execution_forbidden(
         forbidden_from_block - 1, chain,
     )
     with brownie.reverts("ExecutorContract: execution timeout already reached"):
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
 
 
 def test_skip_cipher_execution(
@@ -379,13 +383,13 @@ def test_skip_cipher_execution(
             - 1,
             chain,
         )
-        tx = executor_contract.skipCipherExecution()
+        tx = executor_contract.skipCipherExecution(batch_index)
         assert executor_contract.numExecutionHalfSteps() == batch_index * 2 + 1
         assert len(tx.events) == 1
         assert tx.events["CipherExecutionSkipped"][0] == {
             "numExecutionHalfSteps": batch_index * 2 + 1
         }
-        executor_contract.executePlainBatch([])
+        executor_contract.executePlainBatch(batch_index, [])
 
 
 def test_skip_cipher_execution_checks_half_step(
@@ -414,10 +418,10 @@ def test_skip_cipher_execution_checks_half_step(
             - 1,
             chain,
         )
-        executor_contract.executeCipherBatch(ZERO_HASH32, [], 0, {"from": keypers[0]})
-        with brownie.reverts():
-            executor_contract.skipCipherExecution()
-        executor_contract.executePlainBatch([])
+        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
+        with brownie.reverts("ExecutorContract: unexpected half step"):
+            executor_contract.skipCipherExecution(batch_index)
+        executor_contract.executePlainBatch(batch_index, [])
 
 
 def test_skip_cipher_execution_checks_timeout(
@@ -443,10 +447,10 @@ def test_skip_cipher_execution_checks_timeout(
             - 2,
             chain,
         )
-        with brownie.reverts():
-            executor_contract.skipCipherExecution()
-        executor_contract.skipCipherExecution()
-        executor_contract.executePlainBatch([])
+        with brownie.reverts("ExecutorContract: execution timeout not reached yet"):
+            executor_contract.skipCipherExecution(batch_index)
+        executor_contract.skipCipherExecution(batch_index)
+        executor_contract.executePlainBatch(batch_index, [])
 
 
 def test_skip_cipher_execution_checks_active(
@@ -463,5 +467,5 @@ def test_skip_cipher_execution_checks_active(
         batch_span=0,
     )
     schedule_config(config_contract, config, owner=owner)
-    with brownie.reverts():
-        executor_contract.skipCipherExecution()
+    with brownie.reverts("ExecutorContract: config is inactive"):
+        executor_contract.skipCipherExecution(0)
