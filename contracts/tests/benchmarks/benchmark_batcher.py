@@ -13,6 +13,11 @@ from tests.factories import make_batch_config
 from tests.factories import make_bytes
 
 
+@pytest.fixture
+def config_change_heads_up_blocks() -> int:
+    return 300
+
+
 @pytest.fixture(autouse=True)
 def configured(
     config_contract: Any, chain: Chain, config_change_heads_up_blocks: int, owner: Account

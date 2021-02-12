@@ -16,7 +16,7 @@ ERC_1820_DEPLOYMENT_ADDRESS = "0xa990077c3205cbDf861e17Fa532eeB069cE9fF96"
 
 @pytest.fixture
 def config_change_heads_up_blocks() -> int:
-    return 200
+    return 30
 
 
 @pytest.fixture

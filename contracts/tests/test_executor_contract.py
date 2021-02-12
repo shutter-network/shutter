@@ -119,7 +119,7 @@ def test_call_target_function(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
         target_address=to_canonical_address(mock_target_contract.address),
@@ -165,7 +165,7 @@ def test_emit_event(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
     )
@@ -205,7 +205,7 @@ def test_check_plain_batch_hash(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
     )
@@ -239,7 +239,7 @@ def test_check_cipher_batch_hash(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
     )
@@ -271,7 +271,7 @@ def test_check_keyper(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
     )
@@ -299,7 +299,7 @@ def test_cipher_execution_stores_receipt(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         keypers=keypers,
         threshold=0,
     )
@@ -325,8 +325,8 @@ def test_cipher_execution_forbidden(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=20,
-        execution_timeout=30,
+        batch_span=10,
+        execution_timeout=20,
         keypers=keypers,
     )
     schedule_config(config_contract, config, owner=owner)
@@ -370,8 +370,8 @@ def test_skip_cipher_execution(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
-        execution_timeout=300,
+        batch_span=10,
+        execution_timeout=20,
     )
     schedule_config(config_contract, config, owner=owner)
 
@@ -403,8 +403,8 @@ def test_skip_cipher_execution_checks_half_step(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
-        execution_timeout=300,
+        batch_span=10,
+        execution_timeout=20,
         keypers=keypers,
         threshold=0,
     )
@@ -434,8 +434,8 @@ def test_skip_cipher_execution_checks_timeout(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
-        execution_timeout=300,
+        batch_span=10,
+        execution_timeout=20,
     )
     schedule_config(config_contract, config, owner=owner)
 
@@ -463,7 +463,7 @@ def test_skip_cipher_execution_checks_active(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        execution_timeout=300,
+        execution_timeout=20,
         batch_span=0,
     )
     schedule_config(config_contract, config, owner=owner)

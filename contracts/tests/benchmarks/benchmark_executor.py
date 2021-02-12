@@ -17,6 +17,11 @@ from tests.factories import make_bytes
 
 
 @pytest.fixture
+def config_change_heads_up_blocks() -> int:
+    return 300
+
+
+@pytest.fixture
 def executor_contract(
     ExecutorContract: ContractContainer,
     config_contract: Any,

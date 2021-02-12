@@ -40,13 +40,13 @@ def test_add_tx_checks_batching_period_end(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=20,
     )
     schedule_config(config_contract, config, owner=owner)
-    mine_until(config.start_block_number + 98, chain)
+    mine_until(config.start_block_number + 18, chain)
 
     batcher_contract.addTransaction(0, 0, b"\x00")
-    assert chain.height == config.start_block_number + 99
+    assert chain.height == config.start_block_number + 19
     with brownie.reverts():
         batcher_contract.addTransaction(0, 0, b"\x00")
     batcher_contract.addTransaction(1, 0, b"\x00")
@@ -62,7 +62,7 @@ def test_add_tx_checks_current_batch(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number, chain)
@@ -83,7 +83,7 @@ def test_add_tx_checks_tx_size(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         transaction_size_limit=100,
     )
     schedule_config(config_contract, config, owner=owner)
@@ -107,7 +107,7 @@ def test_add_tx_checks_batch_size(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=20,
         transaction_size_limit=100,
         batch_size_limit=100,
     )
@@ -130,7 +130,7 @@ def test_add_tx_checks_fee(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number - 1, chain)
@@ -151,7 +151,7 @@ def test_add_tx_updates_hash_chain(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number - 1, chain)
@@ -176,7 +176,7 @@ def test_add_tx_updates_batch_size(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number - 1, chain)
@@ -198,7 +198,7 @@ def test_add_tx_emits_event(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
     )
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number - 1, chain)
@@ -236,7 +236,7 @@ def test_add_tx_pays_fee(
     config = make_batch_config(
         start_batch_index=0,
         start_block_number=chain.height + config_change_heads_up_blocks + 20,
-        batch_span=100,
+        batch_span=10,
         fee_receiver=to_canonical_address(fee_receiver.address),
     )
     schedule_config(config_contract, config, owner=owner)
