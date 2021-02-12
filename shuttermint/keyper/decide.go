@@ -297,7 +297,7 @@ func (a SendShuttermintMessage) String() string {
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
 type ExecuteCipherBatch struct {
-	halfStep        uint64
+	batchIndex      uint64
 	cipherBatchHash [32]byte
 	transactions    [][]byte
 	keyperIndex     uint64
@@ -312,7 +312,7 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 		return err
 	}
 
-	tx, err := cc.ExecutorContract.ExecuteCipherBatch(auth, a.cipherBatchHash, a.transactions, a.keyperIndex)
+	tx, err := cc.ExecutorContract.ExecuteCipherBatch(auth, a.batchIndex, a.cipherBatchHash, a.transactions, a.keyperIndex)
 	if err != nil {
 		// XXX consider handling the error somehow
 		log.Printf("Error creating cipher batch execution tx: %s", err)
@@ -324,12 +324,12 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecuteCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute cipher half step %d", a.halfStep)
+	return fmt.Sprintf("-> executor contract: execute cipher batch %d", a.batchIndex)
 }
 
 // ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
 type ExecutePlainBatch struct {
-	halfStep     uint64
+	batchIndex   uint64
 	transactions [][]byte
 }
 
@@ -342,7 +342,7 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 		return err
 	}
 
-	tx, err := cc.ExecutorContract.ExecutePlainBatch(auth, a.transactions)
+	tx, err := cc.ExecutorContract.ExecutePlainBatch(auth, a.batchIndex, a.transactions)
 	if err != nil {
 		// XXX consider handling the error somehow
 		log.Printf("Error creating plain batch execution tx: %s", err)
@@ -354,12 +354,12 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecutePlainBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute plain half step %d", a.halfStep)
+	return fmt.Sprintf("-> executor contract: execute plain batch %d", a.batchIndex)
 }
 
 // SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch
 type SkipCipherBatch struct {
-	halfStep uint64
+	batchIndex uint64
 }
 
 func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
@@ -371,7 +371,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 		return err
 	}
 
-	tx, err := cc.ExecutorContract.SkipCipherExecution(auth)
+	tx, err := cc.ExecutorContract.SkipCipherExecution(auth, a.batchIndex)
 	if err != nil {
 		// XXX consider handling the error somehow
 		log.Printf("Error creating skip cipher execution tx: %s", err)
@@ -383,7 +383,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a SkipCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: skip plain half step %d", a.halfStep)
+	return fmt.Sprintf("-> executor contract: skip plain batch %d", a.batchIndex)
 }
 
 // Accuse is an action accusing the executor of a given half step at the keyper slasher.
@@ -998,14 +998,14 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 			return
 		}
 		action = ExecuteCipherBatch{
-			halfStep:        nextHalfStep,
+			batchIndex:      batchIndex,
 			cipherBatchHash: batch.EncryptedBatchHash,
 			transactions:    stBatch.DecryptedTransactions,
 			keyperIndex:     keyperIndex,
 		}
 	} else {
 		action = ExecutePlainBatch{
-			halfStep:     nextHalfStep,
+			batchIndex:   batchIndex,
 			transactions: batch.PlainTransactions,
 		}
 	}
