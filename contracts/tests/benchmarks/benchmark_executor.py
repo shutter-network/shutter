@@ -1,3 +1,5 @@
+#! pytest -s
+
 from typing import Any
 
 import pytest
@@ -74,9 +76,10 @@ def benchmark_execute_cipher_batch(
 ) -> None:
     batch_sizes = [1, 10, 100]
     thresholds = [1, 10, 100]
+    chain.snapshot()
     for batch_size in batch_sizes:
         for threshold in thresholds:
-            chain.snapshot()
+            chain.revert()
             tx = execute_cipher_batch(
                 config_contract=config_contract,
                 batcher_contract=batcher_contract,
@@ -94,4 +97,3 @@ def benchmark_execute_cipher_batch(
                 f"Threshold: {threshold:>3d}  "
                 f"Gas: {tx.gas_used / 1000:.1f}k"
             )
-            chain.revert()

@@ -103,7 +103,6 @@ def fetch_config(config_contract: Any, batch_index: int) -> BatchConfig:
 
 
 def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -> None:
-    print("set_next_config:", config)
     for field in attr.fields(BatchConfig):
         name_snake_case = field.name
         name_camel_case = snake_to_camel_case(name_snake_case, capitalize=True)
@@ -113,8 +112,6 @@ def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -
         setter_function_name = "nextConfigSet" + name_camel_case
         setter_function = getattr(config_contract, setter_function_name)
         value = getattr(config, name_snake_case)
-        print("SET:", setter_function_name, value)
-
         setter_function(value, {"from": owner})
 
     num_existing_keypers = config_contract.nextConfigNumKeypers()
