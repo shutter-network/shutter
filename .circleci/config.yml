@@ -159,31 +159,14 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v6-{{ checksum "go.sum" }}
-      - run: make build
+            - shuttermint-go-v7-{{ checksum "go.sum" }}
+      - run: make build wasm
       - run: mkdir report
       - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
       - store_test_results:
           path: report
       - save_cache:
-          key: shuttermint-go-v6-{{ checksum "go.sum" }}
-          paths:
-            - "~/go/pkg/mod"
-            - "~/.cache/go-build"
-
-  wasm-build:
-    executor: go
-    working_directory: ~/shutter/shuttermint
-    steps:
-      - checkout:
-          path: ~/shutter
-      - restore_cache:
-          keys:
-            - wasm-go-v1-{{ checksum "go.sum" }}
-      - run: GOARCH=wasm GOOS=js go get -t -v ./shcryptowasm
-      - run: make wasm
-      - save_cache:
-          key: wasm-go-v1-{{ checksum "go.sum" }}
+          key: shuttermint-go-v7-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
@@ -218,7 +201,6 @@ workflows:
   shuttermint:
     jobs:
       - mint-build
-      - wasm-build
       - mint-lint:
           filters:
             branches:
