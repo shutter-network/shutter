@@ -711,7 +711,7 @@ func (dcdr *Decider) handleDKGs() {
 }
 
 func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
-	epoch := batchIndex + 1
+	epoch := batchIndex
 	eon, err := dcdr.Shutter.FindEonByBatchIndex(batchIndex)
 	if err != nil {
 		return
@@ -799,7 +799,7 @@ func (dcdr *Decider) computeDecryptionSignatureHash(cipherBatchHash, batchHash [
 }
 
 func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch uint64) {
-	batchIndex := epoch - 1
+	batchIndex := epoch
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
 		// We may run into this case if our main chain node is lagging behind or if the
@@ -876,9 +876,6 @@ func (dcdr *Decider) handleEpochKG() {
 }
 
 func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uint64) {
-	if epoch == 0 {
-		panic("epoch must be positive")
-	}
 	if _, ok := epochKG.SecretKeys[epoch]; !ok {
 		epochSecretKeyShare := epochKG.ComputeEpochSecretKeyShare(epoch)
 		dcdr.sendShuttermintMessage(

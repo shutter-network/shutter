@@ -122,7 +122,7 @@ func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *E
 
 // ComputeEpochID computes the id of the given epoch.
 func ComputeEpochID(epochIndex uint64) *EpochID {
-	epochIndexBig := new(big.Int).SetUint64(epochIndex)
+	epochIndexBig := new(big.Int).SetUint64(epochIndex + 1)
 	id := EpochID(*new(bn256.G1).ScalarBaseMult(epochIndexBig))
 	return &id
 }
