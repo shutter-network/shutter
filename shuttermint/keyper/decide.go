@@ -661,7 +661,7 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 		)
 		return
 	}
-	log.Printf("Success: DKG process succeeced for %s", dkg.ShortInfo())
+	log.Printf("Success: DKG process succeeded for %s", dkg.ShortInfo())
 	ekg := &EKG{
 		Eon:     dkg.Eon,
 		Keypers: dkg.Keypers,
