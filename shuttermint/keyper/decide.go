@@ -953,55 +953,80 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	}
 }
 
-func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
-	batchIndex := nextHalfStep / 2
+func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.BatchConfig) IAction {
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
 
+	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
+	if !ok {
+		log.Fatal("executeCipherBatch called from non keyper")
+	}
+	stBatch, ok := dcdr.State.Batches[batchIndex]
+	if !ok {
+		log.Printf("Error: maybeExecuteHalfStep: no batch for %d", batchIndex)
+		return nil
+	}
+
+	if uint64(stBatch.SignatureCount) < config.Threshold {
+		log.Printf("not enough votes for batch %d", batchIndex)
+		return nil
+	}
+	return ExecuteCipherBatch{
+		batchIndex:      batchIndex,
+		cipherBatchHash: batch.EncryptedBatchHash,
+		transactions:    stBatch.DecryptedTransactions,
+		keyperIndex:     keyperIndex,
+	}
+}
+
+func (dcdr *Decider) executePlainBatch(batchIndex uint64) IAction {
+	batch, ok := dcdr.MainChain.Batches[batchIndex]
+	if !ok {
+		batch = &observe.Batch{BatchIndex: batchIndex}
+	}
+	return ExecutePlainBatch{
+		batchIndex:   batchIndex,
+		transactions: batch.PlainTransactions,
+	}
+}
+
+func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
+	batchIndex := nextHalfStep / 2
+
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
 	if !ok {
 		return nil // nothing to do if config is inactive
 	}
-	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
-	if !ok {
-		return nil // only keypers can execute
+
+	if nextHalfStep%2 != 0 {
+		return dcdr.executePlainBatch(batchIndex) // TODO: we don't have a delay here
 	}
 
-	delay, err := dcdr.executionDelay(nextHalfStep)
-	if err != nil {
-		log.Printf("unexpected error: %s", err)
-		return nil // shouldn't happen
-	}
-	executionBlock := config.BatchStartBlock(batchIndex) + config.BatchSpan + delay
-	if dcdr.MainChain.CurrentBlock < executionBlock {
-		return nil // wait for other keypers first
+	delay := dcdr.executionDelay(config, nextHalfStep)
+	executionTimeoutBlock := config.BatchEndBlock(batchIndex) + config.ExecutionTimeout
+
+	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
+		return SkipCipherBatch{
+			batchIndex: batchIndex,
+		}
 	}
 
-	if nextHalfStep%2 == 0 {
-		stBatch, ok := dcdr.State.Batches[batchIndex]
-		if !ok {
-			log.Printf("Error: maybeExecuteHalfStep: no batch for %d", batchIndex)
-			return nil
-		}
-
-		if uint64(stBatch.SignatureCount) < config.Threshold {
-			log.Printf("Error: not enough votes for batch %d", batchIndex)
-			return nil
-		}
-		return ExecuteCipherBatch{
-			batchIndex:      batchIndex,
-			cipherBatchHash: batch.EncryptedBatchHash,
-			transactions:    stBatch.DecryptedTransactions,
-			keyperIndex:     keyperIndex,
-		}
-	} else {
-		return ExecutePlainBatch{
-			batchIndex:   batchIndex,
-			transactions: batch.PlainTransactions,
-		}
+	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock {
+		return nil
 	}
+
+	if !config.IsKeyper(dcdr.Config.Address()) {
+		// we can't execute this cipher batch
+		return nil
+	}
+
+	executionBlock := config.BatchEndBlock(batchIndex) + delay
+	if dcdr.MainChain.CurrentBlock >= executionBlock {
+		return dcdr.executeCipherBatch(batchIndex, config)
+	}
+	return nil
 }
 
 // maybeAppeal checks if there are any accusations against us and if so sends an appeal if possible.
@@ -1043,20 +1068,10 @@ func (dcdr *Decider) syncPendingAppeals() {
 
 // executionDelay returns the number of main chain blocks to wait before sending an execution tx.
 // This makes sure not all keypers try to send the same tx at the same time.
-func (dcdr *Decider) executionDelay(halfStep uint64) (uint64, error) {
-	batchIndex := halfStep / 2
-	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
-	if !ok {
-		return 0, fmt.Errorf("config is not active")
-	}
-
-	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
-	if !ok {
-		return 0, fmt.Errorf("not a keyper")
-	}
-
+func (dcdr *Decider) executionDelay(config contract.BatchConfig, halfStep uint64) uint64 {
+	keyperIndex, _ := config.KeyperIndex(dcdr.Config.Address())
 	place := (halfStep + keyperIndex) % uint64(len(config.Keypers))
-	return place * dcdr.Config.ExecutionStaggering, nil
+	return place * dcdr.Config.ExecutionStaggering
 }
 
 // Decide determines the next actions to run.

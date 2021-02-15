@@ -43,6 +43,12 @@ func (bc *BatchConfig) BatchStartBlock(batchIndex uint64) uint64 {
 	return bc.StartBlockNumber + relativeBatchIndex*bc.BatchSpan
 }
 
+// BatchEndBlock returns the end block for the given batch index. This function will panic if the
+// batchIndex is less than the BatchConfig's StartBatchIndex.
+func (bc *BatchConfig) BatchEndBlock(batchIndex uint64) uint64 {
+	return bc.BatchStartBlock(batchIndex) + bc.BatchSpan
+}
+
 // BatchIndex returns the BatchIndex for the given blockNumber. This function will panic if the
 // blockNumber is less than the BatchConfig's StartBlockNumber. If the BatchConfig is not active,
 // i.e. it's BatchSpan is zero, it will return the StartBatchIndex for all blockNumbers.
