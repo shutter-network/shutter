@@ -12,15 +12,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
-// BatchParams desribes the parameters to be used for a single batch
-type BatchParams struct {
-	BatchIndex            uint64
-	StartBlock            uint64
-	EndBlock              uint64
-	ExecutionTimeoutBlock uint64
-	BatchConfig           *BatchConfig
-}
-
 // KeyperIndex returns the index of the keyper identified by the given address
 func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	for i, k := range bc.Keypers {
@@ -63,35 +54,6 @@ func (bc *BatchConfig) BatchIndex(blockNumber uint64) uint64 {
 		return bc.StartBatchIndex
 	}
 	return bc.StartBatchIndex + (blockNumber-bc.StartBlockNumber)/bc.BatchSpan
-}
-
-func MakeBatchParams(bc *BatchConfig, batchIndex uint64) (BatchParams, error) {
-	batchSpan := bc.BatchSpan
-	startBatchIndex := bc.StartBatchIndex
-	if batchIndex < startBatchIndex {
-		return BatchParams{}, fmt.Errorf("bad parameters: %d %d", batchIndex, startBatchIndex)
-	}
-
-	startBlock := bc.StartBlockNumber + batchSpan*(batchIndex-startBatchIndex)
-	endBlock := startBlock + batchSpan
-	executionTimeoutBlock := endBlock + bc.ExecutionTimeout
-
-	return BatchParams{
-		BatchIndex:            batchIndex,
-		StartBlock:            startBlock,
-		EndBlock:              endBlock,
-		ExecutionTimeoutBlock: executionTimeoutBlock,
-		BatchConfig:           bc,
-	}, nil
-}
-
-// QueryBatchParams queries the config contract for the batch parameters of the given batch index.
-func (cc *ConfigContract) QueryBatchParams(opts *bind.CallOpts, batchIndex uint64) (BatchParams, error) {
-	bc, err := cc.GetConfig(opts, batchIndex)
-	if err != nil {
-		return BatchParams{}, err
-	}
-	return MakeBatchParams(&bc, batchIndex)
 }
 
 // NextBatchIndex determines the next batch index to be started after the given block number.
