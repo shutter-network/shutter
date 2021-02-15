@@ -972,12 +972,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 		log.Printf("unexpected error: %s", err)
 		return // shouldn't happen
 	}
-	batchParams, err := contract.MakeBatchParams(&config, batchIndex)
-	if err != nil {
-		log.Printf("unexpected error: %s", err)
-		return // shouldn't happen
-	}
-	executionBlock := batchParams.EndBlock + delay
+	executionBlock := config.BatchStartBlock(batchIndex) + config.BatchSpan + delay
 	if dcdr.MainChain.CurrentBlock < executionBlock {
 		return // wait for other keypers first
 	}
