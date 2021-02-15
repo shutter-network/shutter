@@ -1050,7 +1050,7 @@ func (dcdr *Decider) syncPendingAppeals() {
 	}
 }
 
-// ExecutionDelay returns the number of main chain blocks to wait before sending an execution tx.
+// executionDelay returns the number of main chain blocks to wait before sending an execution tx.
 // This makes sure not all keypers try to send the same tx at the same time.
 func (dcdr *Decider) executionDelay(halfStep uint64) (uint64, error) {
 	batchIndex := halfStep / 2
