@@ -941,17 +941,19 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	if nextHalfStep >= batchIndex*2 {
 		return // everything has been executed already
 	}
-
-	dcdr.maybeExecuteHalfStep(nextHalfStep)
-}
-
-func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 	if dcdr.State.PendingHalfStep != nil {
 		// Don't try to execute anything if there's already a pending transaction executing the
 		// current or another half step. Rather, wait for that tx to confirm first.
 		return
 	}
 
+	if action := dcdr.maybeExecuteHalfStep(nextHalfStep); action != nil {
+		dcdr.addAction(action)
+		dcdr.State.PendingHalfStep = &nextHalfStep
+	}
+}
+
+func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
 	batchIndex := nextHalfStep / 2
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
@@ -960,49 +962,46 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) {
 
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
 	if !ok {
-		return // nothing to do if config is inactive
+		return nil // nothing to do if config is inactive
 	}
 	keyperIndex, ok := config.KeyperIndex(dcdr.Config.Address())
 	if !ok {
-		return // only keypers can execute
+		return nil // only keypers can execute
 	}
 
 	delay, err := dcdr.executionDelay(nextHalfStep)
 	if err != nil {
 		log.Printf("unexpected error: %s", err)
-		return // shouldn't happen
+		return nil // shouldn't happen
 	}
 	executionBlock := config.BatchStartBlock(batchIndex) + config.BatchSpan + delay
 	if dcdr.MainChain.CurrentBlock < executionBlock {
-		return // wait for other keypers first
+		return nil // wait for other keypers first
 	}
 
-	var action IAction
 	if nextHalfStep%2 == 0 {
 		stBatch, ok := dcdr.State.Batches[batchIndex]
 		if !ok {
 			log.Printf("Error: maybeExecuteHalfStep: no batch for %d", batchIndex)
-			return
+			return nil
 		}
 
 		if uint64(stBatch.SignatureCount) < config.Threshold {
 			log.Printf("Error: not enough votes for batch %d", batchIndex)
-			return
+			return nil
 		}
-		action = ExecuteCipherBatch{
+		return ExecuteCipherBatch{
 			batchIndex:      batchIndex,
 			cipherBatchHash: batch.EncryptedBatchHash,
 			transactions:    stBatch.DecryptedTransactions,
 			keyperIndex:     keyperIndex,
 		}
 	} else {
-		action = ExecutePlainBatch{
+		return ExecutePlainBatch{
 			batchIndex:   batchIndex,
 			transactions: batch.PlainTransactions,
 		}
 	}
-	dcdr.State.PendingHalfStep = &nextHalfStep
-	dcdr.addAction(action)
 }
 
 // maybeAppeal checks if there are any accusations against us and if so sends an appeal if possible.
