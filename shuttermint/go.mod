@@ -32,7 +32,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.3
+	github.com/tendermint/tendermint v0.34.4
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/mod v0.4.1 // indirect
