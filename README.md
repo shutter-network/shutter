@@ -20,9 +20,9 @@ found in `shuttermint/bin` after `make build` has been run in the `shuttermint/`
 ### 1) Start the Ethereum Dev Chain
 
 There are many options, but we suggest using either Geth or Ganache with a block time of 3s. Make
-sure that the JSON RPC interface is enabled (using either HTTP or websockets) and that you know the
+sure that the JSON RPC interface is enabled and accessible via websockets and that you know the
 private key of at least one funded account. In the rest of the guide, we'll assume the JSON RPC URL
-is `http://localhost:8545` and the private key is
+is `ws://localhost:8545` and the private key is
 `b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773`. If Ganache is used, the
 following command replicates these settings:
 
@@ -35,7 +35,7 @@ ganache-cli -d -b 3
 Next, the Shutter contract suite has to be deployed on the dev chain:
 
 ```
-deploy deploy -e http://localhost:8545 -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 > contracts.json
+deploy deploy -e ws://localhost:8545 -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 -o contracts.json
 ```
 
 This will output the addresses into a JSON file for later reference.
@@ -45,7 +45,7 @@ This will output the addresses into a JSON file for later reference.
 Now, we can initialize the keypers. Running
 
 ```
-prepare configs -c contracts.json -e http://localhost:8545 --fixed-shuttermint-port -n 3
+prepare configs -c contracts.json -e ws://localhost:8545 --fixed-shuttermint-port -n 3
 ```
 
 creates a new directory called `testrun` (customizable via the `-d` flag) with one subdirectory for
@@ -145,7 +145,7 @@ Lastly, the Shuttermint chain has to be told about the initial keyper set. To do
 following command, substituting the config contract address from `contracts.json`:
 
 ```
-shuttermint bootstrap -c <config contract address> -k b0057716d5917badaf911b193b12b910811c1497b5bad -e http://localhost:8545
+shuttermint bootstrap -c <config contract address> -k b0057716d5917badaf911b193b12b910811c1497b5bad -e ws://localhost:8545
 ```
 
 ### 6) Run the Keypers
