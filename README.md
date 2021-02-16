@@ -145,7 +145,7 @@ Lastly, the Shuttermint chain has to be told about the initial keyper set. To do
 following command, substituting the config contract address from `contracts.json`:
 
 ```
-shuttermint bootstrap -c <config contract address> -k b0057716d5917badaf911b193b12b910811c1497b5bad -e ws://localhost:8545
+shuttermint bootstrap -c <config contract address> -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 -e ws://localhost:8545
 ```
 
 ### 6) Run the Keypers
