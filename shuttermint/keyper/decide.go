@@ -383,7 +383,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a SkipCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: skip plain batch %d", a.batchIndex)
+	return fmt.Sprintf("-> executor contract: skip cipher batch %d", a.batchIndex)
 }
 
 // Accuse is an action accusing the executor of a given half step at the keyper slasher.
