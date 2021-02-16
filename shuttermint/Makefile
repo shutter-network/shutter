@@ -42,7 +42,7 @@ clean:
 	rm -rf ${TESTROOT}
 	rm -f bin/shuttermint bin/testclient bin/keyper bin/deploy bin/prepare
 
-install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-stringer
+install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-stringer install-gci
 
 install-geth:
 	${GO} install github.com/ethereum/go-ethereum/cmd/geth
@@ -59,11 +59,14 @@ install-golangci-lint:
 install-cobra:
 	${GO} install github.com/spf13/cobra/cobra
 
-install-gofumports:
-	${GO} install mvdan.cc/gofumpt/gofumports
+install-gofumpt:
+	${GO} install mvdan.cc/gofumpt
 
 install-stringer:
 	${GO} install golang.org/x/tools/cmd/stringer
+
+install-gci:
+	${GO} install github.com/daixiang0/gci
 
 lint:
 	golangci-lint run --tests
@@ -78,4 +81,4 @@ abigen:
 deploy-ganache:
 	${GO} run ./sandbox/deploy/deploy.go deploy
 
-.PHONY: build run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumports install-tools lint lint-changes abigen coverage
+.PHONY: build run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-tools lint lint-changes abigen coverage

@@ -100,14 +100,14 @@ jobs:
             sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
 
       - restore_cache:
-          key: pre-commit-cache-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
       - run:
           name: Install pre-commit
           command: |
             pip install --user -c requirements.txt pre-commit
             pre-commit install-hooks -c pre-commit-config
       - save_cache:
-          key: pre-commit-cache-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
           paths:
             - ~/.cache/pre-commit
             - ~/.local

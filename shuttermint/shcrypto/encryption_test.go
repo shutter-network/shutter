@@ -95,16 +95,16 @@ func TestPadding(t *testing.T) {
 
 func TestUnpadding(t *testing.T) {
 	invalidBs := [][]string{
-		[]string{
+		{
 			strings.Repeat("00", 32),
 		},
-		[]string{
+		{
 			"aabbcc" + strings.Repeat("00", 29),
 		},
-		[]string{
+		{
 			strings.Repeat("21", 32),
 		},
-		[]string{
+		{
 			strings.Repeat("99", 32),
 			strings.Repeat("00", 32),
 		},

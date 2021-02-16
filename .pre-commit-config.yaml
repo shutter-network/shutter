@@ -29,10 +29,18 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: ac0f6582d2484b3aa90b05d568e70f9f3c1374c7
+  - repo: https://github.com/schmir-at-bb/gci
+    rev: "9283498f6ee8b0be960df5bf6bca058422eb971b"
     hooks:
-      - id: go-fmt
+      - id: gci
+        args: ["-local", "github.com/brainbot-com/shutter"]
+        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/.*\.pb\.go|shuttermint/shcryptowasm/.*_wasm\.go$
+
+  - repo: https://github.com/schmir-at-bb/gofumpt
+    rev: "45be18d02b08dbeeb38ce0b092ba41fef322b482"
+    hooks:
+      - id: gofumpt
+        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/.*\.pb\.go$
 
   # CircleCI stop here
 
@@ -69,11 +77,3 @@ repos:
         types: [python]
         args: ["contracts/tests/", "noxfile.py"]
         pass_filenames: False
-      - id: gofumports
-        name: gofumports
-        entry: gofumports
-        language: system
-        types: [go]
-        args: ["-w", "-local", "github.com/brainbot-com/shutter"]
-        pass_filenames: True
-        exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/.*\.pb\.go$

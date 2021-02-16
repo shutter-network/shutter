@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/DataDog/zstd v1.4.5 // indirect
+	github.com/daixiang0/gci v0.2.8
 	github.com/dgraph-io/ristretto v0.0.3 // indirect
 	github.com/dlclark/regexp2 v1.2.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.25

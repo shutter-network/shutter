@@ -79,7 +79,7 @@ func TestMessageParsing(t *testing.T) {
 		smsg := shmsg.Apology{
 			Eon:       eon,
 			Accusers:  [][]byte{anotherAddressBytes},
-			PolyEvals: [][]byte{[]byte{}},
+			PolyEvals: [][]byte{{}},
 		}
 		msg, err := ParseApologyMsg(&smsg, sender)
 		require.Nil(t, err)

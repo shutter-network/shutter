@@ -13,15 +13,15 @@ import (
 
 func TestNewPolynomial(t *testing.T) {
 	validCoefficients := [][]*big.Int{
-		[]*big.Int{
+		{
 			big.NewInt(10),
 		},
-		[]*big.Int{
+		{
 			big.NewInt(0),
 			big.NewInt(10),
 			big.NewInt(20),
 		},
-		[]*big.Int{
+		{
 			new(big.Int).Sub(bn256.Order, big.NewInt(1)),
 		},
 	}
@@ -36,11 +36,11 @@ func TestNewPolynomial(t *testing.T) {
 	}
 
 	invalidCoefficients := [][]*big.Int{
-		[]*big.Int{},
-		[]*big.Int{
+		{},
+		{
 			big.NewInt(-1),
 		},
-		[]*big.Int{
+		{
 			bn256.Order,
 		},
 	}
