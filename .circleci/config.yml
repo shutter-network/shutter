@@ -7,10 +7,6 @@ commands:
           name: Fingerprint the python installation
           command: |
             python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
-      - run:
-          name: Disable pip version check
-          command: |
-            echo >> ${BASH_ENV} export PIP_DISABLE_PIP_VERSION_CHECK=1
       - restore_cache:
           key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
       - run:
@@ -27,12 +23,8 @@ commands:
           name: Install go
           command: |
             curl -sSL "https://golang.org/dl/go1.15.8.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
-      - run:
-          name: Configure go
-          command: |
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
-
   install-ganache:
     steps:
       - run:
@@ -44,11 +36,15 @@ executors:
   py37:
     docker:
       - image: cimg/python:3.7
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
   go:
     docker:
       - image: cimg/go:1.15-node
         environment:
           GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
 jobs:
   lint:
     executor: py37
@@ -161,8 +157,11 @@ jobs:
           keys:
             - shuttermint-go-v7-{{ checksum "go.sum" }}
       - run: make build wasm
-      - run: mkdir report
-      - run: gotestsum -f standard-verbose --junitfile report/unit-tests.xml
+      - run:
+          name: "Run tests with gotestsum"
+          command: |
+            mkdir report
+            gotestsum -f standard-verbose --junitfile report/unit-tests.xml
       - store_test_results:
           path: report
       - save_cache:
