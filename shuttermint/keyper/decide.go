@@ -257,7 +257,7 @@ type State struct {
 	EKGs                     []*EKG
 	PendingHalfStep          *uint64
 	PendingAppeals           map[uint64]struct{}
-	LastEpochSecretShareSent uint64
+	NextEpochSecretShare     uint64
 	Batches                  map[uint64]*Batch
 }
 
@@ -865,7 +865,7 @@ func (dcdr *Decider) publishEpochSecretKeyShares() {
 	// publish the private epoch key share for batch indexes < currentBatchIndex
 	// TODO Limit the number of messages we sent. It doesn't make sense to publish the secret
 	// key share, if the batch already finished/failed.
-	for batchIndex := dcdr.State.LastEpochSecretShareSent; batchIndex < currentBatchIndex; batchIndex++ {
+	for batchIndex := dcdr.State.NextEpochSecretShare; batchIndex < currentBatchIndex; batchIndex++ {
 		dcdr.publishEpochSecretKeyShare(batchIndex)
 	}
 }
@@ -883,7 +883,7 @@ func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uin
 			shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
 		)
 	}
-	dcdr.State.LastEpochSecretShareSent = epoch
+	dcdr.State.NextEpochSecretShare = epoch + 1
 }
 
 func (dcdr *Decider) syncBatch(batch *Batch) {
