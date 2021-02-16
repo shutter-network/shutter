@@ -104,25 +104,25 @@ Make sure to fill in the following fields:
 Now, send the config to the config contract:
 
 ```
-config -c contracts.json set-next --config config.json -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773
+config -c contracts.json -e ws://localhost:8545 set-next --config config.json -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773
 ```
 
 After all transactions have been confirmed, double check that the contract has accepted everything:
 
 ```
-config -c contracts.json query -i next | diff config.json -
+config -c contracts.json -e ws://localhost:8545 query -i next | diff config.json -
 ```
 
 If so (i.e., the output is empty), schedule the config with
 
 ```
-config -c contracts.json schedule -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773
+config -c contracts.json -e ws://localhost:8545 schedule -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773
 ```
 
 and, once more,
 
 ```
-config -c contracts.json query -i last | diff config.json -
+config -c contracts.json -e ws://localhost:8545 query -i last | diff config.json -
 ```
 
 double check that the changes are live.
