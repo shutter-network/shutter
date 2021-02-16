@@ -182,9 +182,10 @@ func init() {
 }
 
 func initRootFlags() {
-	rootCmd.PersistentFlags().StringVar(
+	rootCmd.PersistentFlags().StringVarP(
 		&rootFlags.Key,
 		"key",
+		"k",
 		hexutil.Encode(crypto.FromECDSA(sandbox.GanacheKey(ganacheKeyIdx))),
 		"private key of deployer account",
 	)
@@ -194,9 +195,10 @@ func initRootFlags() {
 		"",
 		"gas price in GWei (default: use suggested one)",
 	)
-	rootCmd.PersistentFlags().StringVar(
+	rootCmd.PersistentFlags().StringVarP(
 		&rootFlags.EthereumURL,
 		"ethereum-url",
+		"e",
 		"ws://localhost:8545/websocket",
 		"Ethereum RPC URL",
 	)
