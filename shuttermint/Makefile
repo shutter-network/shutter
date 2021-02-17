@@ -4,8 +4,6 @@ GO ?= go
 SHROOT ?= $(CURDIR)
 TESTROOT=$(SHROOT)/testchain
 
-VERSION=$(shell git describe --tags --always --abbrev=4 --dirty)
-
 OPENZEPPELIN_CONTRACTS=OpenZeppelin/openzeppelin-contracts@3.3.0
 OPENZEPPELIN_CONTRACTS_DIR=../contracts/openzeppelin
 
