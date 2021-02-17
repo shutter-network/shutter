@@ -22,7 +22,7 @@ commands:
       - run:
           name: Install go
           command: |
-            curl -sSL "https://golang.org/dl/go1.15.8.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            curl -sSL "https://golang.org/dl/go1.16.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
   install-ganache:
@@ -41,7 +41,7 @@ executors:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
   go:
     docker:
-      - image: cimg/go:1.15-node
+      - image: cimg/go:1.16
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -96,14 +96,14 @@ jobs:
             sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
 
       - restore_cache:
-          key: pre-commit-cache-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v6-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
       - run:
           name: Install pre-commit
           command: |
             pip install --user -c requirements.txt pre-commit
             pre-commit install-hooks -c pre-commit-config
       - save_cache:
-          key: pre-commit-cache-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v6-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
           paths:
             - ~/.cache/pre-commit
             - ~/.local
@@ -155,7 +155,7 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v7-{{ checksum "go.sum" }}
+            - shuttermint-go-v8-{{ checksum "go.sum" }}
       - run: make build wasm
       - run:
           name: "Run tests with gotestsum"
@@ -165,7 +165,7 @@ jobs:
       - store_test_results:
           path: report
       - save_cache:
-          key: shuttermint-go-v7-{{ checksum "go.sum" }}
+          key: shuttermint-go-v8-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
@@ -178,11 +178,11 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - lint-shuttermint-go-v2-{{ checksum "go.sum" }}
+            - lint-shuttermint-go-v3-{{ checksum "go.sum" }}
       - run: make install-golangci-lint
       - run: make lint-changes
       - save_cache:
-          key: lint-shuttermint-go-v2-{{ checksum "go.sum" }}
+          key: lint-shuttermint-go-v3-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
