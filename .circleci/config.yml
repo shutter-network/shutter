@@ -188,11 +188,11 @@ jobs:
           path: ~/shutter
       - restore_cache:
           keys:
-            - lint-shuttermint-go-v5-{{ checksum "go.sum" }}
-      - run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0
+            - lint-shuttermint-go-v6-{{ checksum "go.sum" }}
+      - run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.37.0
       - run: make lint-changes
       - save_cache:
-          key: lint-shuttermint-go-v5-{{ checksum "go.sum" }}
+          key: lint-shuttermint-go-v6-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
