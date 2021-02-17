@@ -45,6 +45,13 @@ executors:
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go115:
+    docker:
+      - image: cimg/go:1.15
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
 jobs:
   lint:
     executor: py37
@@ -148,14 +155,17 @@ jobs:
             - ~/.solcx
 
   mint-build:
-    executor: go
+    parameters:
+      go-version:
+        type: string
+    executor: << parameters.go-version >>
     working_directory: ~/shutter/shuttermint
     steps:
       - checkout:
           path: ~/shutter
       - restore_cache:
           keys:
-            - shuttermint-go-v8-{{ checksum "go.sum" }}
+            - shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
       - run: make build wasm
       - run:
           name: "Run tests with gotestsum"
@@ -165,7 +175,7 @@ jobs:
       - store_test_results:
           path: report
       - save_cache:
-          key: shuttermint-go-v8-{{ checksum "go.sum" }}
+          key: shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
           paths:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
@@ -199,7 +209,10 @@ workflows:
 
   shuttermint:
     jobs:
-      - mint-build
+      - mint-build:
+          matrix:
+            parameters:
+              go-version: [go, go115]
       - mint-lint:
           filters:
             branches:
