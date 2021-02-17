@@ -45,7 +45,7 @@ clean:
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-stringer install-gci
 
 install-geth:
-	${GO} install github.com/ethereum/go-ethereum/cmd/geth
+	${GO} install github.com/ethereum/go-ethereum/cmd/geth@latest
 
 install-abigen:
 	${GO} install github.com/ethereum/go-ethereum/cmd/abigen
@@ -54,19 +54,19 @@ install-protoc-gen-go:
 	${GO} install google.golang.org/protobuf/cmd/protoc-gen-go
 
 install-golangci-lint:
-	${GO} install github.com/golangci/golangci-lint/cmd/golangci-lint
+	${GO} install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 install-cobra:
-	${GO} install github.com/spf13/cobra/cobra
+	${GO} install github.com/spf13/cobra/cobra@latest
 
 install-gofumpt:
-	${GO} install mvdan.cc/gofumpt
+	${GO} install mvdan.cc/gofumpt@latest
 
 install-stringer:
 	${GO} install golang.org/x/tools/cmd/stringer
 
 install-gci:
-	${GO} install github.com/daixiang0/gci
+	${GO} install github.com/daixiang0/gci@latest
 
 lint:
 	golangci-lint run --tests
