@@ -347,11 +347,20 @@ func TestComputeEpochSecretKey(t *testing.T) {
 	_, err = ComputeEpochSecretKey([]int{0}, epochSecretKeyShares[:2], threshold)
 	require.NotNil(t, err)
 
-	epochSecretKey12, err := ComputeEpochSecretKey([]int{0, 1}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]}, threshold)
+	epochSecretKey12, err := ComputeEpochSecretKey(
+		[]int{0, 1},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
+		threshold)
 	require.Nil(t, err)
-	epochSecretKey13, err := ComputeEpochSecretKey([]int{0, 2}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]}, threshold)
+	epochSecretKey13, err := ComputeEpochSecretKey(
+		[]int{0, 2},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]},
+		threshold)
 	require.Nil(t, err)
-	epochSecretKey23, err := ComputeEpochSecretKey([]int{1, 2}, []*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]}, threshold)
+	epochSecretKey23, err := ComputeEpochSecretKey(
+		[]int{1, 2},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]},
+		threshold)
 	require.Nil(t, err)
 
 	require.True(t, EqualG1((*bn256.G1)(epochSecretKey12), (*bn256.G1)(epochSecretKey13)))
@@ -400,12 +409,21 @@ func TestFull(t *testing.T) {
 		require.True(t, VerifyEpochSecretKeyShare(epochSecretKeyShares[i], eonPublicKeyShares[i], epochID))
 	}
 
-	epochSecretKey, err := ComputeEpochSecretKey([]int{0, 1}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]}, threshold)
+	epochSecretKey, err := ComputeEpochSecretKey(
+		[]int{0, 1},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
+		threshold)
 	require.Nil(t, err)
 
-	epochSecretKey13, err := ComputeEpochSecretKey([]int{0, 2}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]}, threshold)
+	epochSecretKey13, err := ComputeEpochSecretKey(
+		[]int{0, 2},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]},
+		threshold)
 	require.Nil(t, err)
-	epochSecretKey23, err := ComputeEpochSecretKey([]int{1, 2}, []*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]}, threshold)
+	epochSecretKey23, err := ComputeEpochSecretKey(
+		[]int{1, 2},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]},
+		threshold)
 	require.Nil(t, err)
 	require.True(t, EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(epochSecretKey13)))
 	require.True(t, EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(epochSecretKey23)))

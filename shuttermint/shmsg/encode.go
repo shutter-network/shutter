@@ -17,7 +17,7 @@ import (
 var hashPrefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
 
 // SignMessage signs the given Message with the given private key
-func SignMessage(msg *MessageWithNonce, privkey *ecdsa.PrivateKey) ([]byte, error) {
+func SignMessage(msg proto.Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 	marshaled, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err

@@ -29,8 +29,6 @@ import (
 )
 
 const (
-	runSleepTime = 10 * time.Second
-
 	// watchedTransactionsBufferSize is the maximum number of txs to watch. If this is too small,
 	// actions will stall.
 	watchedTransactionsBufferSize = 100

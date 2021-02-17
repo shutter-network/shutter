@@ -233,7 +233,10 @@ func TestRoundTrip(t *testing.T) {
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
 	require.True(t, EqualG2(new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey)))
-	epochSecretKey, err := ComputeEpochSecretKey([]int{0, 1}, []*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]}, threshold)
+	epochSecretKey, err := ComputeEpochSecretKey(
+		[]int{0, 1},
+		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
+		threshold)
 	require.Nil(t, err)
 
 	// now encrypt and decrypt message
