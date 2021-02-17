@@ -19,28 +19,24 @@ def test_broadcasting_checks_sender(
     config = make_batch_config(start_batch_index=0, keypers=keyper_addresses, batch_span=1)
     schedule_config(config_contract, config, owner=owner)
 
-    batch_index = 10
-    encryption_key = make_bytes(32)
-    signer_indices = [0, 1]
-    signatures = [make_bytes() for _ in signer_indices]
+    start_batch_index = 10
+    key = make_bytes(32)
 
     for keyper_index, sender in [
         (1, accounts[5]),
         (1, keypers[2]),
-        (3, keypers[0]),
     ]:
-        with brownie.reverts():
-            key_broadcast_contract.broadcastEncryptionKey(
-                keyper_index,
-                batch_index,
-                encryption_key,
-                signer_indices,
-                signatures,
-                {"from": sender},
+        with brownie.reverts("KeyBroadcastContract: sender is not keyper"):
+            key_broadcast_contract.vote(
+                keyper_index, start_batch_index, key, {"from": sender},
             )
+    with brownie.reverts("KeyBroadcastContract: keyper index out of range"):
+        key_broadcast_contract.vote(
+            3, start_batch_index, key, {"from": keypers[0]},
+        )
 
 
-def test_emit_event(
+def test_vote(
     key_broadcast_contract: Any, config_contract: Any, owner: Account, accounts: Sequence[Account]
 ) -> None:
     keypers = accounts[1:4]
@@ -48,22 +44,30 @@ def test_emit_event(
     config = make_batch_config(start_batch_index=0, keypers=keyper_addresses, batch_span=1)
     schedule_config(config_contract, config, owner=owner)
 
-    keyper_index = 1
-    sender = keypers[keyper_index]
-    batch_index = 10
-    encryption_key = make_bytes(32)
-    signer_indices = [0, 1]
-    signatures = [make_bytes() for _ in signer_indices]
+    index1 = 1
+    index2 = 2
+    sender1 = keypers[index1]
+    sender2 = keypers[index2]
+    start_batch_index = 10
+    key = make_bytes(32)
 
-    tx = key_broadcast_contract.broadcastEncryptionKey(
-        keyper_index, batch_index, encryption_key, signer_indices, signatures, {"from": sender}
-    )
-
-    assert len(tx.events) == 1
-    assert tx.events[0] == {
-        "sender": sender,
-        "batchIndex": batch_index,
-        "encryptionKey": encode_hex(encryption_key),
-        "signerIndices": signer_indices,
-        "signatures": [encode_hex(s) for s in signatures],
+    tx1 = key_broadcast_contract.vote(index1, start_batch_index, key, {"from": sender1})
+    assert len(tx1.events) == 1
+    assert tx1.events["Voted"][0] == {
+        "keyper": sender1,
+        "startBatchIndex": start_batch_index,
+        "key": encode_hex(key),
+        "numVotes": 1,
     }
+
+    tx2 = key_broadcast_contract.vote(index2, start_batch_index, key, {"from": sender2})
+    assert len(tx2.events) == 1
+    assert tx2.events["Voted"][0] == {
+        "keyper": sender2,
+        "startBatchIndex": start_batch_index,
+        "key": encode_hex(key),
+        "numVotes": 2,
+    }
+
+    with brownie.reverts("KeyBroadcastContract: keyper has already voted"):
+        key_broadcast_contract.vote(index1, start_batch_index, make_bytes(32), {"from": sender1})
