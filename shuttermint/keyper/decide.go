@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -441,6 +442,40 @@ func (a Appeal) String() string {
 	return fmt.Sprintf("-> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
 }
 
+// EonKeyBroadcast is an action sending a vote for an eon public key to the key broadcast contract.
+type EonKeyBroadcast struct {
+	keyperIndex     uint64
+	startBatchIndex uint64
+	eonPublicKey    *shcrypto.EonPublicKey
+}
+
+func (a EonKeyBroadcast) Run(ctx context.Context, runenv IRunEnv) error {
+	log.Printf("Run: %s", a)
+
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+
+	tx, err := cc.KeyBroadcastContract.Vote(
+		auth,
+		a.keyperIndex,
+		a.startBatchIndex,
+		(*bn256.G2)(a.eonPublicKey).Marshal(),
+	)
+	if err != nil {
+		return err
+	}
+	runenv.WatchTransaction(tx)
+
+	return nil
+}
+
+func (a EonKeyBroadcast) String() string {
+	return fmt.Sprintf("-> key broadcast contract: voting for eon key with start batch %d", a.startBatchIndex)
+}
+
 var errEKGNotFound = errors.New("EKG not found")
 
 func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
@@ -668,6 +703,16 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 		EpochKG: epochkg.NewEpochKG(&dkgresult),
 	}
 	dcdr.State.EKGs = append(dcdr.State.EKGs, ekg)
+	dcdr.broadcastEonPublicKey(&dkgresult, dkg.StartBatchIndex)
+}
+
+func (dcdr *Decider) broadcastEonPublicKey(dkgResult *puredkg.Result, startBatchIndex uint64) {
+	action := EonKeyBroadcast{
+		keyperIndex:     dkgResult.Keyper,
+		startBatchIndex: startBatchIndex,
+		eonPublicKey:    dkgResult.PublicKey,
+	}
+	dcdr.addAction(action)
 }
 
 func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {

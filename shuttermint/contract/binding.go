@@ -8969,19 +8969,19 @@ func (_IERC777Sender *IERC777SenderTransactorSession) TokensToSend(operator comm
 }
 
 // KeyBroadcastContractABI is the input ABI used to generate the binding from.
-const KeyBroadcastContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_configContractAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"batchIndex\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"encryptionKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"uint64[]\",\"name\":\"signerIndices\",\"type\":\"uint64[]\"},{\"indexed\":false,\"internalType\":\"bytes[]\",\"name\":\"signatures\",\"type\":\"bytes[]\"}],\"name\":\"EncryptionKeyBroadcasted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_keyperIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"_batchIndex\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"_encryptionKey\",\"type\":\"bytes32\"},{\"internalType\":\"uint64[]\",\"name\":\"_signerIndices\",\"type\":\"uint64[]\"},{\"internalType\":\"bytes[]\",\"name\":\"_signatures\",\"type\":\"bytes[]\"}],\"name\":\"broadcastEncryptionKey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"configContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const KeyBroadcastContractABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"configContractAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"keyper\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"key\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"numVotes\",\"type\":\"uint64\"}],\"name\":\"Voted\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getConfigContract\",\"outputs\":[{\"internalType\":\"contractConfigContract\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"key\",\"type\":\"bytes\"}],\"name\":\"getNumVotes\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"keyper\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"}],\"name\":\"hasVoted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"keyperIndex\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"startBatchIndex\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"key\",\"type\":\"bytes\"}],\"name\":\"vote\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // KeyBroadcastContractBin is the compiled bytecode used for deploying new contracts.
-var KeyBroadcastContractBin = "0x608060405234801561001057600080fd5b5060405161079238038061079283398101604081905261002f91610054565b600080546001600160a01b0319166001600160a01b0392909216919091179055610082565b600060208284031215610065578081fd5b81516001600160a01b038116811461007b578182fd5b9392505050565b610701806100916000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80632712860b1461003b578063bf66a18214610050575b600080fd5b61004e61004936600461041d565b61006e565b005b6100586101cb565b60405161006591906105c4565b60405180910390f35b6000805460405163700465b160e11b81526001600160a01b039091169063e008cb629061009f908a90600401610679565b60006040518083038186803b1580156100b757600080fd5b505afa1580156100cb573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f191682016040526100f391908101906102e5565b90508060400151518867ffffffffffffffff161061012c5760405162461bcd60e51b81526004016101239061062a565b60405180910390fd5b80604001518867ffffffffffffffff168151811061014657fe5b60200260200101516001600160a01b0316336001600160a01b03161461017e5760405162461bcd60e51b8152600401610123906105d8565b7f4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a338888888888886040516101b997969594939291906104b9565b60405180910390a15050505050505050565b6000546001600160a01b031681565b80516001600160a01b03811681146101f157600080fd5b919050565b600082601f830112610206578081fd5b8151602067ffffffffffffffff82111561021c57fe5b80820261022a82820161068e565b838152828101908684018388018501891015610244578687fd5b8693505b8584101561026d57610259816101da565b835260019390930192918401918401610248565b50979650505050505050565b60008083601f84011261028a578081fd5b50813567ffffffffffffffff8111156102a1578182fd5b60208301915083602080830285010111156102bb57600080fd5b9250929050565b80516001600160e01b0319811681146101f157600080fd5b80516101f1816106b2565b6000602082840312156102f6578081fd5b815167ffffffffffffffff8082111561030d578283fd5b8184019150610180808387031215610323578384fd5b61032c8161068e565b9050610337836102da565b8152610345602084016102da565b602082015260408301518281111561035b578485fd5b610367878286016101f6565b604083015250610379606084016102da565b606082015261038a608084016102da565b608082015261039b60a084016102da565b60a08201526103ac60c084016102da565b60c08201526103bd60e084016102da565b60e082015261010091506103d28284016101da565b8282015261012091506103e68284016101da565b8282015261014091506103fa8284016102c2565b82820152610160915061040e8284016102da565b91810191909152949350505050565b600080600080600080600060a0888a031215610437578283fd5b8735610442816106b2565b96506020880135610452816106b2565b955060408801359450606088013567ffffffffffffffff80821115610475578485fd5b6104818b838c01610279565b909650945060808a0135915080821115610499578384fd5b506104a68a828b01610279565b989b979a50959850939692959293505050565b6001600160a01b038816815267ffffffffffffffff8781166020808401919091526040830188905260a060608401819052830186905260009187919060c08501845b8981101561052257843561050e816106b2565b8316825293830193908301906001016104fb565b50858103608087015286815282810193508287028101830188865b898110156105b057601f19808585030188528235601e198d360301811261056257898afd5b8c01803587811115610572578a8bfd5b8036038e1315610580578a8bfd5b808652808983018a88013785810189018b905298880198601f01909116909301860192509085019060010161053d565b50909e9d5050505050505050505050505050565b6001600160a01b0391909116815260200190565b60208082526032908201527f4b657942726f616463617374436f6e74726163743a2073656e64657220646f6560408201527139903737ba1036b0ba31b41035b2bcb832b960711b606082015260800190565b6020808252602f908201527f4b657942726f616463617374436f6e74726163743a206b657970657220696e6460408201526e6578206f7574206f662072616e676560881b606082015260800190565b67ffffffffffffffff91909116815260200190565b60405181810167ffffffffffffffff811182821017156106aa57fe5b604052919050565b67ffffffffffffffff811681146106c857600080fd5b5056fea2646970667358221220741b1a703aa3066457e77539a8d23739f6edbe850ab674900146630e09d6718464736f6c63430007060033"
+var KeyBroadcastContractBin = "0x608060405234801561001057600080fd5b50604051610a7e380380610a7e83398101604081905261002f91610054565b600080546001600160a01b0319166001600160a01b0392909216919091179055610082565b600060208284031215610065578081fd5b81516001600160a01b038116811461007b578182fd5b9392505050565b6109ed806100916000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80630e1c3a4a146100515780631845bf5c1461006f5780636b32c7951461008f578063cf1d7a0a146100a4575b600080fd5b6100596100c4565b60405161006691906107a2565b60405180910390f35b61008261007d3660046106eb565b6100d3565b60405161006691906108e5565b6100a261009d366004610738565b610103565b005b6100b76100b236600461057c565b61038d565b6040516100669190610797565b6000546001600160a01b031690565b6001600160401b039182166000908152600260209081526040808320845194830194909420835292905220541690565b6000805460405163700465b160e11b81526001600160a01b039091169063e008cb62906101349086906004016108e5565b60006040518083038186803b15801561014c57600080fd5b505afa158015610160573d6000803e3d6000fd5b505050506040513d6000823e601f3d908101601f1916820160405261018891908101906105b4565b9050600081608001516001600160401b0316116101c05760405162461bcd60e51b81526004016101b7906107b6565b60405180910390fd5b806040015151846001600160401b0316106101ed5760405162461bcd60e51b81526004016101b790610848565b8060400151846001600160401b03168151811061020657fe5b60200260200101516001600160a01b0316336001600160a01b03161461023e5760405162461bcd60e51b81526004016101b7906107fe565b6001600160401b038316600090815260016020908152604080832033845290915290205460ff16156102825760405162461bcd60e51b81526004016101b790610897565b815160208084019190912060008181526003909252604090912054600260001961010060018416150201909116041580156102bc57508251155b156102e257600081815260036020908152604090912084516102e0928601906103c0565b505b6001600160401b0384811660008181526002602090815260408083208684528083528184208054958552600180855283862033808852908652848720805460ff1916831790559589905291909352825467ffffffffffffffff19169486160194851693909317905590517f305124b6ec831bb4150eb1ddbd4e8cc4b95687b9a6258b110fd0e9865914b0bf9061037d908890889086906108f9565b60405180910390a2505050505050565b6001600160401b031660009081526001602090815260408083206001600160a01b03949094168352929052205460ff1690565b828054600181600116156101000203166002900490600052602060002090601f0160209004810192826103f6576000855561043c565b82601f1061040f57805160ff191683800117855561043c565b8280016001018555821561043c579182015b8281111561043c578251825591602001919060010190610421565b5061044892915061044c565b5090565b5b80821115610448576000815560010161044d565b805161046c8161098a565b919050565b600082601f830112610481578081fd5b815160206001600160401b0382111561049657fe5b8082026104a4828201610967565b8381528281019086840183880185018910156104be578687fd5b8693505b858410156104e95780516104d58161098a565b8352600193909301929184019184016104c2565b50979650505050505050565b80516001600160e01b03198116811461046c57600080fd5b600082601f83011261051d578081fd5b81356001600160401b0381111561053057fe5b610543601f8201601f1916602001610967565b818152846020838601011115610557578283fd5b816020850160208301379081016020019190915292915050565b805161046c816109a2565b6000806040838503121561058e578182fd5b82356105998161098a565b915060208301356105a9816109a2565b809150509250929050565b6000602082840312156105c5578081fd5b81516001600160401b03808211156105db578283fd5b81840191506101808083870312156105f1578384fd5b6105fa81610967565b905061060583610571565b815261061360208401610571565b6020820152604083015182811115610629578485fd5b61063587828601610471565b60408301525061064760608401610571565b606082015261065860808401610571565b608082015261066960a08401610571565b60a082015261067a60c08401610571565b60c082015261068b60e08401610571565b60e082015261010091506106a0828401610461565b8282015261012091506106b4828401610461565b8282015261014091506106c88284016104f5565b8282015261016091506106dc828401610571565b91810191909152949350505050565b600080604083850312156106fd578182fd5b8235610708816109a2565b915060208301356001600160401b03811115610722578182fd5b61072e8582860161050d565b9150509250929050565b60008060006060848603121561074c578081fd5b8335610757816109a2565b92506020840135610767816109a2565b915060408401356001600160401b03811115610781578182fd5b61078d8682870161050d565b9150509250925092565b901515815260200190565b6001600160a01b0391909116815260200190565b60208082526028908201527f4b657942726f616463617374436f6e74726163743a20636f6e66696720697320604082015267696e61637469766560c01b606082015260800190565b6020808252602a908201527f4b657942726f616463617374436f6e74726163743a2073656e646572206973206040820152693737ba1035b2bcb832b960b11b606082015260800190565b6020808252602f908201527f4b657942726f616463617374436f6e74726163743a206b657970657220696e6460408201526e6578206f7574206f662072616e676560881b606082015260800190565b6020808252602e908201527f4b657942726f616463617374436f6e74726163743a206b65797065722068617360408201526d08185b1c9958591e481d9bdd195960921b606082015260800190565b6001600160401b0391909116815260200190565b60006001600160401b03808616835260206060818501528551806060860152835b818110156109365787810183015186820160800152820161091a565b818111156109475784608083880101525b509490911660408401525050601f91909101601f19160160800192915050565b6040518181016001600160401b038111828210171561098257fe5b604052919050565b6001600160a01b038116811461099f57600080fd5b50565b6001600160401b038116811461099f57600080fdfea264697066735822122087eb3fdf47d61e60d8969e5af19754d223d9ea17ed026893181c724143caca5a64736f6c63430007060033"
 
 // DeployKeyBroadcastContract deploys a new Ethereum contract, binding an instance of KeyBroadcastContract to it.
-func DeployKeyBroadcastContract(auth *bind.TransactOpts, backend bind.ContractBackend, _configContractAddress common.Address) (common.Address, *types.Transaction, *KeyBroadcastContract, error) {
+func DeployKeyBroadcastContract(auth *bind.TransactOpts, backend bind.ContractBackend, configContractAddress common.Address) (common.Address, *types.Transaction, *KeyBroadcastContract, error) {
 	parsed, err := abi.JSON(strings.NewReader(KeyBroadcastContractABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(KeyBroadcastContractBin), backend, _configContractAddress)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(KeyBroadcastContractBin), backend, configContractAddress)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -9130,12 +9130,12 @@ func (_KeyBroadcastContract *KeyBroadcastContractTransactorRaw) Transact(opts *b
 	return _KeyBroadcastContract.Contract.contract.Transact(opts, method, params...)
 }
 
-// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+// GetConfigContract is a free data retrieval call binding the contract method 0x0e1c3a4a.
 //
-// Solidity: function configContract() view returns(address)
-func (_KeyBroadcastContract *KeyBroadcastContractCaller) ConfigContract(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getConfigContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractCaller) GetConfigContract(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _KeyBroadcastContract.contract.Call(opts, &out, "configContract")
+	err := _KeyBroadcastContract.contract.Call(opts, &out, "getConfigContract")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -9147,44 +9147,106 @@ func (_KeyBroadcastContract *KeyBroadcastContractCaller) ConfigContract(opts *bi
 
 }
 
-// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+// GetConfigContract is a free data retrieval call binding the contract method 0x0e1c3a4a.
 //
-// Solidity: function configContract() view returns(address)
-func (_KeyBroadcastContract *KeyBroadcastContractSession) ConfigContract() (common.Address, error) {
-	return _KeyBroadcastContract.Contract.ConfigContract(&_KeyBroadcastContract.CallOpts)
+// Solidity: function getConfigContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractSession) GetConfigContract() (common.Address, error) {
+	return _KeyBroadcastContract.Contract.GetConfigContract(&_KeyBroadcastContract.CallOpts)
 }
 
-// ConfigContract is a free data retrieval call binding the contract method 0xbf66a182.
+// GetConfigContract is a free data retrieval call binding the contract method 0x0e1c3a4a.
 //
-// Solidity: function configContract() view returns(address)
-func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) ConfigContract() (common.Address, error) {
-	return _KeyBroadcastContract.Contract.ConfigContract(&_KeyBroadcastContract.CallOpts)
+// Solidity: function getConfigContract() view returns(address)
+func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) GetConfigContract() (common.Address, error) {
+	return _KeyBroadcastContract.Contract.GetConfigContract(&_KeyBroadcastContract.CallOpts)
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+// GetNumVotes is a free data retrieval call binding the contract method 0x1845bf5c.
 //
-// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractTransactor) BroadcastEncryptionKey(opts *bind.TransactOpts, _keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
-	return _KeyBroadcastContract.contract.Transact(opts, "broadcastEncryptionKey", _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+// Solidity: function getNumVotes(uint64 startBatchIndex, bytes key) view returns(uint64)
+func (_KeyBroadcastContract *KeyBroadcastContractCaller) GetNumVotes(opts *bind.CallOpts, startBatchIndex uint64, key []byte) (uint64, error) {
+	var out []interface{}
+	err := _KeyBroadcastContract.contract.Call(opts, &out, "getNumVotes", startBatchIndex, key)
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+// GetNumVotes is a free data retrieval call binding the contract method 0x1845bf5c.
 //
-// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
-	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+// Solidity: function getNumVotes(uint64 startBatchIndex, bytes key) view returns(uint64)
+func (_KeyBroadcastContract *KeyBroadcastContractSession) GetNumVotes(startBatchIndex uint64, key []byte) (uint64, error) {
+	return _KeyBroadcastContract.Contract.GetNumVotes(&_KeyBroadcastContract.CallOpts, startBatchIndex, key)
 }
 
-// BroadcastEncryptionKey is a paid mutator transaction binding the contract method 0x2712860b.
+// GetNumVotes is a free data retrieval call binding the contract method 0x1845bf5c.
 //
-// Solidity: function broadcastEncryptionKey(uint64 _keyperIndex, uint64 _batchIndex, bytes32 _encryptionKey, uint64[] _signerIndices, bytes[] _signatures) returns()
-func (_KeyBroadcastContract *KeyBroadcastContractTransactorSession) BroadcastEncryptionKey(_keyperIndex uint64, _batchIndex uint64, _encryptionKey [32]byte, _signerIndices []uint64, _signatures [][]byte) (*types.Transaction, error) {
-	return _KeyBroadcastContract.Contract.BroadcastEncryptionKey(&_KeyBroadcastContract.TransactOpts, _keyperIndex, _batchIndex, _encryptionKey, _signerIndices, _signatures)
+// Solidity: function getNumVotes(uint64 startBatchIndex, bytes key) view returns(uint64)
+func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) GetNumVotes(startBatchIndex uint64, key []byte) (uint64, error) {
+	return _KeyBroadcastContract.Contract.GetNumVotes(&_KeyBroadcastContract.CallOpts, startBatchIndex, key)
 }
 
-// KeyBroadcastContractEncryptionKeyBroadcastedIterator is returned from FilterEncryptionKeyBroadcasted and is used to iterate over the raw logs and unpacked data for EncryptionKeyBroadcasted events raised by the KeyBroadcastContract contract.
-type KeyBroadcastContractEncryptionKeyBroadcastedIterator struct {
-	Event *KeyBroadcastContractEncryptionKeyBroadcasted // Event containing the contract specifics and raw log
+// HasVoted is a free data retrieval call binding the contract method 0xcf1d7a0a.
+//
+// Solidity: function hasVoted(address keyper, uint64 startBatchIndex) view returns(bool)
+func (_KeyBroadcastContract *KeyBroadcastContractCaller) HasVoted(opts *bind.CallOpts, keyper common.Address, startBatchIndex uint64) (bool, error) {
+	var out []interface{}
+	err := _KeyBroadcastContract.contract.Call(opts, &out, "hasVoted", keyper, startBatchIndex)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// HasVoted is a free data retrieval call binding the contract method 0xcf1d7a0a.
+//
+// Solidity: function hasVoted(address keyper, uint64 startBatchIndex) view returns(bool)
+func (_KeyBroadcastContract *KeyBroadcastContractSession) HasVoted(keyper common.Address, startBatchIndex uint64) (bool, error) {
+	return _KeyBroadcastContract.Contract.HasVoted(&_KeyBroadcastContract.CallOpts, keyper, startBatchIndex)
+}
+
+// HasVoted is a free data retrieval call binding the contract method 0xcf1d7a0a.
+//
+// Solidity: function hasVoted(address keyper, uint64 startBatchIndex) view returns(bool)
+func (_KeyBroadcastContract *KeyBroadcastContractCallerSession) HasVoted(keyper common.Address, startBatchIndex uint64) (bool, error) {
+	return _KeyBroadcastContract.Contract.HasVoted(&_KeyBroadcastContract.CallOpts, keyper, startBatchIndex)
+}
+
+// Vote is a paid mutator transaction binding the contract method 0x6b32c795.
+//
+// Solidity: function vote(uint64 keyperIndex, uint64 startBatchIndex, bytes key) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactor) Vote(opts *bind.TransactOpts, keyperIndex uint64, startBatchIndex uint64, key []byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.contract.Transact(opts, "vote", keyperIndex, startBatchIndex, key)
+}
+
+// Vote is a paid mutator transaction binding the contract method 0x6b32c795.
+//
+// Solidity: function vote(uint64 keyperIndex, uint64 startBatchIndex, bytes key) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractSession) Vote(keyperIndex uint64, startBatchIndex uint64, key []byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.Vote(&_KeyBroadcastContract.TransactOpts, keyperIndex, startBatchIndex, key)
+}
+
+// Vote is a paid mutator transaction binding the contract method 0x6b32c795.
+//
+// Solidity: function vote(uint64 keyperIndex, uint64 startBatchIndex, bytes key) returns()
+func (_KeyBroadcastContract *KeyBroadcastContractTransactorSession) Vote(keyperIndex uint64, startBatchIndex uint64, key []byte) (*types.Transaction, error) {
+	return _KeyBroadcastContract.Contract.Vote(&_KeyBroadcastContract.TransactOpts, keyperIndex, startBatchIndex, key)
+}
+
+// KeyBroadcastContractVotedIterator is returned from FilterVoted and is used to iterate over the raw logs and unpacked data for Voted events raised by the KeyBroadcastContract contract.
+type KeyBroadcastContractVotedIterator struct {
+	Event *KeyBroadcastContractVoted // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -9198,7 +9260,7 @@ type KeyBroadcastContractEncryptionKeyBroadcastedIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Next() bool {
+func (it *KeyBroadcastContractVotedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -9207,7 +9269,7 @@ func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(KeyBroadcastContractEncryptionKeyBroadcasted)
+			it.Event = new(KeyBroadcastContractVoted)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -9222,7 +9284,7 @@ func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(KeyBroadcastContractEncryptionKeyBroadcasted)
+		it.Event = new(KeyBroadcastContractVoted)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -9238,45 +9300,54 @@ func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Error() error {
+func (it *KeyBroadcastContractVotedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *KeyBroadcastContractEncryptionKeyBroadcastedIterator) Close() error {
+func (it *KeyBroadcastContractVotedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// KeyBroadcastContractEncryptionKeyBroadcasted represents a EncryptionKeyBroadcasted event raised by the KeyBroadcastContract contract.
-type KeyBroadcastContractEncryptionKeyBroadcasted struct {
-	Sender        common.Address
-	BatchIndex    uint64
-	EncryptionKey [32]byte
-	SignerIndices []uint64
-	Signatures    [][]byte
-	Raw           types.Log // Blockchain specific contextual infos
+// KeyBroadcastContractVoted represents a Voted event raised by the KeyBroadcastContract contract.
+type KeyBroadcastContractVoted struct {
+	Keyper          common.Address
+	StartBatchIndex uint64
+	Key             []byte
+	NumVotes        uint64
+	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterEncryptionKeyBroadcasted is a free log retrieval operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+// FilterVoted is a free log retrieval operation binding the contract event 0x305124b6ec831bb4150eb1ddbd4e8cc4b95687b9a6258b110fd0e9865914b0bf.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
-func (_KeyBroadcastContract *KeyBroadcastContractFilterer) FilterEncryptionKeyBroadcasted(opts *bind.FilterOpts) (*KeyBroadcastContractEncryptionKeyBroadcastedIterator, error) {
+// Solidity: event Voted(address indexed keyper, uint64 startBatchIndex, bytes key, uint64 numVotes)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) FilterVoted(opts *bind.FilterOpts, keyper []common.Address) (*KeyBroadcastContractVotedIterator, error) {
 
-	logs, sub, err := _KeyBroadcastContract.contract.FilterLogs(opts, "EncryptionKeyBroadcasted")
+	var keyperRule []interface{}
+	for _, keyperItem := range keyper {
+		keyperRule = append(keyperRule, keyperItem)
+	}
+
+	logs, sub, err := _KeyBroadcastContract.contract.FilterLogs(opts, "Voted", keyperRule)
 	if err != nil {
 		return nil, err
 	}
-	return &KeyBroadcastContractEncryptionKeyBroadcastedIterator{contract: _KeyBroadcastContract.contract, event: "EncryptionKeyBroadcasted", logs: logs, sub: sub}, nil
+	return &KeyBroadcastContractVotedIterator{contract: _KeyBroadcastContract.contract, event: "Voted", logs: logs, sub: sub}, nil
 }
 
-// WatchEncryptionKeyBroadcasted is a free log subscription operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+// WatchVoted is a free log subscription operation binding the contract event 0x305124b6ec831bb4150eb1ddbd4e8cc4b95687b9a6258b110fd0e9865914b0bf.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
-func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBroadcasted(opts *bind.WatchOpts, sink chan<- *KeyBroadcastContractEncryptionKeyBroadcasted) (event.Subscription, error) {
+// Solidity: event Voted(address indexed keyper, uint64 startBatchIndex, bytes key, uint64 numVotes)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchVoted(opts *bind.WatchOpts, sink chan<- *KeyBroadcastContractVoted, keyper []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _KeyBroadcastContract.contract.WatchLogs(opts, "EncryptionKeyBroadcasted")
+	var keyperRule []interface{}
+	for _, keyperItem := range keyper {
+		keyperRule = append(keyperRule, keyperItem)
+	}
+
+	logs, sub, err := _KeyBroadcastContract.contract.WatchLogs(opts, "Voted", keyperRule)
 	if err != nil {
 		return nil, err
 	}
@@ -9286,8 +9357,8 @@ func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBro
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(KeyBroadcastContractEncryptionKeyBroadcasted)
-				if err := _KeyBroadcastContract.contract.UnpackLog(event, "EncryptionKeyBroadcasted", log); err != nil {
+				event := new(KeyBroadcastContractVoted)
+				if err := _KeyBroadcastContract.contract.UnpackLog(event, "Voted", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -9308,12 +9379,12 @@ func (_KeyBroadcastContract *KeyBroadcastContractFilterer) WatchEncryptionKeyBro
 	}), nil
 }
 
-// ParseEncryptionKeyBroadcasted is a log parse operation binding the contract event 0x4ddc6902637f5238f6c476ab331709d0cacd9b9aadd36ab5661a6b3c943bb61a.
+// ParseVoted is a log parse operation binding the contract event 0x305124b6ec831bb4150eb1ddbd4e8cc4b95687b9a6258b110fd0e9865914b0bf.
 //
-// Solidity: event EncryptionKeyBroadcasted(address sender, uint64 batchIndex, bytes32 encryptionKey, uint64[] signerIndices, bytes[] signatures)
-func (_KeyBroadcastContract *KeyBroadcastContractFilterer) ParseEncryptionKeyBroadcasted(log types.Log) (*KeyBroadcastContractEncryptionKeyBroadcasted, error) {
-	event := new(KeyBroadcastContractEncryptionKeyBroadcasted)
-	if err := _KeyBroadcastContract.contract.UnpackLog(event, "EncryptionKeyBroadcasted", log); err != nil {
+// Solidity: event Voted(address indexed keyper, uint64 startBatchIndex, bytes key, uint64 numVotes)
+func (_KeyBroadcastContract *KeyBroadcastContractFilterer) ParseVoted(log types.Log) (*KeyBroadcastContractVoted, error) {
+	event := new(KeyBroadcastContractVoted)
+	if err := _KeyBroadcastContract.contract.UnpackLog(event, "Voted", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
