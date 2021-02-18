@@ -221,10 +221,10 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 	case shutterevents.EpochSecretKeyShare:
 		err = shutter.applyEpochSecretKeyShare(e)
 	default:
-		err = fmt.Errorf("apply event not yet implemented for %s: %+v", reflect.TypeOf(ev), ev)
+		err = fmt.Errorf("not yet implemented for %s", reflect.TypeOf(ev))
 	}
 	if err != nil {
-		log.Printf("Error in apply event: %s", err)
+		log.Printf("Error in apply event: %s, event: %+v", err, ev)
 	}
 }
 
