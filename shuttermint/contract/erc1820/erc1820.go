@@ -1,4 +1,6 @@
-package contract
+// Package erc1820 defines methods to deploy the erc1820 registry contract, see
+// https://eips.ethereum.org/EIPS/eip-1820
+package erc1820
 
 import (
 	"bytes"

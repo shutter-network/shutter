@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/contract/erc1820"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
@@ -359,7 +360,7 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 }
 
 func maybeDeployERC1820(ctx context.Context) {
-	deployed, err := contract.ERC1820Deployed(ctx, client)
+	deployed, err := erc1820.ERC1820Deployed(ctx, client)
 	if err != nil {
 		log.Fatalf("Error: %+v", err)
 	}
@@ -368,7 +369,7 @@ func maybeDeployERC1820(ctx context.Context) {
 		return
 	}
 	log.Print("Deploying erc1820 contract")
-	err = contract.DeployERC1820Contract(ctx, client, key)
+	err = erc1820.DeployERC1820Contract(ctx, client, key)
 	if err != nil {
 		log.Fatalf("Error: %+v", err)
 	}
