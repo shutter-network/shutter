@@ -28,6 +28,9 @@ contract KeyBroadcastContract {
     mapping(uint64 => mapping(bytes32 => uint64)) private _numVotes; // start batch index => key hash => number of votes
     mapping(bytes32 => bytes) private _keys; // key hash => key
 
+    mapping(uint64 => bytes32) private _bestKeyHashes;
+    mapping(uint64 => uint64) private _bestKeyNumVotes;
+
     constructor(address configContractAddress) {
         _configContract = ConfigContract(configContractAddress);
     }
@@ -74,6 +77,11 @@ contract KeyBroadcastContract {
         _voted[startBatchIndex][msg.sender] = true;
         _numVotes[startBatchIndex][keyHash] = numVotes;
 
+        if (numVotes > _bestKeyNumVotes[startBatchIndex]) {
+            _bestKeyNumVotes[startBatchIndex] = numVotes;
+            _bestKeyHashes[startBatchIndex] = keyHash;
+        }
+
         emit Voted({
             keyper: msg.sender,
             startBatchIndex: startBatchIndex,
@@ -100,5 +108,21 @@ contract KeyBroadcastContract {
         returns (uint64)
     {
         return _numVotes[startBatchIndex][keccak256(key)];
+    }
+
+    function getBestKey(uint64 startBatchIndex)
+        public
+        view
+        returns (bytes memory)
+    {
+        return _keys[_bestKeyHashes[startBatchIndex]];
+    }
+
+    function getBestKeyNumVotes(uint64 startBatchIndex)
+        public
+        view
+        returns (uint256)
+    {
+        return _bestKeyNumVotes[startBatchIndex];
     }
 }

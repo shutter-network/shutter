@@ -70,4 +70,16 @@ async function encodeMessage(message, nonce, privateKey) {
   return encoded;
 }
 
-export { getConfigAtBlock, getBatchIndexAtBlock, encodeMessage };
+async function encryptMessage(message, eonPublicKey, batchIndex) {
+  var sigma = new Uint8Array(32);
+  window.crypto.getRandomValues(sigma);
+  window.shcrypto.encrypt(message, eonPublicKey, batchIndex, sigma);
+  return message;
+}
+
+export {
+  getConfigAtBlock,
+  getBatchIndexAtBlock,
+  encodeMessage,
+  encryptMessage,
+};

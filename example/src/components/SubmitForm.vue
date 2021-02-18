@@ -55,6 +55,7 @@ import {
   getConfigAtBlock,
   getBatchIndexAtBlock,
   encodeMessage,
+  encryptMessage,
 } from "../utils.js";
 
 export default {
@@ -67,8 +68,6 @@ export default {
       message: "",
       privateKey:
         "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-
-      encodedMessage: null,
     };
   },
 
@@ -118,10 +117,32 @@ export default {
       let blockNumber = (await this.$provider.getBlockNumber()) + 1;
       let config = await getConfigAtBlock(blockNumber, this.configContract);
       let batchIndex = getBatchIndexAtBlock(blockNumber, config);
+
+      if (type == 0) {
+        let bestKey = await this.$keyBroadcastContract.getBestKey(
+          config.startBatchIndex
+        );
+        let bestKeyNumVotes = await this.$keyBroadcastContract.getBestKeyNumVotes(
+          config.startBatchIndex
+        );
+        if (bestKeyNumVotes < config.threshold) {
+          console.log("not enough votes for eon public key");
+          return;
+        }
+        encodedMessage = await encryptMessage(
+          encodedMessage,
+          bestKey,
+          batchIndex
+        );
+      }
+
       let tx = await this.batcherContract.addTransaction(
         batchIndex,
         type,
-        encodedMessage
+        encodedMessage,
+        {
+          gasPrice: 0,
+        }
       );
       console.log(
         "tx",

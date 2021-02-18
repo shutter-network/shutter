@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -462,7 +461,7 @@ func (a EonKeyBroadcast) Run(ctx context.Context, runenv IRunEnv) error {
 		auth,
 		a.keyperIndex,
 		a.startBatchIndex,
-		(*bn256.G2)(a.eonPublicKey).Marshal(),
+		a.eonPublicKey.Marshal(),
 	)
 	if err != nil {
 		return err
