@@ -124,6 +124,7 @@ func DeployContract(ctx context.Context, client *ethclient.Client, key *ecdsa.Pr
 
 func waitMinedSuccessful(ctx context.Context, client *ethclient.Client, tx *types.Transaction) error {
 	// bind.WaitMined doesn't work for some reason, at least not with Ganache
+	const sleepDuration = time.Millisecond * 500
 	var receipt *types.Receipt
 	var err error
 	for receipt == nil {
@@ -131,7 +132,7 @@ func waitMinedSuccessful(ctx context.Context, client *ethclient.Client, tx *type
 		if err != nil && err != ethereum.NotFound {
 			return err
 		}
-		time.Sleep(time.Millisecond * 500)
+		time.Sleep(sleepDuration)
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		return fmt.Errorf("deployment of ERC1820 contract failed")
