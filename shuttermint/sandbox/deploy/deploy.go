@@ -360,7 +360,7 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 }
 
 func maybeDeployERC1820(ctx context.Context) {
-	deployed, err := erc1820.ERC1820Deployed(ctx, client)
+	deployed, err := erc1820.IsDeployed(ctx, client)
 	if err != nil {
 		log.Fatalf("Error: %+v", err)
 	}
@@ -369,7 +369,7 @@ func maybeDeployERC1820(ctx context.Context) {
 		return
 	}
 	log.Print("Deploying erc1820 contract")
-	err = erc1820.DeployERC1820Contract(ctx, client, key)
+	err = erc1820.DeployContract(ctx, client, key)
 	if err != nil {
 		log.Fatalf("Error: %+v", err)
 	}
