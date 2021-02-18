@@ -358,12 +358,25 @@ func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.P
 	return auth, nil
 }
 
+func maybeDeployERC1820(ctx context.Context) {
+	deployed, err := contract.ERC1820Deployed(ctx, client)
+	if err != nil {
+		log.Fatalf("Error: %+v", err)
+	}
+	if deployed {
+		log.Print("erc1820 contract already deployed")
+		return
+	}
+	log.Print("Deploying erc1820 contract")
+	err = contract.DeployERC1820Contract(ctx, client, key)
+	if err != nil {
+		log.Fatalf("Error: %+v", err)
+	}
+}
+
 func deploy(ctx context.Context) {
 	if !deployFlags.NoERC1820 {
-		err := contract.DeployERC1820Contract(ctx, client, key)
-		if err != nil {
-			panic(err)
-		}
+		maybeDeployERC1820(ctx)
 	}
 
 	auth, err := makeAuth(ctx, client, key)
@@ -453,7 +466,7 @@ func deploy(ctx context.Context) {
 		}
 		s, err := json.MarshalIndent(j, "", "    ")
 		failIfError(err)
-		err = ioutil.WriteFile(deployFlags.OutputFile, s, 0644)
+		err = ioutil.WriteFile(deployFlags.OutputFile, s, 0o644)
 		failIfError(err)
 		fmt.Println("addresses written to", deployFlags.OutputFile)
 	}
