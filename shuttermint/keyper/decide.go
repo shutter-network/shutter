@@ -719,7 +719,7 @@ func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
 
 	ekg, err := dcdr.State.FindEKGByEon(eon.Eon)
 	if err != nil {
-		log.Printf("Cannot find EpochKG for eon=%d", eon.Eon)
+		log.Printf("Cannot publish epoch secret key for epoch %d in eon %d, no eon key", epoch, eon.Eon)
 		return
 	}
 	dcdr.sendEpochSecretKeyShare(ekg.EpochKG, epoch)
@@ -868,6 +868,7 @@ func (dcdr *Decider) publishEpochSecretKeyShares() {
 	for batchIndex := dcdr.State.NextEpochSecretShare; batchIndex < currentBatchIndex; batchIndex++ {
 		dcdr.publishEpochSecretKeyShare(batchIndex)
 	}
+	dcdr.State.NextEpochSecretShare = currentBatchIndex
 }
 
 func (dcdr *Decider) handleEpochKG() {
@@ -883,7 +884,6 @@ func (dcdr *Decider) sendEpochSecretKeyShare(epochKG *epochkg.EpochKG, epoch uin
 			shmsg.NewEpochSecretKeyShare(epochKG.Eon, epoch, epochSecretKeyShare),
 		)
 	}
-	dcdr.State.NextEpochSecretShare = epoch + 1
 }
 
 func (dcdr *Decider) syncBatch(batch *Batch) {
