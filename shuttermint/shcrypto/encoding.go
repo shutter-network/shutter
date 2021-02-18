@@ -56,7 +56,7 @@ func (k *EonPublicKey) Marshal() []byte {
 }
 
 // Unmarshal deserializes an eon public key from the given byte slice.
-func (k *EonPublicKey) Unmrshal(m []byte) error {
+func (k *EonPublicKey) Unmarshal(m []byte) error {
 	_, err := (*bn256.G2)(k).Unmarshal(m)
 	return err
 }
