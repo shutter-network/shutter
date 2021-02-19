@@ -245,3 +245,7 @@ workflows:
           filters:
             branches:
               ignore: /master/
+# Local Variables:
+# compile-command: "circleci config validate"
+# projectile-project-compilation-cmd: "circleci config validate"
+# End:
