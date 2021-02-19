@@ -157,7 +157,7 @@ func initConfigFlags() {
 		&configFlags.EthereumURL,
 		"ethereum-url",
 		"e",
-		"ws://localhost:8545/websocket",
+		"",
 		"Ethereum JSON RPC URL",
 	)
 	configCmd.Flags().StringVarP(

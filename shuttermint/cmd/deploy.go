@@ -103,9 +103,10 @@ func init() {
 		&deployFlags.EthereumURL,
 		"ethereum-url",
 		"e",
-		"ws://localhost:8545/websocket",
+		"",
 		"Ethereum RPC URL",
 	)
+	deployCmd.MarkPersistentFlagRequired("ethereum-url")
 	deployCmd.PersistentFlags().BoolVar(
 		&deployFlags.NoERC1820,
 		"no-erc1820",

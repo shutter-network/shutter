@@ -66,9 +66,10 @@ func init() {
 		&bootstrapFlags.EthereumURL,
 		"ethereum-url",
 		"e",
-		"ws://localhost:8545/websocket",
+		"",
 		"Ethereum RPC URL",
 	)
+	bootstrapCmd.MarkPersistentFlagRequired("ethereum-url")
 	bootstrapCmd.PersistentFlags().IntVarP(
 		&bootstrapFlags.BatchConfigIndex,
 		"index",

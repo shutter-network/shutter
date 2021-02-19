@@ -44,7 +44,7 @@ func initConfigRootFlags() {
 		&configFlags.EthereumURL,
 		"ethereum-url",
 		"e",
-		"ws://localhost:8546/",
+		"",
 		"Ethereum JSON RPC URL",
 	)
 

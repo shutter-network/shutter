@@ -64,7 +64,6 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ExecutionStaggering")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
-	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
 
 	defer func() {
 		if viper.ConfigFileUsed() != "" {
