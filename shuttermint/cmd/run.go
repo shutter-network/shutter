@@ -87,7 +87,7 @@ func newTendermint(configFile string) (*nm.Node, error) {
 	// create logger
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	var err error
-	logger, err = tmflags.ParseLogLevel(config.LogLevel, logger, cfg.DefaultLogLevel())
+	logger, err = tmflags.ParseLogLevel(config.LogLevel, logger, cfg.DefaultLogLevel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse log level: %w", err)
 	}

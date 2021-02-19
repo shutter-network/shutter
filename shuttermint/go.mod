@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/DataDog/zstd v1.4.8 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/aristanetworks/goarista v0.0.0-20210216140821-51f8fd3f0e89 // indirect
+	github.com/aristanetworks/goarista v0.0.0-20210217214619-5a14f8ca694d // indirect
 	github.com/dgraph-io/ristretto v0.0.3 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/ethereum/go-ethereum v1.9.25
@@ -42,17 +42,17 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.4
+	github.com/tendermint/tendermint v0.34.7
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+	golang.org/x/crypto v0.0.0-20210218145215-b8e89b74b9df
 	golang.org/x/mod v0.4.1 // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
-	golang.org/x/sys v0.0.0-20210217090653-ed5674b6da4a // indirect
+	golang.org/x/sys v0.0.0-20210219172841-57ea560cfca1 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	golang.org/x/tools v0.1.0
-	google.golang.org/genproto v0.0.0-20210212180131-e7f2df4ecc2d // indirect
+	google.golang.org/genproto v0.0.0-20210219173056-d891e3cb3b5b // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
