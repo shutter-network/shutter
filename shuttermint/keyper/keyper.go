@@ -1,7 +1,6 @@
 package keyper
 
 import (
-	"bufio"
 	"context"
 	"encoding/gob"
 	"fmt"
@@ -62,7 +61,6 @@ type Keyper struct {
 	shmcl               client.Client
 	MessageSender       MessageSender
 	WatchedTransactions chan *types.Transaction
-	Interactive         bool
 	lastlogTime         time.Time
 }
 
@@ -316,17 +314,6 @@ func (kpr *Keyper) Run() error {
 	}
 }
 
-func readline() {
-	fmt.Printf("\n[press return to continue] > ")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-
-	if err := scanner.Err(); err != nil {
-		log.Println(err)
-	}
-	fmt.Printf("\n")
-}
-
 type storedState struct {
 	State     *State
 	Shutter   *observe.Shutter
@@ -396,13 +383,6 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 		MainChain: kpr.MainChain,
 	}
 	decider.Decide()
-	if kpr.Interactive && len(decider.Actions) > 0 {
-		log.Printf("Showing %d actions", len(decider.Actions))
-		for _, act := range decider.Actions {
-			fmt.Println(act)
-		}
-		readline()
-	}
 
 	now := time.Now()
 	if len(decider.Actions) > 0 || now.Sub(kpr.lastlogTime) > 10*time.Second {

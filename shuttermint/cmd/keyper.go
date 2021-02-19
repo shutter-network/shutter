@@ -43,12 +43,10 @@ var keyperCmd = &cobra.Command{
 		keyperMain()
 	},
 }
-var interactive = false
 
 func init() {
 	rootCmd.AddCommand(keyperCmd)
 	keyperCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-	keyperCmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "interactive mode for debugging")
 }
 
 func readKeyperConfig() (RawKeyperConfig, error) {
@@ -221,7 +219,6 @@ func keyperMain() {
 		panic(err)
 	}
 	log.Printf("loaded state: %s", kpr.ShortInfo())
-	kpr.Interactive = interactive
 	err = kpr.Run()
 	if err != nil {
 		panic(err)
