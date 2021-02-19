@@ -172,9 +172,12 @@ func (pure *PureDKG) StartPhase2Accusing() []AccusationMsg {
 	var accusations []AccusationMsg
 	var dealer KeyperIndex
 	for dealer = 0; dealer < pure.NumKeypers; dealer++ {
+		if dealer == pure.Keyper {
+			continue
+		}
 		eval := pure.Evals[dealer]
 		c := pure.Commitments[dealer]
-		if pure.present(dealer) && (eval == nil || !shcrypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold)) {
+		if eval == nil || c == nil || !shcrypto.VerifyPolyEval(int(pure.Keyper), eval, c, pure.Threshold) {
 			accusations = append(accusations, AccusationMsg{
 				Eon:     pure.Eon,
 				Accuser: pure.Keyper,
@@ -203,10 +206,6 @@ func (pure *PureDKG) StartPhase3Apologizing() []ApologyMsg {
 
 func (pure *PureDKG) Finalize() {
 	pure.setPhase(Finalized)
-}
-
-func (pure *PureDKG) present(i KeyperIndex) bool {
-	return pure.Commitments[i] != nil
 }
 
 // ShortInfo returns a short string to be used in log output, which describes the current state of the DKG
