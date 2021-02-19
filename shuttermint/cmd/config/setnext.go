@@ -48,7 +48,7 @@ func init() {
 		keyFlagName,
 		"k",
 		"",
-		"private key used to sign transactions",
+		"private key of the owner",
 	)
 	sandbox.MarkFlagRequired(setNextCmd, keyFlagName)
 }

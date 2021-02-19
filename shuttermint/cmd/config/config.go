@@ -12,7 +12,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
-const keyFlagName = "key"
+const keyFlagName = "owner-key"
 
 var ConfigCmd = &cobra.Command{
 	Use:   "config",

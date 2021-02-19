@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -30,7 +29,6 @@ import (
 const (
 	defaultConfigChangeHeadsUpBlocks = 20
 	defaultAppealBlocks              = 20
-	ganacheKeyIdx                    = 9
 	deployDefaultTimeout             = 300 * time.Second
 )
 
@@ -40,7 +38,7 @@ var (
 )
 
 var deployFlags struct {
-	Key         string
+	OwnerKey    string
 	EthereumURL string
 	GasPrice    string
 	NoERC1820   bool
@@ -55,7 +53,7 @@ var deployCmd = &cobra.Command{
 		defer cancel()
 		var err error
 
-		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.Key, "0x"))
+		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.OwnerKey, "0x"))
 		failIfError(err)
 
 		client, err := ethclient.DialContext(ctx, deployFlags.EthereumURL)
@@ -87,12 +85,13 @@ var deployCmd = &cobra.Command{
 
 func init() {
 	deployCmd.PersistentFlags().StringVarP(
-		&deployFlags.Key,
-		"key",
+		&deployFlags.OwnerKey,
+		"owner-key",
 		"k",
-		hexutil.Encode(crypto.FromECDSA(sandbox.GanacheKey(ganacheKeyIdx))),
-		"private key of deployer account",
+		"",
+		"private key of the deployer",
 	)
+	deployCmd.MarkPersistentFlagRequired("owner-key")
 	deployCmd.PersistentFlags().StringVar(
 		&deployFlags.GasPrice,
 		"gas-price",
