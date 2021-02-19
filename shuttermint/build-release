@@ -2,6 +2,7 @@
 set -euo pipefail
 
 : "${GO:=go}"
+: "${VERSION:=}"
 
 if [[ -z "${VERSION}" ]]; then
    VERSION=$(git describe --tags --always --abbrev=4 --dirty)
