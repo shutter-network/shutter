@@ -19,6 +19,7 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 
 	"github.com/brainbot-com/shutter/shuttermint/app"
+	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 )
 
 // runCmd represents the run command
@@ -39,7 +40,7 @@ func init() {
 
 func runMain() {
 	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile | stdlog.Lmicroseconds)
-	stdlog.Printf("Starting shuttermint version %s", version)
+	stdlog.Printf("Starting shuttermint version %s", shversion.Version)
 
 	node, err := newTendermint(cfgFile)
 	if err != nil {

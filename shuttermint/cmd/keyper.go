@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
@@ -209,7 +210,7 @@ func keyperMain() {
 
 	log.Printf(
 		"Starting keyper version %s with signing key %s, using %s for Shuttermint and %s for Ethereum",
-		version,
+		shversion.Version,
 		kc.Address().Hex(),
 		kc.ShuttermintURL,
 		kc.EthereumURL,

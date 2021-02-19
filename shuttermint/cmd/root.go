@@ -5,18 +5,17 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 )
 
-var (
-	version string = "(unknown)"
-	cfgFile string
-)
+var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "shuttermint",
 	Short:   "shuttermint runs the shutter tendermint app or a shutter keyper",
-	Version: version,
+	Version: shversion.Version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

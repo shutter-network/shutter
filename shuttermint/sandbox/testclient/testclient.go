@@ -15,11 +15,10 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
-
-var version string = "(unknown)"
 
 func makeMessage() *shmsg.MessageWithNonce {
 	msg := &shmsg.Message{
@@ -112,7 +111,7 @@ func subscribe(cl client.Client) {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	log.Printf("Starting testclient version %s", version)
+	log.Printf("Starting testclient version %s", shversion.Version)
 
 	var cl client.Client
 	cl, err := http.New("http://localhost:26657", "/websocket")
