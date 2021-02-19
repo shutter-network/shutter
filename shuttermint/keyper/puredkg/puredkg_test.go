@@ -68,6 +68,23 @@ func TestPureDKGFull(t *testing.T) {
 	}
 }
 
+// TestPureDKGOfflineSendAccusation tests that we send accusations when we don't receive any
+// message from a keyper. See https://github.com/brainbot-com/shutter/issues/62
+func TestPureDKGOfflineSendAccusation(t *testing.T) {
+	eon := uint64(5)
+	numKeypers := uint64(3)
+	threshold := uint64(2)
+
+	dkg := NewPureDKG(eon, numKeypers, threshold, 0)
+
+	// dealing phase
+	_, _, err := dkg.StartPhase1Dealing()
+	require.Nil(t, err)
+
+	accusations := dkg.StartPhase2Accusing()
+	require.Equal(t, 2, len(accusations))
+}
+
 func TestPureDKGCorrupt(t *testing.T) {
 	eon := uint64(5)
 	numKeypers := uint64(3)
