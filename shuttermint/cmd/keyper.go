@@ -45,7 +45,6 @@ var keyperCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(keyperCmd)
 	keyperCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 }
 

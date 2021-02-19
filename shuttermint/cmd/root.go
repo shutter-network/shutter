@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 )
 
@@ -25,4 +26,14 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func init() {
+	rootCmd.AddCommand(chainCmd)
+	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(keyperCmd)
+	rootCmd.AddCommand(showCmd)
+	rootCmd.AddCommand(bootstrapCmd)
+	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(deployCmd)
 }

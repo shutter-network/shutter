@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -26,7 +26,7 @@ var queryCmd = &cobra.Command{
 	Short: "Download a config and print it as JSON",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		sandbox.ExitIfError(processRootFlags(ctx))
+		sandbox.ExitIfError(processConfigFlags(ctx))
 		if flag, err := validateQueryFlags(); err != nil {
 			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
 		}
@@ -38,7 +38,7 @@ var queryFlags struct {
 	Index string
 }
 
-func initQueryFlags() {
+func init() {
 	queryCmd.PersistentFlags().StringVarP(
 		&queryFlags.Index,
 		"index",

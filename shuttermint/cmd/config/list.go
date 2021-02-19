@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -19,12 +19,12 @@ var listCmd = &cobra.Command{
 	Short: "List all configs",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		sandbox.ExitIfError(processRootFlags(ctx))
+		sandbox.ExitIfError(processConfigFlags(ctx))
 		sandbox.ExitIfError(list(ctx))
 	},
 }
 
-func initListFlags() {
+func init() {
 	// no flags
 }
 

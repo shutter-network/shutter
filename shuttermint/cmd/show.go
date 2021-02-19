@@ -26,7 +26,6 @@ var showCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(showCmd)
 	showCmd.PersistentFlags().StringVarP(
 		&showFlags.ShuttermintURL,
 		"shuttermint-url",

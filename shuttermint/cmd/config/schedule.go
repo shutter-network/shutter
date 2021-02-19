@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -16,7 +16,7 @@ var scheduleCmd = &cobra.Command{
 	Short: "Schedule the next config",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		sandbox.ExitIfError(processRootFlags(ctx))
+		sandbox.ExitIfError(processConfigFlags(ctx))
 		if flag, err := validateScheduleFlags(); err != nil {
 			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
 		}
@@ -28,7 +28,7 @@ var scheduleFlags struct {
 	Key string
 }
 
-func initScheduleFlags() {
+func init() {
 	scheduleCmd.PersistentFlags().StringVarP(
 		&scheduleFlags.Key,
 		keyFlagName,
