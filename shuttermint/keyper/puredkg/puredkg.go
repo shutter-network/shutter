@@ -1,8 +1,5 @@
-/*puredkg implements the DKG protocol. It's independent of any transport, but rather expects to be
-driven from the outside.
-*/
-
-//go:generate stringer -type=Phase
+// Package puredkg implements the DKG protocol. It's independent of any transport, but rather
+// expects to be driven from the outside.
 package puredkg
 
 import (
@@ -18,6 +15,7 @@ type (
 	Phase       int
 )
 
+//go:generate stringer -type=Phase
 const (
 	Off = Phase(iota)
 	Dealing
