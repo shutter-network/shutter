@@ -189,9 +189,9 @@ jobs:
       - restore_cache:
           keys:
             - shuttermint-go-v8-{{ checksum "go.sum" }}
-      - run: make build
+      - run: env VERSION=${CIRCLE_TAG} ./build-release
       - run: go install github.com/tcnksm/ghr@v0.13.0
-      - run: ghr ${CIRCLE_TAG} bin/shuttermint
+      - run: ghr ${CIRCLE_TAG} bin/
 
   mint-lint:
     executor: go
