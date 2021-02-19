@@ -287,12 +287,12 @@ type SendShuttermintMessage struct {
 }
 
 func (a SendShuttermintMessage) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 	return runenv.SendMessage(ctx, a.msg)
 }
 
 func (a SendShuttermintMessage) String() string {
-	return fmt.Sprintf("-> shuttermint: %s", a.description)
+	return fmt.Sprintf("=> shuttermint: %s", a.description)
 }
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
@@ -304,7 +304,7 @@ type ExecuteCipherBatch struct {
 }
 
 func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -324,7 +324,7 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecuteCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute cipher batch %d", a.batchIndex)
+	return fmt.Sprintf("=> executor contract: execute cipher batch %d", a.batchIndex)
 }
 
 // ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
@@ -334,7 +334,7 @@ type ExecutePlainBatch struct {
 }
 
 func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -354,7 +354,7 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecutePlainBatch) String() string {
-	return fmt.Sprintf("-> executor contract: execute plain batch %d", a.batchIndex)
+	return fmt.Sprintf("=> executor contract: execute plain batch %d", a.batchIndex)
 }
 
 // SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch
@@ -363,7 +363,7 @@ type SkipCipherBatch struct {
 }
 
 func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -383,7 +383,7 @@ func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a SkipCipherBatch) String() string {
-	return fmt.Sprintf("-> executor contract: skip cipher batch %d", a.batchIndex)
+	return fmt.Sprintf("=> executor contract: skip cipher batch %d", a.batchIndex)
 }
 
 // Accuse is an action accusing the executor of a given half step at the keyper slasher.
@@ -393,7 +393,7 @@ type Accuse struct {
 }
 
 func (a Accuse) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -411,7 +411,7 @@ func (a Accuse) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a Accuse) String() string {
-	return fmt.Sprintf("-> keyper slasher: accuse for half step %d", a.halfStep)
+	return fmt.Sprintf("=> keyper slasher: accuse for half step %d", a.halfStep)
 }
 
 // Appeal is an action countering an earlier invalid accusation.
@@ -420,7 +420,7 @@ type Appeal struct {
 }
 
 func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -438,7 +438,7 @@ func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a Appeal) String() string {
-	return fmt.Sprintf("-> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
+	return fmt.Sprintf("=> keyper slasher: appeal for half step %d", a.authorization.HalfStep)
 }
 
 // EonKeyBroadcast is an action sending a vote for an eon public key to the key broadcast contract.
@@ -449,7 +449,7 @@ type EonKeyBroadcast struct {
 }
 
 func (a EonKeyBroadcast) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("Run: %s", a)
+	log.Printf("=====%s", a)
 
 	cc := runenv.GetContractCaller(ctx)
 	auth, err := cc.Auth()
@@ -472,7 +472,7 @@ func (a EonKeyBroadcast) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a EonKeyBroadcast) String() string {
-	return fmt.Sprintf("-> key broadcast contract: voting for eon key with start batch %d", a.startBatchIndex)
+	return fmt.Sprintf("=> key broadcast contract: voting for eon key with start batch %d", a.startBatchIndex)
 }
 
 var errEKGNotFound = errors.New("EKG not found")
