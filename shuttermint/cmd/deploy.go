@@ -28,16 +28,9 @@ import (
 )
 
 const (
-	startBlockNumberOffset           = 30
 	defaultConfigChangeHeadsUpBlocks = 20
 	defaultAppealBlocks              = 20
 	ganacheKeyIdx                    = 9
-	numKeypers                       = 3
-	threshold                        = 2
-	transactionSizeLimit             = 100
-	batchSizeLimit                   = 100 * 100
-	baseGasLimit                     = 21000
-	fundAmount                       = 1 * params.Ether
 	deployDefaultTimeout             = 300 * time.Second
 )
 
