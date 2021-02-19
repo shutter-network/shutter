@@ -63,7 +63,7 @@ func TestDecryptionSigning(t *testing.T) {
 	signingKey, _ := crypto.ToECDSA(signingKeyBytes)
 	signer := crypto.PubkeyToAddress(signingKey.PublicKey)
 
-	expectedSignature, _ := hex.DecodeString("bc0af048df027eb11893647d1833d0b4a2e27df6a4fe1c8bf5a0fc16f77912d37282ac5c0a5e24288c9365007982199106cf308150c85253b76623457ff9d7f41b")
+	expectedSignature, _ := hex.DecodeString("bc0af048df027eb11893647d1833d0b4a2e27df6a4fe1c8bf5a0fc16f77912d37282ac5c0a5e24288c9365007982199106cf308150c85253b76623457ff9d7f41b") //nolint:lll
 
 	signature, err := ComputeDecryptionSignature(signingKey, batcherContractAddress, cipherBatchHash, decryptionKey, batchHash)
 	require.Nil(t, err)

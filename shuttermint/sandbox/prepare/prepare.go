@@ -896,6 +896,7 @@ type runScriptTemplateData struct {
 	KeyperDirs     []string
 }
 
+//nolint:lll
 const runScriptTemplate = `#! /usr/bin/env bash
 set -euxo pipefail
 
