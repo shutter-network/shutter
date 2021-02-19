@@ -129,17 +129,17 @@ func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
 	return &shutter.Eons[idx], nil
 }
 
-func (shutter *Shutter) applyCheckIn(e shutterevents.CheckIn) error {
+func (shutter *Shutter) applyCheckIn(e shutterevents.CheckIn) error { //nolint:unparam
 	shutter.KeyperEncryptionKeys[e.Sender] = (*EncryptionPublicKey)(e.EncryptionPublicKey)
 	return nil
 }
 
-func (shutter *Shutter) applyBatchConfig(e shutterevents.BatchConfig) error {
+func (shutter *Shutter) applyBatchConfig(e shutterevents.BatchConfig) error { //nolint:unparam
 	shutter.BatchConfigs = append(shutter.BatchConfigs, e)
 	return nil
 }
 
-func (shutter *Shutter) applyDecryptionSignature(e shutterevents.DecryptionSignature) error {
+func (shutter *Shutter) applyDecryptionSignature(e shutterevents.DecryptionSignature) error { //nolint:unparam
 	b := shutter.getBatchData(e.BatchIndex)
 	b.DecryptionSignatures = append(b.DecryptionSignatures, e)
 	return nil

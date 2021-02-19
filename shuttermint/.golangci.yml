@@ -85,7 +85,6 @@ linters:
     - gocyclo
     - gofumpt
     - golint
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -131,6 +130,9 @@ issues:
     - "Expect WriteFile permissions to be"
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
+    - path: contract/erc1820/bin\.go
+      linters:
+        - lll
     - path: _test\.go
       linters:
         - gomnd
