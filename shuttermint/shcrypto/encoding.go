@@ -51,12 +51,12 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 }
 
 // Marshal serialized the eon public key.
-func (k *EonPublicKey) Marshal() []byte {
-	return (*bn256.G2)(k).Marshal()
+func (eonpubkey *EonPublicKey) Marshal() []byte {
+	return (*bn256.G2)(eonpubkey).Marshal()
 }
 
 // Unmarshal deserializes an eon public key from the given byte slice.
-func (k *EonPublicKey) Unmarshal(m []byte) error {
-	_, err := (*bn256.G2)(k).Unmarshal(m)
+func (eonpubkey *EonPublicKey) Unmarshal(m []byte) error {
+	_, err := (*bn256.G2)(eonpubkey).Unmarshal(m)
 	return err
 }

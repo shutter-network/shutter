@@ -25,13 +25,12 @@ type EpochSecretKeyShare bn256.G1
 // EpochSecretKey represents an epoch secret key.
 type EpochSecretKey bn256.G1
 
-func (g2 *EonPublicKey) GobEncode() ([]byte, error) {
-	return (*bn256.G2)(g2).Marshal(), nil
+func (eonpubkey *EonPublicKey) GobEncode() ([]byte, error) {
+	return eonpubkey.Marshal(), nil
 }
 
-func (g2 *EonPublicKey) GobDecode(data []byte) error {
-	_, err := (*bn256.G2)(g2).Unmarshal(data)
-	return err
+func (eonpubkey *EonPublicKey) GobDecode(data []byte) error {
+	return eonpubkey.Unmarshal(data)
 }
 
 func (g2 *EonPublicKeyShare) GobEncode() ([]byte, error) {
