@@ -77,8 +77,8 @@ func (esks *EonSecretKeyShare) GobDecode(data []byte) error {
 	return (*big.Int)(esks).GobDecode(data)
 }
 
-// ComputeEonSecretKeyShare computes the a keyper's sk share from the set of poly evals received from the
-// other keypers.
+// ComputeEonSecretKeyShare computes the keyper's secret key share from the set of poly evals
+// received from the other keypers.
 func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 	res := big.NewInt(0)
 	for _, si := range polyEvals {
