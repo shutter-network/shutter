@@ -216,7 +216,6 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	eonSecretKeyShares := []*EonSecretKeyShare{}
-	eonPublicKeyShares := []*EonPublicKeyShare{}
 	epochSecretKeyShares := []*EpochSecretKeyShare{}
 	eonSecretKey := big.NewInt(0)
 	for i := 0; i < n; i++ {
@@ -228,7 +227,7 @@ func TestRoundTrip(t *testing.T) {
 			ss = append(ss, s)
 		}
 		eonSecretKeyShares = append(eonSecretKeyShares, ComputeEonSecretKeyShare(ss))
-		eonPublicKeyShares = append(eonPublicKeyShares, ComputeEonPublicKeyShare(i, gammas))
+		_ = ComputeEonPublicKeyShare(i, gammas)
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
