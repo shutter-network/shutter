@@ -322,7 +322,6 @@ func TestComputeEpochSecretKey(t *testing.T) {
 		ps = append(ps, p)
 	}
 
-	eonSecretKeyShares := []*EonSecretKeyShare{}
 	epochSecretKeyShares := []*EpochSecretKeyShare{}
 	for i := 0; i < n; i++ {
 		vs := []*big.Int{}
@@ -333,7 +332,6 @@ func TestComputeEpochSecretKey(t *testing.T) {
 		eonSecretKeyShare := ComputeEonSecretKeyShare(vs)
 		epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
 
-		eonSecretKeyShares = append(eonSecretKeyShares, eonSecretKeyShare)
 		epochSecretKeyShares = append(epochSecretKeyShares, epochSecretKeyShare)
 	}
 
