@@ -907,12 +907,23 @@ func (dcdr *Decider) publishEpochSecretKeyShares() {
 
 	currentBatchIndex := bc.BatchIndex(blockNum)
 	// publish the private epoch key share for batch indexes < currentBatchIndex
-	// TODO Limit the number of messages we sent. It doesn't make sense to publish the secret
-	// key share, if the batch already finished/failed.
 	for batchIndex := dcdr.State.NextEpochSecretShare; batchIndex < currentBatchIndex; batchIndex++ {
-		dcdr.publishEpochSecretKeyShare(batchIndex)
+		if !dcdr.executionTimeoutReachedOrInactive(batchIndex) {
+			dcdr.publishEpochSecretKeyShare(batchIndex)
+		}
 	}
 	dcdr.State.NextEpochSecretShare = currentBatchIndex
+}
+
+// executionTimeoutReachedOrInactive checks if the execution timeout for the given batch has been reached or
+// if the config is inactive
+func (dcdr *Decider) executionTimeoutReachedOrInactive(batchIndex uint64) bool {
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
+	if !ok {
+		return true // config is inactive
+	}
+	executionTimeoutBlock := config.BatchEndBlock(batchIndex) + config.ExecutionTimeout
+	return dcdr.MainChain.CurrentBlock >= executionTimeoutBlock-1
 }
 
 func (dcdr *Decider) handleEpochKG() {
