@@ -26,6 +26,7 @@ var chainCmd = &cobra.Command{
 	Use:   "chain",
 	Short: "Run a node for Shutter's Tendermint chain",
 	Long:  `This command runs a node that will connect to Shutter's Tendermint chain.`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		chainMain()
 	},

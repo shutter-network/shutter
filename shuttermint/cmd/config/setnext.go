@@ -19,6 +19,7 @@ import (
 var setNextCmd = &cobra.Command{
 	Use:   "set-next",
 	Short: "Set the next config in order to schedule it later",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		sandbox.ExitIfError(processConfigFlags(ctx))

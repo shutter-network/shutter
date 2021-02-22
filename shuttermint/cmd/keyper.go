@@ -41,6 +41,7 @@ var keyperCmd = &cobra.Command{
 	Short: "Run a Shutter keyper node",
 	Long: `This command runs a keyper node. It will connect to both an Ethereum and a
 Shuttermint node which have to be started separately in advance.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		keyperMain()
 	},

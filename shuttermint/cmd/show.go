@@ -20,6 +20,7 @@ var showFlags struct {
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show the internal state of a Shuttermint node",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		showMain()
 	},

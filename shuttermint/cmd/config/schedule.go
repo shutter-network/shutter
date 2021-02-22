@@ -17,6 +17,7 @@ var scheduleCmd = &cobra.Command{
 	Long: `This command schedules the next batch config. The next batch config can be
 configured using the 'shuttermint config set-next' command and queried with
 'shuttermint config query -i next'.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		sandbox.ExitIfError(processConfigFlags(ctx))

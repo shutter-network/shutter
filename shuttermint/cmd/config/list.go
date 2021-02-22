@@ -17,6 +17,7 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all configs",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		sandbox.ExitIfError(processConfigFlags(ctx))
