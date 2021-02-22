@@ -23,7 +23,7 @@ const (
 
 var queryCmd = &cobra.Command{
 	Use:   "query",
-	Short: "Download a config and print it as JSON",
+	Short: "Download a batch config and print it as JSON",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		sandbox.ExitIfError(processConfigFlags(ctx))

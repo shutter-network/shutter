@@ -16,7 +16,7 @@ const keyFlagName = "owner-key"
 
 var ConfigCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Configure and query the Shutter config contract",
+	Short: "Send batch configs to and query them from Shutter's config contract",
 }
 
 var (

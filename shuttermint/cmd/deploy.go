@@ -47,7 +47,7 @@ var deployFlags struct {
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "Helper tools to deploy and interact with the Shutter contracts",
+	Short: "Deploy all Shutter contracts",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
 		defer cancel()

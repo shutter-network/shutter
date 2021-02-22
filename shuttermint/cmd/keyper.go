@@ -38,7 +38,9 @@ type RawKeyperConfig struct {
 // keyperCmd represents the keyper command
 var keyperCmd = &cobra.Command{
 	Use:   "keyper",
-	Short: "Run a shutter keyper",
+	Short: "Run a Shutter keyper node",
+	Long: `This command runs a keyper node. It will connect to both an Ethereum and a
+Shuttermint node which have to be started separately in advance.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		keyperMain()
 	},

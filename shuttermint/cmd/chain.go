@@ -25,7 +25,7 @@ import (
 var chainCmd = &cobra.Command{
 	Use:   "chain",
 	Short: "Run a node for Shutter's Tendermint chain",
-	Long:  `The chain command runs a node for Shutter's Tendermint chain.`,
+	Long:  `This command runs a node that will connect to Shutter's Tendermint chain.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		chainMain()
 	},

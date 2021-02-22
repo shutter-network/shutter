@@ -15,7 +15,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "shuttermint",
-	Short:   "shuttermint runs the shutter tendermint app or a shutter keyper",
+	Short:   "A collection of commands to run and interact with Shutter keyper nodes",
 	Version: shversion.Version,
 }
 

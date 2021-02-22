@@ -36,7 +36,7 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize shuttermint",
+	Short: "Create a config file for a Shuttermint node",
 	RunE:  initFiles,
 }
 
