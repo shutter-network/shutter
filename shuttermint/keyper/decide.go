@@ -794,7 +794,9 @@ func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
 		}
 		if key, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
 			log.Printf("Epoch secret key generated for epoch %d", share.Epoch)
-			dcdr.sendDecryptionSignature(key, share.Epoch)
+			if !dcdr.executionTimeoutReachedOrInactive(share.Epoch) {
+				dcdr.sendDecryptionSignature(key, share.Epoch)
+			}
 		}
 	}
 	ekg.EpochSecretKeySharesIndex = len(eon.EpochSecretKeyShares)
