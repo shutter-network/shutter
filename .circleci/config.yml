@@ -244,7 +244,7 @@ workflows:
       - mint-lint:
           filters:
             branches:
-              ignore: /master/
+              ignore: /main/
 # Local Variables:
 # compile-command: "circleci config validate"
 # projectile-project-compilation-cmd: "circleci config validate"
