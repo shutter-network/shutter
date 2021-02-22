@@ -21,7 +21,6 @@ var bootstrapFlags struct {
 	ShuttermintURL   string
 	EthereumURL      string
 	BatchConfigIndex int
-	ConfigContract   string
 	ContractsPath    string
 	SigningKey       string
 }
@@ -41,22 +40,11 @@ chain's genesis config.`,
 }
 
 func getConfigContractAddress() common.Address {
-	var configContractAddress common.Address
-	if bootstrapFlags.ContractsPath != "" {
-		contracts, err := sandbox.LoadContractsJSON(bootstrapFlags.ContractsPath)
-		if err != nil {
-			log.Fatalf("could not read contracts: %s", err)
-		}
-		configContractAddress = common.HexToAddress(contracts.ConfigContract)
-	} else if bootstrapFlags.ConfigContract != "" {
-		configContractAddress = common.HexToAddress(bootstrapFlags.ConfigContract)
-		if bootstrapFlags.ConfigContract != configContractAddress.Hex() {
-			log.Fatalf("Invalid config contract address %s", bootstrapFlags.ConfigContract)
-		}
-	} else {
-		log.Fatalf("must specify either --contracts or -c flag")
+	contracts, err := sandbox.LoadContractsJSON(bootstrapFlags.ContractsPath)
+	if err != nil {
+		log.Fatalf("could not read contracts: %s", err)
 	}
-	return configContractAddress
+	return common.HexToAddress(contracts.ConfigContract)
 }
 
 func init() {
@@ -84,19 +72,13 @@ func init() {
 	)
 
 	bootstrapCmd.PersistentFlags().StringVarP(
-		&bootstrapFlags.ConfigContract,
-		"config-contract",
-		"c",
-		"",
-		"address of the contract from which to fetch config",
-	)
-	bootstrapCmd.Flags().StringVarP(
 		&bootstrapFlags.ContractsPath,
 		"contracts",
-		"", // can't reuse "c" here
+		"c",
 		"",
 		"read config contract address from the given contracts.json file",
 	)
+	bootstrapCmd.MarkPersistentFlagRequired("contracts")
 
 	bootstrapCmd.PersistentFlags().StringVarP(
 		&bootstrapFlags.SigningKey,
