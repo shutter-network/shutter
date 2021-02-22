@@ -38,14 +38,16 @@ type RawKeyperConfig struct {
 // keyperCmd represents the keyper command
 var keyperCmd = &cobra.Command{
 	Use:   "keyper",
-	Short: "Run a shutter keyper",
+	Short: "Run a Shutter keyper node",
+	Long: `This command runs a keyper node. It will connect to both an Ethereum and a
+Shuttermint node which have to be started separately in advance.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		keyperMain()
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(keyperCmd)
 	keyperCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 }
 
@@ -65,7 +67,6 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ExecutionStaggering")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
-	viper.SetDefault("EthereumURL", "ws://localhost:8545/websocket")
 
 	defer func() {
 		if viper.ConfigFileUsed() != "" {

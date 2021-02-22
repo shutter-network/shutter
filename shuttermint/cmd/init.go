@@ -36,12 +36,12 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize shuttermint",
+	Short: "Create a config file for a Shuttermint node",
+	Args:  cobra.NoArgs,
 	RunE:  initFiles,
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
 	initCmd.PersistentFlags().StringVar(&rootDir, "root", "", "root directory")
 	initCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "turn on devmode (disables validator set changes)")
 	initCmd.PersistentFlags().IntVar(&index, "index", 0, "keyper index")

@@ -19,14 +19,14 @@ var showFlags struct {
 // keyperCmd represents the keyper command
 var showCmd = &cobra.Command{
 	Use:   "show",
-	Short: "Show shutter internal state",
+	Short: "Show the internal state of a Shuttermint node",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		showMain()
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(showCmd)
 	showCmd.PersistentFlags().StringVarP(
 		&showFlags.ShuttermintURL,
 		"shuttermint-url",

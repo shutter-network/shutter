@@ -10,7 +10,7 @@ OPENZEPPELIN_CONTRACTS_DIR=../contracts/openzeppelin
 build:
 	@VERSION=`git describe --tags --always --abbrev=4 --dirty`; \
 	echo "Building shuttermint $${VERSION}"; \
-	${GO} build -o bin -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.Version=$${VERSION}" . ./sandbox/testclient ./sandbox/deploy ./sandbox/prepare  ./sandbox/config
+	${GO} build -o bin -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.Version=$${VERSION}" . ./sandbox/testclient ./sandbox/prepare
 
 wasm:
 	GOARCH=wasm GOOS=js ${GO} build -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
@@ -24,7 +24,7 @@ ${TESTROOT}:
 init: ${TESTROOT}
 
 run: build init
-	./bin/shuttermint run --config ${TESTROOT}/config/config.toml
+	./bin/shuttermint chain --config ${TESTROOT}/config/config.toml
 
 test:
 	${GO} test ./...

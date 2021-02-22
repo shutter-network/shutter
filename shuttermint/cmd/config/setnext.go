@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -19,9 +19,10 @@ import (
 var setNextCmd = &cobra.Command{
 	Use:   "set-next",
 	Short: "Set the next config in order to schedule it later",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		sandbox.ExitIfError(processRootFlags(ctx))
+		sandbox.ExitIfError(processConfigFlags(ctx))
 		if flag, err := validateSetNextFlags(); err != nil {
 			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
 		}
@@ -34,7 +35,7 @@ var setNextFlags struct {
 	Key        string
 }
 
-func initSetNextFlags() {
+func init() {
 	setNextCmd.PersistentFlags().StringVar(
 		&setNextFlags.ConfigPath,
 		"config",
@@ -48,7 +49,7 @@ func initSetNextFlags() {
 		keyFlagName,
 		"k",
 		"",
-		"private key used to sign transactions",
+		"private key of the owner",
 	)
 	sandbox.MarkFlagRequired(setNextCmd, keyFlagName)
 }

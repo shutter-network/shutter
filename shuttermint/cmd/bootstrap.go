@@ -29,7 +29,12 @@ var bootstrapFlags struct {
 var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap Shuttermint by submitting the initial batch config",
-	Args:  cobra.NoArgs,
+	Long: `This command sends a batch config to the Shuttermint chain in a message signed
+with the given private key. This will instruct a newly created chain to update
+its validator set according to the keyper set defined in the batch config. The
+private key must correspond to the initial validator address as defined in the
+chain's genesis config.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		bootstrap()
 	},
@@ -55,8 +60,6 @@ func getConfigContractAddress() common.Address {
 }
 
 func init() {
-	rootCmd.AddCommand(bootstrapCmd)
-
 	bootstrapCmd.PersistentFlags().StringVarP(
 		&bootstrapFlags.ShuttermintURL,
 		"shuttermint-url",
@@ -68,9 +71,10 @@ func init() {
 		&bootstrapFlags.EthereumURL,
 		"ethereum-url",
 		"e",
-		"ws://localhost:8545/websocket",
+		"",
 		"Ethereum RPC URL",
 	)
+	bootstrapCmd.MarkPersistentFlagRequired("ethereum-url")
 	bootstrapCmd.PersistentFlags().IntVarP(
 		&bootstrapFlags.BatchConfigIndex,
 		"index",

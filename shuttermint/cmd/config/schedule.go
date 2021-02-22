@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -13,10 +13,14 @@ import (
 
 var scheduleCmd = &cobra.Command{
 	Use:   "schedule",
-	Short: "Schedule the next config",
+	Short: "Schedule the next batch config",
+	Long: `This command schedules the next batch config. The next batch config can be
+configured using the 'shuttermint config set-next' command and queried with
+'shuttermint config query -i next'.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		sandbox.ExitIfError(processRootFlags(ctx))
+		sandbox.ExitIfError(processConfigFlags(ctx))
 		if flag, err := validateScheduleFlags(); err != nil {
 			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
 		}
@@ -28,13 +32,13 @@ var scheduleFlags struct {
 	Key string
 }
 
-func initScheduleFlags() {
+func init() {
 	scheduleCmd.PersistentFlags().StringVarP(
 		&scheduleFlags.Key,
 		keyFlagName,
 		"k",
 		"",
-		"private key used to sign transaction",
+		"private key of the owner",
 	)
 	sandbox.MarkFlagRequired(scheduleCmd, keyFlagName)
 }
