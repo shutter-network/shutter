@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -282,6 +283,7 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 	fmt.Println("TargetContract address:", targetAddress.Hex())
 
 	if deployFlags.OutputFile != "" {
+		outputFile := filepath.Clean(deployFlags.OutputFile)
 		j := sandbox.ContractsJSON{
 			ConfigContract:        configAddress.Hex(),
 			KeyBroadcastContract:  broadcastAddress.Hex(),
@@ -295,9 +297,9 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 		}
 		s, err := json.MarshalIndent(j, "", "    ")
 		failIfError(err)
-		err = ioutil.WriteFile(deployFlags.OutputFile, s, 0o644)
+		err = ioutil.WriteFile(outputFile, s, 0o644)
 		failIfError(err)
-		fmt.Println("addresses written to", deployFlags.OutputFile)
+		fmt.Println("addresses written to", outputFile)
 	}
 }
 
