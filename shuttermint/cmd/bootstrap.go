@@ -13,6 +13,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -21,15 +22,36 @@ var bootstrapFlags struct {
 	EthereumURL      string
 	BatchConfigIndex int
 	ConfigContract   string
+	ContractsPath    string
 	SigningKey       string
 }
 
 var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap Shuttermint by submitting the initial batch config",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		bootstrap()
 	},
+}
+
+func getConfigContractAddress() common.Address {
+	var configContractAddress common.Address
+	if bootstrapFlags.ContractsPath != "" {
+		contracts, err := sandbox.LoadContractsJSON(bootstrapFlags.ContractsPath)
+		if err != nil {
+			log.Fatalf("could not read contracts: %s", err)
+		}
+		configContractAddress = common.HexToAddress(contracts.ConfigContract)
+	} else if bootstrapFlags.ConfigContract != "" {
+		configContractAddress = common.HexToAddress(bootstrapFlags.ConfigContract)
+		if bootstrapFlags.ConfigContract != configContractAddress.Hex() {
+			log.Fatalf("Invalid config contract address %s", bootstrapFlags.ConfigContract)
+		}
+	} else {
+		log.Fatalf("must specify either --contracts or -c flag")
+	}
+	return configContractAddress
 }
 
 func init() {
@@ -64,7 +86,13 @@ func init() {
 		"",
 		"address of the contract from which to fetch config",
 	)
-	bootstrapCmd.MarkPersistentFlagRequired("config-contract")
+	bootstrapCmd.Flags().StringVarP(
+		&bootstrapFlags.ContractsPath,
+		"contracts",
+		"", // can't reuse "c" here
+		"",
+		"read config contract address from the given contracts.json file",
+	)
 
 	bootstrapCmd.PersistentFlags().StringVarP(
 		&bootstrapFlags.SigningKey,
@@ -91,11 +119,7 @@ func bootstrap() {
 	if err != nil {
 		log.Fatalf("Invalid signing key: %v", err)
 	}
-
-	configContractAddress := common.HexToAddress(bootstrapFlags.ConfigContract)
-	if bootstrapFlags.ConfigContract != configContractAddress.Hex() {
-		log.Fatalf("Invalid config contract address %s", bootstrapFlags.ConfigContract)
-	}
+	configContractAddress := getConfigContractAddress()
 	configContract, err := contract.NewConfigContract(configContractAddress, ethcl)
 	if err != nil {
 		log.Fatalf("Failed to instantiate ConfigContract: %v", err)
