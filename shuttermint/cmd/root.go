@@ -16,7 +16,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:     "shuttermint",
 	Short:   "A collection of commands to run and interact with Shutter keyper nodes",
-	Version: shversion.Version,
+	Version: shversion.Version(),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

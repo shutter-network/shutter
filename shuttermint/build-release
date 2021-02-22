@@ -13,5 +13,5 @@ arch=amd64
 for os in linux freebsd openbsd darwin; do
     target=bin/shuttermint-${os}-${arch}-${VERSION}
     echo "Building ${target}"
-    env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.Version=${VERSION}" .
+    env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=${VERSION}" .
 done

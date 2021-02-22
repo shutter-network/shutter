@@ -2,4 +2,14 @@
 // Makefile
 package shversion
 
-var Version string = "(unknown)"
+import (
+	"fmt"
+	"runtime"
+)
+
+var version string = "(unknown)"
+
+// Version returns shuttermint's version string
+func Version() string {
+	return fmt.Sprintf("%s (%s)", version, runtime.Version())
+}
