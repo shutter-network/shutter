@@ -657,28 +657,36 @@ func (dcdr *Decider) sendPolyEvals(dkg *DKG) {
 	}
 }
 
-func (dcdr *Decider) startPhase1Dealing(dkg *DKG) {
+func (dcdr *Decider) startPhase1Dealing(dkg *DKG, phaseAtNextBlockHeight puredkg.Phase) {
 	commitment, polyEvals, err := dkg.Pure.StartPhase1Dealing()
 	if err != nil {
 		panic(err) // XXX fix error handling
 	}
+	if phaseAtNextBlockHeight != puredkg.Dealing {
+		return
+	}
 
 	dkg.OutgoingPolyEvalMsgs = polyEvals
-
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("poly commitment, eon=%d", dkg.Eon),
 		shmsg.NewPolyCommitment(dkg.Eon, commitment.Gammas))
 }
 
-func (dcdr *Decider) startPhase2Accusing(dkg *DKG) {
+func (dcdr *Decider) startPhase2Accusing(dkg *DKG, phaseAtNextBlockHeight puredkg.Phase) {
 	accusations := dkg.Pure.StartPhase2Accusing()
+	if phaseAtNextBlockHeight != puredkg.Accusing {
+		return
+	}
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("accusations, eon=%d, count=%d", dkg.Eon, len(accusations)),
 		dkg.newAccusation(accusations))
 }
 
-func (dcdr *Decider) startPhase3Apologizing(dkg *DKG) {
+func (dcdr *Decider) startPhase3Apologizing(dkg *DKG, phaseAtNextBlockHeight puredkg.Phase) {
 	apologies := dkg.Pure.StartPhase3Apologizing()
+	if phaseAtNextBlockHeight != puredkg.Apologizing {
+		return
+	}
 	dcdr.sendShuttermintMessage(
 		fmt.Sprintf("apologies, eon=%d, count=%d", dkg.Eon, len(apologies)),
 		dkg.newApology(apologies))
@@ -719,25 +727,27 @@ func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
 		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
 	}
 
-	phaseAtCurrentHeight := phaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock, eon.StartHeight)
+	// We look at the next block's phase, because that is the first block that might make it
+	// into the chain
+	phaseAtNextBlockHeight := phaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock+1, eon.StartHeight)
 
-	if dkg.Pure.Phase == puredkg.Off && phaseAtCurrentHeight >= puredkg.Dealing {
-		dcdr.startPhase1Dealing(dkg)
+	if dkg.Pure.Phase == puredkg.Off && phaseAtNextBlockHeight >= puredkg.Dealing {
+		dcdr.startPhase1Dealing(dkg, phaseAtNextBlockHeight)
 	}
 	dkg.syncCommitments(eon)
 	dkg.syncPolyEvals(eon, decrypt)
 
-	if dkg.Pure.Phase == puredkg.Dealing && phaseAtCurrentHeight >= puredkg.Accusing {
-		dcdr.startPhase2Accusing(dkg)
+	if dkg.Pure.Phase == puredkg.Dealing && phaseAtNextBlockHeight >= puredkg.Accusing {
+		dcdr.startPhase2Accusing(dkg, phaseAtNextBlockHeight)
 	}
 	dkg.syncAccusations(eon)
 
-	if dkg.Pure.Phase == puredkg.Accusing && phaseAtCurrentHeight >= puredkg.Apologizing {
-		dcdr.startPhase3Apologizing(dkg)
+	if dkg.Pure.Phase == puredkg.Accusing && phaseAtNextBlockHeight >= puredkg.Apologizing {
+		dcdr.startPhase3Apologizing(dkg, phaseAtNextBlockHeight)
 	}
 	dkg.syncApologies(eon)
 
-	if dkg.Pure.Phase == puredkg.Apologizing && phaseAtCurrentHeight >= puredkg.Finalized {
+	if dkg.Pure.Phase == puredkg.Apologizing && phaseAtNextBlockHeight >= puredkg.Finalized {
 		dcdr.dkgFinalize(dkg)
 	}
 }
