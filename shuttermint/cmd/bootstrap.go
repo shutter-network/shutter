@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -42,9 +43,9 @@ chain's genesis config.`,
 func getConfigContractAddress() common.Address {
 	contracts, err := sandbox.LoadContractsJSON(bootstrapFlags.ContractsPath)
 	if err != nil {
-		log.Fatalf("could not read contracts: %s", err)
+		log.Fatalf("Could not read contracts from %s: %s", filepath.Clean(bootstrapFlags.ContractsPath), err)
 	}
-	return common.HexToAddress(contracts.ConfigContract)
+	return contracts.ConfigContract
 }
 
 func init() {

@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -79,7 +78,7 @@ func processConfigFlags(ctx context.Context) error {
 		return errors.Wrapf(err, "failed to load contracts JSON file at %s", configFlags.ContractsPath)
 	}
 
-	configContract, err = contract.NewConfigContract(common.HexToAddress(contractsJSON.ConfigContract), client)
+	configContract, err = contract.NewConfigContract(contractsJSON.ConfigContract, client)
 	if err != nil {
 		return err
 	}

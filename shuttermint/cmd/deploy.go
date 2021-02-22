@@ -285,15 +285,15 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 	if deployFlags.OutputFile != "" {
 		outputFile := filepath.Clean(deployFlags.OutputFile)
 		j := sandbox.ContractsJSON{
-			ConfigContract:        configAddress.Hex(),
-			KeyBroadcastContract:  broadcastAddress.Hex(),
-			FeeBankContract:       feeAddress.Hex(),
-			BatcherContract:       batcherAddress.Hex(),
-			ExecutorContract:      executorAddress.Hex(),
-			TokenContract:         tokenAddress.Hex(),
-			DepositContract:       depositAddress.Hex(),
-			KeyperSlasherContract: keyperSlasherAddress.Hex(),
-			TargetContract:        targetAddress.Hex(),
+			ConfigContract:        configAddress,
+			KeyBroadcastContract:  broadcastAddress,
+			FeeBankContract:       feeAddress,
+			BatcherContract:       batcherAddress,
+			ExecutorContract:      executorAddress,
+			TokenContract:         tokenAddress,
+			DepositContract:       depositAddress,
+			KeyperSlasherContract: keyperSlasherAddress,
+			TargetContract:        targetAddress,
 		}
 		s, err := json.MarshalIndent(j, "", "    ")
 		failIfError(err)

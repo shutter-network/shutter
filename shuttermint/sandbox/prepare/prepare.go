@@ -364,11 +364,6 @@ func loadContractsJSON(path string) error {
 		return err
 	}
 
-	err = contractsJSON.Validate()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -413,12 +408,12 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		SigningKey:           hex.EncodeToString(crypto.FromECDSA(signingKey)),
 		ValidatorSeed:        validatorSeed,
 		EncryptionKey:        hex.EncodeToString(crypto.FromECDSA(encryptionKey.ExportECDSA())),
-		ConfigContract:       contractsJSON.ConfigContract,
-		BatcherContract:      contractsJSON.BatcherContract,
-		KeyBroadcastContract: contractsJSON.KeyBroadcastContract,
-		ExecutorContract:     contractsJSON.ExecutorContract,
-		DepositContract:      contractsJSON.DepositContract,
-		KeyperSlasher:        contractsJSON.KeyperSlasherContract,
+		ConfigContract:       contractsJSON.ConfigContract.Hex(),
+		BatcherContract:      contractsJSON.BatcherContract.Hex(),
+		KeyBroadcastContract: contractsJSON.KeyBroadcastContract.Hex(),
+		ExecutorContract:     contractsJSON.ExecutorContract.Hex(),
+		DepositContract:      contractsJSON.DepositContract.Hex(),
+		KeyperSlasher:        contractsJSON.KeyperSlasherContract.Hex(),
 		ExecutionStaggering:  "5",
 	}
 	return &config, nil
