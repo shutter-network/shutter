@@ -34,6 +34,8 @@ contract ExecutorContract {
     ///     this one.
     event CipherExecutionSkipped(uint64 numExecutionHalfSteps);
 
+    event TransactionFailed(uint64 txIndex, bytes32 txHash, bytes data);
+
     ConfigContract public configContract;
     BatcherContract public batcherContract;
 
@@ -227,7 +229,15 @@ contract ExecutorContract {
                 );
 
             // call target function, ignoring any errors
-            (bool _, ) = _targetAddress.call{gas: _gasLimit}(_calldata);
+            (bool success, bytes memory data) =
+                _targetAddress.call{gas: _gasLimit}(_calldata);
+            if (!success) {
+                emit TransactionFailed({
+                    txIndex: _i,
+                    txHash: keccak256(_transactions[_i]),
+                    data: data
+                });
+            }
 
             _batchHash = keccak256(
                 abi.encodePacked(_transactions[_i], _batchHash)
