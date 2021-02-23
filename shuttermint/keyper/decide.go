@@ -1136,9 +1136,25 @@ func (dcdr *Decider) syncPendingAppeals() {
 // executionDelay returns the number of main chain blocks to wait before sending an execution tx.
 // This makes sure not all keypers try to send the same tx at the same time.
 func (dcdr *Decider) executionDelay(config contract.BatchConfig, halfStep uint64) uint64 {
+	// do not delay the execution for more than 50% of the execution timeout
+	var maxStaggering, staggering, divisor uint64
+	divisor = uint64(len(config.Keypers) - 1)
+	if divisor == 0 {
+		maxStaggering = 0
+	} else {
+		maxStaggering = config.ExecutionTimeout / (2 * divisor)
+	}
+
+	if dcdr.Config.ExecutionStaggering >= maxStaggering {
+		staggering = maxStaggering
+	} else {
+		staggering = dcdr.Config.ExecutionStaggering
+	}
+
 	keyperIndex, _ := config.KeyperIndex(dcdr.Config.Address())
 	place := (halfStep + keyperIndex) % uint64(len(config.Keypers))
-	return place * dcdr.Config.ExecutionStaggering
+
+	return place * staggering
 }
 
 // Decide determines the next actions to run.
