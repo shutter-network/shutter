@@ -342,7 +342,7 @@ func (mainchain *MainChain) SyncToHead(
 		Context:     ctx,
 	}
 	filter := &bind.FilterOpts{
-		Start: mainchain.CurrentBlock,
+		Start: mainchain.CurrentBlock + 1,
 		End:   &latestBlockNumber,
 	}
 
