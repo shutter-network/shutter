@@ -171,3 +171,78 @@ To shut everything down in the end, kill the following processes:
 
 Delete the `testchain` and `testrun` directories as well as the `contracts.json` and `config.json`
 files to clean up.
+
+## Contracts
+
+At its core, Shutter's contract suite consists of three main components:
+
+- the config contract
+- the batcher contract
+- the executor contract
+
+The following contracts perform auxiliary tasks:
+
+- the deposit contract
+- the fee bank contract
+- the key broadcast contract
+- the keyper slasher contract
+
+All contracts can be found in the `contracts/` subdirectory.
+
+### Config Contract
+
+The config contract defines the system parameters. Since they must be able to evolve over time,
+they are given as a list of batch config objects.
+
+New batch configs can be scheduled for the future, as long as the `configChangeHeadsUp` interval
+set during construction is abided by. This is intended to give keypers enough time to react to
+changes. Once scheduled, batch configs cannot be removed and their order cannot be changed.
+
+Scheduling a config is a two step process: First, the config object is drafted using the various
+`setNext...` functions and, second, it is finalized using `schedule`.
+
+Only the contract owner is allowed to schedule configs. This role is inteded to be played by a DAO.
+
+The batch config objects divide time into a sequence of batches and each config is applicable to a
+range of them. The following fields specify this:
+
+- `startBatchIndex`: the index of the first batch for which the config is applicable to
+- `startBlockNumber`: the Ethereum block number at which the first batch starts
+- `batchSpan`: the length of each batch in Ethereum blocks
+
+The first config has a `startBatchIndex` of 0. It will end with the `startBatchIndex` of the second
+config, and so on. The config contract enforces that transitions between batches are seamless,
+i.e., the start block number of a config fits to the batch span and start block number of the
+previous config (e.g., if config 1 starts at batch index `100` and block `500` and has a span of
+`10` and config 2 at batch index `200`, it's start block number must be `600`).
+
+The batch span can be zero denoting that the system is disabled. It can be enabled again by
+scheduling a new config with a batch span greater than zero.
+
+The key generation parameters are set by the `keypers` and `threshold` fields. Note that `keypers`
+must not contain duplicates and that the threshold must less than or equal to the number of
+keypers, but greater than half of it.
+
+The transactions that are allowed to enter a batch are constrained by the following fields:
+
+- `transactionSizeLimit`: the maximum size of a transaction in bytes
+- `batchSizeLimit`: the maximum size of all transactions in a single batch in bytes
+- `feeReceiver`: address that will receive transaction fees
+
+For transaction execution after decryption, the following fields are relevant:
+
+- `transactionGasLimit`: the maximum amount of gas a transaction is allowed to consume during
+  execution once it is decrypted
+- `targetAddress`: the address of the contract to which the derypted transactions will be passed
+  to
+- `targetFunctionSelector`: the 4 byte function selector that specifies the function in the target
+  contract that will be called with each decrypted transaction
+- `executionTimeout`: the number of blocks to pass between the end of a batch and the time at which
+  it is assumed that decryption has failed and can be skipped (e.g., because too many keyper were
+  offline)
+
+### Batcher Contract
+
+### Executor Contract
+
+### Auxiliary Contracts
