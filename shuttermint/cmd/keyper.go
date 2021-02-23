@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -31,7 +30,7 @@ type RawKeyperConfig struct {
 	ExecutorContract     string
 	DepositContract      string
 	KeyperSlasher        string
-	ExecutionStaggering  string
+	ExecutionStaggering  uint64
 	DBDir                string
 }
 
@@ -173,10 +172,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		)
 	}
 
-	executionStaggering, err := strconv.ParseUint(r.ExecutionStaggering, 10, 64)
-	if err != nil {
-		return emptyConfig, fmt.Errorf("error parsing ExecutionStaggering as non-negative integer: %w", err)
-	}
+	executionStaggering := r.ExecutionStaggering
 
 	return keyper.KeyperConfig{
 		ShuttermintURL:              r.ShuttermintURL,
