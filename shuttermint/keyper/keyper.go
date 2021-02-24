@@ -1,3 +1,4 @@
+// Package keyper contains the keyper implementation
 package keyper
 
 import (
