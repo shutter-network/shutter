@@ -60,8 +60,9 @@ async function encodeMessage(message, nonce, privateKey) {
     ["uint64", "bytes"],
     [nonce, messageBytes]
   );
+  let payloadHash = ethers.utils.keccak256(payload);
   let wallet = new ethers.Wallet(privateKey);
-  let flatSig = await wallet.signMessage(payload);
+  let flatSig = await wallet.signMessage(ethers.utils.arrayify(payloadHash));
   let sig = ethers.utils.splitSignature(flatSig);
   let encoded = ethers.utils.defaultAbiCoder.encode(
     ["bytes", "uint8", "bytes32", "bytes32"],

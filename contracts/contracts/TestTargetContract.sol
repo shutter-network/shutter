@@ -22,7 +22,14 @@ contract TestTargetContract {
         (bytes memory payload, uint8 v, bytes32 r, bytes32 s) =
             abi.decode(txData, (bytes, uint8, bytes32, bytes32));
         bytes32 payloadHash = keccak256(payload);
-        address sender = ecrecover(payloadHash, v, r, s);
+        bytes32 signedHash =
+            keccak256(
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    payloadHash
+                )
+            );
+        address sender = ecrecover(signedHash, v, r, s);
         (uint64 nonce, bytes memory data) =
             abi.decode(payload, (uint64, bytes));
 
