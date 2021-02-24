@@ -48,7 +48,7 @@ type Batch struct {
 	SignatureCount           int // number of valid signatures
 }
 
-// Verify if the sender signed the batches' DecryptionSignatureHash
+// VerifySignature checks if the sender signed the batches' DecryptionSignatureHash
 func (batch *Batch) VerifySignature(sender common.Address, signature []byte) bool {
 	pubkey, err := crypto.SigToPub(batch.DecryptionSignatureHash, signature)
 	if err != nil {
