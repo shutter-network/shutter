@@ -21,6 +21,8 @@
 </template>
 
 <script>
+import { ethers } from "ethers";
+
 export default {
   name: "TargetSection",
 
@@ -52,7 +54,7 @@ export default {
       this.txs.push({
         sender: sender,
         nonce: nonce,
-        data: data,
+        data: ethers.utils.toUtf8String(data),
       });
     },
   },
