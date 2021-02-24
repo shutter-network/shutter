@@ -253,7 +253,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 	return nil
 }
 
-// IsCheckedIn checks if the given address sent it's checkin message
+// IsCheckedIn checks if the given address sent it's check-in message
 func (shutter *Shutter) IsCheckedIn(addr common.Address) bool {
 	_, ok := shutter.KeyperEncryptionKeys[addr]
 	return ok

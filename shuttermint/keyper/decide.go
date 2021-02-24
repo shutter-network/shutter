@@ -234,7 +234,7 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 
 // State is the keyper's internal state
 type State struct {
-	CheckinMessageSent       bool
+	CheckInMessageSent       bool
 	LastSentBatchConfigIndex uint64
 	LastEonStarted           uint64
 	DKGs                     []DKG
@@ -287,9 +287,9 @@ func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Messa
 	})
 }
 
-// shouldSendCheckin returns true if we should send the CheckIn message
-func (dcdr *Decider) shouldSendCheckin() bool {
-	if dcdr.State.CheckinMessageSent {
+// shouldSendCheckIn returns true if we should send the CheckIn message
+func (dcdr *Decider) shouldSendCheckIn() bool {
+	if dcdr.State.CheckInMessageSent {
 		return false
 	}
 	if dcdr.Shutter.IsCheckedIn(dcdr.Config.Address()) {
@@ -301,13 +301,13 @@ func (dcdr *Decider) shouldSendCheckin() bool {
 func (dcdr *Decider) sendCheckIn() {
 	validatorPublicKey := dcdr.Config.ValidatorKey.Public().(ed25519.PublicKey)
 	msg := shmsg.NewCheckIn([]byte(validatorPublicKey), &dcdr.Config.EncryptionKey.PublicKey)
-	dcdr.sendShuttermintMessage("checkin", msg)
+	dcdr.sendShuttermintMessage("check-in", msg)
 }
 
 func (dcdr *Decider) maybeSendCheckIn() {
-	if dcdr.shouldSendCheckin() {
+	if dcdr.shouldSendCheckIn() {
 		dcdr.sendCheckIn()
-		dcdr.State.CheckinMessageSent = true
+		dcdr.State.CheckInMessageSent = true
 	}
 }
 
