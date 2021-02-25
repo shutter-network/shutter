@@ -47,7 +47,7 @@ func roundtrip(t *testing.T, ev shutterevents.IEvent) {
 }
 
 func TestAccusation(t *testing.T) {
-	ev := shutterevents.Accusation{
+	ev := &shutterevents.Accusation{
 		Eon:     eon,
 		Sender:  sender,
 		Accused: addresses,
@@ -56,7 +56,7 @@ func TestAccusation(t *testing.T) {
 }
 
 func TestEmptyAccusation(t *testing.T) {
-	ev := shutterevents.Accusation{
+	ev := &shutterevents.Accusation{
 		Eon:    eon,
 		Sender: sender,
 	}
@@ -70,7 +70,7 @@ func TestApology(t *testing.T) {
 		eval := big.NewInt(int64(100 + i))
 		polyEval = append(polyEval, eval)
 	}
-	ev := shutterevents.Apology{
+	ev := &shutterevents.Apology{
 		Eon:      eon,
 		Sender:   sender,
 		Accusers: accusers,
@@ -80,7 +80,7 @@ func TestApology(t *testing.T) {
 }
 
 func TestEmptyApology(t *testing.T) {
-	ev := shutterevents.Apology{
+	ev := &shutterevents.Apology{
 		Eon:    eon,
 		Sender: sender,
 	}
@@ -88,7 +88,7 @@ func TestEmptyApology(t *testing.T) {
 }
 
 func TestBatchConfig(t *testing.T) {
-	ev := shutterevents.BatchConfig{
+	ev := &shutterevents.BatchConfig{
 		StartBatchIndex: 111,
 		Threshold:       2,
 		Keypers:         addresses,
@@ -101,12 +101,12 @@ func TestCheckIn(t *testing.T) {
 	privateKeyECDSA, err := ethcrypto.GenerateKey()
 	require.Nil(t, err)
 	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
-	ev := shutterevents.CheckIn{Sender: sender, EncryptionPublicKey: publicKey}
+	ev := &shutterevents.CheckIn{Sender: sender, EncryptionPublicKey: publicKey}
 	roundtrip(t, ev)
 }
 
 func TestDecryptionSignature(t *testing.T) {
-	ev := shutterevents.DecryptionSignature{
+	ev := &shutterevents.DecryptionSignature{
 		BatchIndex: uint64(64738),
 		Sender:     sender,
 		Signature:  []byte("fooobar"),
@@ -115,12 +115,12 @@ func TestDecryptionSignature(t *testing.T) {
 }
 
 func TestEonStarted(t *testing.T) {
-	ev := shutterevents.EonStarted{Eon: eon, BatchIndex: 9999}
+	ev := &shutterevents.EonStarted{Eon: eon, BatchIndex: 9999}
 	roundtrip(t, ev)
 }
 
 func TestPolyCommitment(t *testing.T) {
-	ev := shutterevents.PolyCommitment{
+	ev := &shutterevents.PolyCommitment{
 		Eon:    eon,
 		Sender: sender,
 		Gammas: &gammas,
@@ -135,7 +135,7 @@ func TestPolyEval(t *testing.T) {
 		receivers = append(receivers, common.BigToAddress(new(big.Int).SetUint64(uint64(i))))
 		encryptedEvals = append(encryptedEvals, []byte(fmt.Sprintf("encrypted: %d", i)))
 	}
-	ev := shutterevents.PolyEval{
+	ev := &shutterevents.PolyEval{
 		Eon:            eon,
 		Sender:         sender,
 		Receivers:      receivers,
@@ -145,7 +145,7 @@ func TestPolyEval(t *testing.T) {
 }
 
 func TestEpochSecretKeyShare(t *testing.T) {
-	share := shutterevents.EpochSecretKeyShare{
+	share := &shutterevents.EpochSecretKeyShare{
 		Sender: sender,
 		Eon:    eon,
 		Epoch:  uint64(12345),

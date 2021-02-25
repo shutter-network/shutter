@@ -202,24 +202,24 @@ func (shutter *Shutter) applyEpochSecretKeyShare(e shutterevents.EpochSecretKeyS
 func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 	var err error
 	switch e := ev.(type) {
-	case shutterevents.CheckIn:
-		err = shutter.applyCheckIn(e)
-	case shutterevents.BatchConfig:
-		err = shutter.applyBatchConfig(e)
-	case shutterevents.DecryptionSignature:
-		err = shutter.applyDecryptionSignature(e)
-	case shutterevents.EonStarted:
-		err = shutter.applyEonStarted(e)
-	case shutterevents.PolyCommitment:
-		err = shutter.applyPolyCommitment(e)
-	case shutterevents.PolyEval:
-		err = shutter.applyPolyEval(e)
-	case shutterevents.Accusation:
-		err = shutter.applyAccusation(e)
-	case shutterevents.Apology:
-		err = shutter.applyApology(e)
-	case shutterevents.EpochSecretKeyShare:
-		err = shutter.applyEpochSecretKeyShare(e)
+	case *shutterevents.CheckIn:
+		err = shutter.applyCheckIn(*e)
+	case *shutterevents.BatchConfig:
+		err = shutter.applyBatchConfig(*e)
+	case *shutterevents.DecryptionSignature:
+		err = shutter.applyDecryptionSignature(*e)
+	case *shutterevents.EonStarted:
+		err = shutter.applyEonStarted(*e)
+	case *shutterevents.PolyCommitment:
+		err = shutter.applyPolyCommitment(*e)
+	case *shutterevents.PolyEval:
+		err = shutter.applyPolyEval(*e)
+	case *shutterevents.Accusation:
+		err = shutter.applyAccusation(*e)
+	case *shutterevents.Apology:
+		err = shutter.applyApology(*e)
+	case *shutterevents.EpochSecretKeyShare:
+		err = shutter.applyEpochSecretKeyShare(*e)
 	default:
 		err = fmt.Errorf("not yet implemented for %s", reflect.TypeOf(ev))
 	}

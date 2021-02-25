@@ -57,28 +57,28 @@ func expectAttributes(ev abcitypes.Event, names ...string) error {
 	return nil
 }
 
-func makeAccusation(ev abcitypes.Event, height int64) (Accusation, error) {
+func makeAccusation(ev abcitypes.Event, height int64) (*Accusation, error) {
 	err := expectAttributes(ev, "Sender", "Eon", "Accused")
 	if err != nil {
-		return Accusation{}, err
+		return nil, err
 	}
 
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return Accusation{}, err
+		return nil, err
 	}
 
 	eon, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return Accusation{}, err
+		return nil, err
 	}
 
 	accused, err := decodeAddresses(ev.Attributes[2].Value)
 	if err != nil {
-		return Accusation{}, err
+		return nil, err
 	}
 
-	return Accusation{
+	return &Accusation{
 		Height:  height,
 		Sender:  sender,
 		Eon:     eon,
@@ -111,37 +111,37 @@ func (msg Apology) MakeABCIEvent() abcitypes.Event {
 	}
 }
 
-func makeApology(ev abcitypes.Event, height int64) (Apology, error) {
+func makeApology(ev abcitypes.Event, height int64) (*Apology, error) {
 	err := expectAttributes(ev, "Sender", "Eon", "Accusers", "PolyEvals")
 	if err != nil {
-		return Apology{}, err
+		return nil, err
 	}
 
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return Apology{}, err
+		return nil, err
 	}
 
 	eon, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return Apology{}, err
+		return nil, err
 	}
 
 	accusers, err := decodeAddresses(ev.Attributes[2].Value)
 	if err != nil {
-		return Apology{}, err
+		return nil, err
 	}
 	var polyEval []*big.Int
 	polyEvalBytes, err := decodeByteSequence(ev.Attributes[3].Value)
 	if err != nil {
-		return Apology{}, err
+		return nil, err
 	}
 	for _, b := range polyEvalBytes {
 		e := new(big.Int)
 		e.SetBytes(b)
 		polyEval = append(polyEval, e)
 	}
-	return Apology{
+	return &Apology{
 		Height:   height,
 		Sender:   sender,
 		Eon:      eon,
@@ -194,31 +194,31 @@ func (bc BatchConfig) MakeABCIEvent() abcitypes.Event {
 
 // makeBatchConfig creates a BatchConfigEvent from the given tendermint event of type
 // "shutter.batch-config"
-func makeBatchConfig(ev abcitypes.Event, height int64) (BatchConfig, error) {
+func makeBatchConfig(ev abcitypes.Event, height int64) (*BatchConfig, error) {
 	err := expectAttributes(ev, "StartBatchIndex", "Threshold", "Keypers", "ConfigIndex")
 	if err != nil {
-		return BatchConfig{}, err
+		return nil, err
 	}
 
 	startBatchIndex, err := decodeUint64(ev.Attributes[0].Value)
 	if err != nil {
-		return BatchConfig{}, err
+		return nil, err
 	}
 
 	threshold, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return BatchConfig{}, err
+		return nil, err
 	}
 	keypers, err := decodeAddresses(ev.Attributes[2].Value)
 	if err != nil {
-		return BatchConfig{}, err
+		return nil, err
 	}
 
 	configIndex, err := decodeUint64(ev.Attributes[3].Value)
 	if err != nil {
-		return BatchConfig{}, err
+		return nil, err
 	}
-	return BatchConfig{
+	return &BatchConfig{
 		Height:          height,
 		StartBatchIndex: startBatchIndex,
 		Threshold:       threshold,
@@ -248,22 +248,22 @@ func (msg CheckIn) MakeABCIEvent() abcitypes.Event {
 }
 
 // makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
-func makeCheckIn(ev abcitypes.Event, height int64) (CheckIn, error) {
+func makeCheckIn(ev abcitypes.Event, height int64) (*CheckIn, error) {
 	err := expectAttributes(ev, "Sender", "EncryptionPublicKey")
 	if err != nil {
-		return CheckIn{}, err
+		return nil, err
 	}
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return CheckIn{}, err
+		return nil, err
 	}
 
 	publicKey, err := decodeECIESPublicKey(ev.Attributes[1].Value)
 	if err != nil {
-		return CheckIn{}, err
+		return nil, err
 	}
 
-	return CheckIn{
+	return &CheckIn{
 		Sender:              sender,
 		EncryptionPublicKey: publicKey,
 		Height:              height,
@@ -304,28 +304,28 @@ func (msg DecryptionSignature) MakeABCIEvent() abcitypes.Event {
 
 // makeDecryptionSignature creates a DecryptionSignatureEvent from the given tendermint event
 // of type "shutter.decryption-signature".
-func makeDecryptionSignature(ev abcitypes.Event, height int64) (DecryptionSignature, error) {
+func makeDecryptionSignature(ev abcitypes.Event, height int64) (*DecryptionSignature, error) {
 	err := expectAttributes(ev, "BatchIndex", "Sender", "Signature")
 	if err != nil {
-		return DecryptionSignature{}, err
+		return nil, err
 	}
 
 	batchIndex, err := decodeUint64(ev.Attributes[0].Value)
 	if err != nil {
-		return DecryptionSignature{}, err
+		return nil, err
 	}
 
 	sender, err := decodeAddress(ev.Attributes[1].Value)
 	if err != nil {
-		return DecryptionSignature{}, err
+		return nil, err
 	}
 
 	signature, err := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
 	if err != nil {
-		return DecryptionSignature{}, err
+		return nil, err
 	}
 
-	return DecryptionSignature{
+	return &DecryptionSignature{
 		Height:     height,
 		BatchIndex: batchIndex,
 		Sender:     sender,
@@ -370,31 +370,32 @@ func (msg PolyCommitment) MakeABCIEvent() abcitypes.Event {
 	}
 }
 
-func makePolyCommitment(ev abcitypes.Event, height int64) (PolyCommitment, error) {
-	res := PolyCommitment{Height: height}
+func makePolyCommitment(ev abcitypes.Event, height int64) (*PolyCommitment, error) {
 	err := expectAttributes(ev, "Sender", "Eon", "Gammas")
 	if err != nil {
-		return res, err
+		return nil, err
 	}
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	res.Sender = sender
 
 	eon, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	res.Eon = eon
 
 	gammas, err := decodeGammas(ev.Attributes[2].Value)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	res.Gammas = &gammas
 
-	return res, nil
+	return &PolyCommitment{
+		Height: height,
+		Sender: sender,
+		Eon:    eon,
+		Gammas: &gammas,
+	}, nil
 }
 
 // PolyEval represents an encrypted polynomial evaluation message from one keyper to another.
@@ -418,33 +419,33 @@ func (msg PolyEval) MakeABCIEvent() abcitypes.Event {
 	}
 }
 
-func makePolyEval(ev abcitypes.Event, height int64) (PolyEval, error) {
+func makePolyEval(ev abcitypes.Event, height int64) (*PolyEval, error) {
 	err := expectAttributes(ev, "Sender", "Eon", "Receivers", "EncryptedEvals")
 	if err != nil {
-		return PolyEval{}, err
+		return nil, err
 	}
 
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return PolyEval{}, err
+		return nil, err
 	}
 
 	eon, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return PolyEval{}, err
+		return nil, err
 	}
 
 	receivers, err := decodeAddresses(ev.Attributes[2].GetValue())
 	if err != nil {
-		return PolyEval{}, err
+		return nil, err
 	}
 
 	encryptedEvals, err := decodeByteSequence(ev.Attributes[3].Value)
 	if err != nil {
-		return PolyEval{}, err
+		return nil, err
 	}
 
-	return PolyEval{
+	return &PolyEval{
 		Height:         height,
 		Eon:            eon,
 		Sender:         sender,
@@ -474,32 +475,32 @@ func (msg EpochSecretKeyShare) MakeABCIEvent() abcitypes.Event {
 	}
 }
 
-func makeEpochSecretKeyShare(ev abcitypes.Event, height int64) (EpochSecretKeyShare, error) {
+func makeEpochSecretKeyShare(ev abcitypes.Event, height int64) (*EpochSecretKeyShare, error) {
 	err := expectAttributes(ev, "Sender", "Eon", "Epoch", "Share")
 	if err != nil {
-		return EpochSecretKeyShare{}, err
+		return nil, err
 	}
 
 	sender, err := decodeAddress(ev.Attributes[0].Value)
 	if err != nil {
-		return EpochSecretKeyShare{}, err
+		return nil, err
 	}
 
 	eon, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return EpochSecretKeyShare{}, err
+		return nil, err
 	}
 
 	epoch, err := decodeUint64(ev.Attributes[2].Value)
 	if err != nil {
-		return EpochSecretKeyShare{}, err
+		return nil, err
 	}
 	share, err := decodeEpochSecretKeyShare(ev.Attributes[3].Value)
 	if err != nil {
-		return EpochSecretKeyShare{}, err
+		return nil, err
 	}
 
-	return EpochSecretKeyShare{
+	return &EpochSecretKeyShare{
 		Height: height,
 		Sender: sender,
 		Eon:    eon,
@@ -515,22 +516,22 @@ type IEvent interface {
 
 // makeEonStarted creates a EonStartedEvent from the given tendermint event of type
 // "shutter.eon-started".
-func makeEonStarted(ev abcitypes.Event, height int64) (EonStarted, error) {
+func makeEonStarted(ev abcitypes.Event, height int64) (*EonStarted, error) {
 	err := expectAttributes(ev, "Eon", "BatchIndex")
 	if err != nil {
-		return EonStarted{}, err
+		return nil, err
 	}
 
 	eon, err := decodeUint64(ev.Attributes[0].Value)
 	if err != nil {
-		return EonStarted{}, err
+		return nil, err
 	}
 	batchIndex, err := decodeUint64(ev.Attributes[1].Value)
 	if err != nil {
-		return EonStarted{}, err
+		return nil, err
 	}
 
-	return EonStarted{
+	return &EonStarted{
 		Height:     height,
 		Eon:        eon,
 		BatchIndex: batchIndex,
