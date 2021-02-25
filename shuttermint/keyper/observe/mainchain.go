@@ -375,8 +375,8 @@ func (mainchain *MainChain) SyncToHead(
 	return mainchain, nil
 }
 
-// DecryptTransactions decrypts the encrypted transactions. It will log an error message for
-// transactions that cannot be decrypted and skip over them.
+// DecryptTransactions decrypts and shuffles the encrypted transactions. It will log an error
+// message for transactions that cannot be decrypted and skip over them.
 func (batch *Batch) DecryptTransactions(key *shcrypto.EpochSecretKey) [][]byte {
 	var res [][]byte
 	for idx, encTx := range batch.EncryptedTransactions {
@@ -393,5 +393,5 @@ func (batch *Batch) DecryptTransactions(key *shcrypto.EpochSecretKey) [][]byte {
 		}
 		res = append(res, decrypted)
 	}
-	return res
+	return shcrypto.Shuffle(res, key)
 }
