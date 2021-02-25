@@ -74,8 +74,18 @@ async function encodeMessage(message, nonce, privateKey) {
 async function encryptMessage(message, eonPublicKey, batchIndex) {
   var sigma = new Uint8Array(32);
   window.crypto.getRandomValues(sigma);
-  window.shcrypto.encrypt(message, eonPublicKey, batchIndex, sigma);
-  return message;
+  const messageArray = ethers.utils.arrayify(message);
+  const publicKeyArray = ethers.utils.arrayify(eonPublicKey);
+  const result = window.shcrypto.encrypt(
+    messageArray,
+    publicKeyArray,
+    batchIndex.toNumber(),
+    sigma
+  );
+  if (result.error !== null) {
+    throw result.error;
+  }
+  return result.encryptedMessage;
 }
 
 export {
