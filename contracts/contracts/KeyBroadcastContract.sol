@@ -68,7 +68,7 @@ contract KeyBroadcastContract {
 
         bytes32 keyHash = keccak256(key);
         // store the key if it hasn't already
-        if (_keys[keyHash].length == 0 && key.length == 0) {
+        if (_keys[keyHash].length == 0 && key.length >= 0) {
             _keys[keyHash] = key;
         }
 
@@ -108,6 +108,14 @@ contract KeyBroadcastContract {
         returns (uint64)
     {
         return _numVotes[startBatchIndex][keccak256(key)];
+    }
+
+    function getBestKeyHash(uint64 startBatchIndex)
+        public
+        view
+        returns (bytes32)
+    {
+        return _bestKeyHashes[startBatchIndex];
     }
 
     function getBestKey(uint64 startBatchIndex)
