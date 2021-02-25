@@ -30,7 +30,8 @@
       <div class="control">
         <button
           class="button is-primary"
-          v-on:click="sendEncrypted"
+          :class="{ 'is-loading': waitingForTx }"
+          v-on:click="onSend(0)"
           :disabled="!privateKeyValid"
         >
           Send Encrypted
@@ -39,7 +40,8 @@
       <div class="control">
         <button
           class="button is-primary"
-          v-on:click="sendPlain"
+          :class="{ 'is-loading': waitingForTx }"
+          v-on:click="onSend(1)"
           :disabled="!privateKeyValid"
         >
           Send Unencrypted
@@ -68,6 +70,7 @@ export default {
       message: "",
       privateKey:
         "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      waitingForTx: false,
     };
   },
 
@@ -98,12 +101,16 @@ export default {
   },
 
   methods: {
-    async sendEncrypted() {
-      await this.sendTransaction(0);
-    },
-
-    async sendPlain() {
-      await this.sendTransaction(1);
+    async onSend(type) {
+      if (this.waitingForTx) {
+        return;
+      }
+      this.waitingForTx = true;
+      try {
+        await this.sendTransaction(type);
+      } finally {
+        this.waitingForTx = false;
+      }
     },
 
     async sendTransaction(type) {
@@ -114,9 +121,9 @@ export default {
         this.privateKey
       );
 
-      let blockNumber = (await this.$provider.getBlockNumber()) + 1;
-      let config = await getConfigAtBlock(blockNumber, this.configContract);
-      let batchIndex = getBatchIndexAtBlock(blockNumber, config);
+      let blockNumber = await this.waitForGoodBlock();
+      let config = await getConfigAtBlock(blockNumber + 1, this.configContract);
+      let batchIndex = getBatchIndexAtBlock(blockNumber + 1, config);
 
       if (type == 0) {
         let bestKey = await this.$keyBroadcastContract.getBestKey(
@@ -152,7 +159,22 @@ export default {
         "in block",
         blockNumber.toString()
       );
-      await tx.wait();
+    },
+
+    async waitForGoodBlock() {
+      for (;;) {
+        const blockNumber = await this.$provider.getBlockNumber();
+        const config = await getConfigAtBlock(
+          blockNumber + 1,
+          this.configContract
+        );
+        const batchIndexNow = getBatchIndexAtBlock(blockNumber + 1, config);
+        const batchIndexSoon = getBatchIndexAtBlock(blockNumber + 3, config);
+        if (batchIndexNow.eq(batchIndexSoon)) {
+          return blockNumber;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     },
   },
 };
