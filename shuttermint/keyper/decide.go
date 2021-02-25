@@ -282,8 +282,8 @@ func (dcdr *Decider) addAction(a IAction) {
 
 func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Message) {
 	dcdr.addAction(SendShuttermintMessage{
-		description: description,
-		msg:         msg,
+		Description: description,
+		Msg:         msg,
 	})
 }
 
@@ -504,9 +504,9 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 
 func (dcdr *Decider) broadcastEonPublicKey(dkgResult *puredkg.Result, startBatchIndex uint64) {
 	action := EonKeyBroadcast{
-		keyperIndex:     dkgResult.Keyper,
-		startBatchIndex: startBatchIndex,
-		eonPublicKey:    dkgResult.PublicKey,
+		KeyperIndex:     dkgResult.Keyper,
+		StartBatchIndex: startBatchIndex,
+		EonPublicKey:    dkgResult.PublicKey,
 	}
 	dcdr.addAction(action)
 }
@@ -830,10 +830,10 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		return nil
 	}
 	return ExecuteCipherBatch{
-		batchIndex:      batchIndex,
-		cipherBatchHash: batch.EncryptedBatchHash,
-		transactions:    stBatch.DecryptedTransactions,
-		keyperIndex:     keyperIndex,
+		BatchIndex:      batchIndex,
+		CipherBatchHash: batch.EncryptedBatchHash,
+		Transactions:    stBatch.DecryptedTransactions,
+		KeyperIndex:     keyperIndex,
 	}
 }
 
@@ -843,8 +843,8 @@ func (dcdr *Decider) executePlainBatch(batchIndex uint64) IAction {
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
 	return ExecutePlainBatch{
-		batchIndex:   batchIndex,
-		transactions: batch.PlainTransactions,
+		BatchIndex:   batchIndex,
+		Transactions: batch.PlainTransactions,
 	}
 }
 
@@ -865,7 +865,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
 
 	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
 		return SkipCipherBatch{
-			batchIndex: batchIndex,
+			BatchIndex: batchIndex,
 		}
 	}
 
