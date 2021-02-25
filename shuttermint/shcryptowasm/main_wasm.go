@@ -5,7 +5,6 @@ import (
 	"syscall/js"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/rlp"
 
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
@@ -79,8 +78,8 @@ var encrypt = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 	js.CopyBytesToGo(sigma[:], sigmaJS)
 
 	m := shcrypto.Encrypt(message, eonPublicKey, epochID, sigma)
-	encoded, err := rlp.EncodeToBytes(m)
-	return returnValue(encoded, err)
+	encoded := m.Marshal()
+	return returnValue(encoded, nil)
 })
 
 func validateMessage(v js.Value) error {
