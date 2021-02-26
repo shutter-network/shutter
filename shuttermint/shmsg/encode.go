@@ -74,3 +74,11 @@ func GetMessage(signedMessage []byte) (*MessageWithNonce, error) {
 	}
 	return &msg, nil
 }
+
+func (m *Message) GobEncode() ([]byte, error) {
+	return proto.Marshal(m)
+}
+
+func (m *Message) GobDecode(data []byte) error {
+	return proto.Unmarshal(data, m)
+}

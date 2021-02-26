@@ -1,14 +1,12 @@
 package keyper
 
 import (
-	"bytes"
 	"context"
 	"encoding/gob"
 	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
@@ -64,44 +62,6 @@ func (a SendShuttermintMessage) Run(ctx context.Context, runenv IRunEnv) error {
 
 func (a SendShuttermintMessage) String() string {
 	return fmt.Sprintf("=> shuttermint: %s", a.Description)
-}
-
-func (a *SendShuttermintMessage) GobEncode() ([]byte, error) {
-	d, err := proto.Marshal(a.Msg)
-	if err != nil {
-		return nil, err
-	}
-	buff := bytes.Buffer{}
-	raw := struct {
-		Description string
-		Data        []byte
-	}{a.Description, d}
-	err = gob.NewEncoder(&buff).Encode(raw)
-	if err != nil {
-		return nil, err
-	}
-	return buff.Bytes(), nil
-}
-
-func (a *SendShuttermintMessage) GobDecode(data []byte) error {
-	raw := struct {
-		Description string
-		Data        []byte
-	}{}
-	buff := bytes.Buffer{}
-	buff.Write(data)
-	err := gob.NewDecoder(&buff).Decode(&raw)
-	if err != nil {
-		return err
-	}
-	msg := shmsg.Message{}
-	err = proto.Unmarshal(raw.Data, &msg)
-	if err != nil {
-		return err
-	}
-	a.Description = raw.Description
-	a.Msg = &msg
-	return nil
 }
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
