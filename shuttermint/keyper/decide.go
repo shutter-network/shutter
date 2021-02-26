@@ -54,6 +54,7 @@ type DKG struct {
 	AccusationsIndex     int
 	ApologiesIndex       int
 	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
+	PhaseLength          PhaseLength
 }
 
 // EKG is used to store local state about the epoch key generation process.
@@ -92,7 +93,7 @@ func (dkg *DKG) newAccusation(accusations []puredkg.AccusationMsg) *shmsg.Messag
 func (dkg *DKG) syncCommitments(eon observe.Eon) {
 	for i := dkg.CommitmentsIndex; i < len(eon.Commitments); i++ {
 		comm := eon.Commitments[i]
-		phase := phaseLength.getPhaseAtHeight(comm.Height, eon.StartHeight)
+		phase := dkg.PhaseLength.getPhaseAtHeight(comm.Height, eon.StartHeight)
 		if phase != puredkg.Dealing {
 			log.Printf("Warning: received commitment in wrong phase %s: %+v", phase, comm)
 			continue
@@ -117,7 +118,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 	keyperIndex := dkg.Pure.Keyper
 	for i := dkg.PolyEvalsIndex; i < len(eon.PolyEvals); i++ {
 		eval := eon.PolyEvals[i]
-		phase := phaseLength.getPhaseAtHeight(eval.Height, eon.StartHeight)
+		phase := dkg.PhaseLength.getPhaseAtHeight(eval.Height, eon.StartHeight)
 		if phase != puredkg.Dealing {
 			log.Printf("Warning: received polyeval in wrong phase %s: %+v", phase, eval)
 			continue
@@ -166,7 +167,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 func (dkg *DKG) syncAccusations(eon observe.Eon) {
 	for i := dkg.AccusationsIndex; i < len(eon.Accusations); i++ {
 		accusation := eon.Accusations[i]
-		phase := phaseLength.getPhaseAtHeight(accusation.Height, eon.StartHeight)
+		phase := dkg.PhaseLength.getPhaseAtHeight(accusation.Height, eon.StartHeight)
 		if phase != puredkg.Accusing {
 			log.Printf("Warning: received accusation in wrong phase %s: %+v", phase, accusation)
 			continue
@@ -200,7 +201,7 @@ func (dkg *DKG) syncAccusations(eon observe.Eon) {
 func (dkg *DKG) syncApologies(eon observe.Eon) {
 	for i := dkg.ApologiesIndex; i < len(eon.Apologies); i++ {
 		apology := eon.Apologies[i]
-		phase := phaseLength.getPhaseAtHeight(apology.Height, eon.StartHeight)
+		phase := dkg.PhaseLength.getPhaseAtHeight(apology.Height, eon.StartHeight)
 		if phase != puredkg.Apologizing {
 			log.Printf("Warning: received apology in wrong phase %s: %+v", phase, apology)
 			continue
@@ -257,11 +258,23 @@ func NewState() *State {
 // and MainChain state for a single step. For each step the keyper creates a new Decider. The
 // actions to run are stored inside the Actions field.
 type Decider struct {
-	Config    KeyperConfig
-	State     *State
-	Shutter   *observe.Shutter
-	MainChain *observe.MainChain
-	Actions   []IAction
+	Config      KeyperConfig
+	State       *State
+	Shutter     *observe.Shutter
+	MainChain   *observe.MainChain
+	Actions     []IAction
+	PhaseLength PhaseLength
+}
+
+func NewDecider(kpr *Keyper) Decider {
+	return Decider{
+		Config:      kpr.Config,
+		State:       kpr.State,
+		Shutter:     kpr.Shutter,
+		MainChain:   kpr.MainChain,
+		Actions:     []IAction{},
+		PhaseLength: NewConstantPhaseLength(int64(kpr.Config.DKGPhaseLength)),
+	}
 }
 
 var errEKGNotFound = errors.New("EKG not found")
@@ -354,6 +367,7 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 		StartBatchIndex: eon.StartEvent.BatchIndex,
 		Pure:            &pure,
 		Keypers:         batchConfig.Keypers,
+		PhaseLength:     dcdr.PhaseLength,
 	}
 	dcdr.State.DKGs = append(dcdr.State.DKGs, dkg)
 }
@@ -376,6 +390,17 @@ type PhaseLength struct {
 	Apologizing int64
 }
 
+// NewConstantPhaseLength creates a new phase length definition where each phase has the same
+// length.
+func NewConstantPhaseLength(l int64) PhaseLength {
+	return PhaseLength{
+		Off:         0 * l,
+		Dealing:     1 * l,
+		Accusing:    2 * l,
+		Apologizing: 3 * l,
+	}
+}
+
 func (plen *PhaseLength) getPhaseAtHeight(height int64, eonStartHeight int64) puredkg.Phase {
 	if height < eonStartHeight+plen.Off {
 		return puredkg.Off
@@ -390,13 +415,6 @@ func (plen *PhaseLength) getPhaseAtHeight(height int64, eonStartHeight int64) pu
 		return puredkg.Apologizing
 	}
 	return puredkg.Finalized
-}
-
-var phaseLength = PhaseLength{
-	Off:         0,
-	Dealing:     30,
-	Accusing:    60,
-	Apologizing: 90,
 }
 
 // sendPolyEvals sends the outgoing PolyEvalMsg stored in dkg that can be sent. A PolyEvalMessage
@@ -518,7 +536,7 @@ func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
 
 	// We look at the next block's phase, because that is the first block that might make it
 	// into the chain
-	phaseAtNextBlockHeight := phaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock+1, eon.StartHeight)
+	phaseAtNextBlockHeight := dcdr.PhaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock+1, eon.StartHeight)
 
 	if dkg.Pure.Phase == puredkg.Off && phaseAtNextBlockHeight >= puredkg.Dealing {
 		dcdr.startPhase1Dealing(dkg, phaseAtNextBlockHeight)

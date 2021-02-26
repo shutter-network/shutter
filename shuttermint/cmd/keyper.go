@@ -31,6 +31,7 @@ type RawKeyperConfig struct {
 	DepositContract      string
 	KeyperSlasher        string
 	ExecutionStaggering  uint64
+	DKGPhaseLength       uint64
 	DBDir                string
 }
 
@@ -64,6 +65,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("DepositContract")
 	viper.BindEnv("KeyperSlasher")
 	viper.BindEnv("ExecutionStaggering")
+	viper.BindEnv("DKGPhaseLength")
 
 	viper.SetDefault("ShuttermintURL", "http://localhost:26657")
 
@@ -173,6 +175,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 	}
 
 	executionStaggering := r.ExecutionStaggering
+	dkgPhaseLength := r.DKGPhaseLength
 
 	return keyper.KeyperConfig{
 		ShuttermintURL:              r.ShuttermintURL,
@@ -187,6 +190,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		DepositContractAddress:      depositContractAddress,
 		KeyperSlasherAddress:        keyperSlasherAddress,
 		ExecutionStaggering:         executionStaggering,
+		DKGPhaseLength:              dkgPhaseLength,
 		DBDir:                       r.DBDir,
 	}, nil
 }

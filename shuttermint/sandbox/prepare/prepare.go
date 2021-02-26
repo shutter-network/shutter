@@ -415,6 +415,7 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 		DepositContract:      contractsJSON.DepositContract.Hex(),
 		KeyperSlasher:        contractsJSON.KeyperSlasherContract.Hex(),
 		ExecutionStaggering:  5,
+		DKGPhaseLength:       30,
 	}
 	return &config, nil
 }

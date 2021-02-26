@@ -27,7 +27,8 @@ type KeyperConfig struct {
 	ExecutorContractAddress     common.Address
 	DepositContractAddress      common.Address
 	KeyperSlasherAddress        common.Address
-	ExecutionStaggering         uint64
+	ExecutionStaggering         uint64 // in main chain blocks
+	DKGPhaseLength              uint64 // in shuttermint blocks
 }
 
 // MessageSender defines the interface of sending messages to shuttermint.
