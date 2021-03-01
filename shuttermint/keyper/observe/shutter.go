@@ -245,7 +245,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 			events := tx.TxResult.GetEvents()
 			shutter.applyTxEvents(tx.Height, events)
 		}
-		if page*perPage > res.TotalCount {
+		if page*perPage >= res.TotalCount {
 			break
 		}
 		page++
