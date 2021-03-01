@@ -236,6 +236,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 
 	page := 1
 	perPage := 200
+	total := 0
 	for {
 		res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
 		if err != nil {
@@ -243,9 +244,17 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 		}
 		for _, tx := range res.Txs {
 			events := tx.TxResult.GetEvents()
+			total += len(events)
 			shutter.applyTxEvents(tx.Height, events)
 		}
 		if page*perPage >= res.TotalCount {
+			if total != res.TotalCount {
+				log.Fatalf("internal error. got %d events, expected %d events from shuttermint for height %d..%d",
+					total,
+					res.TotalCount,
+					shutter.CurrentBlock+1,
+					targetHeight)
+			}
 			break
 		}
 		page++
