@@ -232,10 +232,13 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 	if targetHeight < shutter.CurrentBlock {
 		panic("internal error: fetchAndApplyEvents bad arguments")
 	}
-	query := fmt.Sprintf("tx.height >= %d and tx.height<=%d", shutter.CurrentBlock+1, targetHeight)
+	query := fmt.Sprintf("tx.height >= %d and tx.height <= %d", shutter.CurrentBlock+1, targetHeight)
 
+	// tendermint silently caps the perPage value at 100, make sure to stay below, otherwise
+	// our exit condition is wrong and the log.Fatalf will trigger a panic below; see
+	// https://github.com/brainbot-com/shutter/issues/50
+	perPage := 100
 	page := 1
-	perPage := 200
 	total := 0
 	for {
 		res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
