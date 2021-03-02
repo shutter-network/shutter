@@ -9,9 +9,10 @@ if [[ -z "${VERSION}" ]]; then
 fi
 
 
-arch=amd64
-for os in linux freebsd openbsd darwin; do
+for osarch in linux-amd64 linux-arm linux-arm64 freebsd-amd64 openbsd-amd64 darwin-amd64; do
+    IFS='-' read os arch <<< "${osarch}"
     target=bin/shuttermint-${os}-${arch}-${VERSION}
     echo "Building ${target}"
     env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=${VERSION}" .
 done
+
