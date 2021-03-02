@@ -1,3 +1,4 @@
+// Package cmd implements the shuttermint subcommands
 package cmd
 
 import (
@@ -33,6 +34,7 @@ func init() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(keyperCmd)
 	rootCmd.AddCommand(showCmd)
+	rootCmd.AddCommand(txsearchCmd)
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(deployCmd)

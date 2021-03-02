@@ -16,11 +16,12 @@ var showFlags struct {
 	Height         int64
 }
 
-// keyperCmd represents the keyper command
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show the internal state of a Shuttermint node",
-	Args:  cobra.NoArgs,
+	Long: `This command queries transactions from a running shuttermint node and rebuilds the
+internal shutter state object according to the results. It then prints the result to stdout.`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		showMain()
 	},
