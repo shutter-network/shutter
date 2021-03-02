@@ -11,5 +11,5 @@ var version string = "(unknown)"
 
 // Version returns shuttermint's version string
 func Version() string {
-	return fmt.Sprintf("%s (%s)", version, runtime.Version())
+	return fmt.Sprintf("%s (%s, %s-%s)", version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 }
