@@ -15,4 +15,3 @@ for osarch in linux-amd64 linux-arm linux-arm64 freebsd-amd64 openbsd-amd64 darw
     echo "Building ${target}"
     env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=${VERSION}" .
 done
-
