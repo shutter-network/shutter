@@ -245,14 +245,14 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 		if err != nil {
 			return err
 		}
+		total += len(res.Txs)
 		for _, tx := range res.Txs {
 			events := tx.TxResult.GetEvents()
-			total += len(events)
 			shutter.applyTxEvents(tx.Height, events)
 		}
 		if page*perPage >= res.TotalCount {
 			if total != res.TotalCount {
-				log.Fatalf("internal error. got %d events, expected %d events from shuttermint for height %d..%d",
+				log.Fatalf("internal error. got %d transactions, expected %d transactions from shuttermint for height %d..%d",
 					total,
 					res.TotalCount,
 					shutter.CurrentBlock+1,
