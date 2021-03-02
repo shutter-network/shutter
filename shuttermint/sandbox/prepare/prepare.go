@@ -506,7 +506,7 @@ func findConfigFiles(dir string) ([]string, error) {
 	configPaths := []string{}
 	for _, file := range files {
 		if file.IsDir() {
-			configPath := filepath.Join(scheduleFlags.Dir, file.Name(), "config.toml")
+			configPath := filepath.Join(dir, file.Name(), "config.toml")
 			configPaths = append(configPaths, configPath)
 		}
 	}
