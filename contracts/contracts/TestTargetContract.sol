@@ -7,7 +7,7 @@ contract TestTargetContract {
     event ExecutedTransaction(address sender, bytes data, uint64 nonce);
 
     address private _executor;
-    mapping(address => uint64) private _nonces;
+    mapping(address => mapping(uint64 => bool)) private _nonces;
 
     constructor(address executor) {
         _executor = executor;
@@ -33,14 +33,21 @@ contract TestTargetContract {
         (uint64 nonce, bytes memory data) =
             abi.decode(payload, (uint64, bytes));
 
-        require(nonce == _nonces[sender], "TestTargetContract: wrong nonce");
-        _nonces[sender] = nonce + 1;
+        require(
+            !_nonces[sender][nonce],
+            "TestTargetContract: nonce already used"
+        );
+        _nonces[sender][nonce] = true;
 
         emit ExecutedTransaction({sender: sender, data: data, nonce: nonce});
     }
 
-    function getNonce(address account) public view returns (uint64) {
-        return _nonces[account];
+    function isNonceUsed(address account, uint64 nonce)
+        public
+        view
+        returns (bool)
+    {
+        return _nonces[account][nonce];
     }
 
     function getExecutor() public view returns (address) {

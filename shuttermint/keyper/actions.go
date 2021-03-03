@@ -93,7 +93,7 @@ func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecuteCipherBatch) String() string {
-	return fmt.Sprintf("=> executor contract: execute cipher batch %d", a.BatchIndex)
+	return fmt.Sprintf("=> executor contract: execute cipher batch %d with %d txs", a.BatchIndex, len(a.Transactions))
 }
 
 // ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
@@ -123,7 +123,7 @@ func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
 }
 
 func (a ExecutePlainBatch) String() string {
-	return fmt.Sprintf("=> executor contract: execute plain batch %d", a.BatchIndex)
+	return fmt.Sprintf("=> executor contract: execute plain batch %d with %d txs", a.BatchIndex, len(a.Transactions))
 }
 
 // SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch

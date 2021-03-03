@@ -54,6 +54,12 @@ function getBatchIndexAtBlock(blockNumber, config) {
   return batchIndex;
 }
 
+function getRandomNonce() {
+  // nonces range from 0 to 2^64 - 1, but we don't have to use the whole range and smaller
+  // numbers are nicer to display.
+  return Math.floor(Math.random() * 100000);
+}
+
 async function encodeMessage(message, nonce, privateKey) {
   let messageBytes = ethers.utils.toUtf8Bytes(message);
   let payload = ethers.utils.defaultAbiCoder.encode(
@@ -91,6 +97,7 @@ async function encryptMessage(message, eonPublicKey, batchIndex) {
 export {
   getConfigAtBlock,
   getBatchIndexAtBlock,
+  getRandomNonce,
   encodeMessage,
   encryptMessage,
 };

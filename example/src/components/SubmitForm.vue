@@ -56,6 +56,7 @@ import { ethers } from "ethers";
 import {
   getConfigAtBlock,
   getBatchIndexAtBlock,
+  getRandomNonce,
   encodeMessage,
   encryptMessage,
 } from "../utils.js";
@@ -114,7 +115,7 @@ export default {
     },
 
     async sendTransaction(type) {
-      let nonce = await this.$targetContract.getNonce(this.address);
+      let nonce = getRandomNonce();
       let encodedMessage = await encodeMessage(
         this.message,
         nonce,
@@ -169,7 +170,7 @@ export default {
           this.configContract
         );
         const batchIndexNow = getBatchIndexAtBlock(blockNumber + 1, config);
-        const batchIndexSoon = getBatchIndexAtBlock(blockNumber + 3, config);
+        const batchIndexSoon = getBatchIndexAtBlock(blockNumber + 2, config);
         if (batchIndexNow.eq(batchIndexSoon)) {
           return blockNumber;
         }
