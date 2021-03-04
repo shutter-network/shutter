@@ -60,6 +60,7 @@ import {
   encodeMessage,
   encryptMessage,
 } from "../utils.js";
+import { getBlockNumber } from "../blocknumber.js";
 
 export default {
   name: "SubmitForm",
@@ -149,7 +150,7 @@ export default {
         type,
         encodedMessage,
         {
-          gasPrice: 0,
+          gasLimit: 200000,
         }
       );
       console.log(
@@ -164,7 +165,7 @@ export default {
 
     async waitForGoodBlock() {
       for (;;) {
-        const blockNumber = await this.$provider.getBlockNumber();
+        const blockNumber = await getBlockNumber(this.$provider);
         const config = await getConfigAtBlock(
           blockNumber + 1,
           this.configContract

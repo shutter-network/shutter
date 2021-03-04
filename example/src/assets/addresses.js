@@ -5,8 +5,9 @@ let targetAddress = "0x2adf8B30d4Dd24a05Ccd9aFbDc06A5b49C9c758d";
 let keyBroadcastAddress = "0xBe0B0f08A599F07699E98A9D001084e97b9a900A";
 
 // goerli
-// let configAddress = "0x0389AA3AA50A43Fccd80E779f50d0076E9c2e672";
-// let batcherAddress = "0x6231D2bc4Ff51Be7ad593ECCf6d5a7b9911A05cA";
-// let targetAddress = "0x4CaDde3E9E2eC2378373879443be60F615Ba8Ef0";
+// let configAddress = "0xb9e70ff19f963b89e434a55c303A8747c80b906a";
+// let batcherAddress = "0x0abdC68D1CBb324062fe2c782C68De74B5aEDeE9";
+// let targetAddress = "0x5e7008A8E9486133e4Ec3f0aba12967361F90FCb";
+// let keyBroadcastAddress = "0xBf74708a438F6f94d378edce02586F8d15d9708E";
 
 export { configAddress, batcherAddress, targetAddress, keyBroadcastAddress };
