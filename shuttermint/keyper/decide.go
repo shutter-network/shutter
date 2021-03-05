@@ -14,6 +14,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/epochkg"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -262,7 +263,7 @@ type Decider struct {
 	State       *State
 	Shutter     *observe.Shutter
 	MainChain   *observe.MainChain
-	Actions     []IAction
+	Actions     []fx.IAction
 	PhaseLength PhaseLength
 }
 
@@ -272,7 +273,7 @@ func NewDecider(kpr *Keyper) Decider {
 		State:       kpr.State,
 		Shutter:     kpr.Shutter,
 		MainChain:   kpr.MainChain,
-		Actions:     []IAction{},
+		Actions:     []fx.IAction{},
 		PhaseLength: NewConstantPhaseLength(int64(kpr.Config.DKGPhaseLength)),
 	}
 }
@@ -289,12 +290,12 @@ func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
 }
 
 // addAction stores the given IAction to be run later
-func (dcdr *Decider) addAction(a IAction) {
+func (dcdr *Decider) addAction(a fx.IAction) {
 	dcdr.Actions = append(dcdr.Actions, a)
 }
 
 func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Message) {
-	dcdr.addAction(SendShuttermintMessage{
+	dcdr.addAction(fx.SendShuttermintMessage{
 		Description: description,
 		Msg:         msg,
 	})
@@ -521,7 +522,7 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 }
 
 func (dcdr *Decider) broadcastEonPublicKey(dkgResult *puredkg.Result, startBatchIndex uint64) {
-	action := EonKeyBroadcast{
+	action := fx.EonKeyBroadcast{
 		KeyperIndex:     dkgResult.Keyper,
 		StartBatchIndex: startBatchIndex,
 		EonPublicKey:    dkgResult.PublicKey,
@@ -827,7 +828,7 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	}
 }
 
-func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.BatchConfig) IAction {
+func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.BatchConfig) fx.IAction {
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
 		batch = &observe.Batch{BatchIndex: batchIndex}
@@ -847,7 +848,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		log.Printf("not enough votes for batch %d", batchIndex)
 		return nil
 	}
-	return ExecuteCipherBatch{
+	return fx.ExecuteCipherBatch{
 		BatchIndex:      batchIndex,
 		CipherBatchHash: batch.EncryptedBatchHash,
 		Transactions:    stBatch.DecryptedTransactions,
@@ -855,18 +856,18 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 }
 
-func (dcdr *Decider) executePlainBatch(batchIndex uint64) IAction {
+func (dcdr *Decider) executePlainBatch(batchIndex uint64) fx.IAction {
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
-	return ExecutePlainBatch{
+	return fx.ExecutePlainBatch{
 		BatchIndex:   batchIndex,
 		Transactions: batch.PlainTransactions,
 	}
 }
 
-func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
+func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 	batchIndex := nextHalfStep / 2
 
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
@@ -882,7 +883,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) IAction {
 	executionTimeoutBlock := config.BatchEndBlock(batchIndex) + config.ExecutionTimeout
 
 	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
-		return SkipCipherBatch{
+		return fx.SkipCipherBatch{
 			BatchIndex: batchIndex,
 		}
 	}

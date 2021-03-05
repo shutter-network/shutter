@@ -1,4 +1,4 @@
-package keyper
+package fx
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 
 // IRunEnv is passed as a parameter to IAction's Run function.
 type IRunEnv interface {
-	MessageSender
+	SendMessage(context.Context, *shmsg.Message) error
 	GetContractCaller(ctx context.Context) *contract.Caller
 	WatchTransaction(tx *types.Transaction)
 }
