@@ -26,14 +26,9 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 const (
-	// watchedTransactionsBufferSize is the maximum number of txs to watch. If this is too small,
-	// actions will stall.
-	watchedTransactionsBufferSize = 100
-
 	// mainChainTimeout is the time after which we assume the connection to the main chain
 	// node is lost if no new block is received
 	mainChainTimeout           = 30 * time.Second
@@ -59,11 +54,11 @@ type Keyper struct {
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
 
-	ContractCaller      contract.Caller
-	shmcl               client.Client
-	MessageSender       fx.MessageSender
-	WatchedTransactions chan *types.Transaction
-	lastlogTime         time.Time
+	ContractCaller contract.Caller
+	shmcl          client.Client
+	MessageSender  fx.MessageSender
+	lastlogTime    time.Time
+	runenv         *fx.RunEnv
 }
 
 func NewKeyper(kc KeyperConfig) Keyper {
@@ -72,8 +67,6 @@ func NewKeyper(kc KeyperConfig) Keyper {
 		State:     NewState(),
 		Shutter:   observe.NewShutter(),
 		MainChain: observe.NewMainChain(),
-
-		WatchedTransactions: make(chan *types.Transaction, watchedTransactionsBufferSize),
 	}
 }
 
@@ -141,6 +134,7 @@ func (kpr *Keyper) init() error {
 	kpr.MessageSender = &ms
 
 	kpr.ContractCaller, err = NewContractCallerFromConfig(kpr.Config)
+	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller)
 	return err
 }
 
@@ -293,7 +287,7 @@ func (kpr *Keyper) Run() error {
 	signal.Notify(signals, syscall.SIGUSR1)
 	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
 	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
-	g.Go(func() error { kpr.watchTransactions(ctx); return nil })
+	kpr.runenv.StartBackgroundTasks(ctx, g)
 
 	for {
 		select {
@@ -391,45 +385,6 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
-	if len(decider.Actions) > 0 {
-		log.Printf("Running %d actions", len(decider.Actions))
-	}
 
-	runenv := fx.RunEnv{
-		MessageSender:       kpr.MessageSender,
-		ContractCaller:      &kpr.ContractCaller,
-		WatchedTransactions: kpr.WatchedTransactions,
-	}
-	for _, act := range decider.Actions {
-		err := act.Run(ctx, runenv)
-		// XXX at the moment we just let the whole program die. We need a better strategy
-		// here. We could retry the actions or feed the errors back into our state
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-func (kpr *Keyper) watchTransactions(ctx context.Context) {
-	for {
-		select {
-		case tx := <-kpr.WatchedTransactions:
-			receipt, err := medley.WaitMined(ctx, kpr.ContractCaller.Ethclient, tx.Hash())
-			if err != nil {
-				log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
-			}
-			if receipt == nil {
-				// This happens if the context is canceled. By continuing, we end up in the
-				// ctx.Done case
-				continue
-			}
-			if receipt.Status != types.ReceiptStatusSuccessful {
-				log.Printf("Tx %s has failed and was reverted", tx.Hash().Hex())
-			} else {
-				log.Printf("Tx %s was successful", tx.Hash().Hex())
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
+	kpr.runenv.RunActions(ctx, decider.Actions)
 }
