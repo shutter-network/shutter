@@ -1,11 +1,10 @@
 package fx
 
 import (
-	"context"
 	"encoding/gob"
 	"fmt"
-	"log"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -13,26 +12,23 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// IRunEnv is passed as a parameter to IAction's Run function.
-type IRunEnv interface {
-	SendMessage(context.Context, *shmsg.Message) error
-	GetContractCaller(ctx context.Context) *contract.Caller
-	WatchTransaction(tx *types.Transaction)
-}
-
 // IAction describes an action to run as determined by the Decider's Decide method.
-type IAction interface {
-	Run(ctx context.Context, runenv IRunEnv) error
+type IAction interface{}
+
+// MainChainTX is an action that sends a transaction to the main chain
+type MainChainTX interface {
+	IAction
+	SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error)
 }
 
 var (
-	_ IAction = SendShuttermintMessage{}
-	_ IAction = ExecuteCipherBatch{}
-	_ IAction = ExecutePlainBatch{}
-	_ IAction = SkipCipherBatch{}
-	_ IAction = Accuse{}
-	_ IAction = Appeal{}
-	_ IAction = EonKeyBroadcast{}
+	_ IAction     = SendShuttermintMessage{}
+	_ MainChainTX = ExecuteCipherBatch{}
+	_ MainChainTX = ExecutePlainBatch{}
+	_ MainChainTX = SkipCipherBatch{}
+	_ MainChainTX = Accuse{}
+	_ MainChainTX = Appeal{}
+	_ MainChainTX = EonKeyBroadcast{}
 )
 
 func init() {
@@ -55,11 +51,6 @@ type SendShuttermintMessage struct {
 	Msg         *shmsg.Message
 }
 
-func (a SendShuttermintMessage) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-	return runenv.SendMessage(ctx, a.Msg)
-}
-
 func (a SendShuttermintMessage) String() string {
 	return fmt.Sprintf("=> shuttermint: %s", a.Description)
 }
@@ -72,24 +63,10 @@ type ExecuteCipherBatch struct {
 	KeyperIndex     uint64
 }
 
-func (a ExecuteCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.ExecutorContract.ExecuteCipherBatch(auth, a.BatchIndex, a.CipherBatchHash, a.Transactions, a.KeyperIndex)
-	if err != nil {
-		// XXX consider handling the error somehow
-		log.Printf("Error creating cipher batch execution tx: %s", err)
-		return nil
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
+func (a ExecuteCipherBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.ExecutorContract.ExecuteCipherBatch(
+		auth, a.BatchIndex, a.CipherBatchHash, a.Transactions, a.KeyperIndex,
+	)
 }
 
 func (a ExecuteCipherBatch) String() string {
@@ -102,24 +79,8 @@ type ExecutePlainBatch struct {
 	Transactions [][]byte
 }
 
-func (a ExecutePlainBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.ExecutorContract.ExecutePlainBatch(auth, a.BatchIndex, a.Transactions)
-	if err != nil {
-		// XXX consider handling the error somehow
-		log.Printf("Error creating plain batch execution tx: %s", err)
-		return nil
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
+func (a ExecutePlainBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.ExecutorContract.ExecutePlainBatch(auth, a.BatchIndex, a.Transactions)
 }
 
 func (a ExecutePlainBatch) String() string {
@@ -131,24 +92,8 @@ type SkipCipherBatch struct {
 	BatchIndex uint64
 }
 
-func (a SkipCipherBatch) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.ExecutorContract.SkipCipherExecution(auth, a.BatchIndex)
-	if err != nil {
-		// XXX consider handling the error somehow
-		log.Printf("Error creating skip cipher execution tx: %s", err)
-		return nil
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
+func (a SkipCipherBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.ExecutorContract.SkipCipherExecution(auth, a.BatchIndex)
 }
 
 func (a SkipCipherBatch) String() string {
@@ -161,22 +106,8 @@ type Accuse struct {
 	KeyperIndex uint64 // index of the accuser, not the executor
 }
 
-func (a Accuse) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.KeyperSlasher.Accuse(auth, a.HalfStep, a.KeyperIndex)
-	if err != nil {
-		return err
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
+func (a Accuse) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.KeyperSlasher.Accuse(auth, a.HalfStep, a.KeyperIndex)
 }
 
 func (a Accuse) String() string {
@@ -188,22 +119,8 @@ type Appeal struct {
 	Authorization contract.Authorization
 }
 
-func (a Appeal) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.KeyperSlasher.Appeal(auth, a.Authorization)
-	if err != nil {
-		return err
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
+func (a Appeal) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.KeyperSlasher.Appeal(auth, a.Authorization)
 }
 
 func (a Appeal) String() string {
@@ -217,27 +134,13 @@ type EonKeyBroadcast struct {
 	EonPublicKey    *shcrypto.EonPublicKey
 }
 
-func (a EonKeyBroadcast) Run(ctx context.Context, runenv IRunEnv) error {
-	log.Printf("=====%s", a)
-
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-
-	tx, err := cc.KeyBroadcastContract.Vote(
+func (a EonKeyBroadcast) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	return caller.KeyBroadcastContract.Vote(
 		auth,
 		a.KeyperIndex,
 		a.StartBatchIndex,
 		a.EonPublicKey.Marshal(),
 	)
-	if err != nil {
-		return err
-	}
-	runenv.WatchTransaction(tx)
-
-	return nil
 }
 
 func (a EonKeyBroadcast) String() string {

@@ -2,6 +2,7 @@ package fx
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -44,13 +45,44 @@ func (runenv RunEnv) WatchTransaction(tx *types.Transaction) {
 	runenv.WatchedTransactions <- tx
 }
 
+func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, act *SendShuttermintMessage) error {
+	log.Printf("=====%s", act)
+	err := runenv.MessageSender.SendMessage(ctx, act.Msg)
+	return err
+}
+
+func (runenv *RunEnv) sendMainChainTX(ctx context.Context, act MainChainTX) error {
+	cc := runenv.GetContractCaller(ctx)
+	auth, err := cc.Auth()
+	if err != nil {
+		return err
+	}
+	tx, err := act.SendTX(cc, auth)
+	if err != nil {
+		// XXX consider handling the error somehow
+		log.Printf("Error: %s: %s", act, err)
+		return nil
+	}
+	runenv.WatchTransaction(tx)
+	return nil
+}
+
 func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
+	var err error
 	if len(actions) > 0 {
 		log.Printf("Running %d actions", len(actions))
 	}
 
 	for _, act := range actions {
-		err := act.Run(ctx, runenv)
+		switch a := act.(type) {
+		case SendShuttermintMessage:
+			err = runenv.sendShuttermintMessage(ctx, &a)
+		case MainChainTX:
+			err = runenv.sendMainChainTX(ctx, a)
+		default:
+			err = fmt.Errorf("cannot run %s", a)
+		}
+
 		// XXX at the moment we just let the whole program die. We need a better strategy
 		// here. We could retry the actions or feed the errors back into our state
 		if err != nil {
