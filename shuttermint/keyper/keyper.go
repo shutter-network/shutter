@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
@@ -60,7 +61,7 @@ type Keyper struct {
 
 	ContractCaller      contract.Caller
 	shmcl               client.Client
-	MessageSender       MessageSender
+	MessageSender       fx.MessageSender
 	WatchedTransactions chan *types.Transaction
 	lastlogTime         time.Time
 }
@@ -136,7 +137,7 @@ func (kpr *Keyper) init() error {
 	if err != nil {
 		return errors.Wrapf(err, "start shuttermint client")
 	}
-	ms := NewRPCMessageSender(kpr.shmcl, kpr.Config.SigningKey)
+	ms := fx.NewRPCMessageSender(kpr.shmcl, kpr.Config.SigningKey)
 	kpr.MessageSender = &ms
 
 	kpr.ContractCaller, err = NewContractCallerFromConfig(kpr.Config)
@@ -394,7 +395,7 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 		log.Printf("Running %d actions", len(decider.Actions))
 	}
 
-	runenv := RunEnv{
+	runenv := fx.RunEnv{
 		MessageSender:       kpr.MessageSender,
 		ContractCaller:      &kpr.ContractCaller,
 		WatchedTransactions: kpr.WatchedTransactions,

@@ -13,7 +13,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -141,7 +141,7 @@ func bootstrap() {
 	}
 	keypers := bc.Keypers
 
-	ms := keyper.NewRPCMessageSender(shmcl, signingKey)
+	ms := fx.NewRPCMessageSender(shmcl, signingKey)
 	batchConfigMsg := shmsg.NewBatchConfig(
 		bc.StartBatchIndex,
 		keypers,
