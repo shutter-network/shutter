@@ -4,45 +4,37 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
 const (
-	// watchedTransactionsBufferSize is the maximum number of txs to watch. If this is too small,
-	// actions will stall.
-	watchedTransactionsBufferSize = 100
+	numMainChainWorkers = 20
 )
 
 type RunEnv struct {
-	MessageSender       MessageSender
-	ContractCaller      *contract.Caller
-	WatchedTransactions chan *types.Transaction
+	MessageSender  MessageSender
+	ContractCaller *contract.Caller
+	mainChainTXs   chan MainChainTX
+	mutex          sync.Mutex
 }
 
 func NewRunEnv(messageSender MessageSender, contractCaller *contract.Caller) *RunEnv {
 	return &RunEnv{
-		MessageSender:       messageSender,
-		ContractCaller:      contractCaller,
-		WatchedTransactions: make(chan *types.Transaction, watchedTransactionsBufferSize),
+		MessageSender:  messageSender,
+		ContractCaller: contractCaller,
+		mainChainTXs:   make(chan MainChainTX),
 	}
-}
-
-func (runenv RunEnv) SendMessage(ctx context.Context, msg *shmsg.Message) error {
-	return runenv.MessageSender.SendMessage(ctx, msg)
 }
 
 func (runenv RunEnv) GetContractCaller(ctx context.Context) *contract.Caller {
 	return runenv.ContractCaller
-}
-
-func (runenv RunEnv) WatchTransaction(tx *types.Transaction) {
-	runenv.WatchedTransactions <- tx
 }
 
 func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, act *SendShuttermintMessage) error {
@@ -52,18 +44,41 @@ func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, act *SendShutt
 }
 
 func (runenv *RunEnv) sendMainChainTX(ctx context.Context, act MainChainTX) error {
-	cc := runenv.GetContractCaller(ctx)
-	auth, err := cc.Auth()
-	if err != nil {
-		return err
-	}
-	tx, err := act.SendTX(cc, auth)
+	var err error
+	var tx *types.Transaction
+	var auth *bind.TransactOpts
+
+	func() {
+		// We lock the mutex in order to not reuse the same nonce
+		runenv.mutex.Lock()
+		defer runenv.mutex.Unlock()
+		auth, err = runenv.ContractCaller.Auth()
+		if err != nil {
+			return
+		}
+		tx, err = act.SendTX(runenv.ContractCaller, auth)
+	}()
+
 	if err != nil {
 		// XXX consider handling the error somehow
 		log.Printf("Error: %s: %s", act, err)
 		return nil
 	}
-	runenv.WatchTransaction(tx)
+
+	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, tx.Hash())
+	if err != nil {
+		log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
+	}
+	if receipt == nil {
+		// This happens if the context is canceled.
+		return nil
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		log.Printf("TX reverted: %s, hash=%s", act, tx.Hash().Hex())
+	} else {
+		log.Printf("TX success: %s, hash=%s", act, tx.Hash().Hex())
+	}
+
 	return nil
 }
 
@@ -78,7 +93,7 @@ func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
 		case SendShuttermintMessage:
 			err = runenv.sendShuttermintMessage(ctx, &a)
 		case MainChainTX:
-			err = runenv.sendMainChainTX(ctx, a)
+			runenv.mainChainTXs <- a
 		default:
 			err = fmt.Errorf("cannot run %s", a)
 		}
@@ -91,30 +106,22 @@ func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
 	}
 }
 
-func (runenv *RunEnv) StartBackgroundTasks(ctx context.Context, g *errgroup.Group) {
-	g.Go(func() error { return runenv.watchTransactions(ctx) })
-}
-
-func (runenv *RunEnv) watchTransactions(ctx context.Context) error {
+func (runenv *RunEnv) handleMainChainTXs(ctx context.Context) {
 	for {
 		select {
-		case tx := <-runenv.WatchedTransactions:
-			receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, tx.Hash())
-			if err != nil {
-				log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
-			}
-			if receipt == nil {
-				// This happens if the context is canceled. By continuing, we end up in the
-				// ctx.Done case
-				continue
-			}
-			if receipt.Status != types.ReceiptStatusSuccessful {
-				log.Printf("Tx %s has failed and was reverted", tx.Hash().Hex())
-			} else {
-				log.Printf("Tx %s was successful", tx.Hash().Hex())
-			}
+		case a := <-runenv.mainChainTXs:
+			_ = runenv.sendMainChainTX(ctx, a)
 		case <-ctx.Done():
-			return nil
+			return
 		}
+	}
+}
+
+func (runenv *RunEnv) StartBackgroundTasks(ctx context.Context, g *errgroup.Group) {
+	for i := 0; i < numMainChainWorkers; i++ {
+		g.Go(func() error {
+			runenv.handleMainChainTXs(ctx)
+			return nil
+		})
 	}
 }
