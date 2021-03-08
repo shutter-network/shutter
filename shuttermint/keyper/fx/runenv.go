@@ -3,7 +3,7 @@ package fx
 import (
 	"context"
 	"log"
-	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
@@ -18,23 +19,27 @@ const (
 	numMainChainWorkers = 20
 )
 
+type InFlightMainChainTX struct {
+	MainChainTX MainChainTX
+	Transaction *types.Transaction
+}
+
 type RunEnv struct {
-	MessageSender  MessageSender
-	ContractCaller *contract.Caller
-	mainChainTXs   chan MainChainTX
-	mutex          sync.Mutex
+	MessageSender        MessageSender
+	ContractCaller       *contract.Caller
+	mainChainTXs         chan MainChainTX
+	inFlightMainChainTXs chan InFlightMainChainTX
+	currentWorld         func() observe.World
 }
 
-func NewRunEnv(messageSender MessageSender, contractCaller *contract.Caller) *RunEnv {
+func NewRunEnv(messageSender MessageSender, contractCaller *contract.Caller, currentWorld func() observe.World) *RunEnv {
 	return &RunEnv{
-		MessageSender:  messageSender,
-		ContractCaller: contractCaller,
-		mainChainTXs:   make(chan MainChainTX),
+		MessageSender:        messageSender,
+		ContractCaller:       contractCaller,
+		mainChainTXs:         make(chan MainChainTX, numMainChainWorkers),
+		inFlightMainChainTXs: make(chan InFlightMainChainTX),
+		currentWorld:         currentWorld,
 	}
-}
-
-func (runenv RunEnv) GetContractCaller(ctx context.Context) *contract.Caller {
-	return runenv.ContractCaller
 }
 
 func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, act *SendShuttermintMessage) error {
@@ -48,38 +53,39 @@ func (runenv *RunEnv) sendMainChainTX(ctx context.Context, act MainChainTX) erro
 	var tx *types.Transaction
 	var auth *bind.TransactOpts
 
-	func() {
-		// We lock the mutex in order to not reuse the same nonce
-		runenv.mutex.Lock()
-		defer runenv.mutex.Unlock()
-		auth, err = runenv.ContractCaller.Auth()
-		if err != nil {
-			return
-		}
-		tx, err = act.SendTX(runenv.ContractCaller, auth)
-	}()
+	auth, err = runenv.ContractCaller.Auth()
 
 	if err != nil {
-		// XXX consider handling the error somehow
-		log.Printf("Error: %s: %+v", act, err)
-		return nil
+		return err
+	}
+	tx, err = act.SendTX(runenv.ContractCaller, auth)
+	if err != nil {
+		return err
 	}
 
+	runenv.inFlightMainChainTXs <- InFlightMainChainTX{MainChainTX: act, Transaction: tx}
+	return nil
+}
+
+func (runenv *RunEnv) waitMined(ctx context.Context, inFlightMainChainTX InFlightMainChainTX) {
+	tx := inFlightMainChainTX.Transaction
+	act := inFlightMainChainTX.MainChainTX
 	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, tx.Hash())
 	if err != nil {
-		log.Printf("Error waiting for transaction %s: %+v", tx.Hash().Hex(), err)
+		log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
+		return
 	}
 	if receipt == nil {
 		// This happens if the context is canceled.
-		return nil
+		return
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		log.Printf("TX reverted: %s, hash=%s", act, tx.Hash().Hex())
+		world := runenv.CurrentWorld() // XXX we should make sure our world includes the receipt's blocknumber
+		expired := act.IsExpired(world)
+		log.Printf("TX reverted: expired=%t, %s, hash=%s", expired, act, tx.Hash().Hex())
 	} else {
 		log.Printf("TX success: %s, hash=%s", act, tx.Hash().Hex())
 	}
-
-	return nil
 }
 
 func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
@@ -110,17 +116,54 @@ func (runenv *RunEnv) handleMainChainTXs(ctx context.Context) {
 	for {
 		select {
 		case a := <-runenv.mainChainTXs:
-			_ = runenv.sendMainChainTX(ctx, a)
+			var err error
+			for {
+				if a.IsExpired(runenv.CurrentWorld()) {
+					log.Printf("action expired: %s", a)
+					break
+				}
+				if err != nil {
+					log.Printf("retrying main chain tx %s; err=%s", a, err)
+				}
+				err := runenv.sendMainChainTX(ctx, a)
+				if err == nil {
+					break
+				}
+				time.Sleep(time.Second)
+			}
+
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
+func (runenv *RunEnv) handleInFlightTXs(ctx context.Context) {
+	for {
+		select {
+		case t := <-runenv.inFlightMainChainTXs:
+			runenv.waitMined(ctx, t)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (runenv *RunEnv) CurrentWorld() observe.World {
+	return runenv.currentWorld()
+}
+
 func (runenv *RunEnv) StartBackgroundTasks(ctx context.Context, g *errgroup.Group) {
+	// Start exactly one worker, because we like to make sure the actions are started in the
+	// order given to us
+	g.Go(func() error {
+		runenv.handleMainChainTXs(ctx)
+		return nil
+	})
+
 	for i := 0; i < numMainChainWorkers; i++ {
 		g.Go(func() error {
-			runenv.handleMainChainTXs(ctx)
+			runenv.handleInFlightTXs(ctx)
 			return nil
 		})
 	}

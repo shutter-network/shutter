@@ -134,7 +134,7 @@ func (kpr *Keyper) init() error {
 	kpr.MessageSender = &ms
 
 	kpr.ContractCaller, err = NewContractCallerFromConfig(kpr.Config)
-	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller)
+	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller, kpr.CurrentWorld)
 	return err
 }
 
@@ -308,6 +308,10 @@ func (kpr *Keyper) Run() error {
 			return g.Wait()
 		}
 	}
+}
+
+func (kpr *Keyper) CurrentWorld() observe.World {
+	return observe.World{Shutter: kpr.Shutter, MainChain: kpr.MainChain}
 }
 
 type storedState struct {

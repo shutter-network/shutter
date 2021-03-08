@@ -860,11 +860,13 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		log.Printf("not enough votes for batch %d", batchIndex)
 		return nil
 	}
+
 	return fx.ExecuteCipherBatch{
-		BatchIndex:      batchIndex,
-		CipherBatchHash: batch.EncryptedBatchHash,
-		Transactions:    stBatch.DecryptedTransactions,
-		KeyperIndex:     keyperIndex,
+		BatchIndex:            batchIndex,
+		CipherBatchHash:       batch.EncryptedBatchHash,
+		Transactions:          stBatch.DecryptedTransactions,
+		KeyperIndex:           keyperIndex,
+		ExecutionTimeoutBlock: config.BatchEndBlock(batchIndex) + config.ExecutionTimeout,
 	}
 }
 
