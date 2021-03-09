@@ -23,6 +23,7 @@ type KeyperConfig struct {
 	ExecutorContractAddress     common.Address
 	DepositContractAddress      common.Address
 	KeyperSlasherAddress        common.Address
+	MainChainFollowDistance     uint64 // in main chain blocks
 	ExecutionStaggering         uint64 // in main chain blocks
 	DKGPhaseLength              uint64 // in shuttermint blocks
 }

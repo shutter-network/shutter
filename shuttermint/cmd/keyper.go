@@ -19,20 +19,21 @@ import (
 
 // RawKeyperConfig contains raw, unvalidated configuration parameters
 type RawKeyperConfig struct {
-	ShuttermintURL       string
-	EthereumURL          string
-	SigningKey           string
-	ValidatorSeed        string
-	EncryptionKey        string
-	ConfigContract       string
-	BatcherContract      string
-	KeyBroadcastContract string
-	ExecutorContract     string
-	DepositContract      string
-	KeyperSlasher        string
-	ExecutionStaggering  uint64
-	DKGPhaseLength       uint64
-	DBDir                string
+	ShuttermintURL          string
+	EthereumURL             string
+	SigningKey              string
+	ValidatorSeed           string
+	EncryptionKey           string
+	ConfigContract          string
+	BatcherContract         string
+	KeyBroadcastContract    string
+	ExecutorContract        string
+	DepositContract         string
+	KeyperSlasher           string
+	MainChainFollowDistance uint64
+	ExecutionStaggering     uint64
+	DKGPhaseLength          uint64
+	DBDir                   string
 }
 
 // keyperCmd represents the keyper command
@@ -64,6 +65,7 @@ func readKeyperConfig() (RawKeyperConfig, error) {
 	viper.BindEnv("ExecutorContract")
 	viper.BindEnv("DepositContract")
 	viper.BindEnv("KeyperSlasher")
+	viper.BindEnv("MainChainFollowDistance")
 	viper.BindEnv("ExecutionStaggering")
 	viper.BindEnv("DKGPhaseLength")
 
@@ -174,6 +176,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		)
 	}
 
+	mainChainFollowDistance := r.MainChainFollowDistance
 	executionStaggering := r.ExecutionStaggering
 	dkgPhaseLength := r.DKGPhaseLength
 
@@ -189,6 +192,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 		ExecutorContractAddress:     executorContractAddress,
 		DepositContractAddress:      depositContractAddress,
 		KeyperSlasherAddress:        keyperSlasherAddress,
+		MainChainFollowDistance:     mainChainFollowDistance,
 		ExecutionStaggering:         executionStaggering,
 		DKGPhaseLength:              dkgPhaseLength,
 		DBDir:                       r.DBDir,

@@ -403,19 +403,20 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 	shuttermintURL := configFlags.ShuttermintURLBase + ":" + strconv.Itoa(shuttermintPort)
 
 	config := cmd.RawKeyperConfig{
-		ShuttermintURL:       shuttermintURL,
-		EthereumURL:          configFlags.EthereumURL,
-		SigningKey:           hex.EncodeToString(crypto.FromECDSA(signingKey)),
-		ValidatorSeed:        validatorSeed,
-		EncryptionKey:        hex.EncodeToString(crypto.FromECDSA(encryptionKey.ExportECDSA())),
-		ConfigContract:       contractsJSON.ConfigContract.Hex(),
-		BatcherContract:      contractsJSON.BatcherContract.Hex(),
-		KeyBroadcastContract: contractsJSON.KeyBroadcastContract.Hex(),
-		ExecutorContract:     contractsJSON.ExecutorContract.Hex(),
-		DepositContract:      contractsJSON.DepositContract.Hex(),
-		KeyperSlasher:        contractsJSON.KeyperSlasherContract.Hex(),
-		ExecutionStaggering:  5,
-		DKGPhaseLength:       30,
+		ShuttermintURL:          shuttermintURL,
+		EthereumURL:             configFlags.EthereumURL,
+		SigningKey:              hex.EncodeToString(crypto.FromECDSA(signingKey)),
+		ValidatorSeed:           validatorSeed,
+		EncryptionKey:           hex.EncodeToString(crypto.FromECDSA(encryptionKey.ExportECDSA())),
+		ConfigContract:          contractsJSON.ConfigContract.Hex(),
+		BatcherContract:         contractsJSON.BatcherContract.Hex(),
+		KeyBroadcastContract:    contractsJSON.KeyBroadcastContract.Hex(),
+		ExecutorContract:        contractsJSON.ExecutorContract.Hex(),
+		DepositContract:         contractsJSON.DepositContract.Hex(),
+		KeyperSlasher:           contractsJSON.KeyperSlasherContract.Hex(),
+		MainChainFollowDistance: 0,
+		ExecutionStaggering:     5,
+		DKGPhaseLength:          30,
 	}
 	return &config, nil
 }
