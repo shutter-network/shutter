@@ -18,6 +18,7 @@ import (
 // work. The only source for the data stored in this struct should be the ethereum node.  The
 // SyncToHead method can be used to update the data. All other accesses should be read-only.
 type MainChain struct {
+	FollowDistance          uint64
 	CurrentBlock            uint64
 	BatchConfigs            []contract.BatchConfig
 	Batches                 map[uint64]*Batch
@@ -56,8 +57,10 @@ type Accusation struct {
 }
 
 // NewMainChain creates an empty MainChain struct
-func NewMainChain() *MainChain {
+func NewMainChain(followDistance uint64) *MainChain {
 	return &MainChain{
+		FollowDistance: followDistance,
+
 		Batches:                 make(map[uint64]*Batch),
 		CipherExecutionReceipts: make(map[uint64]*contract.CipherExecutionReceipt),
 		Deposits:                make(map[common.Address]*Deposit),
@@ -335,15 +338,22 @@ func (mainchain *MainChain) SyncToHead(
 		return mainchain, nil
 	}
 
+	var syncUntilBlockNumber uint64
+	if latestBlockNumber >= mainchain.FollowDistance {
+		syncUntilBlockNumber = latestBlockNumber - mainchain.FollowDistance
+	} else {
+		syncUntilBlockNumber = 0
+	}
+
 	mainchain = mainchain.Clone()
 
 	opts := &bind.CallOpts{
-		BlockNumber: latestBlockHeader.Number,
+		BlockNumber: new(big.Int).SetUint64(syncUntilBlockNumber),
 		Context:     ctx,
 	}
 	filter := &bind.FilterOpts{
 		Start: mainchain.CurrentBlock + 1,
-		End:   &latestBlockNumber,
+		End:   &syncUntilBlockNumber,
 	}
 
 	err = mainchain.syncConfigs(cc, opts)
@@ -371,7 +381,7 @@ func (mainchain *MainChain) SyncToHead(
 		return nil, err
 	}
 
-	mainchain.CurrentBlock = latestBlockNumber
+	mainchain.CurrentBlock = syncUntilBlockNumber
 	return mainchain, nil
 }
 
