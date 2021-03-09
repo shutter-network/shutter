@@ -80,6 +80,7 @@ def test_appealing(
     decrypted_transactions = [make_bytes() for _ in range(3)]
     decryption_signature_preimage = compute_decryption_signature_preimage(
         batcher_contract_address=to_canonical_address(mock_batcher_contract.address),
+        batch_index=0,
         cipher_batch_hash=cipher_batch_hash,
         decrypted_transactions=decrypted_transactions,
     )

@@ -166,9 +166,18 @@ def compute_decrypted_transaction_hash(transactions: Sequence[bytes]) -> Hash32:
 def compute_decryption_signature_preimage(
     *,
     batcher_contract_address: Address,
+    batch_index: int,
     cipher_batch_hash: Hash32,
     decrypted_transactions: Sequence[bytes],
 ) -> bytes:
+    batch_index_bytes = batch_index.to_bytes(8, byteorder="big")
     decrypted_transaction_hash = compute_decrypted_transaction_hash(decrypted_transactions)
-    preimage = b"".join([batcher_contract_address, cipher_batch_hash, decrypted_transaction_hash])
+    preimage = b"".join(
+        [
+            batcher_contract_address,
+            batch_index_bytes,
+            cipher_batch_hash,
+            decrypted_transaction_hash,
+        ]
+    )
     return preimage
