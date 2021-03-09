@@ -1,8 +1,10 @@
 package keyper
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -644,13 +646,22 @@ func transactionsHash(txs [][]byte) []byte {
 // computeDecryptionSignatureHash computes a cryptographic hash over the encrypted transactions,
 // the decrypted transactions, the batcher contracts address and the batch index.
 // It's the same hash we compute in the KeyperSlasher.sol's verifyAuthorization
-func (dcdr *Decider) computeDecryptionSignatureHash(cipherBatchHash, batchHash []byte) []byte {
+func (dcdr *Decider) computeDecryptionSignatureHash(batchIndex uint64, cipherBatchHash, batchHash []byte) []byte {
 	keccak := sha3.NewLegacyKeccak256()
 	if _, err := keccak.Write(hashPrefix); err != nil {
 		panic(err)
 	}
 
+	batchIndexBuffer := new(bytes.Buffer)
+	err := binary.Write(batchIndexBuffer, binary.BigEndian, batchIndex)
+	if err != nil {
+		panic(err)
+	}
+
 	if _, err := keccak.Write(dcdr.Config.BatcherContractAddress.Bytes()); err != nil {
+		panic(err)
+	}
+	if _, err := batchIndexBuffer.WriteTo(keccak); err != nil {
 		panic(err)
 	}
 	if _, err := keccak.Write(cipherBatchHash); err != nil {
@@ -673,7 +684,7 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 	}
 	txs := batch.DecryptTransactions(key)
 	decryptedTxsHash := transactionsHash(txs)
-	hash := dcdr.computeDecryptionSignatureHash(batch.EncryptedBatchHash.Bytes(), decryptedTxsHash)
+	hash := dcdr.computeDecryptionSignatureHash(batchIndex, batch.EncryptedBatchHash.Bytes(), decryptedTxsHash)
 
 	signature, err := crypto.Sign(hash, dcdr.Config.SigningKey)
 	if err != nil {

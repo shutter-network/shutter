@@ -135,6 +135,7 @@ contract KeyperSlasher {
             keccak256(
                 abi.encodePacked(
                     address(executorContract.batcherContract()),
+                    _receipt.halfStep / 2,
                     _receipt.cipherBatchHash,
                     _receipt.batchHash
                 )
