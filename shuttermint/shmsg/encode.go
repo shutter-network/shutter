@@ -2,10 +2,10 @@ package shmsg
 
 import (
 	"crypto/ecdsa"
-	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 	"google.golang.org/protobuf/proto"
 )

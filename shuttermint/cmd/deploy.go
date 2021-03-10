@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"

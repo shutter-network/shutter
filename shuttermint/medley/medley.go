@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	pkgErrors "github.com/pkg/errors"
 )
 
 const receiptPollInterval = 500 * time.Millisecond
@@ -27,7 +28,7 @@ func FindAddressIndex(addresses []common.Address, addr common.Address) (int, err
 			return i, nil
 		}
 	}
-	return -1, errAddressNotFound
+	return -1, pkgErrors.WithStack(errAddressNotFound)
 }
 
 // WaitMined waits for a transaction to be mined and returns its receipt. It's a replacement for

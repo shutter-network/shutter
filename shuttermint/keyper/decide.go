@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	pkgErrors "github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -288,7 +289,7 @@ func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
 			return epochkg, nil
 		}
 	}
-	return nil, errEKGNotFound
+	return nil, pkgErrors.WithStack(errEKGNotFound)
 }
 
 // addAction stores the given IAction to be run later

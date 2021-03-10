@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	pkgErrors "github.com/pkg/errors"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/rpc/client"
 
@@ -118,13 +119,13 @@ func (shutter *Shutter) FindEonByBatchIndex(batchIndex uint64) (*Eon, error) {
 			return &shutter.Eons[i], nil
 		}
 	}
-	return nil, errEonNotFound
+	return nil, pkgErrors.WithStack(errEonNotFound)
 }
 
 func (shutter *Shutter) FindEon(eon uint64) (*Eon, error) {
 	idx := shutter.searchEon(eon)
 	if idx == len(shutter.Eons) || eon < shutter.Eons[idx].Eon {
-		return nil, errEonNotFound
+		return nil, pkgErrors.WithStack(errEonNotFound)
 	}
 	return &shutter.Eons[idx], nil
 }
