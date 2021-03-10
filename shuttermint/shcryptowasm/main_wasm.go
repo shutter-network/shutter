@@ -68,7 +68,7 @@ var encrypt = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 	eonPublicKey := new(shcrypto.EonPublicKey)
 	err := eonPublicKey.Unmarshal(eonPublicKeyBytes)
 	if err != nil {
-		return errorReturnValue(fmt.Errorf("failed to decode eon public key: %w", err))
+		return errorReturnValue(errors.Wrap(err, "failed to decode eon public key"))
 	}
 
 	epochIndex := uint64(epochIndexJS.Int())

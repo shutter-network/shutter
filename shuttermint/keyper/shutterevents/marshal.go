@@ -13,6 +13,7 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
@@ -24,7 +25,7 @@ func encodeUint64(val uint64) []byte {
 func decodeUint64(val []byte) (uint64, error) {
 	v, err := strconv.ParseUint(string(val), 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse event: %w", err)
+		return 0, errors.Wrap(err, "failed to parse event")
 	}
 	return v, nil
 }

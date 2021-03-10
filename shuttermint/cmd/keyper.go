@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -116,12 +117,12 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 
 	signingKey, err := crypto.HexToECDSA(r.SigningKey)
 	if err != nil {
-		return emptyConfig, fmt.Errorf("bad signing key: %w", err)
+		return emptyConfig, errors.Wrap(err, "bad signing key")
 	}
 
 	validatorSeed, err := hex.DecodeString(r.ValidatorSeed)
 	if err != nil {
-		return emptyConfig, fmt.Errorf("invalid validator seed: %w", err)
+		return emptyConfig, errors.Wrap(err, "invalid validator seed")
 	}
 	if len(validatorSeed) != ed25519.SeedSize {
 		return emptyConfig, fmt.Errorf("invalid validator seed length %d (must be %d)", len(validatorSeed), ed25519.SeedSize)
@@ -130,7 +131,7 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 
 	encryptionKeyECDSA, err := crypto.HexToECDSA(r.EncryptionKey)
 	if err != nil {
-		return emptyConfig, fmt.Errorf("bad encryption key: %w", err)
+		return emptyConfig, errors.Wrap(err, "bad encryption key")
 	}
 	encryptionKey := ecies.ImportECDSA(encryptionKeyECDSA)
 

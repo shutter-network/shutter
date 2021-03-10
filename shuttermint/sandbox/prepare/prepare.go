@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -27,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pelletier/go-toml"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd"
@@ -337,7 +337,7 @@ func validateAddress(address string) error {
 
 func validatePrivateKey(key string) error {
 	if _, err := crypto.HexToECDSA(key); err != nil {
-		return fmt.Errorf("invalid private key: %w", err)
+		return errors.Wrap(err, "invalid private key")
 	}
 	return nil
 }
@@ -451,16 +451,16 @@ func saveConfigs(configs []*cmd.RawKeyperConfig) error {
 
 		dir := filepath.Join(configFlags.Dir, "keyper"+strconv.Itoa(i))
 		if err = os.MkdirAll(dir, 0o755); err != nil {
-			return fmt.Errorf("failed to create keyper directory: %w", err)
+			return errors.Wrap(err, "failed to create keyper directory")
 		}
 		path := filepath.Join(dir, "config.toml")
 
 		file, err := os.Create(path)
 		if err != nil {
-			return fmt.Errorf("failed to create keyper config file: %w", err)
+			return errors.Wrap(err, "failed to create keyper config file")
 		}
 		if _, err = file.Write(configToml); err != nil {
-			return fmt.Errorf("failed to write keyper config file: %w", err)
+			return errors.Wrap(err, "failed to write keyper config file")
 		}
 	}
 	return nil
@@ -488,7 +488,7 @@ func schedule() error {
 	ethereumURL := configs[0].EthereumURL
 	client, err := ethclient.DialContext(context.Background(), ethereumURL)
 	if err != nil {
-		return fmt.Errorf("faild to connect to Ethereum node at %s: %w", ethereumURL, err)
+		return errors.Wrapf(err, "faild to connect to Ethereum node at %s", ethereumURL)
 	}
 
 	if err := scheduleForKeyperConfigs(context.Background(), client, ownerKey, configs); err != nil {
@@ -519,17 +519,17 @@ func loadConfigs(paths []string) ([]keyper.KeyperConfig, error) {
 	for _, path := range paths {
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
-			return []keyper.KeyperConfig{}, fmt.Errorf("failed to read config file at %s: %w", path, err)
+			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to read config file at %s", path)
 		}
 
 		var r cmd.RawKeyperConfig
 		if err := toml.Unmarshal(data, &r); err != nil {
-			return []keyper.KeyperConfig{}, fmt.Errorf("failed to read config file %s: %w", path, err)
+			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to read config file %s", path)
 		}
 
 		c, err := cmd.ValidateKeyperConfig(r)
 		if err != nil {
-			return []keyper.KeyperConfig{}, fmt.Errorf("failed to parse config file %s: %w", path, err)
+			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to parse config file %s", path)
 		}
 
 		configs = append(configs, c)
@@ -652,7 +652,7 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 func checkContractExists(ctx context.Context, client *ethclient.Client, address common.Address) error {
 	code, err := client.CodeAt(ctx, address, nil)
 	if err != nil {
-		return fmt.Errorf("failed to check contract code: %w", err)
+		return errors.Wrap(err, "failed to check contract code")
 	}
 	if len(code) == 0 {
 		return fmt.Errorf("no contract exists at address %s", address.Hex())
@@ -698,7 +698,7 @@ func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc 
 	if numConfigs != 0 {
 		config, err := cc.GetConfigByIndex(callOpts, numConfigs-1)
 		if err != nil {
-			return 0, 0, fmt.Errorf("failed to query config %d: %w", numConfigs-1, err)
+			return 0, 0, errors.Wrapf(err, "failed to query config %d", numConfigs-1)
 		}
 		batchSpan = config.BatchSpan
 		startBlockNumber = config.StartBlockNumber
@@ -711,11 +711,11 @@ func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc 
 
 	headsUp, err := cc.ConfigChangeHeadsUpBlocks(callOpts)
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to query config change heads up blocks: %w", err)
+		return 0, 0, errors.Wrap(err, "failed to query config change heads up blocks")
 	}
 	header, err := client.HeaderByNumber(ctx, nil)
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to get header: %w", err)
+		return 0, 0, errors.Wrap(err, "failed to get header")
 	}
 	minStartBlock := header.Number.Uint64() + headsUp + 10
 
@@ -787,18 +787,18 @@ func fund() error {
 	ethereumURL := configs[0].EthereumURL
 	client, err := ethclient.DialContext(context.Background(), ethereumURL)
 	if err != nil {
-		return fmt.Errorf("faild to connect to Ethereum node at %s: %w", ethereumURL, err)
+		return errors.Wrapf(err, "faild to connect to Ethereum node at %s", ethereumURL)
 	}
 
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to query chain id: %w", err)
+		return errors.Wrap(err, "failed to query chain id")
 	}
 	signer := types.NewEIP155Signer(chainID)
 
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to query gas price: %w", err)
+		return errors.Wrap(err, "failed to query gas price")
 	}
 
 	amount, ok := new(big.Int).SetString("1000000000000000000", 10)
@@ -808,7 +808,7 @@ func fund() error {
 
 	nonce, err := client.PendingNonceAt(ctx, ownerAddress)
 	if err != nil {
-		return fmt.Errorf("failed to query nonce: %w", err)
+		return errors.Wrap(err, "failed to query nonce")
 	}
 
 	txs := []*types.Transaction{}
@@ -816,12 +816,12 @@ func fund() error {
 		unsignedTx := types.NewTransaction(nonce, config.Address(), amount, 21000, gasPrice, []byte{})
 		tx, err := types.SignTx(unsignedTx, signer, ownerKey)
 		if err != nil {
-			return fmt.Errorf("failed to sign transaction: %w", err)
+			return errors.Wrap(err, "failed to sign transaction")
 		}
 
 		err = client.SendTransaction(ctx, tx)
 		if err != nil {
-			return fmt.Errorf("failed to send transaction: %w", err)
+			return errors.Wrap(err, "failed to send transaction")
 		}
 		nonce++
 
@@ -837,7 +837,7 @@ func fund() error {
 func LookPath(file string) (string, error) {
 	p, err := exec.LookPath(file)
 	if err != nil {
-		return "", fmt.Errorf("cannot find executable %s: %w", file, err)
+		return "", errors.Wrapf(err, "cannot find executable %s", file)
 	}
 	return filepath.Abs(p)
 }
@@ -846,11 +846,11 @@ func createRunScript() error {
 	path := filepath.Join(configFlags.Dir, "run.sh")
 	file, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("failed to create run script file: %w", err)
+		return errors.Wrap(err, "failed to create run script file")
 	}
 	err = os.Chmod(path, 0o755)
 	if err != nil {
-		return fmt.Errorf("failed to make run script executable: %w", err)
+		return errors.Wrap(err, "failed to make run script executable")
 	}
 
 	shuttermintCmd, err := LookPath(configFlags.Bin)
@@ -869,7 +869,7 @@ func createRunScript() error {
 
 	t, err := template.New("script").Parse(runScriptTemplate)
 	if err != nil {
-		return fmt.Errorf("failed to create template: %w", err)
+		return errors.Wrap(err, "failed to create template")
 	}
 
 	d := runScriptTemplateData{
@@ -878,12 +878,12 @@ func createRunScript() error {
 	}
 	err = t.Execute(file, d)
 	if err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
+		return errors.Wrap(err, "failed to execute template")
 	}
 
 	// err := ioutil.WriteFile(path, []byte(runScriptTemplate), 0755)
 	// if err != nil {
-	// 	return fmt.Errorf("failed to write run script: %w", err)
+	// 	return errors.Wrap(err, "failed to write run script")
 	// }
 	return nil
 }

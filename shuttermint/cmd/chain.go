@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
@@ -74,13 +75,13 @@ func newTendermint(configFile string) (*nm.Node, error) {
 	config.SetRoot(config.RootDir)
 	viper.SetConfigFile(configFile)
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("viper failed to read config file: %w", err)
+		return nil, errors.Wrap(err, "viper failed to read config file")
 	}
 	if err := viper.Unmarshal(config); err != nil {
-		return nil, fmt.Errorf("viper failed to unmarshal config: %w", err)
+		return nil, errors.Wrap(err, "viper failed to unmarshal config")
 	}
 	if err := config.ValidateBasic(); err != nil {
-		return nil, fmt.Errorf("config is invalid: %w", err)
+		return nil, errors.Wrap(err, "config is invalid")
 	}
 
 	// create logger
@@ -88,7 +89,7 @@ func newTendermint(configFile string) (*nm.Node, error) {
 	var err error
 	logger, err = tmflags.ParseLogLevel(config.LogLevel, logger, cfg.DefaultLogLevel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse log level: %w", err)
+		return nil, errors.Wrap(err, "failed to parse log level")
 	}
 
 	shapp, err := app.LoadShutterAppFromFile(
@@ -106,7 +107,7 @@ func newTendermint(configFile string) (*nm.Node, error) {
 	// read node key
 	nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
 	if err != nil {
-		return nil, fmt.Errorf("failed to load node's key: %w", err)
+		return nil, errors.Wrap(err, "failed to load node's key")
 	}
 
 	// create node
@@ -120,7 +121,7 @@ func newTendermint(configFile string) (*nm.Node, error) {
 		nm.DefaultMetricsProvider(config.Instrumentation),
 		logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new Tendermint node: %w", err)
+		return nil, errors.Wrap(err, "failed to create new Tendermint node")
 	}
 
 	return node, nil

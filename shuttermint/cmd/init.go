@@ -68,7 +68,7 @@ func initFiles(cmd *cobra.Command, args []string) error {
 
 	config.SetRoot(rootDir)
 	if err := config.ValidateBasic(); err != nil {
-		return fmt.Errorf("error in config file: %v", err)
+		return errors.Wrap(err, "error in config file")
 	}
 	cfg.EnsureRoot(config.RootDir)
 
