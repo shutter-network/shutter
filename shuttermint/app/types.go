@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
@@ -84,7 +85,7 @@ type Powermap map[ValidatorPubkey]int64
 // https://docs.tendermint.com/master/spec/abci/apps.html#validator-updates for more information
 func NewValidatorPubkey(pubkey []byte) (ValidatorPubkey, error) {
 	if len(pubkey) != ed25519.PublicKeySize {
-		return ValidatorPubkey{}, fmt.Errorf("pubkey must be 32 bytes")
+		return ValidatorPubkey{}, errors.Errorf("pubkey must be 32 bytes")
 	}
 	return ValidatorPubkey{Ed25519pubkey: string(pubkey)}, nil
 }

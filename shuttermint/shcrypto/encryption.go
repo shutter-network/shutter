@@ -3,12 +3,12 @@ package shcrypto
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/pkg/errors"
 )
 
 // EncryptedMessage represents the full output of the encryption procedure.
@@ -170,10 +170,10 @@ func UnpadMessage(blocks []Block) ([]byte, error) {
 	lastBlock := blocks[len(blocks)-1]
 	paddingLength := int(lastBlock[BlockSize-1])
 	if paddingLength == 0 {
-		return nil, fmt.Errorf("invalid padding length 0")
+		return nil, errors.Errorf("invalid padding length 0")
 	}
 	if paddingLength > BlockSize {
-		return nil, fmt.Errorf("invalid padding length %d (greater than block size %d)", paddingLength, BlockSize)
+		return nil, errors.Errorf("invalid padding length %d (greater than block size %d)", paddingLength, BlockSize)
 	}
 
 	m := make([]byte, len(blocks)*BlockSize-paddingLength)

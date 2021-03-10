@@ -2,9 +2,9 @@ package app
 
 import (
 	"bytes"
-	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
@@ -15,7 +15,7 @@ func MakePowermap(validators []abcitypes.ValidatorUpdate) (Powermap, error) {
 	for _, v := range validators {
 		data := v.PubKey.GetEd25519()
 		if data == nil {
-			return res, fmt.Errorf("cannot handle key %s", v.PubKey)
+			return res, errors.Errorf("cannot handle key %s", v.PubKey)
 		}
 		pk, err := NewValidatorPubkey(data)
 		if err != nil {

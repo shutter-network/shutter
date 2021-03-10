@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"math/big"
 	"time"
 
@@ -135,7 +134,7 @@ func waitMinedSuccessful(ctx context.Context, client *ethclient.Client, tx *type
 		time.Sleep(sleepDuration)
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		return fmt.Errorf("deployment of ERC1820 contract failed")
+		return errors.Errorf("deployment of ERC1820 contract failed")
 	}
 	return nil
 }

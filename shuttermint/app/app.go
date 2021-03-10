@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/pkg/errors"
 	"github.com/tendermint/go-amino"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
@@ -126,14 +127,14 @@ func (app *ShutterApp) checkConfig(cfg BatchConfig) error {
 	}
 	lastConfig := app.LastConfig()
 	if cfg.StartBatchIndex < lastConfig.StartBatchIndex {
-		return fmt.Errorf(
+		return errors.Errorf(
 			"start batch index of next config (%d) lower than current one (%d)",
 			cfg.StartBatchIndex,
 			lastConfig.StartBatchIndex,
 		)
 	}
 	if cfg.ConfigIndex <= lastConfig.ConfigIndex {
-		return fmt.Errorf(
+		return errors.Errorf(
 			"config index of next config (%d) not greater than current one (%d)",
 			cfg.ConfigIndex,
 			lastConfig.ConfigIndex,

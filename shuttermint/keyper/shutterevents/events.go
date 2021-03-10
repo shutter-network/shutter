@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/pkg/errors"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents/evtype"
@@ -40,12 +41,12 @@ func (acc Accusation) MakeABCIEvent() abcitypes.Event {
 
 func expectAttributes(ev abcitypes.Event, names ...string) error {
 	if len(ev.Attributes) < len(names) {
-		return fmt.Errorf("expected at least %d attributes", len(names))
+		return errors.Errorf("expected at least %d attributes", len(names))
 	}
 
 	for i, n := range names {
 		if string(ev.Attributes[i].Key) != n {
-			return fmt.Errorf(
+			return errors.Errorf(
 				"bad attribute, parsing event %s: expected %s, got %s at position %d",
 				ev.Type,
 				n,
@@ -560,6 +561,6 @@ func MakeEvent(ev abcitypes.Event, height int64) (IEvent, error) {
 	case evtype.EpochSecretKeyShare:
 		return makeEpochSecretKeyShare(ev, height)
 	default:
-		return nil, fmt.Errorf("cannot make event from type %s", ev.Type)
+		return nil, errors.Errorf("cannot make event from type %s", ev.Type)
 	}
 }

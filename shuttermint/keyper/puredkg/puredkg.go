@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/pkg/errors"
+
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
@@ -106,14 +108,14 @@ func (pure *PureDKG) setPhase(p Phase) {
 
 func (pure *PureDKG) checkPhase(maxPhase Phase) error {
 	if pure.Phase > maxPhase {
-		return fmt.Errorf("received msg for phase '%s' in phase '%s'", maxPhase, pure.Phase)
+		return errors.Errorf("received msg for phase '%s' in phase '%s'", maxPhase, pure.Phase)
 	}
 	return nil
 }
 
 func (pure *PureDKG) checkEon(eon uint64) error {
 	if pure.Eon != eon {
-		return fmt.Errorf("received msg for eon %d instead of %d", eon, pure.Eon)
+		return errors.Errorf("received msg for eon %d instead of %d", eon, pure.Eon)
 	}
 	return nil
 }
@@ -242,7 +244,7 @@ func (pure *PureDKG) ShortInfo() string {
 // error is returned if this is called before finalization or if too few keypers participated.
 func (pure *PureDKG) ComputeResult() (Result, error) {
 	if pure.Phase < Finalized {
-		return Result{}, fmt.Errorf("dkg is not finalized yet")
+		return Result{}, errors.Errorf("dkg is not finalized yet")
 	}
 
 	numParticipants := 0
@@ -261,7 +263,7 @@ func (pure *PureDKG) ComputeResult() (Result, error) {
 				// when we receive no or an invalid poly eval, we send an accusation. If this
 				// accusation does not end up in the chain, the keyper will not be considered
 				// corrupt by the other keypers. We know  they should be though, so we abort.
-				return Result{}, fmt.Errorf("corrupt keyper %d not considered corrupt", dealer)
+				return Result{}, errors.Errorf("corrupt keyper %d not considered corrupt", dealer)
 			}
 		} else {
 			c = shcrypto.ZeroGammas(shcrypto.DegreeFromThreshold(pure.Threshold))
@@ -272,7 +274,7 @@ func (pure *PureDKG) ComputeResult() (Result, error) {
 	}
 
 	if uint64(numParticipants) < pure.Threshold {
-		return Result{}, fmt.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
+		return Result{}, errors.Errorf("only %d keypers participated, but threshold is %d", numParticipants, pure.Threshold)
 	}
 
 	var publicKeyShares []*shcrypto.EonPublicKeyShare
@@ -344,10 +346,10 @@ func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 		return err
 	}
 	if pure.Commitments[msg.Sender] != nil {
-		return fmt.Errorf("received duplicate poly commitment msg")
+		return errors.Errorf("received duplicate poly commitment msg")
 	}
 	if msg.Gammas.Degree() != shcrypto.DegreeFromThreshold(pure.Threshold) {
-		return fmt.Errorf(
+		return errors.Errorf(
 			"received poly commitment with unexpected degree %d instead of %d",
 			msg.Gammas.Degree(),
 			shcrypto.DegreeFromThreshold(pure.Threshold),
@@ -364,13 +366,13 @@ func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
 		return err
 	}
 	if msg.Receiver != pure.Keyper {
-		return fmt.Errorf("received poly eval msg for keyper %d instead of %d", msg.Receiver, pure.Keyper)
+		return errors.Errorf("received poly eval msg for keyper %d instead of %d", msg.Receiver, pure.Keyper)
 	}
 	if pure.Evals[msg.Sender] != nil {
-		return fmt.Errorf("received duplicate poly eval msg")
+		return errors.Errorf("received duplicate poly eval msg")
 	}
 	if !shcrypto.ValidEval(msg.Eval) {
-		return fmt.Errorf("received invalid poly eval %d", msg.Eval)
+		return errors.Errorf("received invalid poly eval %d", msg.Eval)
 	}
 
 	pure.Evals[msg.Sender] = msg.Eval
@@ -384,7 +386,7 @@ func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
 	}
 	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
 	if _, ok := pure.Accusations[key]; ok {
-		return fmt.Errorf("received duplicate accusation")
+		return errors.Errorf("received duplicate accusation")
 	}
 
 	pure.Accusations[key] = struct{}{}
@@ -398,10 +400,10 @@ func (pure *PureDKG) HandleApologyMsg(msg ApologyMsg) error {
 	}
 	key := accusationKey{Accuser: msg.Accuser, Accused: msg.Accused}
 	if _, ok := pure.Apologies[key]; ok {
-		return fmt.Errorf("received duplicate apology")
+		return errors.Errorf("received duplicate apology")
 	}
 	if !shcrypto.ValidEval(msg.Eval) {
-		return fmt.Errorf("received apology with invalid poly eval %d", msg.Eval)
+		return errors.Errorf("received apology with invalid poly eval %d", msg.Eval)
 	}
 
 	pure.Apologies[key] = msg.Eval

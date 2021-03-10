@@ -68,7 +68,7 @@ func WaitMinedMany(ctx context.Context, client *ethclient.Client, txHashes []com
 
 	if len(failedTxs) > 0 {
 		firstFailed := failedTxs[0]
-		return res, fmt.Errorf("some txs have failed, the first being %s", txHashes[firstFailed])
+		return res, pkgErrors.Errorf("some txs have failed, the first being %s", txHashes[firstFailed])
 	}
 
 	return res, nil
@@ -79,7 +79,7 @@ func EnsureUniqueAddresses(addrs []common.Address) error {
 	seen := make(map[common.Address]struct{})
 	for _, a := range addrs {
 		if _, ok := seen[a]; ok {
-			return fmt.Errorf("duplicate address: %s", a.Hex())
+			return pkgErrors.Errorf("duplicate address: %s", a.Hex())
 		}
 		seen[a] = struct{}{}
 	}

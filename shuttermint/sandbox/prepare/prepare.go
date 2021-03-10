@@ -267,10 +267,10 @@ func initFundFlags() {
 
 func validateConfigFlags() (string, error) {
 	if configFlags.NumKeypers <= 0 {
-		return "num-keypers", fmt.Errorf("must be at least 1")
+		return "num-keypers", errors.Errorf("must be at least 1")
 	}
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
-		return "dir", fmt.Errorf("output directory %s already exists", configFlags.Dir)
+		return "dir", errors.Errorf("output directory %s already exists", configFlags.Dir)
 	}
 	var err error
 	if configFlags.Bin, err = LookPath(configFlags.Bin); err != nil {
@@ -282,10 +282,10 @@ func validateConfigFlags() (string, error) {
 func validateScheduleFlags() (string, error) {
 	stats, err := os.Stat(scheduleFlags.Dir)
 	if os.IsNotExist(err) {
-		return "dir", fmt.Errorf("directory %s does not exists", configFlags.Dir)
+		return "dir", errors.Errorf("directory %s does not exists", configFlags.Dir)
 	}
 	if !stats.IsDir() {
-		return "dir", fmt.Errorf("%s is not a directory", configFlags.Dir)
+		return "dir", errors.Errorf("%s is not a directory", configFlags.Dir)
 	}
 
 	if err := validatePrivateKey(scheduleFlags.OwnerKey); err != nil {
@@ -299,13 +299,13 @@ func validateScheduleFlags() (string, error) {
 		return "target-selector", err
 	}
 	if scheduleFlags.BatchSpan < 0 {
-		return "batch-span", fmt.Errorf("must not be negative")
+		return "batch-span", errors.Errorf("must not be negative")
 	}
 	if scheduleFlags.TransactionSizeLimit < 0 {
-		return "transaction-size-limt", fmt.Errorf("must not be negative")
+		return "transaction-size-limt", errors.Errorf("must not be negative")
 	}
 	if scheduleFlags.BatchSizeLimit < 0 {
-		return "batch-size-limit", fmt.Errorf("must not be negative")
+		return "batch-size-limit", errors.Errorf("must not be negative")
 	}
 
 	return "", nil
@@ -314,10 +314,10 @@ func validateScheduleFlags() (string, error) {
 func validateFundFlags() (string, error) {
 	stats, err := os.Stat(fundFlags.Dir)
 	if os.IsNotExist(err) {
-		return "dir", fmt.Errorf("directory %s does not exists", fundFlags.Dir)
+		return "dir", errors.Errorf("directory %s does not exists", fundFlags.Dir)
 	}
 	if !stats.IsDir() {
-		return "dir", fmt.Errorf("%s is not a directory", fundFlags.Dir)
+		return "dir", errors.Errorf("%s is not a directory", fundFlags.Dir)
 	}
 
 	if err := validatePrivateKey(fundFlags.OwnerKey); err != nil {
@@ -330,7 +330,7 @@ func validateFundFlags() (string, error) {
 func validateAddress(address string) error {
 	addressParsed := common.HexToAddress(address)
 	if addressParsed.Hex() != address {
-		return fmt.Errorf("invalid address")
+		return errors.Errorf("invalid address")
 	}
 	return nil
 }
@@ -348,7 +348,7 @@ func validateFunctionSelector(selector string) error {
 		return err
 	}
 	if len(selectorBytes) != 4 {
-		return fmt.Errorf("function selector must be 4 bytes, got %d", len(selectorBytes))
+		return errors.Errorf("function selector must be 4 bytes, got %d", len(selectorBytes))
 	}
 	return nil
 }
@@ -477,12 +477,12 @@ func schedule() error {
 	}
 
 	if len(configs) < 3 {
-		return fmt.Errorf("3 keypers required, but only %d config files found in %s", len(configs), scheduleFlags.Dir)
+		return errors.Errorf("3 keypers required, but only %d config files found in %s", len(configs), scheduleFlags.Dir)
 	}
 
 	ownerKey, err := crypto.HexToECDSA(scheduleFlags.OwnerKey)
 	if err != nil {
-		return fmt.Errorf("invalid owner key")
+		return errors.Errorf("invalid owner key")
 	}
 
 	ethereumURL := configs[0].EthereumURL
@@ -501,7 +501,7 @@ func schedule() error {
 func findConfigFiles(dir string) ([]string, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return []string{}, fmt.Errorf("failed to read directory %s", dir)
+		return []string{}, errors.Errorf("failed to read directory %s", dir)
 	}
 
 	configPaths := []string{}
@@ -655,7 +655,7 @@ func checkContractExists(ctx context.Context, client *ethclient.Client, address 
 		return errors.Wrap(err, "failed to check contract code")
 	}
 	if len(code) == 0 {
-		return fmt.Errorf("no contract exists at address %s", address.Hex())
+		return errors.Errorf("no contract exists at address %s", address.Hex())
 	}
 	return nil
 }
@@ -689,7 +689,7 @@ func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc 
 	}
 	numConfigs, err := cc.NumConfigs(callOpts)
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to query number of configs")
+		return 0, 0, errors.Errorf("failed to query number of configs")
 	}
 
 	var batchSpan uint64
@@ -780,7 +780,7 @@ func fund() error {
 
 	ownerKey, err := crypto.HexToECDSA(fundFlags.OwnerKey)
 	if err != nil {
-		return fmt.Errorf("invalid owner key")
+		return errors.Errorf("invalid owner key")
 	}
 	ownerAddress := crypto.PubkeyToAddress(ownerKey.PublicKey)
 

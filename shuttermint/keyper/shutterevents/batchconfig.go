@@ -1,9 +1,8 @@
 package shutterevents
 
 import (
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -28,13 +27,13 @@ func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
 // EnsureValid checks if the BatchConfig is valid and returns an error if it's not valid
 func (bc *BatchConfig) EnsureValid() error {
 	if len(bc.Keypers) == 0 {
-		return fmt.Errorf("no keypers in batch config")
+		return errors.Errorf("no keypers in batch config")
 	}
 	if bc.Threshold == 0 {
-		return fmt.Errorf("threshold must not be zero")
+		return errors.Errorf("threshold must not be zero")
 	}
 	if int(bc.Threshold) > len(bc.Keypers) {
-		return fmt.Errorf("threshold too high")
+		return errors.Errorf("threshold too high")
 	}
 	// XXX maybe we should check for duplicate addresses
 	return nil
@@ -45,7 +44,7 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 	var keypers []common.Address
 	for _, b := range m.Keypers {
 		if len(b) != common.AddressLength {
-			return BatchConfig{}, fmt.Errorf("keyper address has invalid length")
+			return BatchConfig{}, errors.Errorf("keyper address has invalid length")
 		}
 		keypers = append(keypers, common.BytesToAddress(b))
 	}
@@ -55,7 +54,7 @@ func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 	}
 
 	if len(m.ConfigContractAddress) != common.AddressLength {
-		return BatchConfig{}, fmt.Errorf(
+		return BatchConfig{}, errors.Errorf(
 			"config contract address has invalid length (%d instead of %d)",
 			len(m.ConfigContractAddress),
 			common.AddressLength,

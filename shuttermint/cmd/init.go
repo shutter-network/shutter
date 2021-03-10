@@ -87,12 +87,12 @@ func initFiles(cmd *cobra.Command, args []string) error {
 func adjustPort(address string, keyperIndex int) (string, error) {
 	substrings := strings.Split(address, ":")
 	if len(substrings) < 2 {
-		return "", fmt.Errorf("address %s does not contain port", address)
+		return "", errors.Errorf("address %s does not contain port", address)
 	}
 	portStr := substrings[len(substrings)-1]
 	portInt, err := strconv.Atoi(portStr)
 	if err != nil {
-		return "", fmt.Errorf("port %s is not an integer", portStr)
+		return "", errors.Errorf("port %s is not an integer", portStr)
 	}
 	portIntAdjusted := portInt + keyperIndex*2
 	portStrAdjusted := strconv.Itoa(portIntAdjusted)

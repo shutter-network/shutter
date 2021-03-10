@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/base64"
-	"fmt"
 	"math/rand"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -67,7 +67,7 @@ func (ms *RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message)
 		return err
 	}
 	if res.DeliverTx.Code != 0 {
-		return fmt.Errorf("remote error: %s", res.DeliverTx.Log)
+		return errors.Errorf("remote error: %s", res.DeliverTx.Log)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (ms *RPCMessageSender) maybeFetchChainID(ctx context.Context) error {
 		return err
 	}
 	if len(info.BlockMetas) == 0 {
-		return fmt.Errorf("failed to fetch block meta to check chain id")
+		return errors.Errorf("failed to fetch block meta to check chain id")
 	}
 
 	ms.chainID = info.BlockMetas[0].Header.ChainID

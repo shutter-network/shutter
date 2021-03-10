@@ -1,10 +1,10 @@
 package shcrypto
 
 import (
-	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/pkg/errors"
 )
 
 // EonSecretKeyShare represents a share of the eon secret key.
@@ -129,10 +129,10 @@ func ComputeEpochID(epochIndex uint64) *EpochID {
 // ComputeEpochSecretKey computes the epoch secret key from a set of shares.
 func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSecretKeyShare, threshold uint64) (*EpochSecretKey, error) {
 	if len(keyperIndices) != len(epochSecretKeyShares) {
-		return nil, fmt.Errorf("got %d keyper indices, but %d secret shares", len(keyperIndices), len(epochSecretKeyShares))
+		return nil, errors.Errorf("got %d keyper indices, but %d secret shares", len(keyperIndices), len(epochSecretKeyShares))
 	}
 	if uint64(len(keyperIndices)) != threshold {
-		return nil, fmt.Errorf("got %d shares, but threshold is %d", len(keyperIndices), threshold)
+		return nil, errors.Errorf("got %d shares, but threshold is %d", len(keyperIndices), threshold)
 	}
 
 	skG1 := new(bn256.G1).Set(zeroG1)

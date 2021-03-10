@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -49,7 +48,7 @@ func decodeAddresses(val []byte) ([]common.Address, error) {
 	}
 	for _, a := range strings.Split(s, ",") {
 		if !common.IsHexAddress(a) {
-			return nil, fmt.Errorf("malformed address: %q", s)
+			return nil, errors.Errorf("malformed address: %q", s)
 		}
 
 		res = append(res, common.HexToAddress(a))
@@ -160,7 +159,7 @@ func decodeAddress(v []byte) (common.Address, error) {
 	s := string(v)
 	a := common.HexToAddress(s)
 	if a.Hex() != s {
-		return common.Address{}, fmt.Errorf("invalid address %s", s)
+		return common.Address{}, errors.Errorf("invalid address %s", s)
 	}
 	return a, nil
 }

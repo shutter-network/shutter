@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"os"
 	"strconv"
@@ -83,7 +82,7 @@ func query(ctx context.Context) error {
 				return errors.Wrapf(err, "failed to call config contract")
 			}
 			if numConfigs == 0 {
-				return fmt.Errorf("no configs scheduled in contract")
+				return errors.Errorf("no configs scheduled in contract")
 			}
 			index = numConfigs - 1
 		} else {

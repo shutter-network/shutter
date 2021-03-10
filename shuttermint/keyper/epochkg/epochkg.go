@@ -3,7 +3,7 @@
 package epochkg
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
@@ -67,7 +67,7 @@ func (epochkg *EpochKG) addEpochSecretKeyShare(share *EpochSecretKeyShare) error
 	shares := epochkg.SecretShares[share.Epoch]
 	for _, s := range shares {
 		if s.Sender == share.Sender {
-			return fmt.Errorf(
+			return errors.Errorf(
 				"already have EpochSecretKeyShare from sender %d for epoch %d",
 				share.Sender,
 				share.Epoch)
@@ -96,7 +96,7 @@ func (epochkg *EpochKG) HandleEpochSecretKeyShare(share *EpochSecretKeyShare) er
 		epochkg.PublicKeyShares[share.Sender],
 		epochID,
 	) {
-		return fmt.Errorf(
+		return errors.Errorf(
 			"cannot verify epoch secret key share from sender %d for epoch %d",
 			share.Sender,
 			share.Epoch)

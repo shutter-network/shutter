@@ -3,11 +3,11 @@ package contract
 // This file adds some custom methods to the abigen generated ConfigContract class
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
@@ -70,7 +70,7 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 	}
 	for {
 		if i == 0 {
-			return uint64(0), fmt.Errorf("contract misconfigured")
+			return uint64(0), errors.Errorf("contract misconfigured")
 		}
 		i--
 

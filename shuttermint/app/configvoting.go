@@ -1,10 +1,10 @@
 package app
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 )
 
 // NewConfigVoting creates a ConfigVoting struct
@@ -20,7 +20,7 @@ func NewConfigVoting() ConfigVoting {
 func (cfgv *ConfigVoting) AddVote(sender common.Address, batchConfig BatchConfig) error {
 	_, ok := cfgv.Votes[sender]
 	if ok {
-		return fmt.Errorf("sender %s already voted", sender.Hex())
+		return errors.Errorf("sender %s already voted", sender.Hex())
 	}
 
 	for i, bc := range cfgv.Candidates {

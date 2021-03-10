@@ -3,11 +3,11 @@ package shcrypto
 import (
 	"bytes"
 	"crypto/rand"
-	"fmt"
 	"io"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -30,14 +30,14 @@ func init() {
 // range of them.
 func NewPolynomial(coefficients []*big.Int) (*Polynomial, error) {
 	if len(coefficients) == 0 {
-		return nil, fmt.Errorf("no coefficients given")
+		return nil, errors.Errorf("no coefficients given")
 	}
 	for i, v := range coefficients {
 		if v.Sign() < 0 {
-			return nil, fmt.Errorf("coefficient %d is negative (%d)", i, v)
+			return nil, errors.Errorf("coefficient %d is negative (%d)", i, v)
 		}
 		if v.Cmp(bn256.Order) >= 0 {
-			return nil, fmt.Errorf("coefficient %d is too big (%d)", i, v)
+			return nil, errors.Errorf("coefficient %d is too big (%d)", i, v)
 		}
 	}
 	p := Polynomial(coefficients)

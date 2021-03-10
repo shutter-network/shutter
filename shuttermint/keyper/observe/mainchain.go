@@ -2,12 +2,12 @@ package observe
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -291,7 +291,7 @@ func (mainchain *MainChain) syncSlashings(cc *contract.Caller, filter *bind.Filt
 	for _, ev := range appealedEvents {
 		accusation, ok := mainchain.Accusations[ev.HalfStep]
 		if !ok {
-			return fmt.Errorf("got appeal without prior accusation: %+v", accusation)
+			return errors.Errorf("got appeal without prior accusation: %+v", accusation)
 		}
 		accusation.Appealed = true
 	}

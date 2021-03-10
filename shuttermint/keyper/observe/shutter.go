@@ -149,7 +149,7 @@ func (shutter *Shutter) applyDecryptionSignature(e shutterevents.DecryptionSigna
 func (shutter *Shutter) applyEonStarted(e shutterevents.EonStarted) error {
 	idx := shutter.searchEon(e.Eon)
 	if idx < len(shutter.Eons) {
-		return fmt.Errorf("eons should increase")
+		return pkgErrors.Errorf("eons should increase")
 	}
 	shutter.Eons = append(shutter.Eons, Eon{Eon: e.Eon, StartEvent: e, StartHeight: e.Height})
 	return nil
@@ -222,7 +222,7 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 	case *shutterevents.EpochSecretKeyShare:
 		err = shutter.applyEpochSecretKeyShare(*e)
 	default:
-		err = fmt.Errorf("not yet implemented for %s", reflect.TypeOf(ev))
+		err = pkgErrors.Errorf("not yet implemented for %s", reflect.TypeOf(ev))
 	}
 	if err != nil {
 		log.Printf("Error in apply event: %s, event: %+v", err, ev)
@@ -288,7 +288,7 @@ func (shutter *Shutter) FindBatchConfigByConfigIndex(configIndex uint64) (shutte
 			return bc, nil
 		}
 	}
-	return shutterevents.BatchConfig{}, fmt.Errorf("cannot find BatchConfig with ConfigIndex==%d", configIndex)
+	return shutterevents.BatchConfig{}, pkgErrors.Errorf("cannot find BatchConfig with ConfigIndex==%d", configIndex)
 }
 
 func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfig {
@@ -312,7 +312,7 @@ func (shutter *Shutter) LastCommittedHeight(ctx context.Context, shmcl client.Cl
 		return 0, err
 	}
 	if latestBlock.Block == nil || latestBlock.Block.LastCommit == nil {
-		return 0, fmt.Errorf("empty blockchain: %+v", latestBlock)
+		return 0, pkgErrors.Errorf("empty blockchain: %+v", latestBlock)
 	}
 	return latestBlock.Block.LastCommit.Height, nil
 }

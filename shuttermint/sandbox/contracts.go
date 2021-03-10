@@ -2,7 +2,6 @@ package sandbox
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -30,7 +29,7 @@ func (addr *chksumAddr) UnmarshalJSON(data []byte) error {
 	}
 	a := common.HexToAddress(s)
 	if a.Hex() != s {
-		return fmt.Errorf("invalid address: %s", s)
+		return errors.Errorf("invalid address: %s", s)
 	}
 	copy(addr[:], a[:])
 	return nil
@@ -139,7 +138,7 @@ func (c ConfigJSON) Validate() error {
 func validateAddress(address string) error {
 	addressParsed := common.HexToAddress(address)
 	if addressParsed.Hex() != address {
-		return fmt.Errorf("invalid address")
+		return errors.Errorf("invalid address")
 	}
 	return nil
 }
@@ -150,20 +149,20 @@ func validateTargetFunctionSelector(selector string) error {
 		return err
 	}
 	if len(decoded) != selectorLength {
-		return fmt.Errorf("target function selector must be 4 bytes long")
+		return errors.Errorf("target function selector must be 4 bytes long")
 	}
 	return nil
 }
 
 func validateThreshold(threshold uint64, numKeypers int) error {
 	if numKeypers <= 0 {
-		return fmt.Errorf("there must be at least one keyper")
+		return errors.Errorf("there must be at least one keyper")
 	}
 	if threshold > uint64(numKeypers) {
-		return fmt.Errorf("threshold must not be greater than number of keypers")
+		return errors.Errorf("threshold must not be greater than number of keypers")
 	}
 	if threshold == 0 {
-		return fmt.Errorf("threshold must not be zero")
+		return errors.Errorf("threshold must not be zero")
 	}
 	return nil
 }

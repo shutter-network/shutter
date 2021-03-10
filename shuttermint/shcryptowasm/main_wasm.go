@@ -40,7 +40,7 @@ var encrypt = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 	}
 
 	if len(args) != 4 {
-		return errorReturnValue(fmt.Errorf("expected 4 arguments, got %d", len(args)))
+		return errorReturnValue(errors.Errorf("expected 4 arguments, got %d", len(args)))
 	}
 	messageJS := args[0]
 	eonPublicKeyJS := args[1]
@@ -92,10 +92,10 @@ func validateEonPublicKey(v js.Value) error {
 
 func validateEpochIndex(v js.Value) error {
 	if v.Type() != js.TypeNumber {
-		return fmt.Errorf("expected number, got non-number")
+		return errors.Errorf("expected number, got non-number")
 	}
 	if v.Int() < 0 {
-		return fmt.Errorf("epoch index must not be negative, got %d", v.Int())
+		return errors.Errorf("epoch index must not be negative, got %d", v.Int())
 	}
 	return nil
 }
@@ -109,25 +109,25 @@ func validateBlock(v js.Value) error {
 		return err
 	}
 	if v.Length() != 32 {
-		return fmt.Errorf("expected array of length 32, got %d", v.Length())
+		return errors.Errorf("expected array of length 32, got %d", v.Length())
 	}
 	return nil
 }
 
 func validateUint8Array(v js.Value) error {
 	if v.Type() != js.TypeObject {
-		return fmt.Errorf("expected Uint8Array, but value is not an object")
+		return errors.Errorf("expected Uint8Array, but value is not an object")
 	}
 	constructor := v.Get("constructor")
 	if constructor.Type() != js.TypeFunction {
-		return fmt.Errorf("expected Uint8Array, but value constructor is not a function")
+		return errors.Errorf("expected Uint8Array, but value constructor is not a function")
 	}
 	name := constructor.Get("name")
 	if name.Type() != js.TypeString {
-		return fmt.Errorf("expected Uint8Array, but name is not a string")
+		return errors.Errorf("expected Uint8Array, but name is not a string")
 	}
 	if name.String() != "Uint8Array" {
-		return fmt.Errorf("expected Uint8Array, but name is %s", name)
+		return errors.Errorf("expected Uint8Array, but name is %s", name)
 	}
 	return nil
 }

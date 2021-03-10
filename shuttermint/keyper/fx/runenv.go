@@ -2,12 +2,12 @@ package fx
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -95,7 +95,7 @@ func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
 		case MainChainTX:
 			runenv.mainChainTXs <- a
 		default:
-			err = fmt.Errorf("cannot run %s", a)
+			err = errors.Errorf("cannot run %s", a)
 		}
 
 		// XXX at the moment we just let the whole program die. We need a better strategy

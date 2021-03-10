@@ -1,11 +1,11 @@
 package app
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
@@ -14,7 +14,7 @@ import (
 
 func validateAddress(address []byte) (common.Address, error) {
 	if len(address) != common.AddressLength {
-		return common.Address{}, fmt.Errorf(
+		return common.Address{}, errors.Errorf(
 			"address has invalid length (%d instead of %d bytes)",
 			len(address),
 			common.AddressLength,
@@ -27,7 +27,7 @@ func validateAddress(address []byte) (common.Address, error) {
 // ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg
 func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, error) {
 	if len(msg.Receivers) != len(msg.EncryptedEvals) {
-		return nil, fmt.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
+		return nil, errors.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
 	}
 
 	receivers := []common.Address{}
@@ -94,7 +94,7 @@ func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusati
 // ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg
 func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error) {
 	if len(msg.Accusers) != len(msg.PolyEvals) {
-		return nil, fmt.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
+		return nil, errors.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
 	}
 
 	accusers := []common.Address{}
