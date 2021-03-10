@@ -88,7 +88,7 @@ func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
 	for _, ev := range events {
 		x, err := shutterevents.MakeEvent(ev, height)
 		if err != nil {
-			log.Printf("Error: malformed event: %s ev=%+v", err, ev)
+			log.Printf("Error: malformed event: %+v ev=%+v", err, ev)
 		} else {
 			shutter.applyEvent(x)
 		}
@@ -225,7 +225,7 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 		err = pkgErrors.Errorf("not yet implemented for %s", reflect.TypeOf(ev))
 	}
 	if err != nil {
-		log.Printf("Error in apply event: %s, event: %+v", err, ev)
+		log.Printf("Error in apply event: %+v, event: %+v", err, ev)
 	}
 }
 

@@ -112,7 +112,7 @@ func (dkg *DKG) syncCommitments(eon observe.Eon) {
 			puredkg.PolyCommitmentMsg{Eon: comm.Eon, Gammas: comm.Gammas, Sender: uint64(sender)},
 		)
 		if err != nil {
-			log.Printf("Error in syncCommitments: %s", err)
+			log.Printf("Error in syncCommitments: %+v", err)
 		}
 	}
 	dkg.CommitmentsIndex = len(eon.Commitments)
@@ -139,7 +139,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 		for j, receiver := range eval.Receivers {
 			receiverIndex, err := medley.FindAddressIndex(dkg.Keypers, receiver)
 			if err != nil {
-				log.Printf("Error in syncPolyEvals: %s", err)
+				log.Printf("Error in syncPolyEvals: %+v", err)
 				continue
 			}
 			if uint64(receiverIndex) != keyperIndex {
@@ -148,7 +148,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 			encrypted := eval.EncryptedEvals[j]
 			evalBytes, err := decrypt(encrypted)
 			if err != nil {
-				log.Printf("Error in syncPolyEvals: %s", err)
+				log.Printf("Error in syncPolyEvals: %+v", err)
 				continue
 			}
 			b := new(big.Int)
@@ -161,7 +161,7 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 					Eval:     b,
 				})
 			if err != nil {
-				log.Printf("Error in syncPolyEvals: %s", err)
+				log.Printf("Error in syncPolyEvals: %+v", err)
 			}
 		}
 	}
@@ -185,7 +185,7 @@ func (dkg *DKG) syncAccusations(eon observe.Eon) {
 		for _, accused := range accusation.Accused {
 			accusedIndex, err := medley.FindAddressIndex(dkg.Keypers, accused)
 			if err != nil {
-				log.Printf("Error in syncAccusations: %s", err)
+				log.Printf("Error in syncAccusations: %+v", err)
 				continue
 			}
 			err = dkg.Pure.HandleAccusationMsg(
@@ -195,7 +195,7 @@ func (dkg *DKG) syncAccusations(eon observe.Eon) {
 					Accused: uint64(accusedIndex),
 				})
 			if err != nil {
-				log.Printf("Error: cannot handle accusation: %s", err)
+				log.Printf("Error: cannot handle accusation: %+v", err)
 			}
 		}
 	}
@@ -219,7 +219,7 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 		for j, accuser := range apology.Accusers {
 			accuserIndex, err := medley.FindAddressIndex(dkg.Keypers, accuser)
 			if err != nil {
-				log.Printf("Error in syncApologies: %s", err)
+				log.Printf("Error in syncApologies: %+v", err)
 				continue
 			}
 			err = dkg.Pure.HandleApologyMsg(
@@ -230,7 +230,7 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 					Eval:    apology.PolyEval[j],
 				})
 			if err != nil {
-				log.Printf("Error: cannot handle apology: %s", err)
+				log.Printf("Error: cannot handle apology: %+v", err)
 			}
 		}
 	}
@@ -507,7 +507,7 @@ func (dcdr *Decider) dkgFinalize(dkg *DKG) {
 	dkg.Pure.Finalize()
 	dkgresult, err := dkg.Pure.ComputeResult()
 	if err != nil {
-		log.Printf("Error: DKG process failed for %s: %s", dkg.ShortInfo(), err)
+		log.Printf("Error: DKG process failed for %s: %+v", dkg.ShortInfo(), err)
 		dcdr.sendShuttermintMessage(
 			"requesting DKG restart",
 			shmsg.NewEonStartVote(dkg.StartBatchIndex),
@@ -610,7 +610,7 @@ func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
 			},
 		)
 		if err != nil {
-			log.Printf("Error while handling epoch secret key share: %s", err)
+			log.Printf("Error while handling epoch secret key share: %+v", err)
 			continue
 		}
 		if key, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {

@@ -114,12 +114,12 @@ func sendtxs() {
 	ctx := context.Background()
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		log.Printf("failed to query chain ID: %s", err)
+		log.Printf("failed to query chain ID: %+v", err)
 		return
 	}
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(key, chainID)
 	if err != nil {
-		log.Printf("failed to create transactor: %s", err)
+		log.Printf("failed to create transactor: %+v", err)
 		return
 	}
 
@@ -137,12 +137,12 @@ func sendtxs() {
 
 		blockNumber, err := client.BlockNumber(ctx)
 		if err != nil {
-			log.Printf("failed to determine current block number: %s", err)
+			log.Printf("failed to determine current block number: %+v", err)
 			continue
 		}
 		nextBatchIndex, err := configContract.NextBatchIndex(blockNumber)
 		if err != nil {
-			log.Printf("failed to determine batch index for next tx: %v", err)
+			log.Printf("failed to determine batch index for next tx: %+v", err)
 			continue
 		}
 		if nextBatchIndex == 0 {
@@ -160,14 +160,14 @@ func sendtxs() {
 
 		tx, err := batcherContract.AddTransaction(transactOpts, batchIndex, txType, cipherTx)
 		if err != nil {
-			log.Printf("failed to send tx: %v", err)
+			log.Printf("failed to send tx: %+v", err)
 			continue
 		}
 		log.Printf("Sent tx %s of type %d for batch %d in tx %s", hexutil.Encode(cipherTx), txType, batchIndex, tx.Hash().Hex())
 
 		receipt, err := bind.WaitMined(ctx, client, tx)
 		if err != nil {
-			log.Printf("failed to wait for receipt of tx %s: %v", tx.Hash().Hex(), err)
+			log.Printf("failed to wait for receipt of tx %+v: %v", tx.Hash().Hex(), err)
 			continue
 		}
 		if receipt.Status != types.ReceiptStatusSuccessful {

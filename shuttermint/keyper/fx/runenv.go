@@ -61,13 +61,13 @@ func (runenv *RunEnv) sendMainChainTX(ctx context.Context, act MainChainTX) erro
 
 	if err != nil {
 		// XXX consider handling the error somehow
-		log.Printf("Error: %s: %s", act, err)
+		log.Printf("Error: %s: %+v", act, err)
 		return nil
 	}
 
 	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, tx.Hash())
 	if err != nil {
-		log.Printf("Error waiting for transaction %s: %v", tx.Hash().Hex(), err)
+		log.Printf("Error waiting for transaction %s: %+v", tx.Hash().Hex(), err)
 	}
 	if receipt == nil {
 		// This happens if the context is canceled.
