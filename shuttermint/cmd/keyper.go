@@ -221,11 +221,11 @@ func keyperMain() {
 	kpr := keyper.NewKeyper(kc)
 	err = kpr.LoadState()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error in LoadState: %+v", err)
 	}
 	log.Printf("loaded state: %s", kpr.ShortInfo())
 	err = kpr.Run()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error in Run: %+v", err)
 	}
 }
