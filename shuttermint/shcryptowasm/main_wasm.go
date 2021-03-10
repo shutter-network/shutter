@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"syscall/js"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
