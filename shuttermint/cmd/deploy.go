@@ -272,15 +272,15 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 	}
 	fmt.Println("Gas used:", totalGasUsed)
 
-	fmt.Println("ConfigContract address:", configAddress.Hex())
-	fmt.Println("KeyBroadcastContract address:", broadcastAddress.Hex())
-	fmt.Println("FeeBankContract address:", feeAddress.Hex())
-	fmt.Println("BatcherContract address:", batcherAddress.Hex())
-	fmt.Println("ExecutorContract address:", executorAddress.Hex())
-	fmt.Println("TokenContract address:", tokenAddress.Hex())
-	fmt.Println("DepositContract address:", depositAddress.Hex())
-	fmt.Println("KeyperSlasher address:", keyperSlasherAddress.Hex())
-	fmt.Println("TargetContract address:", targetAddress.Hex())
+	fmt.Println("      ConfigContract:", configAddress.Hex())
+	fmt.Println("KeyBroadcastContract:", broadcastAddress.Hex())
+	fmt.Println("     FeeBankContract:", feeAddress.Hex())
+	fmt.Println("     BatcherContract:", batcherAddress.Hex())
+	fmt.Println("    ExecutorContract:", executorAddress.Hex())
+	fmt.Println("       TokenContract:", tokenAddress.Hex())
+	fmt.Println("     DepositContract:", depositAddress.Hex())
+	fmt.Println("       KeyperSlasher:", keyperSlasherAddress.Hex())
+	fmt.Println("      TargetContract:", targetAddress.Hex())
 
 	if deployFlags.OutputFile != "" {
 		outputFile := filepath.Clean(deployFlags.OutputFile)
