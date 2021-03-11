@@ -62,7 +62,7 @@ func txsearchShutter(shuttermintURL string, fromHeight, toHeight int64) {
 
 	s := observe.NewShutter()
 	if toHeight == -1 {
-		toHeight, err = s.LastCommittedHeight(context.Background(), cl)
+		toHeight, err = s.GetLastCommittedHeight(context.Background(), cl)
 		if err != nil {
 			panic(err)
 		}

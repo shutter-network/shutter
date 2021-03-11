@@ -981,6 +981,14 @@ func (dcdr *Decider) executionDelay(config contract.BatchConfig, halfStep uint64
 
 // Decide determines the next actions to run.
 func (dcdr *Decider) Decide() {
+	if !dcdr.Shutter.IsSynced() {
+		log.Printf("shuttermint chain out of sync, waiting")
+		return
+	}
+	if !dcdr.MainChain.IsSynced() {
+		log.Printf("main chain out of sync, waiting")
+		return
+	}
 	// We can't go on unless we're registered as keyper in shuttermint
 	if !dcdr.Shutter.IsKeyper(dcdr.Config.Address()) {
 		log.Printf("not registered as keyper in shuttermint, nothing to do")

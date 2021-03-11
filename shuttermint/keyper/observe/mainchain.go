@@ -4,7 +4,9 @@ import (
 	"context"
 	"log"
 	"math/big"
+	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -14,12 +16,19 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
+const (
+	// If the state hasn't been updated for more than this duration, we treat it as unsynced.
+	mainChainSyncedGracePeriod = 120 * time.Second
+)
+
 // MainChain let's a keyper fetch all necessary information from an ethereum node to do it's
 // work. The only source for the data stored in this struct should be the ethereum node.  The
 // SyncToHead method can be used to update the data. All other accesses should be read-only.
 type MainChain struct {
 	FollowDistance          uint64
 	CurrentBlock            uint64
+	TimeLastSynced          time.Time
+	NodeSyncProgress        *ethereum.SyncProgress
 	BatchConfigs            []contract.BatchConfig
 	Batches                 map[uint64]*Batch
 	NumExecutionHalfSteps   uint64
@@ -328,6 +337,13 @@ func (mainchain *MainChain) SyncToHead(
 	ctx context.Context,
 	cc *contract.Caller,
 ) (*MainChain, error) {
+	now := time.Now()
+
+	syncProgress, err := cc.Ethclient.SyncProgress(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get sync progress")
+	}
+
 	latestBlockHeader, err := cc.Ethclient.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -382,7 +398,27 @@ func (mainchain *MainChain) SyncToHead(
 	}
 
 	mainchain.CurrentBlock = syncUntilBlockNumber
+	mainchain.TimeLastSynced = now
+	mainchain.NodeSyncProgress = syncProgress
 	return mainchain, nil
+}
+
+// IsSyncedToNodes checks if the state is likely to be more or less in sync with the main chain
+// node the keyper is connected to.
+func (mainchain *MainChain) IsSyncedToNode() bool {
+	dt := time.Since(mainchain.TimeLastSynced)
+	return dt.Seconds() < mainChainSyncedGracePeriod.Seconds()
+}
+
+// IsNodeSynced checks if the node we are connected to is synced to the network. Prior to the
+// first call to SyncToHead, this returns true.
+func (mainchain *MainChain) IsNodeSynced() bool {
+	return mainchain.NodeSyncProgress == nil
+}
+
+// IsSynced checks if the state is synced to the main chain.
+func (mainchain *MainChain) IsSynced() bool {
+	return mainchain.IsSyncedToNode() && mainchain.IsNodeSynced()
 }
 
 // DecryptTransactions decrypts and shuffles the encrypted transactions. It will log an error

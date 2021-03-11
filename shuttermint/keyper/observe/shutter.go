@@ -9,22 +9,34 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	pkgErrors "github.com/pkg/errors"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/rpc/client"
+	rpctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
+// We call the state unsynced if it hasn't been updated for more than this duration or if we know
+// there are more than this number of new blocks.
+const (
+	shuttermintSyncedGracePeriod = 30 * time.Second
+	shuttermintSyncedGraceBlocks = 2
+)
+
 var errEonNotFound = errors.New("eon not found")
 
 func init() {
-	gob.Register(ethcrypto.S256()) // Allow gob to serialize ecsda.PrivateKey
+	// Allow gob to serialize ecsda.PrivateKey and ed25519.PubKey
+	gob.Register(ethcrypto.S256())
+	gob.Register(ed25519.GenPrivKeyFromSecret([]byte{}).PubKey())
 }
 
 // EncryptionPublicKey is a gob serializable version of ecies.PublicKey
@@ -53,6 +65,9 @@ func (epk *EncryptionPublicKey) Encrypt(rand io.Reader, m []byte) ([]byte, error
 // used to update the data. All other accesses should be read-only.
 type Shutter struct {
 	CurrentBlock         int64
+	LastCommittedHeight  int64
+	NodeStatus           *rpctypes.ResultStatus
+	TimeLastSynced       time.Time
 	KeyperEncryptionKeys map[common.Address]*EncryptionPublicKey
 	BatchConfigs         []shutterevents.BatchConfig
 	Batches              map[uint64]*BatchData
@@ -306,7 +321,7 @@ func (shutter *Shutter) Clone() *Shutter {
 	return clone
 }
 
-func (shutter *Shutter) LastCommittedHeight(ctx context.Context, shmcl client.Client) (int64, error) {
+func (shutter *Shutter) GetLastCommittedHeight(ctx context.Context, shmcl client.Client) (int64, error) {
 	latestBlock, err := shmcl.Block(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -321,7 +336,7 @@ func (shutter *Shutter) LastCommittedHeight(ctx context.Context, shmcl client.Cl
 // last sync and updates the state by calling applyEvent for each event. This method does not
 // mutate the object in place, it rather returns a new object.
 func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*Shutter, error) {
-	height, err := shutter.LastCommittedHeight(ctx, shmcl)
+	height, err := shutter.GetLastCommittedHeight(ctx, shmcl)
 	if err != nil {
 		return nil, err
 	}
@@ -330,11 +345,48 @@ func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*S
 
 // SyncToHeight syncs the state with the remote state until the given height
 func (shutter *Shutter) SyncToHeight(ctx context.Context, shmcl client.Client, height int64) (*Shutter, error) {
+	now := time.Now()
 	clone := shutter.Clone()
-	err := clone.fetchAndApplyEvents(ctx, shmcl, height)
+
+	nodeStatus, err := shmcl.Status(ctx)
+	if err != nil {
+		return nil, pkgErrors.Wrap(err, "failed to get shuttermint status")
+	}
+
+	lastCommittedHeight, err := clone.GetLastCommittedHeight(ctx, shmcl)
 	if err != nil {
 		return nil, err
 	}
+
+	err = clone.fetchAndApplyEvents(ctx, shmcl, height)
+	if err != nil {
+		return nil, err
+	}
+
 	clone.CurrentBlock = height
+	clone.LastCommittedHeight = lastCommittedHeight
+	clone.TimeLastSynced = now
+	clone.NodeStatus = nodeStatus
+
 	return clone, nil
+}
+
+// IsSyncedToNode checks if the state is likely to be more or less in sync with the shuttermint
+// node we are connected to.
+func (shutter *Shutter) IsSyncedToNode() bool {
+	dt := time.Since(shutter.TimeLastSynced)
+	tooOld := dt.Seconds() >= shuttermintSyncedGracePeriod.Seconds()
+	knownNewBlocks := (shutter.LastCommittedHeight >= shuttermintSyncedGraceBlocks &&
+		shutter.CurrentBlock <= shutter.LastCommittedHeight-shuttermintSyncedGraceBlocks)
+	return !tooOld && !knownNewBlocks
+}
+
+// IsNodeSynced checks if the shuttermint node is synced with the network.
+func (shutter *Shutter) IsNodeSynced() bool {
+	return shutter.NodeStatus == nil || !shutter.NodeStatus.SyncInfo.CatchingUp
+}
+
+// IsSynced checks if the state is synced to the Tendermint chain.
+func (shutter *Shutter) IsSynced() bool {
+	return shutter.IsSyncedToNode() && shutter.IsNodeSynced()
 }
