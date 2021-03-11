@@ -49,7 +49,7 @@ func (epk *EncryptionPublicKey) GobEncode() ([]byte, error) {
 func (epk *EncryptionPublicKey) GobDecode(data []byte) error {
 	pubkey, err := ethcrypto.UnmarshalPubkey(data)
 	if err != nil {
-		return err
+		return pkgErrors.Wrap(err, "failed to unmarshal encryption public key")
 	}
 	*epk = *(*EncryptionPublicKey)(ecies.ImportECDSAPublic(pubkey))
 	return nil
@@ -259,7 +259,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 	for {
 		res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
 		if err != nil {
-			return err
+			return pkgErrors.Wrap(err, "failed to fetch shuttermint txs")
 		}
 		total += len(res.Txs)
 		for _, tx := range res.Txs {
@@ -324,7 +324,7 @@ func (shutter *Shutter) Clone() *Shutter {
 func (shutter *Shutter) GetLastCommittedHeight(ctx context.Context, shmcl client.Client) (int64, error) {
 	latestBlock, err := shmcl.Block(ctx, nil)
 	if err != nil {
-		return 0, err
+		return 0, pkgErrors.Wrap(err, "failed to get last committed height of shuttermint chain")
 	}
 	if latestBlock.Block == nil || latestBlock.Block.LastCommit == nil {
 		return 0, pkgErrors.Errorf("empty blockchain: %+v", latestBlock)

@@ -149,12 +149,12 @@ func (mainchain *MainChain) ConfigForBatchIndex(batchIndex uint64) (contract.Bat
 func (mainchain *MainChain) syncConfigs(cc *contract.Caller, opts *bind.CallOpts) error {
 	numConfigs, err := cc.ConfigContract.NumConfigs(opts)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get number of configs from contract")
 	}
 	for configIndex := uint64(len(mainchain.BatchConfigs)); configIndex < numConfigs; configIndex++ {
 		config, err := cc.ConfigContract.GetConfigByIndex(opts, configIndex)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to get config by index from contract")
 		}
 		mainchain.BatchConfigs = append(mainchain.BatchConfigs, config)
 	}
@@ -164,7 +164,7 @@ func (mainchain *MainChain) syncConfigs(cc *contract.Caller, opts *bind.CallOpts
 func (mainchain *MainChain) syncBatches(cc *contract.Caller, filter *bind.FilterOpts) error {
 	it, err := cc.BatcherContract.FilterTransactionAdded(filter)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to filter for added transaction events")
 	}
 
 	events := []*contract.BatcherContractTransactionAdded{}
@@ -172,7 +172,7 @@ func (mainchain *MainChain) syncBatches(cc *contract.Caller, filter *bind.Filter
 		events = append(events, it.Event)
 	}
 	if it.Error() != nil {
-		return it.Error()
+		return errors.Wrap(it.Error(), "failed to iterate added transaction events")
 	}
 
 	for _, event := range events {
@@ -208,7 +208,7 @@ func (mainchain *MainChain) syncExecutionState(cc *contract.Caller, opts *bind.C
 
 	numExecutionHalfSteps, err := cc.ExecutorContract.NumExecutionHalfSteps(opts)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get number of execution half steps from contract")
 	}
 
 	receipts := []contract.CipherExecutionReceipt{}
@@ -220,7 +220,7 @@ func (mainchain *MainChain) syncExecutionState(cc *contract.Caller, opts *bind.C
 
 		receipt, err := cc.ExecutorContract.CipherExecutionReceipts(opts, i)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to get cipher execution receipt from contract")
 		}
 		receipts = append(receipts, receipt)
 	}
@@ -236,7 +236,7 @@ func (mainchain *MainChain) syncExecutionState(cc *contract.Caller, opts *bind.C
 func (mainchain *MainChain) syncDeposits(cc *contract.Caller, filter *bind.FilterOpts) error {
 	eventIt, err := cc.DepositContract.FilterDepositChanged(filter, []common.Address{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to filter for deposit changed events")
 	}
 
 	events := []*contract.DepositContractDepositChanged{}
@@ -244,7 +244,7 @@ func (mainchain *MainChain) syncDeposits(cc *contract.Caller, filter *bind.Filte
 		events = append(events, eventIt.Event)
 	}
 	if eventIt.Error() != nil {
-		return eventIt.Error()
+		return errors.Wrap(eventIt.Error(), "failed to iterate deposit changed events")
 	}
 
 	for _, ev := range events {
@@ -262,11 +262,11 @@ func (mainchain *MainChain) syncDeposits(cc *contract.Caller, filter *bind.Filte
 func (mainchain *MainChain) syncSlashings(cc *contract.Caller, filter *bind.FilterOpts) error {
 	accusedIt, err := cc.KeyperSlasher.FilterAccused(filter, []uint64{}, []common.Address{}, []common.Address{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to filter accused events")
 	}
 	appealedIt, err := cc.KeyperSlasher.FilterAppealed(filter, []uint64{}, []common.Address{})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to filter appealed events")
 	}
 	// We don't filter for slashed events. Each slashing also results in a DepositChanged event in
 	// the deposit contract which we already sync.
@@ -276,7 +276,7 @@ func (mainchain *MainChain) syncSlashings(cc *contract.Caller, filter *bind.Filt
 		accusedEvents = append(accusedEvents, accusedIt.Event)
 	}
 	if accusedIt.Error() != nil {
-		return accusedIt.Error()
+		return errors.Wrap(accusedIt.Error(), "failed to iterate accused events")
 	}
 
 	appealedEvents := []*contract.KeyperSlasherAppealed{}
@@ -284,7 +284,7 @@ func (mainchain *MainChain) syncSlashings(cc *contract.Caller, filter *bind.Filt
 		appealedEvents = append(appealedEvents, appealedIt.Event)
 	}
 	if appealedIt.Error() != nil {
-		return appealedIt.Error()
+		return errors.Wrap(appealedIt.Error(), "failed to iterate appealed events")
 	}
 
 	for _, ev := range accusedEvents {
@@ -341,12 +341,12 @@ func (mainchain *MainChain) SyncToHead(
 
 	syncProgress, err := cc.Ethclient.SyncProgress(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get sync progress")
+		return nil, errors.Wrap(err, "failed to get main chain sync progress")
 	}
 
 	latestBlockHeader, err := cc.Ethclient.HeaderByNumber(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get latest block header of main chain")
 	}
 
 	latestBlockNumber := latestBlockHeader.Number.Uint64()
