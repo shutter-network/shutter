@@ -852,7 +852,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 	stBatch, ok := dcdr.State.Batches[batchIndex]
 	if !ok {
-		log.Printf("Error: maybeExecuteHalfStep: no batch for %d", batchIndex)
+		log.Printf("Error: maybeExecuteHalfStep: no data for batch %d", batchIndex)
 		return nil
 	}
 
