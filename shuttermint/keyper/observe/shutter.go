@@ -235,7 +235,7 @@ func (shutter *Shutter) applyEvent(ev shutterevents.IEvent) {
 	}
 }
 
-func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Client, targetHeight int64) error {
+func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Client, targetHeight int64) (*Shutter, error) {
 	if targetHeight < shutter.CurrentBlock {
 		panic("internal error: fetchAndApplyEvents bad arguments")
 	}
@@ -247,11 +247,21 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 	perPage := 100
 	page := 1
 	total := 0
+	cloned := false
 	for {
 		res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
 		if err != nil {
-			return pkgErrors.Wrap(err, "failed to fetch shuttermint txs")
+			return nil, pkgErrors.Wrap(err, "failed to fetch shuttermint txs")
 		}
+		// Create a shallow or deep clone
+		if !cloned {
+			if res.TotalCount == 0 {
+				return shutter.ShallowClone(), nil
+			}
+			shutter = shutter.Clone()
+			cloned = true
+		}
+
 		total += len(res.Txs)
 		for _, tx := range res.Txs {
 			events := tx.TxResult.GetEvents()
@@ -269,7 +279,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 		}
 		page++
 	}
-	return nil
+	return shutter, nil
 }
 
 // IsCheckedIn checks if the given address sent it's check-in message
@@ -306,6 +316,11 @@ func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterev
 	return shutterevents.BatchConfig{}
 }
 
+func (shutter *Shutter) ShallowClone() *Shutter {
+	s := *shutter
+	return &s
+}
+
 func (shutter *Shutter) Clone() *Shutter {
 	clone := new(Shutter)
 	medley.CloneWithGob(shutter, clone)
@@ -340,19 +355,17 @@ func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*S
 
 // SyncToHeight syncs the state with the remote state until the given height
 func (shutter *Shutter) SyncToHeight(ctx context.Context, shmcl client.Client, height int64) (*Shutter, error) {
-	clone := shutter.Clone()
-
 	nodeStatus, err := shmcl.Status(ctx)
 	if err != nil {
 		return nil, pkgErrors.Wrap(err, "failed to get shuttermint status")
 	}
 
-	lastCommittedHeight, err := clone.GetLastCommittedHeight(ctx, shmcl)
+	lastCommittedHeight, err := shutter.GetLastCommittedHeight(ctx, shmcl)
 	if err != nil {
 		return nil, err
 	}
 
-	err = clone.fetchAndApplyEvents(ctx, shmcl, height)
+	clone, err := shutter.fetchAndApplyEvents(ctx, shmcl, height)
 	if err != nil {
 		return nil, err
 	}
