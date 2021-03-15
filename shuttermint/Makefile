@@ -1,5 +1,6 @@
 .POSIX:
 
+PREFIX ?= /usr/local
 GO ?= go
 SHROOT ?= $(CURDIR)
 TESTROOT=$(SHROOT)/testchain
@@ -40,6 +41,9 @@ clean:
 	rm -rf ${TESTROOT}
 	rm -f bin/shuttermint bin/testclient bin/keyper bin/deploy bin/prepare
 
+install:
+	install -o root -g root -m 0555 bin/shuttermint ${PREFIX}/bin/shuttermint
+
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-stringer install-gci
 
 install-geth:
@@ -79,4 +83,4 @@ abigen:
 deploy-ganache:
 	${GO} run ./sandbox/deploy/deploy.go deploy
 
-.PHONY: build run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-tools lint lint-changes abigen coverage
+.PHONY: build install run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-tools lint lint-changes abigen coverage
