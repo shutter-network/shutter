@@ -27,7 +27,6 @@ const (
 type MainChain struct {
 	FollowDistance          uint64
 	CurrentBlock            uint64
-	TimeLastSynced          time.Time
 	NodeSyncProgress        *ethereum.SyncProgress
 	BatchConfigs            []contract.BatchConfig
 	Batches                 map[uint64]*Batch
@@ -337,8 +336,6 @@ func (mainchain *MainChain) SyncToHead(
 	ctx context.Context,
 	cc *contract.Caller,
 ) (*MainChain, error) {
-	now := time.Now()
-
 	syncProgress, err := cc.Ethclient.SyncProgress(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get main chain sync progress")
@@ -398,27 +395,14 @@ func (mainchain *MainChain) SyncToHead(
 	}
 
 	mainchain.CurrentBlock = syncUntilBlockNumber
-	mainchain.TimeLastSynced = now
 	mainchain.NodeSyncProgress = syncProgress
 	return mainchain, nil
 }
 
-// IsSyncedToNodes checks if the state is likely to be more or less in sync with the main chain
-// node the keyper is connected to.
-func (mainchain *MainChain) IsSyncedToNode() bool {
-	dt := time.Since(mainchain.TimeLastSynced)
-	return dt.Seconds() < mainChainSyncedGracePeriod.Seconds()
-}
-
-// IsNodeSynced checks if the node we are connected to is synced to the network. Prior to the
+// IsSynced checks if the node we are connected to is synced to the network. Prior to the
 // first call to SyncToHead, this returns true.
-func (mainchain *MainChain) IsNodeSynced() bool {
-	return mainchain.NodeSyncProgress == nil
-}
-
-// IsSynced checks if the state is synced to the main chain.
 func (mainchain *MainChain) IsSynced() bool {
-	return mainchain.IsSyncedToNode() && mainchain.IsNodeSynced()
+	return mainchain.NodeSyncProgress == nil
 }
 
 // DecryptTransactions decrypts and shuffles the encrypted transactions. It will log an error

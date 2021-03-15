@@ -9,7 +9,6 @@ import (
 	"log"
 	"reflect"
 	"sort"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -22,13 +21,6 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
-)
-
-// We call the state unsynced if it hasn't been updated for more than this duration or if we know
-// there are more than this number of new blocks.
-const (
-	shuttermintSyncedGracePeriod = 30 * time.Second
-	shuttermintSyncedGraceBlocks = 2
 )
 
 var errEonNotFound = errors.New("eon not found")
@@ -67,7 +59,6 @@ type Shutter struct {
 	CurrentBlock         int64
 	LastCommittedHeight  int64
 	NodeStatus           *rpctypes.ResultStatus
-	TimeLastSynced       time.Time
 	KeyperEncryptionKeys map[common.Address]*EncryptionPublicKey
 	BatchConfigs         []shutterevents.BatchConfig
 	Batches              map[uint64]*BatchData
@@ -345,7 +336,6 @@ func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*S
 
 // SyncToHeight syncs the state with the remote state until the given height
 func (shutter *Shutter) SyncToHeight(ctx context.Context, shmcl client.Client, height int64) (*Shutter, error) {
-	now := time.Now()
 	clone := shutter.Clone()
 
 	nodeStatus, err := shmcl.Status(ctx)
@@ -365,28 +355,12 @@ func (shutter *Shutter) SyncToHeight(ctx context.Context, shmcl client.Client, h
 
 	clone.CurrentBlock = height
 	clone.LastCommittedHeight = lastCommittedHeight
-	clone.TimeLastSynced = now
 	clone.NodeStatus = nodeStatus
 
 	return clone, nil
 }
 
-// IsSyncedToNode checks if the state is likely to be more or less in sync with the shuttermint
-// node we are connected to.
-func (shutter *Shutter) IsSyncedToNode() bool {
-	dt := time.Since(shutter.TimeLastSynced)
-	tooOld := dt.Seconds() >= shuttermintSyncedGracePeriod.Seconds()
-	knownNewBlocks := (shutter.LastCommittedHeight >= shuttermintSyncedGraceBlocks &&
-		shutter.CurrentBlock <= shutter.LastCommittedHeight-shuttermintSyncedGraceBlocks)
-	return !tooOld && !knownNewBlocks
-}
-
-// IsNodeSynced checks if the shuttermint node is synced with the network.
-func (shutter *Shutter) IsNodeSynced() bool {
-	return shutter.NodeStatus == nil || !shutter.NodeStatus.SyncInfo.CatchingUp
-}
-
-// IsSynced checks if the state is synced to the Tendermint chain.
+// IsSynced checks if the shuttermint node is synced with the network.
 func (shutter *Shutter) IsSynced() bool {
-	return shutter.IsSyncedToNode() && shutter.IsNodeSynced()
+	return shutter.NodeStatus == nil || !shutter.NodeStatus.SyncInfo.CatchingUp
 }
