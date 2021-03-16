@@ -25,6 +25,10 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+// maxParallelHalfSteps is the maximum number of txs to send at the same time to execute half
+// steps
+const maxParallelHalfSteps uint64 = 10
+
 type decryptfn func(encrypted []byte) ([]byte, error)
 
 // Batch is used to store local state about a single Batch
@@ -814,7 +818,6 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	if !config.IsActive() {
 		return // nothing to execute if config is inactive
 	}
-
 	batchIndex := config.BatchIndex(dcdr.MainChain.CurrentBlock)
 
 	nextHalfStep := dcdr.MainChain.NumExecutionHalfSteps
@@ -825,19 +828,35 @@ func (dcdr *Decider) maybeExecuteBatch() {
 		// another one.
 		dcdr.State.PendingHalfStep = nil
 	}
-	if nextHalfStep >= batchIndex*2 {
-		return // everything has been executed already
-	}
 	if dcdr.State.PendingHalfStep != nil {
-		// Don't try to execute anything if there's already a pending transaction executing the
-		// current or another half step. Rather, wait for that tx to confirm first.
+		// Don't try to execute anything if there's already one or more pending transaction
+		// executing the current or another half step. Rather, wait for them to confirm first.
 		return
 	}
 
-	if action := dcdr.maybeExecuteHalfStep(nextHalfStep); action != nil {
-		dcdr.addAction(action)
-		dcdr.State.PendingHalfStep = &nextHalfStep
+	numHalfStepsToExecute := getNumHalfStepsToExecute(nextHalfStep, batchIndex)
+	for halfStep := nextHalfStep; halfStep < nextHalfStep+numHalfStepsToExecute; halfStep++ {
+		if action := dcdr.maybeExecuteHalfStep(halfStep); action != nil {
+			dcdr.addAction(action)
+			dcdr.State.PendingHalfStep = &halfStep
+		} else {
+			break
+		}
 	}
+}
+
+// getNumHalfStepsToExecute returns the number of half steps to execute given the index of the
+// next half step to execute (i.e., the total number of already executed half steps) and the
+// current batch index.
+func getNumHalfStepsToExecute(nextHalfStep uint64, batchIndex uint64) uint64 {
+	if nextHalfStep >= batchIndex*2 {
+		return 0
+	}
+	numMissingHalfSteps := batchIndex*2 - nextHalfStep
+	if numMissingHalfSteps <= maxParallelHalfSteps {
+		return numMissingHalfSteps
+	}
+	return maxParallelHalfSteps
 }
 
 func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.BatchConfig) fx.IAction {
@@ -852,7 +871,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 	stBatch, ok := dcdr.State.Batches[batchIndex]
 	if !ok {
-		log.Printf("Error: maybeExecuteHalfStep: no data for batch %d", batchIndex)
+		log.Printf("Error: no data for batch %d", batchIndex)
 		return nil
 	}
 
