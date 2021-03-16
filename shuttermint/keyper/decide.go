@@ -908,31 +908,32 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 		return nil // nothing to do if config is inactive
 	}
 
-	if nextHalfStep%2 != 0 {
-		return dcdr.executePlainBatch(batchIndex) // TODO: we don't have a delay here
-	}
-
 	delay := dcdr.executionDelay(config, nextHalfStep)
+	executionBlock := config.BatchEndBlock(batchIndex) + delay
 	executionTimeoutBlock := config.BatchEndBlock(batchIndex) + config.ExecutionTimeout
+	isCipherBatch := nextHalfStep%2 == 0
 
-	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
-		return fx.SkipCipherBatch{
-			BatchIndex: batchIndex,
+	// skip cipher half steps if execution timeout block + delay is passed
+	if isCipherBatch && dcdr.MainChain.CurrentBlock >= executionTimeoutBlock {
+		if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
+			return fx.SkipCipherBatch{
+				BatchIndex: batchIndex,
+			}
 		}
-	}
-
-	if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock {
 		return nil
 	}
 
 	if !config.IsKeyper(dcdr.Config.Address()) {
-		// we can't execute this cipher batch
+		// we can't execute this batch
 		return nil
 	}
 
-	executionBlock := config.BatchEndBlock(batchIndex) + delay
+	// execute batch if execution block is passed
 	if dcdr.MainChain.CurrentBlock >= executionBlock {
-		return dcdr.executeCipherBatch(batchIndex, config)
+		if isCipherBatch {
+			return dcdr.executeCipherBatch(batchIndex, config)
+		}
+		return dcdr.executePlainBatch(batchIndex)
 	}
 	return nil
 }
