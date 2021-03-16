@@ -77,20 +77,25 @@ contract ExecutorContract {
 
         // Check that batching is active and the batch is closed
         require(_config.batchSpan > 0, "ExecutorContract: config is inactive");
+
+        // skip cipher execution if we reached the execution timeout.
+        if (
+            block.number >=
+            _config.startBlockNumber +
+                _config.batchSpan *
+                (_batchIndex + 1) +
+                _config.executionTimeout
+        ) {
+            numExecutionHalfSteps++;
+            emit CipherExecutionSkipped(numExecutionHalfSteps);
+            return;
+        }
         require(
             block.number >=
                 _config.startBlockNumber +
                     _config.batchSpan *
                     (_batchIndex + 1),
             "ExecutorContract: batch is not closed yet"
-        );
-        require(
-            block.number <
-                _config.startBlockNumber +
-                    _config.batchSpan *
-                    (_batchIndex + 1) +
-                    _config.executionTimeout,
-            "ExecutorContract: execution timeout already reached"
         );
 
         // Check that caller is keyper

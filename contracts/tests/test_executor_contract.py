@@ -314,7 +314,7 @@ def test_cipher_execution_stores_receipt(
     assert bytes(receipt[3]) == ZERO_HASH32  # batch hash
 
 
-def test_cipher_execution_forbidden(
+def test_cipher_execution_skips_after_timeout(
     executor_contract: Any,
     config_contract: Any,
     chain: Chain,
@@ -349,15 +349,21 @@ def test_cipher_execution_forbidden(
 
     # test that we could still executeCipherBatch for block forbidden_from_block -1
     chain.revert()
-    executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
-
-    # test that we cannot call executeCipherBatch for block forbidden_from_block
+    tx = executor_contract.executeCipherBatch(
+        batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}
+    )
+    assert tx.events["BatchExecuted"]
+    # test that calling executeCipherBatch after the timeout results in skipping the cipher
+    # execution
     chain.revert()
     mine_until(
         forbidden_from_block - 1, chain,
     )
-    with brownie.reverts("ExecutorContract: execution timeout already reached"):
-        executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]})
+    tx = executor_contract.executeCipherBatch(
+        batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}
+    )
+    assert len(tx.events) == 1
+    assert tx.events["CipherExecutionSkipped"]["numExecutionHalfSteps"] == 1
 
 
 def test_skip_cipher_execution(
