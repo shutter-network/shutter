@@ -838,7 +838,8 @@ func (dcdr *Decider) maybeExecuteBatch() {
 	for halfStep := nextHalfStep; halfStep < nextHalfStep+numHalfStepsToExecute; halfStep++ {
 		if action := dcdr.maybeExecuteHalfStep(halfStep); action != nil {
 			dcdr.addAction(action)
-			dcdr.State.PendingHalfStep = &halfStep
+			halfStep2 := halfStep // avoid using reference to loop variable
+			dcdr.State.PendingHalfStep = &halfStep2
 		} else {
 			break
 		}
