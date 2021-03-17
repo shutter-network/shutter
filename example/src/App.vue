@@ -8,7 +8,16 @@
       </div>
     </section>
     <div class="container">
-      <SubmitSection />
+      <section class="section content">
+        <div class="columns">
+          <div class="column">
+            <SubmitPanel />
+          </div>
+          <div class="column">
+            <StatusPanel />
+          </div>
+        </div>
+      </section>
       <BatchSection />
       <TargetSection />
     </div>
@@ -16,16 +25,18 @@
 </template>
 
 <script>
-import SubmitSection from "./components/SubmitSection.vue";
-import TargetSection from "./components/TargetSection.vue";
+import StatusPanel from "./components/StatusPanel.vue";
+import SubmitPanel from "./components/SubmitPanel.vue";
 import BatchSection from "./components/BatchSection.vue";
+import TargetSection from "./components/TargetSection.vue";
 
 export default {
   name: "App",
   components: {
-    SubmitSection,
-    TargetSection,
     BatchSection,
+    StatusPanel,
+    SubmitPanel,
+    TargetSection,
   },
 };
 </script>

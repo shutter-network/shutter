@@ -7,6 +7,7 @@ import configContractMetadata from "./assets/abis/ConfigContract.json";
 import batcherContractMetadata from "./assets/abis/BatcherContract.json";
 import targetContractMetadata from "./assets/abis/TestTargetContract.json";
 import keyBroadcastContractMetadata from "./assets/abis/KeyBroadcastContract.json";
+import executorContractMetadata from "./assets/abis/ExecutorContract.json";
 
 require("@/assets/main.scss");
 
@@ -33,12 +34,18 @@ let keyBroadcastContract = new ethers.Contract(
   keyBroadcastContractMetadata.abi,
   provider
 );
+let executorContract = new ethers.Contract(
+  contracts.ExecutorContract,
+  executorContractMetadata.abi,
+  provider
+);
 
 Vue.prototype.$provider = provider;
 Vue.prototype.$configContract = configContract;
 Vue.prototype.$batcherContract = batcherContract;
 Vue.prototype.$targetContract = targetContract;
 Vue.prototype.$keyBroadcastContract = keyBroadcastContract;
+Vue.prototype.$executorContract = executorContract;
 
 new Vue({
   render: (h) => h(App),

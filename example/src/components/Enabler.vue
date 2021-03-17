@@ -1,5 +1,5 @@
 <template>
-  <button class="button is-primary" v-on:click="enable">Enable Ethereum</button>
+  <button class="button is-primary" v-on:click="enable">Connect Wallet</button>
 </template>
 
 <script>

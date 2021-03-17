@@ -1,9 +1,9 @@
 <template>
-  <section class="section">
+  <div>
     <h1 class="title">Submit Transaction</h1>
     <Enabler v-if="!enabled" v-on:enabled="enabled = true" />
     <SubmitForm v-if="enabled" />
-  </section>
+  </div>
 </template>
 
 <script>
@@ -11,7 +11,7 @@ import SubmitForm from "./SubmitForm.vue";
 import Enabler from "./Enabler.vue";
 
 export default {
-  name: "SubmitSection",
+  name: "SubmitPanel",
   components: {
     SubmitForm,
     Enabler,
