@@ -1230,18 +1230,21 @@ func (_ConfigContract *ConfigContractCaller) Configs(opts *bind.CallOpts, arg0 *
 		TargetFunctionSelector [4]byte
 		ExecutionTimeout       uint64
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.StartBatchIndex = out[0].(uint64)
-	outstruct.StartBlockNumber = out[1].(uint64)
-	outstruct.Threshold = out[2].(uint64)
-	outstruct.BatchSpan = out[3].(uint64)
-	outstruct.BatchSizeLimit = out[4].(uint64)
-	outstruct.TransactionSizeLimit = out[5].(uint64)
-	outstruct.TransactionGasLimit = out[6].(uint64)
-	outstruct.FeeReceiver = out[7].(common.Address)
-	outstruct.TargetAddress = out[8].(common.Address)
-	outstruct.TargetFunctionSelector = out[9].([4]byte)
-	outstruct.ExecutionTimeout = out[10].(uint64)
+	outstruct.StartBatchIndex = *abi.ConvertType(out[0], new(uint64)).(*uint64)
+	outstruct.StartBlockNumber = *abi.ConvertType(out[1], new(uint64)).(*uint64)
+	outstruct.Threshold = *abi.ConvertType(out[2], new(uint64)).(*uint64)
+	outstruct.BatchSpan = *abi.ConvertType(out[3], new(uint64)).(*uint64)
+	outstruct.BatchSizeLimit = *abi.ConvertType(out[4], new(uint64)).(*uint64)
+	outstruct.TransactionSizeLimit = *abi.ConvertType(out[5], new(uint64)).(*uint64)
+	outstruct.TransactionGasLimit = *abi.ConvertType(out[6], new(uint64)).(*uint64)
+	outstruct.FeeReceiver = *abi.ConvertType(out[7], new(common.Address)).(*common.Address)
+	outstruct.TargetAddress = *abi.ConvertType(out[8], new(common.Address)).(*common.Address)
+	outstruct.TargetFunctionSelector = *abi.ConvertType(out[9], new([4]byte)).(*[4]byte)
+	outstruct.ExecutionTimeout = *abi.ConvertType(out[10], new(uint64)).(*uint64)
 
 	return *outstruct, err
 
@@ -1348,18 +1351,21 @@ func (_ConfigContract *ConfigContractCaller) NextConfig(opts *bind.CallOpts) (st
 		TargetFunctionSelector [4]byte
 		ExecutionTimeout       uint64
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.StartBatchIndex = out[0].(uint64)
-	outstruct.StartBlockNumber = out[1].(uint64)
-	outstruct.Threshold = out[2].(uint64)
-	outstruct.BatchSpan = out[3].(uint64)
-	outstruct.BatchSizeLimit = out[4].(uint64)
-	outstruct.TransactionSizeLimit = out[5].(uint64)
-	outstruct.TransactionGasLimit = out[6].(uint64)
-	outstruct.FeeReceiver = out[7].(common.Address)
-	outstruct.TargetAddress = out[8].(common.Address)
-	outstruct.TargetFunctionSelector = out[9].([4]byte)
-	outstruct.ExecutionTimeout = out[10].(uint64)
+	outstruct.StartBatchIndex = *abi.ConvertType(out[0], new(uint64)).(*uint64)
+	outstruct.StartBlockNumber = *abi.ConvertType(out[1], new(uint64)).(*uint64)
+	outstruct.Threshold = *abi.ConvertType(out[2], new(uint64)).(*uint64)
+	outstruct.BatchSpan = *abi.ConvertType(out[3], new(uint64)).(*uint64)
+	outstruct.BatchSizeLimit = *abi.ConvertType(out[4], new(uint64)).(*uint64)
+	outstruct.TransactionSizeLimit = *abi.ConvertType(out[5], new(uint64)).(*uint64)
+	outstruct.TransactionGasLimit = *abi.ConvertType(out[6], new(uint64)).(*uint64)
+	outstruct.FeeReceiver = *abi.ConvertType(out[7], new(common.Address)).(*common.Address)
+	outstruct.TargetAddress = *abi.ConvertType(out[8], new(common.Address)).(*common.Address)
+	outstruct.TargetFunctionSelector = *abi.ConvertType(out[9], new([4]byte)).(*[4]byte)
+	outstruct.ExecutionTimeout = *abi.ConvertType(out[10], new(uint64)).(*uint64)
 
 	return *outstruct, err
 
@@ -5086,12 +5092,15 @@ func (_ExecutorContract *ExecutorContractCaller) CipherExecutionReceipts(opts *b
 		CipherBatchHash [32]byte
 		BatchHash       [32]byte
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.Executed = out[0].(bool)
-	outstruct.Executor = out[1].(common.Address)
-	outstruct.HalfStep = out[2].(uint64)
-	outstruct.CipherBatchHash = out[3].([32]byte)
-	outstruct.BatchHash = out[4].([32]byte)
+	outstruct.Executed = *abi.ConvertType(out[0], new(bool)).(*bool)
+	outstruct.Executor = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
+	outstruct.HalfStep = *abi.ConvertType(out[2], new(uint64)).(*uint64)
+	outstruct.CipherBatchHash = *abi.ConvertType(out[3], new([32]byte)).(*[32]byte)
+	outstruct.BatchHash = *abi.ConvertType(out[4], new([32]byte)).(*[32]byte)
 
 	return *outstruct, err
 
@@ -9804,13 +9813,16 @@ func (_KeyperSlasher *KeyperSlasherCaller) Accusations(opts *bind.CallOpts, arg0
 		HalfStep    uint64
 		BlockNumber uint64
 	})
+	if err != nil {
+		return *outstruct, err
+	}
 
-	outstruct.Accused = out[0].(bool)
-	outstruct.Appealed = out[1].(bool)
-	outstruct.Slashed = out[2].(bool)
-	outstruct.Executor = out[3].(common.Address)
-	outstruct.HalfStep = out[4].(uint64)
-	outstruct.BlockNumber = out[5].(uint64)
+	outstruct.Accused = *abi.ConvertType(out[0], new(bool)).(*bool)
+	outstruct.Appealed = *abi.ConvertType(out[1], new(bool)).(*bool)
+	outstruct.Slashed = *abi.ConvertType(out[2], new(bool)).(*bool)
+	outstruct.Executor = *abi.ConvertType(out[3], new(common.Address)).(*common.Address)
+	outstruct.HalfStep = *abi.ConvertType(out[4], new(uint64)).(*uint64)
+	outstruct.BlockNumber = *abi.ConvertType(out[5], new(uint64)).(*uint64)
 
 	return *outstruct, err
 
