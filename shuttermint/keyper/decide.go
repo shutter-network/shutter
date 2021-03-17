@@ -882,11 +882,10 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 
 	return fx.ExecuteCipherBatch{
-		BatchIndex:            batchIndex,
-		CipherBatchHash:       batch.EncryptedBatchHash,
-		Transactions:          stBatch.DecryptedTransactions,
-		KeyperIndex:           keyperIndex,
-		ExecutionTimeoutBlock: config.BatchEndBlock(batchIndex) + config.ExecutionTimeout,
+		BatchIndex:      batchIndex,
+		CipherBatchHash: batch.EncryptedBatchHash,
+		Transactions:    stBatch.DecryptedTransactions,
+		KeyperIndex:     keyperIndex,
 	}
 }
 

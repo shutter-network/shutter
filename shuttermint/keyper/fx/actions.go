@@ -67,11 +67,10 @@ func (a SendShuttermintMessage) IsExpired(world observe.World) bool {
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
 type ExecuteCipherBatch struct {
-	BatchIndex            uint64
-	CipherBatchHash       [32]byte
-	Transactions          [][]byte
-	KeyperIndex           uint64
-	ExecutionTimeoutBlock uint64
+	BatchIndex      uint64
+	CipherBatchHash [32]byte
+	Transactions    [][]byte
+	KeyperIndex     uint64
 }
 
 func (a ExecuteCipherBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
@@ -85,9 +84,6 @@ func (a ExecuteCipherBatch) String() string {
 }
 
 func (a ExecuteCipherBatch) IsExpired(world observe.World) bool {
-	if world.MainChain.CurrentBlock >= a.ExecutionTimeoutBlock {
-		return true
-	}
 	halfStep := 2 * a.BatchIndex
 	return world.MainChain.NumExecutionHalfSteps > halfStep
 }
