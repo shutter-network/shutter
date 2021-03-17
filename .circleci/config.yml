@@ -229,7 +229,11 @@ jobs:
       - run: go install github.com/tcnksm/ghr@v0.13.0
       - attach_workspace:
           at: ~/share
-      - run: ghr ${CIRCLE_TAG} bin/ ~/share/combined.json
+      - run:
+          name: Upload binaries and combined.json
+          command: |
+            cp ~/share/combined.json bin/
+            ghr ${CIRCLE_TAG} bin/
 
   mint-lint:
     executor: go
