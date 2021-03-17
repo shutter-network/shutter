@@ -50,6 +50,7 @@ func init() {
 
 func initFiles(cmd *cobra.Command, args []string) error {
 	config := cfg.DefaultConfig()
+	config.LogLevel = "*:error"
 	keyper0RPCAddress := config.RPC.ListenAddress
 	rpcAddress, err := adjustPort(keyper0RPCAddress, index)
 	if err != nil {
