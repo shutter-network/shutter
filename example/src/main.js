@@ -2,12 +2,7 @@ import Vue from "vue";
 import { ethers } from "ethers";
 
 import App from "./App.vue";
-import {
-  configAddress,
-  batcherAddress,
-  targetAddress,
-  keyBroadcastAddress,
-} from "./assets/addresses.js";
+import contracts from "./assets/contracts.json";
 import configContractMetadata from "./assets/abis/ConfigContract.json";
 import batcherContractMetadata from "./assets/abis/BatcherContract.json";
 import targetContractMetadata from "./assets/abis/TestTargetContract.json";
@@ -19,22 +14,22 @@ Vue.config.productionTip = false;
 
 let provider = new ethers.providers.Web3Provider(window.ethereum);
 let configContract = new ethers.Contract(
-  configAddress,
+  contracts.ConfigContract,
   configContractMetadata.abi,
   provider
 );
 let batcherContract = new ethers.Contract(
-  batcherAddress,
+  contracts.BatcherContract,
   batcherContractMetadata.abi,
   provider
 );
 let targetContract = new ethers.Contract(
-  targetAddress,
+  contracts.TargetContract,
   targetContractMetadata.abi,
   provider
 );
 let keyBroadcastContract = new ethers.Contract(
-  keyBroadcastAddress,
+  contracts.KeyBroadcastContract,
   keyBroadcastContractMetadata.abi,
   provider
 );
