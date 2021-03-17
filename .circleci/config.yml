@@ -31,7 +31,15 @@ commands:
           name: Install ganache-cli
           command: |
             sudo npm install -g ganache-cli@6.12.2
-
+  install-solidity:
+    steps:
+      - run:
+          name: Install solidity
+          command: |
+            mkdir -p ~/bin
+            curl -sSL -o ~/bin/solc https://github.com/ethereum/solidity/releases/download/v0.7.6/solc-static-linux
+            chmod +x ~/bin/solc
+            echo >${BASH_ENV} 'export PATH=~/bin:${PATH}'
 executors:
   py37:
     docker:
@@ -180,6 +188,34 @@ jobs:
             - "~/go/pkg/mod"
             - "~/.cache/go-build"
 
+  mint-abigen:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - install-solidity
+      - restore_cache:
+          keys:
+            - abigen-v1-{{ checksum "go.sum" }}
+      - run: make install-abigen
+      - save_cache:
+          key: abigen-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+      - run:
+          name: Run abigen
+          command: |
+            make abigen
+            mkdir -p ~/share
+            cp -p contract/combined.json ~/share
+      - run: git diff --exit-code
+      - persist_to_workspace:
+          root: ~/share
+          paths:
+            - combined.json
+
   publish-release:
     executor: go
     working_directory: ~/shutter/shuttermint
@@ -191,7 +227,9 @@ jobs:
             - shuttermint-go-v8-{{ checksum "go.sum" }}
       - run: env VERSION=${CIRCLE_TAG} ./build-release
       - run: go install github.com/tcnksm/ghr@v0.13.0
-      - run: ghr ${CIRCLE_TAG} bin/
+      - attach_workspace:
+          at: ~/share
+      - run: ghr ${CIRCLE_TAG} bin/ ~/share/combined.json
 
   mint-lint:
     executor: go
@@ -229,10 +267,14 @@ workflows:
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/
-
+      - mint-abigen:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
       - publish-release:
           requires:
             - mint-build
+            - mint-abigen
           context:
             - upload-release
           filters:
