@@ -32,7 +32,7 @@
           class="button is-primary"
           :class="{ 'is-loading': waitingForTx }"
           v-on:click="onSend(0)"
-          :disabled="!privateKeyValid"
+          :disabled="sendDisabled"
         >
           Send Encrypted
         </button>
@@ -42,7 +42,7 @@
           class="button is-primary"
           :class="{ 'is-loading': waitingForTx }"
           v-on:click="onSend(1)"
-          :disabled="!privateKeyValid"
+          :disabled="sendDisabled"
         >
           Send Unencrypted
         </button>
@@ -54,7 +54,6 @@
 <script>
 import { ethers } from "ethers";
 import {
-  getConfigAtBlock,
   getBatchIndexAtBlock,
   getRandomNonce,
   encodeMessage,
@@ -64,6 +63,7 @@ import { getBlockNumber } from "../blocknumber.js";
 
 export default {
   name: "SubmitForm",
+  props: ["config", "eonKey"],
 
   data() {
     return {
@@ -77,6 +77,14 @@ export default {
   },
 
   computed: {
+    sendDisabled() {
+      return (
+        this.waitingForTx ||
+        this.eonKey === null ||
+        this.config === null ||
+        !this.privateKeyValid
+      );
+    },
     privateKeyValid() {
       if (!ethers.utils.isHexString(this.privateKey, 32)) {
         return false;
@@ -104,7 +112,7 @@ export default {
 
   methods: {
     async onSend(type) {
-      if (this.waitingForTx) {
+      if (this.sendDisabled) {
         return;
       }
       this.waitingForTx = true;
@@ -124,23 +132,12 @@ export default {
       );
 
       let blockNumber = await this.waitForGoodBlock();
-      let config = await getConfigAtBlock(blockNumber + 1, this.configContract);
-      let batchIndex = getBatchIndexAtBlock(blockNumber + 1, config);
+      let batchIndex = getBatchIndexAtBlock(blockNumber + 1, this.config);
 
       if (type == 0) {
-        let bestKey = await this.$keyBroadcastContract.getBestKey(
-          config.startBatchIndex
-        );
-        let bestKeyNumVotes = await this.$keyBroadcastContract.getBestKeyNumVotes(
-          config.startBatchIndex
-        );
-        if (bestKeyNumVotes < config.threshold) {
-          console.log("not enough votes for eon public key");
-          return;
-        }
         encodedMessage = await encryptMessage(
           encodedMessage,
-          bestKey,
+          this.eonKey,
           batchIndex
         );
       }
@@ -166,12 +163,14 @@ export default {
     async waitForGoodBlock() {
       for (;;) {
         const blockNumber = await getBlockNumber(this.$provider);
-        const config = await getConfigAtBlock(
+        const batchIndexNow = getBatchIndexAtBlock(
           blockNumber + 1,
-          this.configContract
+          this.config
         );
-        const batchIndexNow = getBatchIndexAtBlock(blockNumber + 1, config);
-        const batchIndexSoon = getBatchIndexAtBlock(blockNumber + 2, config);
+        const batchIndexSoon = getBatchIndexAtBlock(
+          blockNumber + 2,
+          this.config
+        );
         if (batchIndexNow.eq(batchIndexSoon)) {
           return blockNumber;
         }

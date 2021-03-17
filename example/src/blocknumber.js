@@ -1,5 +1,5 @@
 const blockTime = 15;
-const pollInterval = 0;
+const pollInterval = 0.5;
 
 let latestBlockNumber = null;
 let latestBlockNumberTime = null;

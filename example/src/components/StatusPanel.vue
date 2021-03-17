@@ -12,8 +12,10 @@
           <td>{{ batchIndex !== null ? batchIndex : "Unknown" }}</td>
         </tr>
         <tr>
-          <th>Executed Batches</th>
-          <td>{{ executedBatches !== null ? executedBatches : "Unknown" }}</td>
+          <th>Last Executed Batch</th>
+          <td>
+            {{ lastExecutedBatch !== null ? lastExecutedBatch : "Unknown" }}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -22,10 +24,11 @@
 
 <script>
 import { getBlockNumber } from "../blocknumber.js";
-import { getConfigAtBlock, getBatchIndexAtBlock } from "../utils.js";
+import { getBatchIndexAtBlock } from "../utils.js";
 
 export default {
   name: "StatusPanel",
+  props: ["config"],
 
   data() {
     return {
@@ -36,23 +39,34 @@ export default {
   },
 
   computed: {
-    executedBatches() {
+    lastExecutedBatch() {
       if (this.halfSteps == null) {
         return null;
       }
-      return Math.floor((this.halfSteps.toNumber() + 1) / 2);
+      const fullyExecutedBatches = Math.floor(this.halfSteps.toNumber() / 2);
+      return fullyExecutedBatches - 1;
     },
   },
 
-  mounted() {
-    this.poll();
+  watch: {
+    config: {
+      immediate: true,
+      handler() {
+        if (this.config !== null) {
+          this.poll();
+        }
+      },
+    },
   },
 
   methods: {
     async update() {
+      if (this.config === null) {
+        return;
+      }
+
       const blockNumber = await getBlockNumber(this.$provider);
-      const config = await getConfigAtBlock(blockNumber, this.$configContract);
-      const batchIndex = getBatchIndexAtBlock(blockNumber, config);
+      const batchIndex = getBatchIndexAtBlock(blockNumber, this.config);
       const halfSteps = await this.$executorContract.numExecutionHalfSteps();
 
       this.blockNumber = blockNumber;
@@ -62,7 +76,7 @@ export default {
     async poll() {
       for (;;) {
         await this.update();
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     },
   },

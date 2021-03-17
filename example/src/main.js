@@ -8,33 +8,32 @@ import batcherContractMetadata from "./assets/abis/BatcherContract.json";
 import targetContractMetadata from "./assets/abis/TestTargetContract.json";
 import keyBroadcastContractMetadata from "./assets/abis/KeyBroadcastContract.json";
 import executorContractMetadata from "./assets/abis/ExecutorContract.json";
-
 require("@/assets/main.scss");
 
 Vue.config.productionTip = false;
 
-let provider = new ethers.providers.Web3Provider(window.ethereum);
-let configContract = new ethers.Contract(
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+const configContract = new ethers.Contract(
   contracts.ConfigContract,
   configContractMetadata.abi,
   provider
 );
-let batcherContract = new ethers.Contract(
+const batcherContract = new ethers.Contract(
   contracts.BatcherContract,
   batcherContractMetadata.abi,
   provider
 );
-let targetContract = new ethers.Contract(
+const targetContract = new ethers.Contract(
   contracts.TargetContract,
   targetContractMetadata.abi,
   provider
 );
-let keyBroadcastContract = new ethers.Contract(
+const keyBroadcastContract = new ethers.Contract(
   contracts.KeyBroadcastContract,
   keyBroadcastContractMetadata.abi,
   provider
 );
-let executorContract = new ethers.Contract(
+const executorContract = new ethers.Contract(
   contracts.ExecutorContract,
   executorContractMetadata.abi,
   provider

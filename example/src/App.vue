@@ -11,10 +11,10 @@
       <section class="section content">
         <div class="columns">
           <div class="column">
-            <SubmitPanel />
+            <SubmitPanel :config="config" :eonKey="eonKey" />
           </div>
           <div class="column">
-            <StatusPanel />
+            <StatusPanel :config="config" />
           </div>
         </div>
       </section>
@@ -29,6 +29,8 @@ import StatusPanel from "./components/StatusPanel.vue";
 import SubmitPanel from "./components/SubmitPanel.vue";
 import BatchSection from "./components/BatchSection.vue";
 import TargetSection from "./components/TargetSection.vue";
+import { getBlockNumber } from "./blocknumber.js";
+import { getConfigAtBlock } from "./utils.js";
 
 export default {
   name: "App",
@@ -37,6 +39,39 @@ export default {
     StatusPanel,
     SubmitPanel,
     TargetSection,
+  },
+
+  data() {
+    return {
+      config: null,
+      eonKey: null,
+    };
+  },
+
+  mounted() {
+    this.getKeyAndConfig();
+  },
+
+  methods: {
+    async getKeyAndConfig() {
+      const blockNumber = await getBlockNumber(this.$provider);
+      const config = await getConfigAtBlock(blockNumber, this.$configContract);
+
+      const bestKey = await this.$keyBroadcastContract.getBestKey(
+        config.startBatchIndex
+      );
+      const bestKeyNumVotes = await this.$keyBroadcastContract.getBestKeyNumVotes(
+        config.startBatchIndex
+      );
+
+      this.config = config;
+      if (bestKeyNumVotes >= config.threshold) {
+        this.eonKey = bestKey;
+      } else {
+        this.eonKey = null;
+        console.log("not enough votes for eon public key");
+      }
+    },
   },
 };
 </script>
