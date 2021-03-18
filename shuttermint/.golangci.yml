@@ -108,6 +108,7 @@ linters:
     - varcheck
     - whitespace
     - maligned
+    - thelper
 
   # don't enable:
   # - asciicheck

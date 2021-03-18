@@ -11,6 +11,7 @@ import (
 )
 
 func Results(t *testing.T) []*puredkg.Result {
+	t.Helper()
 	eon := uint64(5)
 	numKeypers := uint64(3)
 	threshold := uint64(2)

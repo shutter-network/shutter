@@ -10,6 +10,7 @@ import (
 )
 
 func EnsureGobable(t *testing.T, src, dst interface{}) {
+	t.Helper()
 	buff := bytes.Buffer{}
 	err := gob.NewEncoder(&buff).Encode(src)
 	require.Nil(t, err)

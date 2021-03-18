@@ -13,6 +13,7 @@ import (
 
 // encryptionPublicKey generates an EncryptionPublicKey
 func encryptionPublicKey(t *testing.T) *EncryptionPublicKey {
+	t.Helper()
 	privkey, err := crypto.GenerateKey()
 	require.Nil(t, err)
 	return (*EncryptionPublicKey)(ecies.ImportECDSAPublic(&privkey.PublicKey))
