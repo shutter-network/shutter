@@ -288,6 +288,9 @@ func (kpr *Keyper) Run() error {
 	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
 	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
 	kpr.runenv.StartBackgroundTasks(ctx, g)
+	if len(kpr.State.Actions) > 0 {
+		kpr.runActions(ctx)
+	}
 
 	for {
 		select {
@@ -318,6 +321,7 @@ type storedState struct {
 	State     *State
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
+	Actions   []fx.IAction
 }
 
 func (kpr *Keyper) gobpath() string {
@@ -379,20 +383,31 @@ func (kpr *Keyper) saveState() error {
 	return err
 }
 
-func (kpr *Keyper) runOneStep(ctx context.Context) {
-	decider := NewDecider(kpr)
-	decider.Decide()
-
+func (kpr *Keyper) runActions(ctx context.Context) {
 	now := time.Now()
-	if len(decider.Actions) > 0 || now.Sub(kpr.lastlogTime) > 10*time.Second {
+	if len(kpr.State.Actions) > 0 || now.Sub(kpr.lastlogTime) > 10*time.Second {
 		log.Println(kpr.ShortInfo())
 		kpr.lastlogTime = now
 	}
 
-	err := kpr.saveState()
-	if err != nil {
+	kpr.runenv.RunActions(ctx, kpr.State.ActionCounter, kpr.State.Actions)
+	kpr.State.ActionCounter += uint64(len(kpr.State.Actions))
+	kpr.State.Actions = nil
+}
+
+func (kpr *Keyper) decide() []fx.IAction {
+	decider := NewDecider(kpr)
+	decider.Decide()
+	return decider.Actions
+}
+
+func (kpr *Keyper) runOneStep(ctx context.Context) {
+	if len(kpr.State.Actions) > 0 {
+		panic("internal errror: kpr.State.Actions is not empty")
+	}
+	kpr.State.Actions = kpr.decide()
+	if err := kpr.saveState(); err != nil {
 		panic(err)
 	}
-
-	kpr.runenv.RunActions(ctx, decider.Actions)
+	kpr.runActions(ctx)
 }

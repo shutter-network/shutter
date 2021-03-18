@@ -88,7 +88,8 @@ func (runenv *RunEnv) waitMined(ctx context.Context, inFlightMainChainTX InFligh
 	}
 }
 
-func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
+func (runenv *RunEnv) RunActions(ctx context.Context, actionCounter uint64, actions []IAction) {
+	_ = actionCounter
 	var err error
 	if len(actions) > 0 {
 		log.Printf("Running %d actions", len(actions))
@@ -96,8 +97,8 @@ func (runenv *RunEnv) RunActions(ctx context.Context, actions []IAction) {
 
 	for _, act := range actions {
 		switch a := act.(type) {
-		case SendShuttermintMessage:
-			err = runenv.sendShuttermintMessage(ctx, &a)
+		case *SendShuttermintMessage:
+			err = runenv.sendShuttermintMessage(ctx, a)
 		case MainChainTX:
 			runenv.mainChainTXs <- a
 		default:

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -252,6 +253,12 @@ type State struct {
 	PendingAppeals           map[uint64]struct{}
 	NextEpochSecretShare     uint64
 	Batches                  map[uint64]*Batch
+
+	// We store the actions that should be executed together with a counter. When starting the
+	// program, we feed these actions into runenv, which can use the counter to identify the
+	// actions.
+	ActionCounter uint64
+	Actions       []fx.IAction
 }
 
 // NewState creates an empty State object
@@ -298,11 +305,14 @@ func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
 
 // addAction stores the given IAction to be run later
 func (dcdr *Decider) addAction(a fx.IAction) {
+	if reflect.ValueOf(a).Kind() != reflect.Ptr {
+		panic("internal error: addAction: expected pointer")
+	}
 	dcdr.Actions = append(dcdr.Actions, a)
 }
 
 func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Message) {
-	dcdr.addAction(fx.SendShuttermintMessage{
+	dcdr.addAction(&fx.SendShuttermintMessage{
 		Description: description,
 		Msg:         msg,
 	})
@@ -534,7 +544,7 @@ func (dcdr *Decider) broadcastEonPublicKey(dkgResult *puredkg.Result, startBatch
 		StartBatchIndex: startBatchIndex,
 		EonPublicKey:    dkgResult.PublicKey,
 	}
-	dcdr.addAction(action)
+	dcdr.addAction(&action)
 }
 
 func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
@@ -881,7 +891,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		return nil
 	}
 
-	return fx.ExecuteCipherBatch{
+	return &fx.ExecuteCipherBatch{
 		BatchIndex:      batchIndex,
 		CipherBatchHash: batch.EncryptedBatchHash,
 		Transactions:    stBatch.DecryptedTransactions,
@@ -894,7 +904,7 @@ func (dcdr *Decider) executePlainBatch(batchIndex uint64) fx.IAction {
 	if !ok {
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
-	return fx.ExecutePlainBatch{
+	return &fx.ExecutePlainBatch{
 		BatchIndex:   batchIndex,
 		Transactions: batch.PlainTransactions,
 	}
@@ -916,7 +926,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 	// skip cipher half steps if execution timeout block + delay is passed
 	if isCipherBatch && dcdr.MainChain.CurrentBlock >= executionTimeoutBlock {
 		if dcdr.MainChain.CurrentBlock >= executionTimeoutBlock+delay {
-			return fx.SkipCipherBatch{
+			return &fx.SkipCipherBatch{
 				BatchIndex: batchIndex,
 			}
 		}
