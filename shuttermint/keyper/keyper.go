@@ -134,8 +134,11 @@ func (kpr *Keyper) init() error {
 	kpr.MessageSender = &ms
 
 	kpr.ContractCaller, err = NewContractCallerFromConfig(kpr.Config)
-	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller, kpr.CurrentWorld)
-	return err
+	if err != nil {
+		return err
+	}
+	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller, kpr.CurrentWorld, kpr.pathActionsGob())
+	return nil
 }
 
 func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.MainChain, syncErrors chan<- error) error {
@@ -288,6 +291,11 @@ func (kpr *Keyper) Run() error {
 	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
 	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
 	kpr.runenv.StartBackgroundTasks(ctx, g)
+	err = kpr.runenv.Load()
+	if err != nil {
+		return err
+	}
+
 	if len(kpr.State.Actions) > 0 {
 		kpr.runActions(ctx)
 	}
@@ -324,12 +332,16 @@ type storedState struct {
 	Actions   []fx.IAction
 }
 
-func (kpr *Keyper) gobpath() string {
+func (kpr *Keyper) pathStateGob() string {
 	return filepath.Join(kpr.Config.DBDir, "state.gob")
 }
 
+func (kpr *Keyper) pathActionsGob() string {
+	return filepath.Join(kpr.Config.DBDir, "actions.gob")
+}
+
 func (kpr *Keyper) LoadState() error {
-	gobpath := kpr.gobpath()
+	gobpath := kpr.pathStateGob()
 
 	gobfile, err := os.Open(gobpath)
 	if os.IsNotExist(err) {
@@ -350,14 +362,11 @@ func (kpr *Keyper) LoadState() error {
 	kpr.Shutter = st.Shutter
 	kpr.MainChain = st.MainChain
 
-	// We don't store the pending actions, so for the moment it's better to reset the
-	// PendingHalfStep. XXX
-	kpr.State.PendingHalfStep = nil
 	return nil
 }
 
 func (kpr *Keyper) saveState() error {
-	gobpath := kpr.gobpath()
+	gobpath := kpr.pathStateGob()
 	tmppath := gobpath + ".tmp"
 	file, err := os.Create(tmppath)
 	if err != nil {
