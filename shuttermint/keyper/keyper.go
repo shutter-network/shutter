@@ -30,7 +30,7 @@ import (
 
 const (
 	// mainChainTimeout is the time after which we assume the connection to the main chain
-	// node is lost if no new block is received
+	// node is lost if no new block is received.
 	mainChainTimeout           = 30 * time.Second
 	mainChainReconnectInterval = 5 * time.Second // time between two reconnection attempts
 	shuttermintTimeout         = 10 * time.Second

@@ -8,7 +8,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// KeyperIndex returns the index of the keyper identified by the given address
+// KeyperIndex returns the index of the keyper identified by the given address.
 func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	for i, k := range bc.Keypers {
 		if k == address {
@@ -18,13 +18,13 @@ func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	return 0, false
 }
 
-// IsKeyper checks if the given address is a keyper
+// IsKeyper checks if the given address is a keyper.
 func (bc *BatchConfig) IsKeyper(candidate common.Address) bool {
 	_, ok := bc.KeyperIndex(candidate)
 	return ok
 }
 
-// EnsureValid checks if the BatchConfig is valid and returns an error if it's not valid
+// EnsureValid checks if the BatchConfig is valid and returns an error if it's not valid.
 func (bc *BatchConfig) EnsureValid() error {
 	if len(bc.Keypers) == 0 {
 		return errors.Errorf("no keypers in batch config")
@@ -39,7 +39,7 @@ func (bc *BatchConfig) EnsureValid() error {
 	return nil
 }
 
-// BatchConfigFromMessage extracts the batch config received in a message
+// BatchConfigFromMessage extracts the batch config received in a message.
 func BatchConfigFromMessage(m *shmsg.BatchConfig) (BatchConfig, error) {
 	var keypers []common.Address
 	for _, b := range m.Keypers {

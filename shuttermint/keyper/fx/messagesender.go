@@ -41,7 +41,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano()) // Seed the PRNG we use for random nonces
 }
 
-// NewRPCMessageSender creates a new RPCMessageSender
+// NewRPCMessageSender creates a new RPCMessageSender.
 func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMessageSender {
 	return RPCMessageSender{
 		rpcclient:  cl,
@@ -50,7 +50,7 @@ func NewRPCMessageSender(cl client.Client, signingKey *ecdsa.PrivateKey) RPCMess
 	}
 }
 
-// SendMessage signs the given shmsg.Message and sends the message to shuttermint
+// SendMessage signs the given shmsg.Message and sends the message to shuttermint.
 func (ms *RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message) error {
 	if err := ms.maybeFetchChainID(ctx); err != nil {
 		return err

@@ -12,7 +12,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
-// KeyperIndex returns the index of the keyper identified by the given address
+// KeyperIndex returns the index of the keyper identified by the given address.
 func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	for i, k := range bc.Keypers {
 		if k == address {
@@ -22,13 +22,13 @@ func (bc *BatchConfig) KeyperIndex(address common.Address) (uint64, bool) {
 	return 0, false
 }
 
-// IsKeyper returns true if the given address is part of the keyper set, otherwise false
+// IsKeyper returns true if the given address is part of the keyper set, otherwise false.
 func (bc *BatchConfig) IsKeyper(address common.Address) bool {
 	_, isKeyper := bc.KeyperIndex(address)
 	return isKeyper
 }
 
-// IsActive checks if the config is active, i.e. the batch span is non-zero
+// IsActive checks if the config is active, i.e. the batch span is non-zero.
 func (bc *BatchConfig) IsActive() bool {
 	return bc.BatchSpan > 0
 }
@@ -91,7 +91,7 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 	}
 }
 
-// GetConfigKeypers queries the list of keypers defined in the config given by its index
+// GetConfigKeypers queries the list of keypers defined in the config given by its index.
 func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint64) ([]common.Address, error) {
 	var keypers []common.Address
 
@@ -111,7 +111,7 @@ func (cc *ConfigContract) GetConfigKeypers(opts *bind.CallOpts, configIndex uint
 	return keypers, nil
 }
 
-// GetNextConfigKeypers queries the list of keypers set for the next config to be scheduled
+// GetNextConfigKeypers queries the list of keypers set for the next config to be scheduled.
 func (cc *ConfigContract) GetNextConfigKeypers(opts *bind.CallOpts) ([]common.Address, error) {
 	var keypers []common.Address
 
@@ -131,7 +131,7 @@ func (cc *ConfigContract) GetNextConfigKeypers(opts *bind.CallOpts) ([]common.Ad
 	return keypers, nil
 }
 
-// GetConfigByIndex queries the batch config by its index (not the batch index, but the config index)
+// GetConfigByIndex queries the batch config by its index (not the batch index, but the config index).
 func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint64) (BatchConfig, error) {
 	config, err := cc.Configs(opts, big.NewInt(0).SetUint64(configIndex))
 	if err != nil {

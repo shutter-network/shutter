@@ -6,7 +6,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-// MaxTxsPerBlock is the maximum number of txs by a single sender per block
+// MaxTxsPerBlock is the maximum number of txs by a single sender per block.
 const MaxTxsPerBlock = 10
 
 // NewCheckTxState returns a new check tx state.

@@ -39,14 +39,14 @@ type Result struct {
 // XXX All of the messages here carry the Eon field, which we could also remove. It's not needed
 // here.
 
-// PolyCommitmentMsg is broadcast to all keypers
+// PolyCommitmentMsg is broadcast to all keypers.
 type PolyCommitmentMsg struct {
 	Eon    uint64
 	Sender KeyperIndex
 	Gammas *shcrypto.Gammas
 }
 
-// PolyEvalMsg is sent over a secure channel to a single receiver
+// PolyEvalMsg is sent over a secure channel to a single receiver.
 type PolyEvalMsg struct {
 	Eon      uint64
 	Sender   KeyperIndex
@@ -54,13 +54,13 @@ type PolyEvalMsg struct {
 	Eval     *big.Int
 }
 
-// AccusationMsg is broadcast, Accuser is the sender
+// AccusationMsg is broadcast, Accuser is the sender.
 type AccusationMsg struct {
 	Eon              uint64
 	Accuser, Accused KeyperIndex
 }
 
-// ApologyMsg is broadcast, Accused is the sender
+// ApologyMsg is broadcast, Accused is the sender.
 type ApologyMsg struct {
 	Eon              uint64
 	Accuser, Accused KeyperIndex
@@ -71,7 +71,7 @@ type accusationKey struct {
 	Accuser, Accused KeyperIndex
 }
 
-// PureDKG implements the distributed key generation process for a single keyper
+// PureDKG implements the distributed key generation process for a single keyper.
 type PureDKG struct {
 	Phase       Phase
 	Eon         uint64
@@ -210,7 +210,7 @@ func (pure *PureDKG) Finalize() {
 	pure.setPhase(Finalized)
 }
 
-// ShortInfo returns a short string to be used in log output, which describes the current state of the DKG
+// ShortInfo returns a short string to be used in log output, which describes the current state of the DKG.
 func (pure *PureDKG) ShortInfo() string {
 	var numCommitments, numCorrupt, numAccusations, numApologies int
 	numAccusations = len(pure.Accusations)
@@ -340,7 +340,7 @@ func (pure *PureDKG) polyEval(dealer KeyperIndex) *big.Int {
 	return pure.Evals[dealer]
 }
 
-// HandlePolyCommitmentMsg
+// HandlePolyCommitmentMsg handles a PolyCommitmentMsg.
 func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 	if err := pure.checkEonAndPhase(msg.Eon, Dealing); err != nil {
 		return err
@@ -360,7 +360,7 @@ func (pure *PureDKG) HandlePolyCommitmentMsg(msg PolyCommitmentMsg) error {
 	return nil
 }
 
-// HandlePolyEvalMsg
+// HandlePolyEvalMsg handles a PolyEvalMsg.
 func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
 	if err := pure.checkEonAndPhase(msg.Eon, Dealing); err != nil {
 		return err
@@ -379,7 +379,7 @@ func (pure *PureDKG) HandlePolyEvalMsg(msg PolyEvalMsg) error {
 	return nil
 }
 
-// HandleAccusationMsg
+// HandleAccusationMsg handles an AccusationMsg.
 func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
 	if err := pure.checkEonAndPhase(msg.Eon, Accusing); err != nil {
 		return err
@@ -393,7 +393,7 @@ func (pure *PureDKG) HandleAccusationMsg(msg AccusationMsg) error {
 	return nil
 }
 
-// HandleApologyMsg
+// HandleApologyMsg handles an ApologyMsg.
 func (pure *PureDKG) HandleApologyMsg(msg ApologyMsg) error {
 	if err := pure.checkEonAndPhase(msg.Eon, Apologizing); err != nil {
 		return err

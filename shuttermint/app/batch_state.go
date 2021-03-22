@@ -2,7 +2,7 @@ package app
 
 import "github.com/pkg/errors"
 
-// AddDecryptionSignature adds a decryption signature to the batch
+// AddDecryptionSignature adds a decryption signature to the batch.
 func (bs *BatchState) AddDecryptionSignature(ds DecryptionSignature) error {
 	if !bs.Config.IsKeyper(ds.Sender) {
 		return errors.Errorf("sender %s is not a keyper", ds.Sender.Hex())

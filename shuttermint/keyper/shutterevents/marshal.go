@@ -29,7 +29,7 @@ func decodeUint64(val []byte) (uint64, error) {
 	return v, nil
 }
 
-// encodeAddresses encodes the given slice of Addresses as comma-separated list of addresses
+// encodeAddresses encodes the given slice of Addresses as comma-separated list of addresses.
 func encodeAddresses(addr []common.Address) []byte {
 	var hexstrings []string
 	for _, a := range addr {
@@ -82,7 +82,7 @@ func decodeEpochSecretKeyShare(v []byte) (*shcrypto.EpochSecretKeyShare, error) 
 	return share, nil
 }
 
-// encodeByteSequence encodes a slice o byte strings as a comma separated string
+// encodeByteSequence encodes a slice o byte strings as a comma separated string.
 func encodeByteSequence(v [][]byte) []byte {
 	var hexstrings []string
 	for _, a := range v {
@@ -109,12 +109,12 @@ func decodeByteSequence(val []byte) ([][]byte, error) {
 }
 
 // encodePubkey encodes the PublicKey as a string suitable for putting it into a tendermint
-// event, i.e. an utf-8 compatible string
+// event, i.e. an utf-8 compatible string.
 func encodePubkey(pubkey *ecdsa.PublicKey) []byte {
 	return []byte(base64.RawURLEncoding.EncodeToString(ethcrypto.FromECDSAPub(pubkey)))
 }
 
-// decodePubkey decodes a public key from a tendermint event
+// decodePubkey decodes a public key from a tendermint event.
 func decodePubkey(val []byte) (*ecdsa.PublicKey, error) {
 	data, err := base64.RawURLEncoding.DecodeString(string(val))
 	if err != nil {

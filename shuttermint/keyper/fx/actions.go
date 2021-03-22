@@ -21,7 +21,7 @@ type IAction interface {
 	IsExpired(world observe.World) bool
 }
 
-// MainChainTX is an action that sends a transaction to the main chain
+// MainChainTX is an action that sends a transaction to the main chain.
 type MainChainTX interface {
 	IAction
 	SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error)
@@ -51,7 +51,7 @@ func init() {
 	}
 }
 
-// SendShuttermintMessage is an Action that sends a message to shuttermint
+// SendShuttermintMessage is an Action that sends a message to shuttermint.
 type SendShuttermintMessage struct {
 	Description string
 	Msg         *shmsg.Message
@@ -107,7 +107,7 @@ func (a ExecutePlainBatch) IsExpired(world observe.World) bool {
 	return world.MainChain.NumExecutionHalfSteps > halfStep
 }
 
-// SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch
+// SkipCipherBatch is an Action that instructs the executor contract to skip a cipher batch.
 type SkipCipherBatch struct {
 	BatchIndex uint64
 }

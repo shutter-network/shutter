@@ -13,7 +13,7 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:     "shuttermint",
 	Short:   "A collection of commands to run and interact with Shutter keyper nodes",

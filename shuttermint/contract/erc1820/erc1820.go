@@ -25,17 +25,17 @@ const (
 	deployerAmountInt    = 80000000000000000 // 0.08 ETH
 )
 
-// DeploymentTransaction is the transaction deploying the ERC1820 contract
+// DeploymentTransaction is the transaction deploying the ERC1820 contract.
 var DeploymentTransaction *types.Transaction
 
-// DeployerAddress is the sender address of the ERC1820 deployment transaction
+// DeployerAddress is the sender address of the ERC1820 deployment transaction.
 var DeployerAddress common.Address
 
 // DeployerAmount is the amount the ERC1820 deployer is expected to be funded with before
 // the deployment transaction is sent.
 var DeployerAmount *big.Int
 
-// ContractAddress is the address of the deployed ERC1820 contract
+// ContractAddress is the address of the deployed ERC1820 contract.
 var ContractAddress common.Address
 
 func init() {
@@ -84,7 +84,7 @@ func NewFundingTransaction(ctx context.Context, client *ethclient.Client, key *e
 	return types.SignTx(unsignedTx, signer, key)
 }
 
-// IsDeployed checks if the ERC1820 contract is deployed
+// IsDeployed checks if the ERC1820 contract is deployed.
 func IsDeployed(ctx context.Context, client *ethclient.Client) (bool, error) {
 	code, err := client.CodeAt(ctx, ContractAddress, nil)
 	if err != nil {

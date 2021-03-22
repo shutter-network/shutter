@@ -64,7 +64,7 @@ type Accusation struct {
 	BlockNumber uint64
 }
 
-// NewMainChain creates an empty MainChain struct
+// NewMainChain creates an empty MainChain struct.
 func NewMainChain(followDistance uint64) *MainChain {
 	return &MainChain{
 		FollowDistance: followDistance,
@@ -94,7 +94,7 @@ func (mainchain *MainChain) IsActiveKeyper(addr common.Address) bool {
 	return false
 }
 
-// ActiveConfigIndex returns the index of the config that is active for the given block number
+// ActiveConfigIndex returns the index of the config that is active for the given block number.
 func (mainchain *MainChain) ActiveConfigIndex(blocknum uint64) int {
 	for i := len(mainchain.BatchConfigs) - 1; i >= 0; i-- {
 		if mainchain.BatchConfigs[i].StartBlockNumber <= blocknum {

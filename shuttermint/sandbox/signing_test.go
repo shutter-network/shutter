@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// TestSigning shows how to sign messages and check signatures
+// TestSigning shows how to sign messages and check signatures.
 func TestSigning(t *testing.T) {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {

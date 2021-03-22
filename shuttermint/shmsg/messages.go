@@ -10,7 +10,7 @@ import (
 	shcrypto "github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
-// NewBatchtchConfig creates a new BatchConfig message
+// NewBatchtchConfig creates a new BatchConfig message.
 func NewBatchConfig(
 	startBatchIndex uint64,
 	keypers []common.Address,
@@ -141,7 +141,7 @@ func NewEonStartVote(startBatchIndex uint64) *Message {
 	}
 }
 
-// NewBatchConfigStarted creates a new BatchConfigStarted message
+// NewBatchConfigStarted creates a new BatchConfigStarted message.
 func NewBatchConfigStarted(configIndex uint64) *Message {
 	return &Message{
 		Payload: &Message_BatchConfigStarted{
@@ -152,7 +152,7 @@ func NewBatchConfigStarted(configIndex uint64) *Message {
 	}
 }
 
-// NewCheckIn creates a new CheckIn message
+// NewCheckIn creates a new CheckIn message.
 func NewCheckIn(validatorPublicKey []byte, encryptionKey *ecies.PublicKey) *Message {
 	encryptionKeyECDSA := encryptionKey.ExportECDSA()
 	return &Message{

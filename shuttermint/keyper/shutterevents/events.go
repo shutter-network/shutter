@@ -194,7 +194,7 @@ func (bc BatchConfig) MakeABCIEvent() abcitypes.Event {
 }
 
 // makeBatchConfig creates a BatchConfigEvent from the given tendermint event of type
-// "shutter.batch-config"
+// "shutter.batch-config".
 func makeBatchConfig(ev abcitypes.Event, height int64) (*BatchConfig, error) {
 	err := expectAttributes(ev, "StartBatchIndex", "Threshold", "Keypers", "ConfigIndex")
 	if err != nil {
@@ -248,7 +248,7 @@ func (msg CheckIn) MakeABCIEvent() abcitypes.Event {
 	}
 }
 
-// makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in"
+// makeCheckIn creates a CheckInEvent from the given tendermint event of type "shutter.check-in".
 func makeCheckIn(ev abcitypes.Event, height int64) (*CheckIn, error) {
 	err := expectAttributes(ev, "Sender", "EncryptionPublicKey")
 	if err != nil {
@@ -510,7 +510,7 @@ func makeEpochSecretKeyShare(ev abcitypes.Event, height int64) (*EpochSecretKeyS
 	}, nil
 }
 
-// IEvent is an interface for the event types declared above
+// IEvent is an interface for the event types declared above.
 type IEvent interface {
 	MakeABCIEvent() abcitypes.Event
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// NewVoting creates a new Voting struct
+// NewVoting creates a new Voting struct.
 func NewVoting() Voting {
 	return Voting{
 		Votes: make(map[common.Address]int),

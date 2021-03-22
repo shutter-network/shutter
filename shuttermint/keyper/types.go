@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 )
 
-// KeyperConfig contains validated configuration parameters for the keyper client
+// KeyperConfig contains validated configuration parameters for the keyper client.
 type KeyperConfig struct {
 	ChainID                     string
 	ShuttermintURL              string

@@ -14,7 +14,7 @@ import (
 const selectorLength = 4
 
 // chksumAddr is used internally to serialize addresses as checksum addresses when writing JSON
-// files
+// files.
 type chksumAddr common.Address
 
 func (addr chksumAddr) MarshalJSON() ([]byte, error) {
@@ -60,7 +60,7 @@ type contractsJSON struct {
 	TargetContract        chksumAddr
 }
 
-// MarshalJSON makes us output checksum addresses when marshaling as json
+// MarshalJSON makes us output checksum addresses when marshaling as json.
 func (c ContractsJSON) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		contractsJSON{
@@ -96,7 +96,7 @@ func (c *ContractsJSON) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ConfigJSON represents a batch config in JSON format
+// ConfigJSON represents a batch config in JSON format.
 type ConfigJSON struct {
 	StartBatchIndex        uint64
 	StartBlockNumber       uint64

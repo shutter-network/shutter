@@ -27,12 +27,12 @@ import (
 )
 
 // maxParallelHalfSteps is the maximum number of txs to send at the same time to execute half
-// steps
+// steps.
 const maxParallelHalfSteps uint64 = 10
 
 type decryptfn func(encrypted []byte) ([]byte, error)
 
-// Batch is used to store local state about a single Batch
+// Batch is used to store local state about a single Batch.
 type Batch struct {
 	BatchIndex               uint64
 	DecryptionSignatureHash  []byte
@@ -41,7 +41,7 @@ type Batch struct {
 	SignatureCount           int // number of valid signatures
 }
 
-// VerifySignature checks if the sender signed the batches' DecryptionSignatureHash
+// VerifySignature checks if the sender signed the batches' DecryptionSignatureHash.
 func (batch *Batch) VerifySignature(sender common.Address, signature []byte) bool {
 	pubkey, err := crypto.SigToPub(batch.DecryptionSignatureHash, signature)
 	if err != nil {
@@ -78,7 +78,7 @@ func (dkg *DKG) ShortInfo() string {
 	return fmt.Sprintf("eon=%d, #keypers=%d, %s", dkg.Eon, len(dkg.Keypers), dkg.Pure.ShortInfo())
 }
 
-// newApology create a new shmsg apology message from the given puredkg apologies
+// newApology create a new shmsg apology message from the given puredkg apologies.
 func (dkg *DKG) newApology(apologies []puredkg.ApologyMsg) *shmsg.Message {
 	var accusers []common.Address
 	var polyEvals []*big.Int
@@ -90,7 +90,7 @@ func (dkg *DKG) newApology(apologies []puredkg.ApologyMsg) *shmsg.Message {
 	return shmsg.NewApology(dkg.Eon, accusers, polyEvals)
 }
 
-// newAccusation creates a new shmsg accusation message from the given puredkg accusations
+// newAccusation creates a new shmsg accusation message from the given puredkg accusations.
 func (dkg *DKG) newAccusation(accusations []puredkg.AccusationMsg) *shmsg.Message {
 	var accused []common.Address
 	for _, a := range accusations {
@@ -242,7 +242,7 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 	dkg.ApologiesIndex = len(eon.Apologies)
 }
 
-// State is the keyper's internal state
+// State is the keyper's internal state.
 type State struct {
 	CheckInMessageSent       bool
 	LastSentBatchConfigIndex uint64
@@ -261,7 +261,7 @@ type State struct {
 	Actions       []fx.IAction
 }
 
-// NewState creates an empty State object
+// NewState creates an empty State object.
 func NewState() *State {
 	return &State{
 		PendingAppeals: make(map[uint64]struct{}),
@@ -303,7 +303,7 @@ func (st *State) FindEKGByEon(eon uint64) (*EKG, error) {
 	return nil, pkgErrors.WithStack(errEKGNotFound)
 }
 
-// addAction stores the given IAction to be run later
+// addAction stores the given IAction to be run later.
 func (dcdr *Decider) addAction(a fx.IAction) {
 	if reflect.ValueOf(a).Kind() != reflect.Ptr {
 		panic("internal error: addAction: expected pointer")
@@ -318,7 +318,7 @@ func (dcdr *Decider) sendShuttermintMessage(description string, msg *shmsg.Messa
 	})
 }
 
-// shouldSendCheckIn returns true if we should send the CheckIn message
+// shouldSendCheckIn returns true if we should send the CheckIn message.
 func (dcdr *Decider) shouldSendCheckIn() bool {
 	if dcdr.State.CheckInMessageSent {
 		return false
@@ -400,7 +400,7 @@ func (dcdr *Decider) maybeStartDKG() {
 	}
 }
 
-// PhaseLength is used to store the accumulated lengths of the DKG phases
+// PhaseLength is used to store the accumulated lengths of the DKG phases.
 type PhaseLength struct {
 	Off         int64
 	Dealing     int64
@@ -660,7 +660,7 @@ func transactionsHash(txs [][]byte) []byte {
 
 // computeDecryptionSignatureHash computes a cryptographic hash over the encrypted transactions,
 // the decrypted transactions, the batcher contracts address and the batch index.
-// It's the same hash we compute in the KeyperSlasher.sol's verifyAuthorization
+// It's the same hash we compute in the KeyperSlasher.sol's verifyAuthorization.
 func (dcdr *Decider) computeDecryptionSignatureHash(batchIndex uint64, cipherBatchHash, batchHash []byte) []byte {
 	keccak := sha3.NewLegacyKeccak256()
 	if _, err := keccak.Write(hashPrefix); err != nil {
@@ -762,7 +762,7 @@ func (dcdr *Decider) publishEpochSecretKeyShares() {
 }
 
 // executionTimeoutReachedOrInactive checks if the execution timeout for the given batch has been reached or
-// if the config is inactive
+// if the config is inactive.
 func (dcdr *Decider) executionTimeoutReachedOrInactive(batchIndex uint64) bool {
 	config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
 	if !ok {

@@ -17,7 +17,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 )
 
-// RawKeyperConfig contains raw, unvalidated configuration parameters
+// RawKeyperConfig contains raw, unvalidated configuration parameters.
 type RawKeyperConfig struct {
 	ShuttermintURL          string
 	EthereumURL             string
@@ -36,7 +36,7 @@ type RawKeyperConfig struct {
 	DBDir                   string
 }
 
-// keyperCmd represents the keyper command
+// keyperCmd represents the keyper command.
 var keyperCmd = &cobra.Command{
 	Use:   "keyper",
 	Short: "Run a Shutter keyper node",

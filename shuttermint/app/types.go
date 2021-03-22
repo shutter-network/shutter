@@ -28,7 +28,7 @@ func NewGenesisAppState(keypers []common.Address, threshold int) GenesisAppState
 	return appState
 }
 
-// GetKeypers returns the keypers defined in the GenesisAppState
+// GetKeypers returns the keypers defined in the GenesisAppState.
 func (appState *GenesisAppState) GetKeypers() []common.Address {
 	var res []common.Address
 	for _, k := range appState.Keypers {
@@ -43,7 +43,7 @@ type Voting struct {
 }
 
 // ConfigVoting is used to let the keypers vote on new BatchConfigs to be added
-// Each keyper can vote exactly once
+// Each keyper can vote exactly once.
 type ConfigVoting struct {
 	Voting
 	Candidates []BatchConfig
@@ -61,7 +61,7 @@ type DecryptionSignature struct {
 	Signature []byte
 }
 
-// The BatchState structure is used to manage the key generation process for a certain batch
+// BatchState is used to manage the key generation process for a certain batch.
 type BatchState struct {
 	BatchIndex           uint64
 	Config               *BatchConfig
@@ -69,7 +69,7 @@ type BatchState struct {
 }
 
 // ValidatorPubkey holds the raw 32 byte ed25519 public key to be used as tendermint validator key
-// We use this is a map key, so don't use a byte slice
+// We use this is a map key, so don't use a byte slice.
 type ValidatorPubkey struct {
 	Ed25519pubkey string
 }
@@ -78,7 +78,7 @@ func (vp ValidatorPubkey) String() string {
 	return fmt.Sprintf("ed25519:%s", hex.EncodeToString([]byte(vp.Ed25519pubkey)))
 }
 
-// Powermap maps a ValidatorPubkey to the validators voting power
+// Powermap maps a ValidatorPubkey to the validators voting power.
 type Powermap map[ValidatorPubkey]int64
 
 // NewValidatorPubkey creates a new ValidatorPubkey from a 32 byte ed25519 raw pubkey. See

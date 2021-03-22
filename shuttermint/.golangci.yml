@@ -109,6 +109,7 @@ linters:
     - whitespace
     - maligned
     - thelper
+    - godot
 
   # don't enable:
   # - asciicheck

@@ -11,7 +11,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 )
 
-// encryptionPublicKey generates an EncryptionPublicKey
+// encryptionPublicKey generates an EncryptionPublicKey.
 func encryptionPublicKey(t *testing.T) *EncryptionPublicKey {
 	t.Helper()
 	privkey, err := crypto.GenerateKey()

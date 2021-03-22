@@ -24,7 +24,7 @@ func validateAddress(address []byte) (common.Address, error) {
 	return common.BytesToAddress(address), nil
 }
 
-// ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg
+// ParsePolyEvalMsg converts a shmsg.PolyEvalMsg to an app.PolyEvalMsg.
 func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, error) {
 	if len(msg.Receivers) != len(msg.EncryptedEvals) {
 		return nil, errors.Errorf("number of receivers %d does not match number of evals %d", len(msg.Receivers), len(msg.EncryptedEvals))
@@ -51,7 +51,7 @@ func ParsePolyEvalMsg(msg *shmsg.PolyEval, sender common.Address) (*PolyEval, er
 	}, nil
 }
 
-// ParsePolyCommitmentMsg converts a shmsg.PolyCommitmentMsg to an app.PolyCommitmentMsg
+// ParsePolyCommitmentMsg converts a shmsg.PolyCommitmentMsg to an app.PolyCommitmentMsg.
 func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*PolyCommitment, error) {
 	gammas := shcrypto.Gammas{}
 	for _, g := range msg.Gammas {
@@ -69,7 +69,7 @@ func ParsePolyCommitmentMsg(msg *shmsg.PolyCommitment, sender common.Address) (*
 	}, nil
 }
 
-// ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg
+// ParseAccusationMsg converts a shmsg.AccusationMsg to an app.AccusationMsg.
 func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusation, error) {
 	accused := []common.Address{}
 	for _, acc := range msg.Accused {
@@ -91,7 +91,7 @@ func ParseAccusationMsg(msg *shmsg.Accusation, sender common.Address) (*Accusati
 	}, nil
 }
 
-// ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg
+// ParseApologyMsg converts a shmsg.ApologyMsg to an app.ApologyMsg.
 func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error) {
 	if len(msg.Accusers) != len(msg.PolyEvals) {
 		return nil, errors.Errorf("number of accusers %d and apology evals %d not equal", len(msg.Accusers), len(msg.PolyEvals))
@@ -127,7 +127,7 @@ func ParseApologyMsg(msg *shmsg.Apology, sender common.Address) (*Apology, error
 	}, nil
 }
 
-// ParseEpochSecretKeyShareMsg converts a shmsg.EpochSecretKeyShareMsg to an app.EpochSecretShareMsg
+// ParseEpochSecretKeyShareMsg converts a shmsg.EpochSecretKeyShareMsg to an app.EpochSecretShareMsg.
 func ParseEpochSecretKeyShareMsg(msg *shmsg.EpochSecretKeyShare, sender common.Address) (*EpochSecretKeyShare, error) {
 	share := new(shcrypto.EpochSecretKeyShare)
 	err := share.GobDecode(msg.Share)

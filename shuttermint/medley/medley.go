@@ -21,7 +21,7 @@ const receiptPollInterval = 500 * time.Millisecond
 var errAddressNotFound = errors.New("address not found")
 
 // FindAddressIndex returns the index of the given address inside the slice of addresses or returns
-// an error, if the slice does not contain the given address
+// an error, if the slice does not contain the given address.
 func FindAddressIndex(addresses []common.Address, addr common.Address) (int, error) {
 	for i, a := range addresses {
 		if a == addr {
@@ -74,7 +74,7 @@ func WaitMinedMany(ctx context.Context, client *ethclient.Client, txHashes []com
 	return res, nil
 }
 
-// EnsureUniqueAddresses makes sure the slice of addresses doesn't contain duplicate addresses
+// EnsureUniqueAddresses makes sure the slice of addresses doesn't contain duplicate addresses.
 func EnsureUniqueAddresses(addrs []common.Address) error {
 	seen := make(map[common.Address]struct{})
 	for _, a := range addrs {
@@ -86,7 +86,7 @@ func EnsureUniqueAddresses(addrs []common.Address) error {
 	return nil
 }
 
-// DedupAddresses returns a new slice containing only unique addresses
+// DedupAddresses returns a new slice containing only unique addresses.
 func DedupAddresses(addrs []common.Address) []common.Address {
 	var res []common.Address
 	seen := make(map[common.Address]struct{})
@@ -102,7 +102,7 @@ func DedupAddresses(addrs []common.Address) []common.Address {
 	return res
 }
 
-// CloneWithGob clones the given object by serializing/deserializing with gob
+// CloneWithGob clones the given object by serializing/deserializing with gob.
 func CloneWithGob(src, dst interface{}) {
 	buff := bytes.Buffer{}
 	err := gob.NewEncoder(&buff).Encode(src)

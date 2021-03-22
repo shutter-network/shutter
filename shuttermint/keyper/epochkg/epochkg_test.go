@@ -69,7 +69,7 @@ func Results(t *testing.T) []*puredkg.Result {
 	return results
 }
 
-// TestEpochKG tests the happy case: everyone online and honest
+// TestEpochKG tests the happy case: everyone online and honest.
 func TestEpochKG(t *testing.T) {
 	results := Results(t)
 	var kgs []*EpochKG

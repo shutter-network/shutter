@@ -15,7 +15,7 @@ var (
 	zeroG2 *bn256.G2
 )
 
-// Polynomial represents a polynomial over Z_q
+// Polynomial represents a polynomial over Z_q.
 type Polynomial []*big.Int
 
 // Gammas is a sequence of G2 points based on a polynomial.

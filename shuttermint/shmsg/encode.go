@@ -16,7 +16,7 @@ import (
 // particular Ethereum transactions (c.f. EIP191 https://eips.ethereum.org/EIPS/eip-191).
 var hashPrefix = []byte{0x19, 's', 'h', 'm', 's', 'g'}
 
-// SignMessage signs the given Message with the given private key
+// SignMessage signs the given Message with the given private key.
 func SignMessage(msg proto.Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 	marshaled, err := proto.Marshal(msg)
 	if err != nil {
@@ -41,7 +41,7 @@ func SignMessage(msg proto.Message, privkey *ecdsa.PrivateKey) ([]byte, error) {
 	return append(signature, marshaled...), nil
 }
 
-// GetSigner returns the signer address of a signed message
+// GetSigner returns the signer address of a signed message.
 func GetSigner(signedMessage []byte) (common.Address, error) {
 	var signer common.Address
 	if len(signedMessage) < crypto.SignatureLength {
@@ -66,7 +66,7 @@ func GetSigner(signedMessage []byte) (common.Address, error) {
 	return signer, nil
 }
 
-// GetMessage returns the unmarshalled Message of a signed message
+// GetMessage returns the unmarshalled Message of a signed message.
 func GetMessage(signedMessage []byte) (*MessageWithNonce, error) {
 	msg := MessageWithNonce{}
 	if err := proto.Unmarshal(signedMessage[crypto.SignatureLength:], &msg); err != nil {

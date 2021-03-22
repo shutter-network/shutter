@@ -27,11 +27,11 @@ var (
 	// The variable is declared here, because we do not want to persist it as part of the
 	// application. The same could be said about the Gobpath field though, which we persist as
 	// part of the application.
-	// If we set this to zero, the state will get saved on every call to Commit
+	// If we set this to zero, the state will get saved on every call to Commit.
 	PersistMinDuration time.Duration = 30 * time.Second
 
 	// NonExistentValidator is an artificial key used to replace the voting power of validators
-	// that haven't sent their CheckIn message yet
+	// that haven't sent their CheckIn message yet.
 	NonExistentValidator ValidatorPubkey
 )
 
@@ -69,7 +69,7 @@ func (app *ShutterApp) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseC
 	return abcitypes.ResponseCheckTx{Code: 0, GasWanted: 1}
 }
 
-// NewShutterApp creates a new ShutterApp
+// NewShutterApp creates a new ShutterApp.
 func NewShutterApp() *ShutterApp {
 	return &ShutterApp{
 		Configs:         []*BatchConfig{{}},
@@ -85,7 +85,7 @@ func NewShutterApp() *ShutterApp {
 	}
 }
 
-// LoadShutterAppFromFile loads a shutter app from a file
+// LoadShutterAppFromFile loads a shutter app from a file.
 func LoadShutterAppFromFile(gobpath string) (ShutterApp, error) {
 	var shapp ShutterApp
 	gobfile, err := os.Open(gobpath)
@@ -109,7 +109,7 @@ func LoadShutterAppFromFile(gobpath string) (ShutterApp, error) {
 	return shapp, nil
 }
 
-// getConfig returns the BatchConfig for the given batchIndex
+// getConfig returns the BatchConfig for the given batchIndex.
 func (app *ShutterApp) getConfig(batchIndex uint64) *BatchConfig {
 	for i := len(app.Configs) - 1; i >= 0; i-- {
 		if app.Configs[i].StartBatchIndex <= batchIndex {
@@ -166,7 +166,7 @@ func (app *ShutterApp) updateCheckTxMembers() {
 	app.CheckTxState.SetMembers(members)
 }
 
-// getBatchState returns the BatchState for the given batchIndex
+// getBatchState returns the BatchState for the given batchIndex.
 func (app *ShutterApp) getBatchState(batchIndex uint64) BatchState {
 	bs, ok := app.BatchStates[batchIndex]
 	if !ok {
@@ -383,7 +383,7 @@ func (app *ShutterApp) deliverBatchConfig(msg *shmsg.BatchConfig, sender common.
 	}
 }
 
-// isKeyper checks if the given address is a keyper in any config (current and previous ones)
+// isKeyper checks if the given address is a keyper in any config (current and previous ones).
 func (app *ShutterApp) isKeyper(a common.Address) bool {
 	for _, cfg := range app.Configs {
 		_, ok := cfg.KeyperIndex(a)
@@ -694,7 +694,7 @@ func (app *ShutterApp) deliverMessage(msg *shmsg.Message, sender common.Address)
 }
 
 // ShouldStartDKG checks if the DKG should be started, because the threshold or the list of keypers
-// changed
+// changed.
 func (app *ShutterApp) ShouldStartDKG(config BatchConfig) bool {
 	dkg := app.DKGMap[app.EONCounter]
 	if dkg == nil {
@@ -723,7 +723,7 @@ func (app *ShutterApp) LastConfig() *BatchConfig {
 }
 
 // makePowermap creates a power map for the given slice of keypers. The voting power of each keyper
-// that hasn't registered yet, is given to the NonExistentValidator key
+// that hasn't registered yet, is given to the NonExistentValidator key.
 func (app *ShutterApp) makePowermap(keypers []common.Address) Powermap {
 	pm := make(Powermap)
 	for _, k := range keypers {
@@ -747,7 +747,7 @@ func (app *ShutterApp) CurrentValidators() Powermap {
 	return app.Validators
 }
 
-// countCheckedInKeypers counts the number of keypers that have already checked in in the given slice
+// countCheckedInKeypers counts the number of keypers that have already checked in in the given slice.
 func (app *ShutterApp) countCheckedInKeypers(keypers []common.Address) uint64 {
 	var numCheckedIn uint64
 	for _, k := range keypers {

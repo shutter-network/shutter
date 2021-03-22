@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// NewConfigVoting creates a ConfigVoting struct
+// NewConfigVoting creates a ConfigVoting struct.
 func NewConfigVoting() ConfigVoting {
 	return ConfigVoting{
 		Voting:     NewVoting(),

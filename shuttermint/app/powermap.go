@@ -9,7 +9,7 @@ import (
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
-// MakePowermap creates a new Powermap with voting powers as specified in validators
+// MakePowermap creates a new Powermap with voting powers as specified in validators.
 func MakePowermap(validators []abcitypes.ValidatorUpdate) (Powermap, error) {
 	res := make(Powermap)
 	for _, v := range validators {
@@ -27,7 +27,7 @@ func MakePowermap(validators []abcitypes.ValidatorUpdate) (Powermap, error) {
 }
 
 // SortValidators sorts a slice of ValidatorUpdates in a determistic way suitable for updating the
-// validators in tendermint
+// validators in tendermint.
 func SortValidators(validators []abcitypes.ValidatorUpdate) {
 	sort.Slice(validators, func(i, j int) bool {
 		return bytes.Compare(validators[i].PubKey.GetEd25519(), validators[j].PubKey.GetEd25519()) < 0
@@ -35,7 +35,7 @@ func SortValidators(validators []abcitypes.ValidatorUpdate) {
 }
 
 // DiffPowermaps computes the diff to be applied by tendermint to change the old validators into
-// the new validators
+// the new validators.
 func DiffPowermaps(oldpm, newpm Powermap) Powermap {
 	res := make(Powermap)
 
@@ -57,7 +57,7 @@ func DiffPowermaps(oldpm, newpm Powermap) Powermap {
 	return res
 }
 
-// ValidatorUpdates computes a deterministic slice of ValidatorUpdate structs
+// ValidatorUpdates computes a deterministic slice of ValidatorUpdate structs.
 func (pm Powermap) ValidatorUpdates() []abcitypes.ValidatorUpdate {
 	var res []abcitypes.ValidatorUpdate
 	for k, p := range pm {
