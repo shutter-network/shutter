@@ -1,6 +1,6 @@
 <template>
   <section class="section content">
-    <h1 class="title">Executed Transactions</h1>
+    <h1 class="title">Recently Executed Transactions</h1>
     <table class="table">
       <thead>
         <tr>
