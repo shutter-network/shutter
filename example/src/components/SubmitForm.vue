@@ -61,6 +61,9 @@ import {
 } from "../utils.js";
 import { getBlockNumber } from "../blocknumber.js";
 
+// number of blocks between sending the tx and it being included in the chain
+const expectedInclusionDelay = 3;
+
 export default {
   name: "SubmitForm",
   props: ["config", "eonKey"],
@@ -131,8 +134,11 @@ export default {
         this.privateKey
       );
 
-      let blockNumber = await this.waitForGoodBlock();
-      let batchIndex = getBatchIndexAtBlock(blockNumber + 1, this.config);
+      let blockNumber = await getBlockNumber(this.$provider);
+      let batchIndex = getBatchIndexAtBlock(
+        blockNumber + expectedInclusionDelay,
+        this.config
+      );
 
       if (type == 0) {
         encodedMessage = await encryptMessage(
@@ -158,24 +164,6 @@ export default {
         "in block",
         blockNumber.toString()
       );
-    },
-
-    async waitForGoodBlock() {
-      for (;;) {
-        const blockNumber = await getBlockNumber(this.$provider);
-        const batchIndexNow = getBatchIndexAtBlock(
-          blockNumber + 1,
-          this.config
-        );
-        const batchIndexSoon = getBatchIndexAtBlock(
-          blockNumber + 2,
-          this.config
-        );
-        if (batchIndexNow.eq(batchIndexSoon)) {
-          return blockNumber;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
     },
   },
 };
