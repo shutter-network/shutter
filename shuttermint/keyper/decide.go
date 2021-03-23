@@ -282,11 +282,12 @@ type Decider struct {
 }
 
 func NewDecider(kpr *Keyper) Decider {
+	world := kpr.CurrentWorld()
 	return Decider{
 		Config:      kpr.Config,
 		State:       kpr.State,
-		Shutter:     kpr.Shutter,
-		MainChain:   kpr.MainChain,
+		Shutter:     world.Shutter,
+		MainChain:   world.MainChain,
 		Actions:     []fx.IAction{},
 		PhaseLength: NewConstantPhaseLength(int64(kpr.Config.DKGPhaseLength)),
 	}

@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -39,24 +40,28 @@ func (c *KeyperConfig) Address() common.Address {
 }
 
 type Keyper struct {
-	Config    KeyperConfig
-	State     *State
-	Shutter   *observe.Shutter
-	MainChain *observe.MainChain
+	Config KeyperConfig
+	State  *State
 
 	ContractCaller contract.Caller
 	shmcl          client.Client
 	MessageSender  fx.MessageSender
 	lastlogTime    time.Time
 	runenv         *fx.RunEnv
+	world          atomic.Value // holds an observe.World struct
 }
 
 func NewKeyper(kc KeyperConfig) Keyper {
-	return Keyper{
-		Config:    kc,
-		State:     NewState(),
+	world := atomic.Value{}
+	world.Store(observe.World{
 		Shutter:   observe.NewShutter(),
 		MainChain: observe.NewMainChain(kc.MainChainFollowDistance),
+	})
+
+	return Keyper{
+		Config: kc,
+		State:  NewState(),
+		world:  world,
 	}
 }
 
@@ -136,29 +141,32 @@ func (kpr *Keyper) ShortInfo() string {
 	for _, dkg := range kpr.State.DKGs {
 		dkgInfo = append(dkgInfo, dkg.ShortInfo())
 	}
+	world := kpr.CurrentWorld()
 	return fmt.Sprintf(
 		"shutter block %d, main chain %d, last eon started %d, num half steps: %d, DKGs: %s",
-		kpr.Shutter.CurrentBlock,
-		kpr.MainChain.CurrentBlock,
+		world.Shutter.CurrentBlock,
+		world.MainChain.CurrentBlock,
 		kpr.State.LastEonStarted,
-		kpr.MainChain.NumExecutionHalfSteps,
+		world.MainChain.NumExecutionHalfSteps,
 		strings.Join(dkgInfo, " - "),
 	)
 }
 
 func (kpr *Keyper) syncOnce(ctx context.Context) error {
-	newMain, err := kpr.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
+	world := kpr.CurrentWorld()
+
+	newMain, err := world.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
 	if err != nil {
 		return err
 	}
-	kpr.MainChain = newMain
+	world.MainChain = newMain
 
-	newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
+	newShutter, err := world.Shutter.SyncToHead(ctx, kpr.shmcl)
 	if err != nil {
 		return err
 	}
-	kpr.Shutter = newShutter
-
+	world.Shutter = newShutter
+	kpr.world.Store(world)
 	return nil
 }
 
@@ -182,10 +190,10 @@ func (kpr *Keyper) Run() error {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR1)
 	g.Go(func() error {
-		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.MainChain, mainChains, syncErrors)
+		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, mainChains, syncErrors)
 	})
 	g.Go(func() error {
-		return observe.SyncShutter(ctx, kpr.shmcl, kpr.Shutter, shutters, syncErrors)
+		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters, syncErrors)
 	})
 	kpr.runenv.StartBackgroundTasks(ctx, g)
 	err = kpr.runenv.Load()
@@ -201,14 +209,19 @@ func (kpr *Keyper) Run() error {
 		select {
 		case sig := <-signals:
 			log.Printf("Received %s. Dumping internal state", sig)
-			pretty.Println("Shutter:", kpr.Shutter)
-			pretty.Println("Mainchain:", kpr.MainChain)
+			world := kpr.CurrentWorld()
+			pretty.Println("Shutter:", world.Shutter)
+			pretty.Println("Mainchain:", world.MainChain)
 			pretty.Println("State:", kpr.State)
 		case mainChain := <-mainChains:
-			kpr.MainChain = mainChain
+			world := kpr.CurrentWorld()
+			world.MainChain = mainChain
+			kpr.world.Store(world)
 			kpr.runOneStep(ctx)
 		case shutter := <-shutters:
-			kpr.Shutter = shutter
+			world := kpr.CurrentWorld()
+			world.Shutter = shutter
+			kpr.world.Store(world)
 			kpr.runOneStep(ctx)
 		case err := <-syncErrors:
 			return err
@@ -219,7 +232,7 @@ func (kpr *Keyper) Run() error {
 }
 
 func (kpr *Keyper) CurrentWorld() observe.World {
-	return observe.World{Shutter: kpr.Shutter, MainChain: kpr.MainChain}
+	return kpr.world.Load().(observe.World)
 }
 
 type storedState struct {
@@ -256,8 +269,11 @@ func (kpr *Keyper) LoadState() error {
 		return err
 	}
 	kpr.State = st.State
-	kpr.Shutter = st.Shutter
-	kpr.MainChain = st.MainChain
+	world := observe.World{
+		Shutter:   st.Shutter,
+		MainChain: st.MainChain,
+	}
+	kpr.world.Store(world)
 
 	return nil
 }
@@ -270,10 +286,11 @@ func (kpr *Keyper) saveState() error {
 		return err
 	}
 	defer file.Close()
+	world := kpr.CurrentWorld()
 	st := storedState{
 		State:     kpr.State,
-		Shutter:   kpr.Shutter,
-		MainChain: kpr.MainChain,
+		Shutter:   world.Shutter,
+		MainChain: world.MainChain,
 	}
 	enc := gob.NewEncoder(file)
 	err = enc.Encode(st)
