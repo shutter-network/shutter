@@ -47,12 +47,12 @@ def test_add_tx_checks_batching_period_end(
 
     batcher_contract.addTransaction(0, 0, b"\x00")
     assert chain.height == config.start_block_number + 19
-    with brownie.reverts():
+    with brownie.reverts("BatcherContract: batch already ended"):
         batcher_contract.addTransaction(0, 0, b"\x00")
     batcher_contract.addTransaction(1, 0, b"\x00")
 
 
-def test_add_tx_checks_current_batch(
+def test_add_tx_checks_batching_period_start(
     batcher_contract: Any,
     config_contract: Any,
     config_change_heads_up_blocks: int,
@@ -67,10 +67,16 @@ def test_add_tx_checks_current_batch(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number, chain)
 
-    with brownie.reverts():
-        batcher_contract.addTransaction(1, 0, b"\x00")
+    batcher_contract.addTransaction(0, 0, b"\x00")
+    batcher_contract.addTransaction(1, 0, b"\x00")
+    with brownie.reverts("BatcherContract: batch not started yet"):
+        batcher_contract.addTransaction(2, 0, b"\x00")
+
     mine_until(config.start_block_number + config.batch_span, chain)
     batcher_contract.addTransaction(1, 0, b"\x00")
+    batcher_contract.addTransaction(2, 0, b"\x00")
+    with brownie.reverts("BatcherContract: batch not started yet"):
+        batcher_contract.addTransaction(3, 0, b"\x00")
 
 
 def test_add_tx_checks_tx_size(

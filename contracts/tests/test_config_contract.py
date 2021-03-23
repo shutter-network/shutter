@@ -2,11 +2,13 @@ from typing import Any
 
 import brownie
 from brownie.network.account import Account
+from brownie.network.state import Chain
 from web3 import Web3
 
 from tests.contract_helpers import fetch_config
 from tests.contract_helpers import fetch_config_by_index
 from tests.contract_helpers import fetch_next_config
+from tests.contract_helpers import mine_until
 from tests.contract_helpers import schedule_config
 from tests.contract_helpers import set_next_config
 from tests.contract_helpers import ZERO_CONFIG
@@ -146,6 +148,24 @@ def test_scheduling_must_happen_with_heads_up(
         block_number_at_schedule + config_change_heads_up_blocks + 1
     )
     config_contract.scheduleNextConfig({"from": owner})
+
+
+def test_scheduling_must_happen_with_batch_heads_up(
+    chain: Chain, config_contract: Any, config_change_heads_up_blocks: int, owner: Account
+) -> None:
+    config1 = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=100)
+    schedule_config(config_contract, config1, owner=owner)
+
+    config2 = make_batch_config(start_batch_index=2, start_block_number=700)
+    set_next_config(config_contract, config2, owner=owner)
+    mine_until(599, chain)
+    with brownie.reverts("ConfigContract: start block too early"):
+        config_contract.scheduleNextConfig({"from": owner})  # included in block 600
+
+    config3 = make_batch_config(start_batch_index=4, start_block_number=900)
+    set_next_config(config_contract, config3, owner=owner)
+    mine_until(798, chain)
+    config_contract.scheduleNextConfig({"from": owner})  # included in block 799
 
 
 def test_scheduling_emits_event(config_contract: Any, owner: Account) -> None:

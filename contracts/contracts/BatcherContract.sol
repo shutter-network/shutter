@@ -62,12 +62,18 @@ contract BatcherContract is Ownable {
         // check batching is active
         require(config.batchSpan > 0, "BatcherContract: batch not active");
 
-        // check given batch is current
+        // check given batch is open
         assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
         uint64 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
-        uint64 _batchStartBlock =
-            config.startBlockNumber + _relativeBatchIndex * config.batchSpan;
-        uint64 _batchEndBlock = _batchStartBlock + config.batchSpan;
+        uint64 _batchEndBlock =
+            config.startBlockNumber +
+                (_relativeBatchIndex + 1) *
+                config.batchSpan;
+        uint64 _batchStartBlock = _batchEndBlock - config.batchSpan;
+        if (_batchStartBlock >= config.batchSpan && _relativeBatchIndex >= 1) {
+            _batchStartBlock -= config.batchSpan;
+        }
+
         require(
             block.number >= _batchStartBlock,
             "BatcherContract: batch not started yet"

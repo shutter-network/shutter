@@ -128,11 +128,6 @@ contract ConfigContract is Ownable {
     }
 
     function nextConfigSetBatchSpan(uint64 _batchSpan) external onlyOwner {
-        // make sure the heads up is at least one batch
-        require(
-            _batchSpan < configChangeHeadsUpBlocks,
-            "ConfigContract: batch span not shorter than heads up"
-        );
         nextConfig.batchSpan = _batchSpan;
     }
 
@@ -222,11 +217,10 @@ contract ConfigContract is Ownable {
     //
 
     /// @notice Finalize the `nextConfig` object and add it to the end of the config sequence.
-    /// @notice `startBlockNumber` of the next config must be `configChangeHeadsUpBlocks`
-    ///     blocks in the future. Note that the batch spans are smaller than or equal to
-    ///     `configChangeHeadsUpBlocks`, so the heads up corresponds to at least one batch.
+    /// @notice `startBlockNumber` of the next config must be at least `configChangeHeadsUpBlocks`
+    ///     blocks or the batch span of the current config in the future, whatever is greater.
     /// @notice The transition between the next config and the config currently at the end of the
-    ///     config sequence must be seamless, i.e., there batches must not be cut short.
+    ///     config sequence must be seamless, i.e., the batches must not be cut short.
     function scheduleNextConfig() external onlyOwner {
         require(
             configs.length < type(uint64).max - 1,
@@ -234,12 +228,18 @@ contract ConfigContract is Ownable {
         );
         BatchConfig memory _config = configs[configs.length - 1];
 
+        // check start block is not too early
+        uint64 headsUp = configChangeHeadsUpBlocks;
+        if (_config.batchSpan > headsUp) {
+            headsUp = _config.batchSpan;
+        }
+        uint64 earliestStart = uint64(block.number) + headsUp + 1;
         require(
-            nextConfig.startBlockNumber >
-                block.number + configChangeHeadsUpBlocks,
+            nextConfig.startBlockNumber >= earliestStart,
             "ConfigContract: start block too early"
         );
 
+        // check transition is seamless
         if (_config.batchSpan > 0) {
             require(
                 nextConfig.startBatchIndex > _config.startBatchIndex,
