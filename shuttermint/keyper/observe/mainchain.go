@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -19,6 +20,10 @@ import (
 const (
 	// If the state hasn't been updated for more than this duration, we treat it as unsynced.
 	mainChainSyncedGracePeriod = 120 * time.Second
+	// mainChainTimeout is the time after which we assume the connection to the main chain
+	// node is lost if no new block is received.
+	mainChainTimeout           = 30 * time.Second
+	mainChainReconnectInterval = 5 * time.Second // time between two reconnection attempts
 )
 
 // MainChain let's a keyper fetch all necessary information from an ethereum node to do it's
@@ -424,4 +429,61 @@ func (batch *Batch) DecryptTransactions(key *shcrypto.EpochSecretKey) [][]byte {
 		res = append(res, decrypted)
 	}
 	return shcrypto.Shuffle(res, key)
+}
+
+// SyncMain subscribes to new blocks on the main chain and syncs the main chain object with the
+// head block in a loop. It writes newly synced main chain objects to the mainChains channel, as
+// well as errors to the syncErrors channel.
+func SyncMain(
+	ctx context.Context,
+	caller *contract.Caller,
+	mainChain *MainChain,
+	mainChains chan<- *MainChain,
+	syncErrors chan<- error) error {
+	headers := make(chan *types.Header)
+	sub, err := caller.Ethclient.SubscribeNewHead(ctx, headers)
+	if err != nil {
+		return err
+	}
+
+	reconnect := func() {
+		sub.Unsubscribe()
+		for {
+			log.Println("Attempting reconnection to main chain")
+			sub, err = caller.Ethclient.SubscribeNewHead(ctx, headers)
+			if err != nil {
+				select {
+				case <-time.After(mainChainReconnectInterval):
+					continue
+				case <-ctx.Done():
+					return
+				}
+			} else {
+				log.Println("Main chain connection regained")
+				return
+			}
+		}
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			sub.Unsubscribe()
+			return nil
+		case <-headers:
+			newMainChain, err := mainChain.SyncToHead(ctx, caller)
+			if err != nil {
+				syncErrors <- err
+			} else {
+				mainChains <- newMainChain
+				mainChain = newMainChain
+			}
+		case err := <-sub.Err():
+			log.Println("Main chain connection lost:", err)
+			reconnect()
+		case <-time.After(mainChainTimeout):
+			log.Println("No main chain blocks received in a long time")
+			reconnect()
+		}
+	}
 }

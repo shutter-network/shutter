@@ -9,6 +9,7 @@ import (
 	"log"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -21,6 +22,11 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
+)
+
+const (
+	shuttermintTimeout       = 10 * time.Second
+	shutterReconnectInterval = 5 * time.Second
 )
 
 var errEonNotFound = errors.New("eon not found")
@@ -380,4 +386,57 @@ func (shutter *Shutter) SyncToHeight(ctx context.Context, shmcl client.Client, h
 // IsSynced checks if the shuttermint node is synced with the network.
 func (shutter *Shutter) IsSynced() bool {
 	return shutter.NodeStatus == nil || !shutter.NodeStatus.SyncInfo.CatchingUp
+}
+
+// SyncShutter subscribes to new blocks and syncs the shutter object with the head block in a
+// loop. If writes newly synced shutter objects to the shutters channel, as well as errors to the
+// syncErrors channel.
+func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shutters chan<- *Shutter, syncErrors chan<- error) error {
+	name := "keyper"
+	query := "tm.event = 'NewBlock'"
+	events, err := shmcl.Subscribe(ctx, name, query)
+	if err != nil {
+		return err
+	}
+
+	reconnect := func() {
+		for {
+			log.Println("Attempting reconnection to Shuttermint")
+
+			ctx2, cancel2 := context.WithTimeout(ctx, shutterReconnectInterval)
+			events, err = shmcl.Subscribe(ctx2, name, query)
+			cancel2()
+
+			if err != nil {
+				// try again, unless context is canceled
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					continue
+				}
+			} else {
+				log.Println("Shuttermint connection regained")
+				return
+			}
+		}
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-events:
+			newShutter, err := shutter.SyncToHead(ctx, shmcl)
+			if err != nil {
+				syncErrors <- err
+			} else {
+				shutters <- newShutter
+				shutter = newShutter
+			}
+		case <-time.After(shuttermintTimeout):
+			log.Println("No Shuttermint blocks received in a long time")
+			reconnect()
+		}
+	}
 }

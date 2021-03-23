@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kr/pretty"
@@ -26,15 +25,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
-)
-
-const (
-	// mainChainTimeout is the time after which we assume the connection to the main chain
-	// node is lost if no new block is received.
-	mainChainTimeout           = 30 * time.Second
-	mainChainReconnectInterval = 5 * time.Second // time between two reconnection attempts
-	shuttermintTimeout         = 10 * time.Second
-	shutterReconnectInterval   = 5 * time.Second
 )
 
 // IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
@@ -141,103 +131,6 @@ func (kpr *Keyper) init() error {
 	return nil
 }
 
-func (kpr *Keyper) syncMain(ctx context.Context, mainChains chan<- *observe.MainChain, syncErrors chan<- error) error {
-	headers := make(chan *types.Header)
-	sub, err := kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
-	if err != nil {
-		return err
-	}
-
-	reconnect := func() {
-		sub.Unsubscribe()
-		for {
-			log.Println("Attempting reconnection to main chain")
-			sub, err = kpr.ContractCaller.Ethclient.SubscribeNewHead(ctx, headers)
-			if err != nil {
-				select {
-				case <-time.After(mainChainReconnectInterval):
-					continue
-				case <-ctx.Done():
-					return
-				}
-			} else {
-				log.Println("Main chain connection regained")
-				return
-			}
-		}
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			sub.Unsubscribe()
-			return nil
-		case <-headers:
-			newMainChain, err := kpr.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
-			if err != nil {
-				syncErrors <- err
-			} else {
-				mainChains <- newMainChain
-			}
-		case err := <-sub.Err():
-			log.Println("Main chain connection lost:", err)
-			reconnect()
-		case <-time.After(mainChainTimeout):
-			log.Println("No main chain blocks received in a long time")
-			reconnect()
-		}
-	}
-}
-
-func (kpr *Keyper) syncShutter(ctx context.Context, shutters chan<- *observe.Shutter, syncErrors chan<- error) error {
-	name := "keyper"
-	query := "tm.event = 'NewBlock'"
-	events, err := kpr.shmcl.Subscribe(ctx, name, query)
-	if err != nil {
-		return err
-	}
-
-	reconnect := func() {
-		for {
-			log.Println("Attempting reconnection to Shuttermint")
-
-			ctx2, cancel2 := context.WithTimeout(ctx, shutterReconnectInterval)
-			events, err = kpr.shmcl.Subscribe(ctx2, name, query)
-			cancel2()
-
-			if err != nil {
-				// try again, unless context is canceled
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					continue
-				}
-			} else {
-				log.Println("Shuttermint connection regained")
-				return
-			}
-		}
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-events:
-			newShutter, err := kpr.Shutter.SyncToHead(ctx, kpr.shmcl)
-			if err != nil {
-				syncErrors <- err
-			} else {
-				shutters <- newShutter
-			}
-		case <-time.After(shuttermintTimeout):
-			log.Println("No Shuttermint blocks received in a long time")
-			reconnect()
-		}
-	}
-}
-
 func (kpr *Keyper) ShortInfo() string {
 	var dkgInfo []string
 	for _, dkg := range kpr.State.DKGs {
@@ -288,8 +181,12 @@ func (kpr *Keyper) Run() error {
 	syncErrors := make(chan error)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR1)
-	g.Go(func() error { return kpr.syncMain(ctx, mainChains, syncErrors) })
-	g.Go(func() error { return kpr.syncShutter(ctx, shutters, syncErrors) })
+	g.Go(func() error {
+		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.MainChain, mainChains, syncErrors)
+	})
+	g.Go(func() error {
+		return observe.SyncShutter(ctx, kpr.shmcl, kpr.Shutter, shutters, syncErrors)
+	})
 	kpr.runenv.StartBackgroundTasks(ctx, g)
 	err = kpr.runenv.Load()
 	if err != nil {
