@@ -11,5 +11,9 @@ var version string = "(unknown)"
 
 // Version returns shuttermint's version string.
 func Version() string {
-	return fmt.Sprintf("%s (%s, %s-%s)", version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+	var raceinfo string
+	if raceDetectorEnabled {
+		raceinfo = ", race detector enabled"
+	}
+	return fmt.Sprintf("%s (%s, %s-%s%s)", version, runtime.Version(), runtime.GOOS, runtime.GOARCH, raceinfo)
 }
