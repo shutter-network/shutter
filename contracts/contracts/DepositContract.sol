@@ -58,12 +58,12 @@ contract DepositContract is IERC777Recipient {
     }
 
     function tokensReceived(
-        address operator,
+        address, // operator
         address from,
-        address to,
+        address, // to
         uint256 amount,
         bytes calldata userData,
-        bytes calldata operatorData
+        bytes calldata // operatorData
     ) external override {
         require(
             msg.sender == address(_token),
