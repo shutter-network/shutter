@@ -1,4 +1,4 @@
-// package medley provides some functions that may be useful in various parts of shutter
+// Package medley provides some functions that may be useful in various parts of shutter
 package medley
 
 import (
