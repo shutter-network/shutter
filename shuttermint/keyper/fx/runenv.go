@@ -83,7 +83,7 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 	}
 	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, hash)
 	if err != nil {
-		log.Printf("Error waiting for transaction %s: %v", hash.Hex(), err)
+		log.Printf("Error waiting for transaction id=%d, %s: %v", id, hash.Hex(), err)
 		return
 	}
 	if receipt == nil {
@@ -93,9 +93,9 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		world := runenv.CurrentWorld() // XXX we should make sure our world includes the receipt's blocknumber
 		expired := act.IsExpired(world)
-		log.Printf("TX reverted: expired=%t, %s, hash=%s", expired, act, hash.Hex())
+		log.Printf("TX reverted: id=%d, expired=%t, %s, hash=%s", id, expired, act, hash.Hex())
 	} else {
-		log.Printf("TX success: %s, hash=%s", act, hash.Hex())
+		log.Printf("TX success: id=%d, %s, hash=%s", id, act, hash.Hex())
 	}
 }
 
@@ -173,12 +173,12 @@ func (runenv *RunEnv) handleActions(ctx context.Context, actions chan ActionID) 
 
 			for {
 				if a.IsExpired(runenv.CurrentWorld()) {
-					log.Printf("Action expired: %s", a)
+					log.Printf("Action expired: id=%d, %s", id, a)
 					remove = true
 					break
 				}
 				if err != nil {
-					log.Printf("Retrying action %s; err=%s", a, err)
+					log.Printf("Retrying action id=%d, %s; err=%s", id, a, err)
 				}
 				remove, err = runenv.handleAction(ctx, id, a)
 				if err == nil {
