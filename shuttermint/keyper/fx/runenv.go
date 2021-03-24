@@ -47,8 +47,8 @@ func NewRunEnv(messageSender MessageSender, contractCaller *contract.Caller, cur
 	}
 }
 
-func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, act *SendShuttermintMessage) error {
-	log.Printf("=====%s", act)
+func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, id ActionID, act *SendShuttermintMessage) error {
+	log.Printf("=====%s, id=%d", act, id)
 	err := runenv.MessageSender.SendMessage(ctx, act.Msg)
 	return err
 }
@@ -73,9 +73,14 @@ func (runenv *RunEnv) sendMainChainTX(ctx context.Context, id ActionID, act Main
 	return nil
 }
 
+var zerohash = common.Hash{}
+
 func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 	act := runenv.PendingActions.GetAction(id)
 	hash := runenv.PendingActions.GetMainChainTXHash(id)
+	if hash == zerohash {
+		log.Fatalf("internal error: cannot wait for the zero hash, id=%d", id)
+	}
 	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, hash)
 	if err != nil {
 		log.Printf("Error waiting for transaction %s: %v", hash.Hex(), err)
@@ -114,9 +119,8 @@ func (runenv *RunEnv) scheduleAction(id ActionID) {
 	case *SendShuttermintMessage:
 		runenv.shuttermintMessages <- id
 	case MainChainTX:
-		nullhash := common.Hash{}
 		txhash := runenv.PendingActions.GetMainChainTXHash(id)
-		if txhash != nullhash {
+		if txhash != zerohash {
 			runenv.inFlightMainChainTXs <- id
 		} else {
 			runenv.mainChainTXs <- id
@@ -139,55 +143,52 @@ func (runenv *RunEnv) Load() error {
 	return nil
 }
 
-func (runenv *RunEnv) handleShuttermintMessages(ctx context.Context) {
-	for {
-		select {
-		case id := <-runenv.shuttermintMessages:
-			a := runenv.PendingActions.GetAction(id).(*SendShuttermintMessage)
-			var err error
-			for {
-				if a.IsExpired(runenv.CurrentWorld()) {
-					log.Printf("action expired: %s", a)
-					break
-				}
-				if err != nil {
-					log.Printf("retrying main chain tx %s; err=%s", a, err)
-				}
-				err = runenv.sendShuttermintMessage(ctx, a)
-				if err == nil {
-					break
-				}
-				time.Sleep(time.Second)
-			}
-			runenv.PendingActions.RemoveAction(id)
-		case <-ctx.Done():
-			return
+func (runenv *RunEnv) handleAction(ctx context.Context, id ActionID, action IAction) (bool, error) {
+	switch a := action.(type) {
+	case *SendShuttermintMessage:
+		err := runenv.sendShuttermintMessage(ctx, id, a)
+		if err != nil {
+			return false, err
 		}
+		return true, nil
+	case MainChainTX:
+		err := runenv.sendMainChainTX(ctx, id, a)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	default:
+		log.Fatalf("internal error: handleAction: cannot handle %s", action)
+		return false, nil
 	}
 }
 
-func (runenv *RunEnv) handleMainChainTXs(ctx context.Context) {
+func (runenv *RunEnv) handleActions(ctx context.Context, actions chan ActionID) {
 	for {
 		select {
-		case id := <-runenv.mainChainTXs:
-			a := runenv.PendingActions.GetAction(id).(MainChainTX)
+		case id := <-actions:
+			a := runenv.PendingActions.GetAction(id)
 			var err error
+			var remove bool
+
 			for {
 				if a.IsExpired(runenv.CurrentWorld()) {
-					log.Printf("action expired: %s", a)
-					runenv.PendingActions.RemoveAction(id)
+					log.Printf("Action expired: %s", a)
+					remove = true
 					break
 				}
 				if err != nil {
-					log.Printf("retrying main chain tx %s; err=%s", a, err)
+					log.Printf("Retrying action %s; err=%s", a, err)
 				}
-				err := runenv.sendMainChainTX(ctx, id, a)
+				remove, err = runenv.handleAction(ctx, id, a)
 				if err == nil {
 					break
 				}
 				time.Sleep(time.Second)
 			}
-
+			if remove {
+				runenv.PendingActions.RemoveAction(id)
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -213,15 +214,14 @@ func (runenv *RunEnv) CurrentWorld() observe.World {
 func (runenv *RunEnv) StartBackgroundTasks(ctx context.Context, g *errgroup.Group) {
 	// Start exactly one worker, because we like to make sure the actions are started in the
 	// order given to us
-	g.Go(func() error {
-		runenv.handleMainChainTXs(ctx)
-		return nil
-	})
+	for _, ch := range []chan ActionID{runenv.mainChainTXs, runenv.shuttermintMessages} {
+		ch := ch
+		g.Go(func() error {
+			runenv.handleActions(ctx, ch)
+			return nil
+		})
+	}
 
-	g.Go(func() error {
-		runenv.handleShuttermintMessages(ctx)
-		return nil
-	})
 	for i := 0; i < numMainChainWorkers; i++ {
 		g.Go(func() error {
 			runenv.handleInFlightTXs(ctx)
