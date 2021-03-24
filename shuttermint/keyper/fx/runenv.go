@@ -184,6 +184,11 @@ func (runenv *RunEnv) handleActions(ctx context.Context, actions chan ActionID) 
 				if err == nil {
 					break
 				}
+				if !IsRetriable(err) {
+					remove = true
+					log.Printf("Non-retriable error id=%d, %s; err=%s", id, a, err)
+					break
+				}
 				time.Sleep(time.Second)
 			}
 			if remove {

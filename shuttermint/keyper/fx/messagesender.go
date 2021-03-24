@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -13,6 +14,38 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
+
+// IRetriable is an error that knows if it makes sense to retry an action.
+type IRetriable interface {
+	error
+	IsRetriable() bool
+}
+
+// RemoteError is raised for shuttermint messages that return with a result code != 0, i.e. where
+// the shuttermint app generated an error.
+type RemoteError struct {
+	msg string
+}
+
+var _ IRetriable = &RemoteError{}
+
+// IsRetriable checks if we should retry an action that resulted in the given error.
+func IsRetriable(err error) bool {
+	switch e := err.(type) {
+	case IRetriable:
+		return e.IsRetriable()
+	default:
+		return true
+	}
+}
+
+func (remoteError *RemoteError) Error() string {
+	return fmt.Sprintf("remote error: %s", remoteError.msg)
+}
+
+func (remoteError *RemoteError) IsRetriable() bool {
+	return false
+}
 
 // MessageSender defines the interface of sending messages to shuttermint.
 type MessageSender interface {
@@ -67,7 +100,9 @@ func (ms *RPCMessageSender) SendMessage(ctx context.Context, msg *shmsg.Message)
 		return err
 	}
 	if res.DeliverTx.Code != 0 {
-		return errors.Errorf("remote error: %s", res.DeliverTx.Log)
+		return &RemoteError{
+			msg: res.DeliverTx.Log,
+		}
 	}
 	return nil
 }
