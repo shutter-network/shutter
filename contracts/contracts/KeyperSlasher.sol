@@ -36,11 +36,11 @@ contract KeyperSlasher {
     event Appealed(uint64 indexed halfStep, address indexed executor);
     event Slashed(uint64 indexed halfStep, address indexed executor);
 
-    ConfigContract configContract;
-    ExecutorContract executorContract;
-    DepositContract depositContract;
+    ConfigContract public configContract;
+    ExecutorContract public executorContract;
+    DepositContract public depositContract;
 
-    uint256 appealBlocks;
+    uint256 public appealBlocks;
 
     mapping(uint64 => Accusation) public accusations;
 
