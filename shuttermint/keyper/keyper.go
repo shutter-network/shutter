@@ -40,6 +40,10 @@ func (c *KeyperConfig) Address() common.Address {
 }
 
 type Keyper struct {
+	// Keep the atomic.Value as first field in order to make sure it's 64-bit aligned. Visit
+	// https://golang.org/pkg/sync/atomic/#pkg-note-BUG for more information
+	world atomic.Value // holds an observe.World struct
+
 	Config KeyperConfig
 	State  *State
 
@@ -48,7 +52,6 @@ type Keyper struct {
 	MessageSender  fx.MessageSender
 	lastlogTime    time.Time
 	runenv         *fx.RunEnv
-	world          atomic.Value // holds an observe.World struct
 }
 
 func NewKeyper(kc KeyperConfig) Keyper {
