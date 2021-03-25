@@ -44,7 +44,7 @@ clean:
 	rm -f ${BINDIR}/shuttermint ${BINDIR}/testclient ${BINDIR}/keyper ${BINDIR}/deploy ${BINDIR}/prepare
 
 install:
-	install -o root -g root -m 0555 ${BINDIR}/shuttermint ${PREFIX}/bin/shuttermint
+	install -o root -m 0555 ${BINDIR}/shuttermint ${PREFIX}/bin/shuttermint
 
 install-tools: install-abigen install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-stringer install-gci
 
