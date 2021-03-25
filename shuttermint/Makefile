@@ -2,6 +2,7 @@
 
 PREFIX ?= /usr/local
 GO ?= go
+GOFLAGS ?=
 SHROOT ?= $(CURDIR)
 TESTROOT=$(SHROOT)/testchain
 
@@ -11,10 +12,10 @@ OPENZEPPELIN_CONTRACTS_DIR=../contracts/openzeppelin
 build:
 	@VERSION=`git describe --tags --always --abbrev=4 --dirty`; \
 	echo "Building shuttermint $${VERSION}"; \
-	${GO} build -o bin -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=$${VERSION}" . ./sandbox/testclient ./sandbox/prepare
+	${GO} build ${GOFLAGS} -o bin -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=$${VERSION}" . ./sandbox/testclient ./sandbox/prepare
 
 wasm:
-	GOARCH=wasm GOOS=js ${GO} build -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
+	GOARCH=wasm GOOS=js ${GO} build ${GOFLAGS} -o bin/shcrypto.wasm ./shcryptowasm/main_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
@@ -28,13 +29,13 @@ run: build init
 	./bin/shuttermint chain --config ${TESTROOT}/config/config.toml
 
 test:
-	${GO} test ./...
+	${GO} test ${GOFLAGS} ./...
 
 generate:
 	${GO} generate ./...
 
 coverage:
-	${GO} test -covermode=count -coverprofile=coverage.out ./...
+	${GO} test ${GOFLAGS} -covermode=count -coverprofile=coverage.out ./...
 	${GO} tool cover -html=coverage.out
 
 clean:
