@@ -43,13 +43,13 @@ contract ConfigContract is Ownable {
 
     uint64 public immutable configChangeHeadsUpBlocks;
 
-    constructor(uint64 _configChangeHeadsUpBlocks) {
-        configs.push(zeroConfig());
+    constructor(uint64 headsUp) {
+        configs.push(_zeroConfig());
 
-        configChangeHeadsUpBlocks = _configChangeHeadsUpBlocks;
+        configChangeHeadsUpBlocks = headsUp;
     }
 
-    function zeroConfig() internal pure returns (BatchConfig memory) {
+    function _zeroConfig() internal pure returns (BatchConfig memory) {
         return
             BatchConfig({
                 startBatchIndex: 0,
@@ -72,15 +72,15 @@ contract ConfigContract is Ownable {
     }
 
     /// @notice Get the config for a certain batch.
-    /// @param _batchIndex The index of the batch.
-    function getConfig(uint64 _batchIndex)
+    /// @param batchIndex The index of the batch.
+    function getConfig(uint64 batchIndex)
         external
         view
         returns (BatchConfig memory)
     {
         for (uint256 i = configs.length - 1; i >= 0; i--) {
             BatchConfig storage config = configs[i];
-            if (config.startBatchIndex <= _batchIndex) {
+            if (config.startBatchIndex <= batchIndex) {
                 return config;
             }
         }
@@ -90,103 +90,103 @@ contract ConfigContract is Ownable {
     //
     // Config keyper getters
     //
-    function configKeypers(uint64 _configIndex, uint64 _keyperIndex)
+    function configKeypers(uint64 configIndex, uint64 keyperIndex)
         external
         view
         returns (address)
     {
-        return configs[_configIndex].keypers[_keyperIndex];
+        return configs[configIndex].keypers[keyperIndex];
     }
 
-    function configNumKeypers(uint64 _configIndex)
+    function configNumKeypers(uint64 configIndex)
         external
         view
         returns (uint64)
     {
-        return uint64(configs[_configIndex].keypers.length);
+        return uint64(configs[configIndex].keypers.length);
     }
 
     //
     // next config setters
     //
-    function nextConfigSetStartBatchIndex(uint64 _startBatchIndex)
+    function nextConfigSetStartBatchIndex(uint64 startBatchIndex)
         external
         onlyOwner
     {
-        nextConfig.startBatchIndex = _startBatchIndex;
+        nextConfig.startBatchIndex = startBatchIndex;
     }
 
-    function nextConfigSetStartBlockNumber(uint64 _startBlockNumber)
+    function nextConfigSetStartBlockNumber(uint64 startBlockNumber)
         external
         onlyOwner
     {
-        nextConfig.startBlockNumber = _startBlockNumber;
+        nextConfig.startBlockNumber = startBlockNumber;
     }
 
-    function nextConfigSetThreshold(uint64 _threshold) external onlyOwner {
-        nextConfig.threshold = _threshold;
+    function nextConfigSetThreshold(uint64 threshold) external onlyOwner {
+        nextConfig.threshold = threshold;
     }
 
-    function nextConfigSetBatchSpan(uint64 _batchSpan) external onlyOwner {
-        nextConfig.batchSpan = _batchSpan;
+    function nextConfigSetBatchSpan(uint64 batchSpan) external onlyOwner {
+        nextConfig.batchSpan = batchSpan;
     }
 
-    function nextConfigSetBatchSizeLimit(uint64 _batchSizeLimit)
+    function nextConfigSetBatchSizeLimit(uint64 batchSizeLimit)
         external
         onlyOwner
     {
-        nextConfig.batchSizeLimit = _batchSizeLimit;
+        nextConfig.batchSizeLimit = batchSizeLimit;
     }
 
-    function nextConfigSetTransactionSizeLimit(uint64 _transactionSizeLimit)
+    function nextConfigSetTransactionSizeLimit(uint64 transactionSizeLimit)
         external
         onlyOwner
     {
-        nextConfig.transactionSizeLimit = _transactionSizeLimit;
+        nextConfig.transactionSizeLimit = transactionSizeLimit;
     }
 
-    function nextConfigSetTransactionGasLimit(uint64 _transactionGasLimit)
+    function nextConfigSetTransactionGasLimit(uint64 transactionGasLimit)
         external
         onlyOwner
     {
-        nextConfig.transactionGasLimit = _transactionGasLimit;
+        nextConfig.transactionGasLimit = transactionGasLimit;
     }
 
-    function nextConfigSetFeeReceiver(address _feeReceiver) external onlyOwner {
-        nextConfig.feeReceiver = _feeReceiver;
+    function nextConfigSetFeeReceiver(address feeReceiver) external onlyOwner {
+        nextConfig.feeReceiver = feeReceiver;
     }
 
-    function nextConfigSetTargetAddress(address _targetAddress)
+    function nextConfigSetTargetAddress(address targetAddress)
         external
         onlyOwner
     {
-        nextConfig.targetAddress = _targetAddress;
+        nextConfig.targetAddress = targetAddress;
     }
 
-    function nextConfigSetTargetFunctionSelector(bytes4 _targetFunctionSelector)
+    function nextConfigSetTargetFunctionSelector(bytes4 targetFunctionSelector)
         external
         onlyOwner
     {
-        nextConfig.targetFunctionSelector = _targetFunctionSelector;
+        nextConfig.targetFunctionSelector = targetFunctionSelector;
     }
 
-    function nextConfigSetExecutionTimeout(uint64 _executionTimeout)
+    function nextConfigSetExecutionTimeout(uint64 executionTimeout)
         external
         onlyOwner
     {
-        nextConfig.executionTimeout = _executionTimeout;
+        nextConfig.executionTimeout = executionTimeout;
     }
 
-    function nextConfigAddKeypers(address[] calldata _newKeypers)
+    function nextConfigAddKeypers(address[] calldata newKeypers)
         external
         onlyOwner
     {
         require(
-            nextConfig.keypers.length <= type(uint64).max - _newKeypers.length,
+            nextConfig.keypers.length <= type(uint64).max - newKeypers.length,
             "ConfigContract: number of keypers exceeds uint64"
         );
-        for (uint64 i = 0; i < _newKeypers.length; i++) {
-            nextConfig.keypers.push(_newKeypers[i]);
+        for (uint64 i = 0; i < newKeypers.length; i++) {
+            nextConfig.keypers.push(newKeypers[i]);
         }
     }
 
@@ -204,8 +204,8 @@ contract ConfigContract is Ownable {
     //
     // nextConfig keyper getters
     //
-    function nextConfigKeypers(uint64 _index) external view returns (address) {
-        return nextConfig.keypers[_index];
+    function nextConfigKeypers(uint64 index) external view returns (address) {
+        return nextConfig.keypers[index];
     }
 
     function nextConfigNumKeypers() external view returns (uint64) {
@@ -226,12 +226,12 @@ contract ConfigContract is Ownable {
             configs.length < type(uint64).max - 1,
             "ConfigContract: number of configs exceeds uint64"
         );
-        BatchConfig memory _config = configs[configs.length - 1];
+        BatchConfig memory config = configs[configs.length - 1];
 
         // check start block is not too early
         uint64 headsUp = configChangeHeadsUpBlocks;
-        if (_config.batchSpan > headsUp) {
-            headsUp = _config.batchSpan;
+        if (config.batchSpan > headsUp) {
+            headsUp = config.batchSpan;
         }
         uint64 earliestStart = uint64(block.number) + headsUp + 1;
         require(
@@ -240,51 +240,48 @@ contract ConfigContract is Ownable {
         );
 
         // check transition is seamless
-        if (_config.batchSpan > 0) {
+        if (config.batchSpan > 0) {
             require(
-                nextConfig.startBatchIndex > _config.startBatchIndex,
+                nextConfig.startBatchIndex > config.startBatchIndex,
                 "ConfigContract: start batch index too small"
             );
-            uint64 _batchDelta =
-                nextConfig.startBatchIndex - _config.startBatchIndex;
+            uint64 batchDelta =
+                nextConfig.startBatchIndex - config.startBatchIndex;
             require(
-                _config.startBlockNumber + _config.batchSpan * _batchDelta ==
+                config.startBlockNumber + config.batchSpan * batchDelta ==
                     nextConfig.startBlockNumber,
                 "ConfigContract: config transition not seamless"
             );
         } else {
             require(
-                nextConfig.startBatchIndex == _config.startBatchIndex,
+                nextConfig.startBatchIndex == config.startBatchIndex,
                 "ConfigContract: transition from inactive config with wrong start index"
             );
         }
 
         configs.push(nextConfig);
-        nextConfig = zeroConfig();
+        nextConfig = _zeroConfig();
 
         emit ConfigScheduled(uint64(configs.length));
     }
 
     /// @notice Remove configs from the end.
-    /// @param _fromStartBlockNumber All configs with a start block number greater than or equal
+    /// @param fromStartBlockNumber All configs with a start block number greater than or equal
     ///     to this will be removed.
-    /// @notice `_fromStartBlockNumber` must be `configChangeHeadsUpBlocks` blocks in the future.
+    /// @notice `fromStartBlockNumber` must be `configChangeHeadsUpBlocks` blocks in the future.
     /// @notice This method can remove one or more configs. If no config would be removed, an error
     ///     is thrown.
-    function unscheduleConfigs(uint64 _fromStartBlockNumber)
-        external
-        onlyOwner
-    {
+    function unscheduleConfigs(uint64 fromStartBlockNumber) external onlyOwner {
         require(
-            _fromStartBlockNumber > block.number + configChangeHeadsUpBlocks,
+            fromStartBlockNumber > block.number + configChangeHeadsUpBlocks,
             "ConfigContract: from start block too early"
         );
 
-        uint64 _lengthBefore = uint64(configs.length);
+        uint64 lengthBefore = uint64(configs.length);
 
         for (uint256 i = configs.length - 1; i > 0; i--) {
             BatchConfig storage config = configs[i];
-            if (config.startBlockNumber >= _fromStartBlockNumber) {
+            if (config.startBlockNumber >= fromStartBlockNumber) {
                 configs.pop();
             } else {
                 break;
@@ -292,7 +289,7 @@ contract ConfigContract is Ownable {
         }
 
         require(
-            configs.length < _lengthBefore,
+            configs.length < lengthBefore,
             "ConfigContract: no configs unscheduled"
         );
         emit ConfigUnscheduled(uint64(configs.length));

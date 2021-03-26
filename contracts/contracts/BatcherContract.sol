@@ -40,60 +40,60 @@ contract BatcherContract is Ownable {
     uint64 public minFee;
 
     constructor(
-        ConfigContract _configContract,
-        FeeBankContract _feeBankContract
+        ConfigContract configContractAddress,
+        FeeBankContract feeBankContractAddress
     ) {
-        configContract = _configContract;
-        feeBankContract = _feeBankContract;
+        configContract = configContractAddress;
+        feeBankContract = feeBankContractAddress;
     }
 
     /// @notice Add a transaction to a batch.
-    /// @param _batchIndex The index of the batch to which the transaction should be added. Note
+    /// @param batchIndex The index of the batch to which the transaction should be added. Note
     ///     that this must match the batch corresponding to the current block number.
-    /// @param _type The type of the transaction (either cipher or plain).
-    /// @param _transaction The encrypted or plaintext transaction (depending on `_type`).
+    /// @param transactionType The type of the transaction (either cipher or plain).
+    /// @param transaction The encrypted or plaintext transaction (depending on `transactionType`).
     function addTransaction(
-        uint64 _batchIndex,
-        TransactionType _type,
-        bytes calldata _transaction
+        uint64 batchIndex,
+        TransactionType transactionType,
+        bytes calldata transaction
     ) external payable {
-        BatchConfig memory config = configContract.getConfig(_batchIndex);
+        BatchConfig memory config = configContract.getConfig(batchIndex);
 
         // check batching is active
         require(config.batchSpan > 0, "BatcherContract: batch not active");
 
         // check given batch is open
-        assert(_batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
-        uint64 _relativeBatchIndex = _batchIndex - config.startBatchIndex;
-        uint64 _batchEndBlock =
+        assert(batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
+        uint64 relativeBatchIndex = batchIndex - config.startBatchIndex;
+        uint64 batchEndBlock =
             config.startBlockNumber +
-                (_relativeBatchIndex + 1) *
+                (relativeBatchIndex + 1) *
                 config.batchSpan;
-        uint64 _batchStartBlock = _batchEndBlock - config.batchSpan;
-        if (_batchStartBlock >= config.batchSpan && _relativeBatchIndex >= 1) {
-            _batchStartBlock -= config.batchSpan;
+        uint64 batchStartBlock = batchEndBlock - config.batchSpan;
+        if (batchStartBlock >= config.batchSpan && relativeBatchIndex >= 1) {
+            batchStartBlock -= config.batchSpan;
         }
 
         require(
-            block.number >= _batchStartBlock,
+            block.number >= batchStartBlock,
             "BatcherContract: batch not started yet"
         );
         require(
-            block.number < _batchEndBlock,
+            block.number < batchEndBlock,
             "BatcherContract: batch already ended"
         );
 
         // check tx and batch size limits
         require(
-            _transaction.length > 0,
+            transaction.length > 0,
             "BatcherContract: transaction is empty"
         );
         require(
-            _transaction.length <= config.transactionSizeLimit,
+            transaction.length <= config.transactionSizeLimit,
             "BatcherContract: transaction too big"
         );
         require(
-            batchSizes[_batchIndex] + _transaction.length <=
+            batchSizes[batchIndex] + transaction.length <=
                 config.batchSizeLimit,
             "BatcherContract: batch already full"
         ); // overflow can be ignored here because number of txs and their sizes are both small
@@ -102,22 +102,30 @@ contract BatcherContract is Ownable {
         require(msg.value >= minFee, "BatcherContract: fee too small");
 
         // add tx to batch
-        bytes memory _batchHashPreimage =
-            abi.encodePacked(_transaction, batchHashes[_batchIndex][_type]);
-        bytes32 _newBatchHash = keccak256(_batchHashPreimage);
-        batchHashes[_batchIndex][_type] = _newBatchHash;
-        batchSizes[_batchIndex] += uint64(_transaction.length);
+        bytes memory batchHashPreimage =
+            abi.encodePacked(
+                transaction,
+                batchHashes[batchIndex][transactionType]
+            );
+        bytes32 newBatchHash = keccak256(batchHashPreimage);
+        batchHashes[batchIndex][transactionType] = newBatchHash;
+        batchSizes[batchIndex] += uint64(transaction.length);
 
         // pay fee to fee bank and emit event
         if (msg.value > 0 && config.feeReceiver != address(0)) {
             feeBankContract.deposit{value: msg.value}(config.feeReceiver);
         }
-        emit TransactionAdded(_batchIndex, _type, _transaction, _newBatchHash);
+        emit TransactionAdded(
+            batchIndex,
+            transactionType,
+            transaction,
+            newBatchHash
+        );
     }
 
     /// @notice Set the minimum fee required to add a transaction to the batch.
-    /// @param _minFee The new value for the minimum fee.
-    function setMinFee(uint64 _minFee) external onlyOwner {
-        minFee = _minFee;
+    /// @param newMinFee The new value for the minimum fee.
+    function setMinFee(uint64 newMinFee) external onlyOwner {
+        minFee = newMinFee;
     }
 }

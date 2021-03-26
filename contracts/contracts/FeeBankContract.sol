@@ -31,49 +31,44 @@ contract FeeBankContract {
     mapping(address => uint64) public deposits;
 
     /// @notice Deposit ETH for later withdrawal
-    /// @param _receiver Address of the account that is eligible for withdrawal.
-    function deposit(address _receiver) external payable {
-        require(_receiver != address(0), "FeeBank: receiver is zero address");
+    /// @param receiver Address of the account that is eligible for withdrawal.
+    function deposit(address receiver) external payable {
+        require(receiver != address(0), "FeeBank: receiver is zero address");
         require(msg.value > 0, "FeeBank: fee is zero");
         require(
-            msg.value <= type(uint64).max - deposits[_receiver],
+            msg.value <= type(uint64).max - deposits[receiver],
             "FeeBank: balance would exceed uint64"
         );
-        deposits[_receiver] += uint64(msg.value);
+        deposits[receiver] += uint64(msg.value);
 
         emit DepositEvent(
             msg.sender,
-            _receiver,
+            receiver,
             uint64(msg.value),
-            deposits[_receiver]
+            deposits[receiver]
         );
     }
 
     /// @notice Withdraw ETH previously deposited in favor of the caller.
-    /// @param _receiver The address to which the ETH will be sent.
-    /// @param _amount The amount to withdraw (must not be greater than the deposited amount)
-    function withdraw(address _receiver, uint64 _amount) external {
-        withdrawInternal(_receiver, _amount);
+    /// @param receiver The address to which the ETH will be sent.
+    /// @param amount The amount to withdraw (must not be greater than the deposited amount)
+    function withdraw(address receiver, uint64 amount) external {
+        _withdraw(receiver, amount);
     }
 
     /// @notice Withdraw all ETH previously deposited in favor of the caller and send it to them.
     function withdraw() external {
-        withdrawInternal(msg.sender, deposits[msg.sender]);
+        _withdraw(msg.sender, deposits[msg.sender]);
     }
 
-    function withdrawInternal(address _receiver, uint64 _amount) internal {
-        require(_receiver != address(0), "FeeBank: receiver is zero address");
-        uint64 _deposit = deposits[msg.sender];
-        require(_deposit > 0, "FeeBank: deposit is empty");
-        require(_amount <= _deposit, "FeeBank: amount exceeds deposit");
-        deposits[msg.sender] = _deposit - _amount;
-        (bool _success, ) = _receiver.call{value: _amount}("");
-        require(_success, "FeeBank: withdrawal call failed");
-        emit WithdrawEvent(
-            msg.sender,
-            _receiver,
-            _amount,
-            deposits[msg.sender]
-        );
+    function _withdraw(address receiver, uint64 amount) internal {
+        require(receiver != address(0), "FeeBank: receiver is zero address");
+        uint64 depositBefore = deposits[msg.sender];
+        require(depositBefore > 0, "FeeBank: deposit is empty");
+        require(amount <= depositBefore, "FeeBank: amount exceeds deposit");
+        deposits[msg.sender] = depositBefore - amount;
+        (bool success, ) = receiver.call{value: amount}("");
+        require(success, "FeeBank: withdrawal call failed");
+        emit WithdrawEvent(msg.sender, receiver, amount, deposits[msg.sender]);
     }
 }

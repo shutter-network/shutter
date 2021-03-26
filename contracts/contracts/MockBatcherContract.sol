@@ -9,10 +9,10 @@ contract MockBatcherContract {
     mapping(uint64 => mapping(TransactionType => bytes32)) public batchHashes;
 
     function setBatchHash(
-        uint64 _batchIndex,
-        TransactionType _type,
-        bytes32 _hash
+        uint64 batchIndex,
+        TransactionType transactionType,
+        bytes32 batchHash
     ) external {
-        batchHashes[_batchIndex][_type] = _hash;
+        batchHashes[batchIndex][transactionType] = batchHash;
     }
 }
