@@ -13,6 +13,8 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
+const EonKeyBroadcastGasLimit = uint64(1_000_000)
+
 // IAction describes an action to run as determined by the Decider's Decide method.
 type IAction interface {
 	// IsExpired checks if the action expired because some time limit is reached or because the
@@ -168,8 +170,10 @@ type EonKeyBroadcast struct {
 }
 
 func (a EonKeyBroadcast) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	authCopy := *auth
+	authCopy.GasLimit = EonKeyBroadcastGasLimit
 	return caller.KeyBroadcastContract.Vote(
-		auth,
+		&authCopy,
 		a.KeyperIndex,
 		a.StartBatchIndex,
 		a.EonPublicKey.Marshal(),
