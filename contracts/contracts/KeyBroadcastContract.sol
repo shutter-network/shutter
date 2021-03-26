@@ -23,7 +23,7 @@ contract KeyBroadcastContract {
         uint64 numVotes
     );
 
-    ConfigContract private _configContract;
+    ConfigContract public configContract;
     mapping(uint64 => mapping(address => bool)) private _voted; // start batch index => keyper => voted or not
     mapping(uint64 => mapping(bytes32 => uint64)) private _numVotes; // start batch index => key hash => number of votes
     mapping(bytes32 => bytes) private _keys; // key hash => key
@@ -32,7 +32,7 @@ contract KeyBroadcastContract {
     mapping(uint64 => uint64) private _bestKeyNumVotes;
 
     constructor(address configContractAddress) {
-        _configContract = ConfigContract(configContractAddress);
+        configContract = ConfigContract(configContractAddress);
     }
 
     /// @notice Submit a vote.
@@ -46,7 +46,7 @@ contract KeyBroadcastContract {
         uint64 startBatchIndex,
         bytes memory key
     ) public {
-        BatchConfig memory config = _configContract.getConfig(startBatchIndex);
+        BatchConfig memory config = configContract.getConfig(startBatchIndex);
         require(
             config.batchSpan > 0,
             "KeyBroadcastContract: config is inactive"
@@ -88,10 +88,6 @@ contract KeyBroadcastContract {
             key: key,
             numVotes: numVotes
         });
-    }
-
-    function getConfigContract() public view returns (ConfigContract) {
-        return _configContract;
     }
 
     function hasVoted(address keyper, uint64 startBatchIndex)

@@ -35,12 +35,12 @@ contract DepositContract is IERC777Recipient {
     bytes32 private constant TOKENS_RECIPIENT_INTERFACE_HASH =
         keccak256("ERC777TokensRecipient");
 
-    IERC777 private _token;
-    address private _slasher;
+    IERC777 public token;
+    address public slasher;
     mapping(address => Deposit) private _deposits;
 
-    constructor(IERC777 token) {
-        _token = token;
+    constructor(IERC777 tokenContract) {
+        token = tokenContract;
 
         _erc1820.setInterfaceImplementer(
             address(this),
@@ -51,10 +51,10 @@ contract DepositContract is IERC777Recipient {
 
     function setSlasher(address slasherAddress) external {
         require(
-            _slasher == address(0),
+            slasher == address(0),
             "DepositContract: slasher address already set"
         );
-        _slasher = slasherAddress;
+        slasher = slasherAddress;
     }
 
     function tokensReceived(
@@ -66,7 +66,7 @@ contract DepositContract is IERC777Recipient {
         bytes calldata // operatorData
     ) external override {
         require(
-            msg.sender == address(_token),
+            msg.sender == address(token),
             "DepositContract: received invalid token"
         );
         uint64 withdrawalInterval = abi.decode(userData, (uint64));
@@ -110,7 +110,7 @@ contract DepositContract is IERC777Recipient {
         );
 
         delete _deposits[msg.sender];
-        _token.send(recipient, deposit.amount, "");
+        token.send(recipient, deposit.amount, "");
 
         emit DepositChanged({
             account: msg.sender,
@@ -123,7 +123,7 @@ contract DepositContract is IERC777Recipient {
     }
 
     function slash(address account) external {
-        require(msg.sender == _slasher);
+        require(msg.sender == slasher);
 
         Deposit memory deposit = _deposits[account];
 

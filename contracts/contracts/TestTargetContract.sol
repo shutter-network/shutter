@@ -6,16 +6,16 @@ pragma experimental ABIEncoderV2;
 contract TestTargetContract {
     event ExecutedTransaction(address sender, bytes data, uint64 nonce);
 
-    address private _executor;
+    address public executor;
     mapping(address => mapping(uint64 => bool)) private _nonces;
 
-    constructor(address executor) {
-        _executor = executor;
+    constructor(address executorAddress) {
+        executor = executorAddress;
     }
 
     function executeTransaction(bytes memory txData) external {
         require(
-            msg.sender == _executor,
+            msg.sender == executor,
             "TestTargetContract: only executor can execute"
         );
 
@@ -48,9 +48,5 @@ contract TestTargetContract {
         returns (bool)
     {
         return _nonces[account][nonce];
-    }
-
-    function getExecutor() public view returns (address) {
-        return _executor;
     }
 }
