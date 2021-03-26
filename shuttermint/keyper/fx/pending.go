@@ -56,11 +56,13 @@ func (pending *PendingActions) AddActions(id ActionID, actions []IAction) (Actio
 		panic("internal error: AddAction called with wrong id")
 	}
 
-	skip := pending.CurrentID - id
-
-	actions = actions[skip:]
-
 	startID := pending.CurrentID
+	if pending.CurrentID >= id+ActionID(len(actions)) {
+		return startID, startID
+	}
+
+	skip := pending.CurrentID - id
+	actions = actions[skip:]
 
 	for i, act := range actions {
 		pending.ActionMap[startID+ActionID(i)] = act
