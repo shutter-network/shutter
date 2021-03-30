@@ -13,7 +13,11 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
-const EonKeyBroadcastGasLimit = uint64(1_000_000)
+const (
+	eonKeyBroadcastGasLimit     = uint64(1_000_000)
+	executeCipherBatchBaseLimit = uint64(150_000)
+	executePlainBatchBaseLimit  = uint64(150_000) // XXX check if we can lower that value
+)
 
 // IAction describes an action to run as determined by the Decider's Decide method.
 type IAction interface {
@@ -69,13 +73,19 @@ func (a SendShuttermintMessage) IsExpired(world observe.World) bool {
 
 // ExecuteCipherBatch is an Action that instructs the executor contract to execute a cipher batch.
 type ExecuteCipherBatch struct {
-	BatchIndex      uint64
-	CipherBatchHash [32]byte
-	Transactions    [][]byte
-	KeyperIndex     uint64
+	BatchIndex          uint64
+	CipherBatchHash     [32]byte
+	Transactions        [][]byte
+	KeyperIndex         uint64
+	TransactionGasLimit uint64
+}
+
+func (a ExecuteCipherBatch) gasLimit() uint64 {
+	return executeCipherBatchBaseLimit + uint64(len(a.Transactions))*a.TransactionGasLimit
 }
 
 func (a ExecuteCipherBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	auth.GasLimit = a.gasLimit()
 	return caller.ExecutorContract.ExecuteCipherBatch(
 		auth, a.BatchIndex, a.CipherBatchHash, a.Transactions, a.KeyperIndex,
 	)
@@ -92,11 +102,17 @@ func (a ExecuteCipherBatch) IsExpired(world observe.World) bool {
 
 // ExecutePlainBatch is an Action that instructs the executor contract to execute a plain batch.
 type ExecutePlainBatch struct {
-	BatchIndex   uint64
-	Transactions [][]byte
+	BatchIndex          uint64
+	Transactions        [][]byte
+	TransactionGasLimit uint64
+}
+
+func (a ExecutePlainBatch) gasLimit() uint64 {
+	return executePlainBatchBaseLimit + uint64(len(a.Transactions))*a.TransactionGasLimit
 }
 
 func (a ExecutePlainBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	auth.GasLimit = a.gasLimit()
 	return caller.ExecutorContract.ExecutePlainBatch(auth, a.BatchIndex, a.Transactions)
 }
 
@@ -171,7 +187,7 @@ type EonKeyBroadcast struct {
 
 func (a EonKeyBroadcast) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
 	authCopy := *auth
-	authCopy.GasLimit = EonKeyBroadcastGasLimit
+	authCopy.GasLimit = eonKeyBroadcastGasLimit
 	return caller.KeyBroadcastContract.Vote(
 		&authCopy,
 		a.KeyperIndex,

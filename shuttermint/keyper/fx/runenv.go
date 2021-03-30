@@ -93,9 +93,9 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		world := runenv.CurrentWorld() // XXX we should make sure our world includes the receipt's blocknumber
 		expired := act.IsExpired(world)
-		log.Printf("TX reverted: id=%d, expired=%t, %s, hash=%s", id, expired, act, hash.Hex())
+		log.Printf("TX reverted: id=%d, gasUsed=%d, expired=%t, %s, hash=%s", id, receipt.GasUsed, expired, act, hash.Hex())
 	} else {
-		log.Printf("TX success: id=%d, %s, hash=%s", id, act, hash.Hex())
+		log.Printf("TX success: id=%d, gasUsed=%d, %s, hash=%s", id, receipt.GasUsed, act, hash.Hex())
 	}
 }
 

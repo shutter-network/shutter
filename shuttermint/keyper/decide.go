@@ -893,21 +893,23 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 
 	return &fx.ExecuteCipherBatch{
-		BatchIndex:      batchIndex,
-		CipherBatchHash: batch.EncryptedBatchHash,
-		Transactions:    stBatch.DecryptedTransactions,
-		KeyperIndex:     keyperIndex,
+		BatchIndex:          batchIndex,
+		CipherBatchHash:     batch.EncryptedBatchHash,
+		Transactions:        stBatch.DecryptedTransactions,
+		KeyperIndex:         keyperIndex,
+		TransactionGasLimit: config.TransactionGasLimit,
 	}
 }
 
-func (dcdr *Decider) executePlainBatch(batchIndex uint64) fx.IAction {
+func (dcdr *Decider) executePlainBatch(batchIndex uint64, config contract.BatchConfig) fx.IAction {
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
 	return &fx.ExecutePlainBatch{
-		BatchIndex:   batchIndex,
-		Transactions: batch.PlainTransactions,
+		BatchIndex:          batchIndex,
+		Transactions:        batch.PlainTransactions,
+		TransactionGasLimit: config.TransactionGasLimit,
 	}
 }
 
@@ -944,7 +946,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 		if isCipherBatch {
 			return dcdr.executeCipherBatch(batchIndex, config)
 		}
-		return dcdr.executePlainBatch(batchIndex)
+		return dcdr.executePlainBatch(batchIndex, config)
 	}
 	return nil
 }
