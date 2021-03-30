@@ -79,7 +79,7 @@ def benchmark_execute_cipher_batch(
     keypers: Accounts,
     config_change_heads_up_blocks: int,
 ) -> None:
-    batch_sizes = [1, 10, 100]
+    batch_sizes = [0, 1, 10, 100]
     thresholds = [1, 10, 100]
     chain.snapshot()
     for batch_size in batch_sizes:
