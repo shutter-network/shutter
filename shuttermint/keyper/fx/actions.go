@@ -17,6 +17,7 @@ const (
 	eonKeyBroadcastGasLimit     = uint64(1_000_000)
 	executeCipherBatchBaseLimit = uint64(150_000)
 	executePlainBatchBaseLimit  = uint64(150_000) // XXX check if we can lower that value
+	skipCipherExecutionLimit    = uint64(100_000)
 )
 
 // IAction describes an action to run as determined by the Decider's Decide method.
@@ -131,6 +132,7 @@ type SkipCipherBatch struct {
 }
 
 func (a SkipCipherBatch) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
+	auth.GasLimit = skipCipherExecutionLimit
 	return caller.ExecutorContract.SkipCipherExecution(auth, a.BatchIndex)
 }
 
