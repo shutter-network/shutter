@@ -138,16 +138,17 @@ func (runenv *RunEnv) scheduleAction(id ActionID) {
 }
 
 // Load loads the pending actions from disk and schedules the actions to be run.
-func (runenv *RunEnv) Load() error {
+func (runenv *RunEnv) Load() (bool, error) {
 	err := runenv.PendingActions.Load()
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	for _, id := range runenv.PendingActions.SortedIDs() {
+	sortedIDs := runenv.PendingActions.SortedIDs()
+	for _, id := range sortedIDs {
 		runenv.scheduleAction(id)
 	}
-	return nil
+	return len(sortedIDs) > 0, nil
 }
 
 func (runenv *RunEnv) handleAction(ctx context.Context, id ActionID, action IAction) (bool, error) {

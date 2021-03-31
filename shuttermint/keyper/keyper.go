@@ -200,9 +200,14 @@ func (kpr *Keyper) Run() error {
 		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters, syncErrors)
 	})
 	kpr.runenv.StartBackgroundTasks(ctx, g)
-	err = kpr.runenv.Load()
+	havePendingActions, err := kpr.runenv.Load()
 	if err != nil {
 		return err
+	}
+
+	if !havePendingActions && len(kpr.State.Actions) == 0 && kpr.State.PendingHalfStep != nil {
+		log.Printf("Fixing State: PendingHalfStep should be nil!")
+		kpr.State.PendingHalfStep = nil
 	}
 
 	if len(kpr.State.Actions) > 0 {
