@@ -188,10 +188,9 @@ type EonKeyBroadcast struct {
 }
 
 func (a EonKeyBroadcast) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
-	authCopy := *auth
-	authCopy.GasLimit = eonKeyBroadcastGasLimit
+	auth.GasLimit = eonKeyBroadcastGasLimit
 	return caller.KeyBroadcastContract.Vote(
-		&authCopy,
+		auth,
 		a.KeyperIndex,
 		a.StartBatchIndex,
 		a.EonPublicKey.Marshal(),
