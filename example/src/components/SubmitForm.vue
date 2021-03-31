@@ -1,5 +1,27 @@
 <template>
   <div>
+    <p>
+      Enter the message you want to send and a private key to sign it with. Do
+      not use a key that corresponds to a real account. The default is just a
+      random string which works just fine.
+    </p>
+    <p>
+      To send the message, press one of the buttons below and confirm the
+      transaction in your wallet. Only encrypted messages will be frontrunning
+      protected.
+    </p>
+    <div class="field">
+      <label class="label">Message</label>
+      <div class="control">
+        <input
+          class="input"
+          type="text"
+          placeholder="Message"
+          v-model="message"
+        />
+      </div>
+    </div>
+
     <div class="field">
       <label class="label">Private Key</label>
       <div class="control">
@@ -11,19 +33,7 @@
         />
       </div>
       <p v-if="!privateKeyValid" class="help is-danger">Invalid private key</p>
-      <p v-else class="help is-success">&check;</p>
-    </div>
-
-    <div class="field">
-      <label class="label">Message</label>
-      <div class="control">
-        <input
-          class="input"
-          type="text"
-          placeholder="Message"
-          v-model="message"
-        />
-      </div>
+      <p v-else class="help is-success">Valid</p>
     </div>
 
     <div class="field is-grouped">
@@ -69,12 +79,12 @@ export default {
   props: ["config", "eonKey"],
 
   data() {
+    const keyBytes = window.crypto.getRandomValues(new Uint8Array(32));
     return {
       batcherContract: null,
 
       message: "",
-      privateKey:
-        "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      privateKey: ethers.utils.hexlify(keyBytes),
       waitingForTx: false,
     };
   },
@@ -85,7 +95,8 @@ export default {
         this.waitingForTx ||
         this.eonKey === null ||
         this.config === null ||
-        !this.privateKeyValid
+        !this.privateKeyValid ||
+        !this.messageValid
       );
     },
     privateKeyValid() {
@@ -98,6 +109,9 @@ export default {
         return false;
       }
       return true;
+    },
+    messageValid() {
+      return this.message.length > 0;
     },
     address() {
       if (!this.privateKeyValid) {

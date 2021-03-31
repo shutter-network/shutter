@@ -1,12 +1,16 @@
 <template>
   <section class="section content">
     <h1 class="title">Recently Executed Transactions</h1>
+    <p>
+      This table shows transactions after they have been executed. At this
+      stage, they were already decrypted, so the messages are readable.
+    </p>
     <table class="table">
       <thead>
         <tr>
           <th>Sender</th>
           <th>Nonce</th>
-          <th>Data</th>
+          <th>Message</th>
         </tr>
       </thead>
       <tbody>

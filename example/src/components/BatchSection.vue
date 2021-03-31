@@ -1,6 +1,12 @@
 <template>
   <section class="section content">
     <h1 class="title">Recently Submitted Transactions</h1>
+    <p>
+      This table shows transactions that have been scheduled for execution.
+      Encrypted transactions appear as a totally garbled mess, giving
+      frontrunners no chance to decipher them. The table also shows the batch in
+      which the transaction was included.
+    </p>
     <table class="table">
       <thead>
         <tr>
