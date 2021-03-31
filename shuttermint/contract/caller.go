@@ -75,6 +75,9 @@ func (cc *Caller) Auth() (*bind.TransactOpts, error) {
 	if err != nil {
 		return nil, err
 	}
+	// multiply gas price by 1.5 because suggested gas price seems to be too optimistic sometimes
+	gasPrice.Mul(gasPrice, big.NewInt(3))
+	gasPrice.Div(gasPrice, big.NewInt(2))
 	auth.GasPrice = gasPrice
 	return auth, nil
 }
