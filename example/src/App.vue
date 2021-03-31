@@ -22,6 +22,7 @@
       <BatchSection />
       <TargetSection />
     </div>
+    <Imprint />
   </div>
 </template>
 
@@ -31,6 +32,7 @@ import SubmitPanel from "./components/SubmitPanel.vue";
 import BatchSection from "./components/BatchSection.vue";
 import TargetSection from "./components/TargetSection.vue";
 import Intro from "./components/Intro.vue";
+import Imprint from "./components/Imprint.vue";
 import { getBlockNumber } from "./blocknumber.js";
 import { getConfigAtBlock } from "./utils.js";
 
@@ -42,6 +44,7 @@ export default {
     SubmitPanel,
     TargetSection,
     Intro,
+    Imprint,
   },
 
   data() {
