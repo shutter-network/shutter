@@ -39,7 +39,6 @@ func init() {
 }
 
 func chainMain() {
-	stdlog.SetFlags(stdlog.LstdFlags | stdlog.Lshortfile | stdlog.Lmicroseconds)
 	stdlog.Printf("Starting shuttermint version %s", shversion.Version())
 
 	node, err := newTendermint(cfgFile)

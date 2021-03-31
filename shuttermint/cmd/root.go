@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,13 +12,34 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 )
 
-var cfgFile string
+var (
+	cfgFile   string
+	logformat string
+)
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:     "shuttermint",
 	Short:   "A collection of commands to run and interact with Shutter keyper nodes",
 	Version: shversion.Version(),
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var flags int
+
+		switch logformat {
+		case "min":
+		case "short":
+			flags = log.Lshortfile
+		case "long":
+			flags = log.LstdFlags | log.Lshortfile | log.Lmicroseconds
+		case "max":
+			flags = log.LstdFlags | log.Llongfile | log.Lmicroseconds
+		default:
+			return fmt.Errorf("bad log value, possible values: min, short, long, max")
+		}
+
+		log.SetFlags(flags)
+		return nil
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -30,6 +52,7 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringVar(&logformat, "log", "long", "set log format, possible values:  min, short, long, max")
 	rootCmd.AddCommand(chainCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(keyperCmd)

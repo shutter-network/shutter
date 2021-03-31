@@ -200,7 +200,6 @@ func ValidateKeyperConfig(r RawKeyperConfig) (keyper.KeyperConfig, error) {
 }
 
 func keyperMain() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	rkc, err := readKeyperConfig()
 	if err != nil {
 		log.Fatalf("Error reading the configuration file: %s\nPlease check your configuration.", err)
