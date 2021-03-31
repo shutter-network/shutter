@@ -353,7 +353,6 @@ func (shutter *Shutter) SyncToHead(ctx context.Context, shmcl client.Client) (*S
 		return nil, err
 	}
 	if height == shutter.CurrentBlock {
-		log.Printf("*** not syncing. already have synced to block %d", height)
 		return shutter, nil
 	}
 	return shutter.SyncToHeight(ctx, shmcl, height)
