@@ -8,7 +8,7 @@
         </div>
       </div>
     </section>
-    <div class="container">
+    <div v-if="providerFound" class="container">
       <section class="section content">
         <div class="columns">
           <div class="column">
@@ -21,6 +21,18 @@
       </section>
       <BatchSection />
       <TargetSection />
+    </div>
+    <div v-else class="container">
+      <section class="section content">
+        <div class="columns">
+          <div class="column is-offset-2 is-two-thirds">
+            <p>
+              No web3 provider found. Please install Metamask or a similar
+              wallet.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
     <Imprint />
   </div>
@@ -51,11 +63,14 @@ export default {
     return {
       config: null,
       eonKey: null,
+      providerFound: this.$providerFound,
     };
   },
 
   mounted() {
-    this.getKeyAndConfig();
+    if (this.$providerFound) {
+      this.getKeyAndConfig();
+    }
   },
 
   methods: {
