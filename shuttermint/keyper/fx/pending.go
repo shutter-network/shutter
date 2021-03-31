@@ -2,6 +2,7 @@ package fx
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -32,6 +33,12 @@ func NewPendingActions(path string) *PendingActions {
 		CurrentID:         0,
 		path:              path,
 	}
+}
+
+func (pending *PendingActions) ShortInfo() string {
+	pending.mux.Lock()
+	defer pending.mux.Unlock()
+	return fmt.Sprintf("%d pending actions", len(pending.ActionMap))
 }
 
 // SortedIDs returns the sorted pending action ids.

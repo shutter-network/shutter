@@ -146,9 +146,10 @@ func (kpr *Keyper) ShortInfo() string {
 	}
 	world := kpr.CurrentWorld()
 	return fmt.Sprintf(
-		"shutter block %d, main chain %d, last eon started %d, num half steps: %d, DKGs: %s",
+		"shutter block %d, main chain %d, %s, last eon started %d, num half steps: %d, DKGs: %s",
 		world.Shutter.CurrentBlock,
 		world.MainChain.CurrentBlock,
+		kpr.runenv.ShortInfo(),
 		kpr.State.LastEonStarted,
 		world.MainChain.NumExecutionHalfSteps,
 		strings.Join(dkgInfo, " - "),

@@ -47,6 +47,13 @@ func NewRunEnv(messageSender MessageSender, contractCaller *contract.Caller, cur
 	}
 }
 
+func (runenv *RunEnv) ShortInfo() string {
+	if runenv == nil {
+		return "<runenv: nil>"
+	}
+	return runenv.PendingActions.ShortInfo()
+}
+
 func (runenv *RunEnv) sendShuttermintMessage(ctx context.Context, id ActionID, act *SendShuttermintMessage) error {
 	log.Printf("=====%s, id=%d", act, id)
 	err := runenv.MessageSender.SendMessage(ctx, act.Msg)
