@@ -5,7 +5,9 @@
       This table shows transactions that have been scheduled for execution.
       Encrypted transactions appear as a totally garbled mess, giving
       frontrunners no chance to decipher them. The table also shows the batch in
-      which the transaction was included.
+      which the transaction was included. Compare with the "Last Executed Batch"
+      in the status panel above to check if the transaction has already been
+      executed or not.
     </p>
     <table class="table">
       <thead>
