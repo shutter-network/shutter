@@ -15,8 +15,8 @@ import (
 
 const (
 	eonKeyBroadcastGasLimit     = uint64(1_000_000)
-	executeCipherBatchBaseLimit = uint64(500_000)
-	executePlainBatchBaseLimit  = uint64(150_000) // XXX check if we can lower that value
+	executeCipherBatchBaseLimit = uint64(250_000)
+	executePlainBatchBaseLimit  = uint64(250_000) // XXX check if we can lower that value
 	skipCipherExecutionLimit    = uint64(200_000)
 )
 
