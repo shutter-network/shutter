@@ -165,10 +165,7 @@ export default {
       let tx = await this.batcherContract.addTransaction(
         batchIndex,
         type,
-        encodedMessage,
-        {
-          gasLimit: 200000,
-        }
+        encodedMessage
       );
       console.log(
         "tx",
