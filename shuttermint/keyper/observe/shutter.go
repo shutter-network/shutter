@@ -245,46 +245,66 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 	if targetHeight < shutter.CurrentBlock {
 		panic("internal error: fetchAndApplyEvents bad arguments")
 	}
-	query := fmt.Sprintf("tx.height >= %d and tx.height <= %d", shutter.CurrentBlock+1, targetHeight)
-
-	// tendermint silently caps the perPage value at 100, make sure to stay below, otherwise
-	// our exit condition is wrong and the log.Fatalf will trigger a panic below; see
-	// https://github.com/brainbot-com/shutter/issues/50
-	perPage := 100
-	page := 1
-	total := 0
 	cloned := false
+
+	currentBlock := shutter.CurrentBlock
+	const perQuery = 500
+	logProgress := shutter.CurrentBlock+perQuery < targetHeight
+
 	for {
-		res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
-		if err != nil {
-			return nil, pkgErrors.Wrap(err, "failed to fetch shuttermint txs")
-		}
-		// Create a shallow or deep clone
-		if !cloned {
-			if res.TotalCount == 0 {
-				return shutter.ShallowClone(), nil
-			}
-			shutter = shutter.Clone()
-			cloned = true
+		height := currentBlock + perQuery
+		if height > targetHeight {
+			height = targetHeight
 		}
 
-		total += len(res.Txs)
-		for _, tx := range res.Txs {
-			events := tx.TxResult.GetEvents()
-			shutter.applyTxEvents(tx.Height, events)
+		query := fmt.Sprintf("tx.height >= %d and tx.height <= %d", currentBlock+1, height)
+		if logProgress {
+			log.Printf("fetchAndApplyEvents: query=%s targetHeight=%d", query, targetHeight)
 		}
-		if page*perPage >= res.TotalCount {
-			if total != res.TotalCount {
-				log.Fatalf("internal error. got %d transactions, expected %d transactions from shuttermint for height %d..%d",
-					total,
-					res.TotalCount,
-					shutter.CurrentBlock+1,
-					targetHeight)
+
+		// tendermint silently caps the perPage value at 100, make sure to stay below, otherwise
+		// our exit condition is wrong and the log.Fatalf will trigger a panic below; see
+		// https://github.com/brainbot-com/shutter/issues/50
+		perPage := 100
+		page := 1
+		total := 0
+		for {
+			res, err := shmcl.TxSearch(ctx, query, false, &page, &perPage, "")
+			if err != nil {
+				return nil, pkgErrors.Wrap(err, "failed to fetch shuttermint txs")
 			}
+			// Create a shallow or deep clone
+			if !cloned {
+				if res.TotalCount == 0 && height == targetHeight {
+					return shutter.ShallowClone(), nil
+				}
+				shutter = shutter.Clone()
+				cloned = true
+			}
+
+			total += len(res.Txs)
+			for _, tx := range res.Txs {
+				events := tx.TxResult.GetEvents()
+				shutter.applyTxEvents(tx.Height, events)
+			}
+			if page*perPage >= res.TotalCount {
+				if total != res.TotalCount {
+					log.Fatalf("internal error. got %d transactions, expected %d transactions from shuttermint for height %d..%d",
+						total,
+						res.TotalCount,
+						shutter.CurrentBlock+1,
+						targetHeight)
+				}
+				break
+			}
+			page++
+		}
+		if height == targetHeight {
 			break
 		}
-		page++
+		currentBlock = height
 	}
+
 	return shutter, nil
 }
 
