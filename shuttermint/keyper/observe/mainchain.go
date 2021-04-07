@@ -439,7 +439,7 @@ func SyncMain(
 	caller *contract.Caller,
 	mainChain *MainChain,
 	mainChains chan<- *MainChain,
-	syncErrors chan<- error) error {
+) error {
 	headers := make(chan *types.Header)
 	sub, err := caller.Ethclient.SubscribeNewHead(ctx, headers)
 	if err != nil {
@@ -473,7 +473,7 @@ func SyncMain(
 		case <-headers:
 			newMainChain, err := mainChain.SyncToHead(ctx, caller)
 			if err != nil {
-				syncErrors <- err
+				log.Printf("Error in MainChain.SyncToHead: %+v", err)
 			} else {
 				mainChains <- newMainChain
 				mainChain = newMainChain

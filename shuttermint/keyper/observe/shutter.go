@@ -408,9 +408,9 @@ func (shutter *Shutter) IsSynced() bool {
 }
 
 // SyncShutter subscribes to new blocks and syncs the shutter object with the head block in a
-// loop. If writes newly synced shutter objects to the shutters channel, as well as errors to the
+// loop. It writes newly synced shutter objects to the shutters channel, as well as errors to the
 // syncErrors channel.
-func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shutters chan<- *Shutter, syncErrors chan<- error) error {
+func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shutters chan<- *Shutter) error {
 	name := "keyper"
 	query := "tm.event = 'NewBlock'"
 	events, err := shmcl.Subscribe(ctx, name, query)
@@ -448,7 +448,7 @@ func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shu
 		case <-events:
 			newShutter, err := shutter.SyncToHead(ctx, shmcl)
 			if err != nil {
-				syncErrors <- err
+				log.Printf("Error in Shutter.SyncToHead: %+v", err)
 			} else {
 				shutters <- newShutter
 				shutter = newShutter

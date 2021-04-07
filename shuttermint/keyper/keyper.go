@@ -190,14 +190,13 @@ func (kpr *Keyper) Run() error {
 
 	mainChains := make(chan *observe.MainChain)
 	shutters := make(chan *observe.Shutter)
-	syncErrors := make(chan error)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR1)
 	g.Go(func() error {
-		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, mainChains, syncErrors)
+		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, mainChains)
 	})
 	g.Go(func() error {
-		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters, syncErrors)
+		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters)
 	})
 	kpr.runenv.StartBackgroundTasks(ctx, g)
 	havePendingActions, err := kpr.runenv.Load()
@@ -232,8 +231,6 @@ func (kpr *Keyper) Run() error {
 			world.Shutter = shutter
 			kpr.world.Store(world)
 			kpr.runOneStep(ctx)
-		case err := <-syncErrors:
-			return err
 		case <-ctx.Done():
 			return g.Wait()
 		}
