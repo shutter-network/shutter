@@ -156,22 +156,12 @@ func (kpr *Keyper) ShortInfo() string {
 	)
 }
 
-func (kpr *Keyper) syncOnce(ctx context.Context) error {
+func (kpr *Keyper) dumpInternalState() {
+	log.Printf("Received signal. Dumping internal state")
 	world := kpr.CurrentWorld()
-
-	newMain, err := world.MainChain.SyncToHead(ctx, &kpr.ContractCaller)
-	if err != nil {
-		return err
-	}
-	world.MainChain = newMain
-
-	newShutter, err := world.Shutter.SyncToHead(ctx, kpr.shmcl)
-	if err != nil {
-		return err
-	}
-	world.Shutter = newShutter
-	kpr.world.Store(world)
-	return nil
+	pretty.Println("Shutter:", world.Shutter)
+	pretty.Println("Mainchain:", world.MainChain)
+	pretty.Println("State:", kpr.State)
 }
 
 func (kpr *Keyper) Run() error {
@@ -180,13 +170,6 @@ func (kpr *Keyper) Run() error {
 		return err
 	}
 	g, ctx := errgroup.WithContext(context.Background())
-
-	// Sync main and shutter chain once. Otherwise, the state of one of the two will be much more
-	// recent than the other one when the first block appears.
-	err = kpr.syncOnce(ctx)
-	if err != nil {
-		return err
-	}
 
 	mainChains := make(chan *observe.MainChain)
 	shutters := make(chan *observe.Shutter)
@@ -198,6 +181,28 @@ func (kpr *Keyper) Run() error {
 	g.Go(func() error {
 		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters)
 	})
+
+	// Sync main and shutter chain at least once. Otherwise, the state of one of the two will
+	// be much more recent than the other one when the first block appears.
+	for seenMainChain, seenShutter := false, false; !(seenMainChain && seenShutter); {
+		select {
+		case <-signals:
+			kpr.dumpInternalState()
+		case mainChain := <-mainChains:
+			world := kpr.CurrentWorld()
+			world.MainChain = mainChain
+			kpr.world.Store(world)
+			seenMainChain = true
+		case shutter := <-shutters:
+			world := kpr.CurrentWorld()
+			world.Shutter = shutter
+			kpr.world.Store(world)
+			seenShutter = true
+		case <-ctx.Done():
+			return g.Wait()
+		}
+	}
+
 	kpr.runenv.StartBackgroundTasks(ctx, g)
 	havePendingActions, err := kpr.runenv.Load()
 	if err != nil {
@@ -215,12 +220,8 @@ func (kpr *Keyper) Run() error {
 
 	for {
 		select {
-		case sig := <-signals:
-			log.Printf("Received %s. Dumping internal state", sig)
-			world := kpr.CurrentWorld()
-			pretty.Println("Shutter:", world.Shutter)
-			pretty.Println("Mainchain:", world.MainChain)
-			pretty.Println("State:", kpr.State)
+		case <-signals:
+			kpr.dumpInternalState()
 		case mainChain := <-mainChains:
 			world := kpr.CurrentWorld()
 			world.MainChain = mainChain
