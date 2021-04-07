@@ -142,5 +142,5 @@ def build_dapp(session: Session) -> None:
 
     session.cd("example/")
     npm = str(bindir.joinpath("npm"))
-    session.run(npm, "install", external=True, silent=True)
+    session.run(npm, "install", "-g", external=True, silent=True)
     session.run(npm, "run", "build", external=True, silent=True)
