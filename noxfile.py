@@ -126,3 +126,21 @@ def test_contracts(session: Session) -> None:
     session.chdir("contracts")
     session.run("brownie", "compile")
     session.run("brownie", "test")
+
+
+@nox.session
+def build_dapp(session: Session) -> None:
+    session.install("nodeenv")
+    assert session.bin is not None
+    nodeenv_dir = pathlib.Path(session.bin).parent.joinpath("node")
+    bindir = nodeenv_dir.joinpath("bin").absolute()
+
+    os.environ["PATH"] = str(bindir) + os.pathsep + os.environ["PATH"]
+    session.env["PATH"] = str(bindir) + os.pathsep + session.env["PATH"]
+    if not nodeenv_dir.exists():
+        session.run("nodeenv", str(nodeenv_dir))
+
+    session.cd("example/")
+    npm = str(bindir.joinpath("npm"))
+    session.run(npm, "install", external=True, silent=True)
+    session.run(npm, "run", "build", external=True, silent=True)
