@@ -140,13 +140,18 @@ def build_dapp(session: Session) -> None:
     if not nodeenv_dir.exists():
         session.run("nodeenv", str(nodeenv_dir))
 
-    session.cd("shuttermint")
-    session.env["BINDIR"] = pathlib.Path("example/dist").absolute()
-    session.run("make", "wasm", external=True, silent=True)
-    session.cd("../example/")
+    session.cd("example/")
+
     npm = str(bindir.joinpath("npm"))
-    session.run(npm, "install", "-g", external=True, silent=True)
+    session.run(npm, "install", external=True, silent=True)
     session.run(npm, "run", "build", external=True, silent=True)
+    session.cd("..")
+
+    session.env["BINDIR"] = pathlib.Path("example/dist").absolute()
+    session.cd("shuttermint")
+    session.run("make", "wasm", external=True, silent=False)
+    session.cd("..")
+
     # Alas, the following doesn't work
     # session.run(npm, "install", "-g", "serve", external=True, silent=True)
-    # session.run("serve", "-s", "dist/", external=True)
+    # session.run("serve", "-s", "example/dist/", external=True)
