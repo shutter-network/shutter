@@ -5,7 +5,7 @@
         This minimal example application illustrates the user experience of
         Shutter. It is the first frontrunning resistant public on-chain
         billboard! For more information, check out
-        <a href="http://shutter.ghost.io/shutter-the-first-testnet-release/"
+        <a href="https://shutter.ghost.io/shutter-alpha-release-on-testnet/"
           >this blog post</a
         >.
       </p>
