@@ -1,14 +1,9 @@
 <template>
   <div>
     <p>
-      Enter the message you want to send and a private key to sign it with. Do
-      not use a key that corresponds to a real account. The default is just a
-      random string which works just fine.
-    </p>
-    <p>
-      To send the message, press one of the buttons below and confirm the
-      transaction in your wallet. Only encrypted messages will be frontrunning
-      protected.
+      Enter the message you want to send, press one of the buttons below, and
+      confirm the transaction in your wallet. Only encrypted messages will be
+      frontrunning protected.
     </p>
     <div class="field">
       <label class="label">Message</label>
@@ -23,7 +18,22 @@
     </div>
 
     <div class="field">
-      <label class="label">Private Key</label>
+      <a v-if="!showAdvancedOptions" v-on:click="showAdvancedOptions = true"
+        >Show advanced options</a
+      >
+      <a v-else v-on:click="showAdvancedOptions = false"
+        >Hide advanced options</a
+      >
+    </div>
+
+    <div v-if="showAdvancedOptions" class="field">
+      <label class="label">Signing Private Key</label>
+      <p>
+        This is the private key used to sign the message. Anything works here
+        and for convenience a random key has been generated for you. As general
+        security practice dictates, do not enter a key used in other contexts,
+        especially not one that controls any funds.
+      </p>
       <div class="control">
         <input
           class="input"
@@ -86,6 +96,7 @@ export default {
       message: "",
       privateKey: ethers.utils.hexlify(keyBytes),
       waitingForTx: false,
+      showAdvancedOptions: false,
     };
   },
 
