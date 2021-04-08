@@ -54,7 +54,7 @@
           v-on:click="onSend(0)"
           :disabled="sendDisabled"
         >
-          Send Encrypted
+          Send encrypted
         </button>
       </div>
       <div class="control">
@@ -64,7 +64,7 @@
           v-on:click="onSend(1)"
           :disabled="sendDisabled"
         >
-          Send Unencrypted
+          Send unencrypted
         </button>
       </div>
     </div>
