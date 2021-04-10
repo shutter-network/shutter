@@ -70,4 +70,10 @@ func main() {
 		d.EpochSecretKeyShares = nil
 	}
 	report("shutter no shares", full, storedState{Shutter: cl})
+	if st.State.SyncHeight == 0 {
+		st.State.SyncHeight = st.Shutter.CurrentBlock + 1
+	}
+	filter := st.State.GetShutterFilter()
+	fmt.Printf("FILTER: %+v\n", filter)
+	report("filtered", full, storedState{Shutter: st.Shutter.ApplyFilter(filter)})
 }

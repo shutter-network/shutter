@@ -58,6 +58,16 @@ func (epk *EncryptionPublicKey) Encrypt(rand io.Reader, m []byte) ([]byte, error
 	return ecies.Encrypt(rand, (*ecies.PublicKey)(epk), m, nil, nil)
 }
 
+// ShutterFilter is used to filter the shutter state we do build. Filtering is done in
+// Shutter.ApplyFilter.
+type ShutterFilter struct {
+	SyncHeight int64
+}
+
+func (filter ShutterFilter) NeedsUpdate(newFilter ShutterFilter) bool {
+	return newFilter.SyncHeight > filter.SyncHeight
+}
+
 // Shutter let's a keyper fetch all necessary information from a shuttermint node. The only source
 // for the data stored in this struct should be the shutter node.  The SyncToHead method can be
 // used to update the data. All other accesses should be read-only.
@@ -69,6 +79,7 @@ type Shutter struct {
 	BatchConfigs         []shutterevents.BatchConfig
 	Batches              map[uint64]*BatchData
 	Eons                 []Eon
+	Filter               ShutterFilter
 }
 
 // NewShutter creates an empty Shutter struct.
@@ -91,9 +102,104 @@ type Eon struct {
 	EpochSecretKeyShares []shutterevents.EpochSecretKeyShare
 }
 
+func (eon *Eon) ApplyFilter(syncHeight int64) *Eon {
+	clone := Eon{
+		Eon:         eon.Eon,
+		StartHeight: eon.StartHeight,
+		StartEvent:  eon.StartEvent,
+	}
+	clone.Commitments = append(clone.Commitments, eon.GetPolyCommitments(syncHeight)...)
+	clone.PolyEvals = append(clone.PolyEvals, eon.GetPolyEvals(syncHeight)...)
+	clone.Accusations = append(clone.Accusations, eon.GetAccusations(syncHeight)...)
+	clone.Apologies = append(clone.Apologies, eon.GetApologies(syncHeight)...)
+	return &clone
+}
+
+func (eon *Eon) GetPolyCommitments(syncHeight int64) []shutterevents.PolyCommitment {
+	slice := eon.Commitments
+	idx := sort.Search(len(slice),
+		func(i int) bool {
+			return slice[i].Height >= syncHeight
+		})
+	if idx == len(slice) {
+		return nil
+	}
+	return slice[idx:]
+}
+
+func (eon *Eon) GetPolyEvals(syncHeight int64) []shutterevents.PolyEval {
+	slice := eon.PolyEvals
+	idx := sort.Search(len(slice),
+		func(i int) bool {
+			return slice[i].Height >= syncHeight
+		})
+	if idx == len(slice) {
+		return nil
+	}
+	return slice[idx:]
+}
+
+func (eon *Eon) GetAccusations(syncHeight int64) []shutterevents.Accusation {
+	slice := eon.Accusations
+	idx := sort.Search(len(slice),
+		func(i int) bool {
+			return slice[i].Height >= syncHeight
+		})
+	if idx == len(slice) {
+		return nil
+	}
+	return slice[idx:]
+}
+
+func (eon *Eon) GetApologies(syncHeight int64) []shutterevents.Apology {
+	slice := eon.Apologies
+	idx := sort.Search(len(slice),
+		func(i int) bool {
+			return slice[i].Height >= syncHeight
+		})
+	if idx == len(slice) {
+		return nil
+	}
+	return slice[idx:]
+}
+
+func (eon *Eon) GetEpochSecretKeyShares(syncHeight int64) []shutterevents.EpochSecretKeyShare {
+	slice := eon.EpochSecretKeyShares
+	idx := sort.Search(len(slice),
+		func(i int) bool {
+			return slice[i].Height >= syncHeight
+		})
+	if idx == len(slice) {
+		return nil
+	}
+	return slice[idx:]
+}
+
 type BatchData struct {
 	BatchIndex           uint64
 	DecryptionSignatures []shutterevents.DecryptionSignature
+}
+
+// filterSyncHeight removes events from shutter.Eons that were generated at a height below the
+// Filter's SyncHeight.
+func (shutter *Shutter) filterSyncHeight() {
+	syncHeight := shutter.Filter.SyncHeight
+	newEons := make([]Eon, len(shutter.Eons))
+	for i := range shutter.Eons {
+		newEons[i] = *shutter.Eons[i].ApplyFilter(syncHeight)
+	}
+	shutter.Eons = newEons
+}
+
+// ApplyFilter applies the given filter and returns a new shutter object with the filter applied.
+func (shutter *Shutter) ApplyFilter(newFilter ShutterFilter) *Shutter {
+	if !shutter.Filter.NeedsUpdate(newFilter) {
+		return shutter
+	}
+	clone := *shutter
+	clone.Filter = newFilter
+	clone.filterSyncHeight()
+	return &clone
 }
 
 func (shutter *Shutter) applyTxEvents(height int64, events []abcitypes.Event) {
@@ -410,7 +516,7 @@ func (shutter *Shutter) IsSynced() bool {
 // SyncShutter subscribes to new blocks and syncs the shutter object with the head block in a
 // loop. It writes newly synced shutter objects to the shutters channel, as well as errors to the
 // syncErrors channel.
-func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shutters chan<- *Shutter) error {
+func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shutters chan<- *Shutter, filter <-chan ShutterFilter) error {
 	name := "keyper"
 	query := "tm.event = 'NewBlock'"
 	events, err := shmcl.Subscribe(ctx, name, query)
@@ -445,6 +551,8 @@ func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shu
 		select {
 		case <-ctx.Done():
 			return nil
+		case f := <-filter:
+			shutter = shutter.ApplyFilter(f)
 		case <-events:
 			newShutter, err := shutter.SyncToHead(ctx, shmcl)
 			if err != nil {

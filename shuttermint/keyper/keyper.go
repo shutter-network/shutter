@@ -174,35 +174,32 @@ func (kpr *Keyper) Run() error {
 	mainChains := make(chan *observe.MainChain)
 	shutters := make(chan *observe.Shutter)
 	signals := make(chan os.Signal, 1)
+	filter := make(chan observe.ShutterFilter, 3)
 	signal.Notify(signals, syscall.SIGUSR1)
 	g.Go(func() error {
 		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, mainChains)
 	})
 	g.Go(func() error {
-		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters)
+		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters, filter)
 	})
 
+	var world observe.World
 	// Sync main and shutter chain at least once. Otherwise, the state of one of the two will
 	// be much more recent than the other one when the first block appears.
-	for seenMainChain, seenShutter := false, false; !(seenMainChain && seenShutter); {
+	for world.MainChain == nil || world.Shutter == nil {
 		select {
 		case <-signals:
 			kpr.dumpInternalState()
+			continue
 		case mainChain := <-mainChains:
-			world := kpr.CurrentWorld()
 			world.MainChain = mainChain
-			kpr.world.Store(world)
-			seenMainChain = true
 		case shutter := <-shutters:
-			world := kpr.CurrentWorld()
 			world.Shutter = shutter
-			kpr.world.Store(world)
-			seenShutter = true
 		case <-ctx.Done():
 			return g.Wait()
 		}
 	}
-
+	kpr.world.Store(world)
 	kpr.runenv.StartBackgroundTasks(ctx, g)
 	havePendingActions, err := kpr.runenv.Load()
 	if err != nil {
@@ -222,19 +219,17 @@ func (kpr *Keyper) Run() error {
 		select {
 		case <-signals:
 			kpr.dumpInternalState()
-		case mainChain := <-mainChains:
-			world := kpr.CurrentWorld()
-			world.MainChain = mainChain
-			kpr.world.Store(world)
-			kpr.runOneStep(ctx)
-		case shutter := <-shutters:
-			world := kpr.CurrentWorld()
-			world.Shutter = shutter
-			kpr.world.Store(world)
-			kpr.runOneStep(ctx)
+			continue
 		case <-ctx.Done():
 			return g.Wait()
+		case mainChain := <-mainChains:
+			world.MainChain = mainChain
+		case shutter := <-shutters:
+			world.Shutter = shutter
 		}
+		kpr.world.Store(world)
+		kpr.runOneStep(ctx)
+		filter <- kpr.State.GetShutterFilter()
 	}
 }
 
@@ -274,6 +269,11 @@ func (kpr *Keyper) LoadState() error {
 	err = dec.Decode(&st)
 	if err != nil {
 		return err
+	}
+
+	if st.State.SyncHeight == 0 && st.Shutter.CurrentBlock > 0 {
+		log.Printf("Fixing SyncHeight: %d", st.Shutter.CurrentBlock)
+		st.State.SyncHeight = st.Shutter.CurrentBlock // We didn't have this field in older versions
 	}
 	kpr.State = st.State
 	world := observe.World{

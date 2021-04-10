@@ -58,24 +58,23 @@ type DKG struct {
 	StartBatchIndex      uint64
 	Keypers              []common.Address
 	Pure                 *puredkg.PureDKG
-	CommitmentsIndex     int
-	PolyEvalsIndex       int
-	AccusationsIndex     int
-	ApologiesIndex       int
 	OutgoingPolyEvalMsgs []puredkg.PolyEvalMsg
 	PhaseLength          PhaseLength
 }
 
 // EKG is used to store local state about the epoch key generation process.
 type EKG struct {
-	Eon                       uint64
-	Keypers                   []common.Address
-	EpochKG                   *epochkg.EpochKG
-	EpochSecretKeySharesIndex int
+	Eon     uint64
+	Keypers []common.Address
+	EpochKG *epochkg.EpochKG
 }
 
 func (dkg *DKG) ShortInfo() string {
 	return fmt.Sprintf("eon=%d, #keypers=%d, %s", dkg.Eon, len(dkg.Keypers), dkg.Pure.ShortInfo())
+}
+
+func (dkg *DKG) IsFinalized() bool {
+	return dkg.Pure == nil || dkg.Pure.Phase == puredkg.Finalized
 }
 
 // newApology create a new shmsg apology message from the given puredkg apologies.
@@ -99,9 +98,8 @@ func (dkg *DKG) newAccusation(accusations []puredkg.AccusationMsg) *shmsg.Messag
 	return shmsg.NewAccusation(dkg.Eon, accused)
 }
 
-func (dkg *DKG) syncCommitments(eon observe.Eon) {
-	for i := dkg.CommitmentsIndex; i < len(eon.Commitments); i++ {
-		comm := eon.Commitments[i]
+func (dkg *DKG) syncCommitments(syncHeight int64, eon observe.Eon) {
+	for _, comm := range eon.GetPolyCommitments(syncHeight) {
 		phase := dkg.PhaseLength.getPhaseAtHeight(comm.Height, eon.StartHeight)
 		if phase != puredkg.Dealing {
 			log.Printf("Warning: received commitment in wrong phase %s: %+v", phase, comm)
@@ -120,13 +118,11 @@ func (dkg *DKG) syncCommitments(eon observe.Eon) {
 			log.Printf("Error in syncCommitments: %+v", err)
 		}
 	}
-	dkg.CommitmentsIndex = len(eon.Commitments)
 }
 
-func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
+func (dkg *DKG) syncPolyEvals(syncHeight int64, eon observe.Eon, decrypt decryptfn) {
 	keyperIndex := dkg.Pure.Keyper
-	for i := dkg.PolyEvalsIndex; i < len(eon.PolyEvals); i++ {
-		eval := eon.PolyEvals[i]
+	for _, eval := range eon.GetPolyEvals(syncHeight) {
 		phase := dkg.PhaseLength.getPhaseAtHeight(eval.Height, eon.StartHeight)
 		if phase != puredkg.Dealing {
 			log.Printf("Warning: received polyeval in wrong phase %s: %+v", phase, eval)
@@ -170,12 +166,10 @@ func (dkg *DKG) syncPolyEvals(eon observe.Eon, decrypt decryptfn) {
 			}
 		}
 	}
-	dkg.PolyEvalsIndex = len(eon.PolyEvals)
 }
 
-func (dkg *DKG) syncAccusations(eon observe.Eon) {
-	for i := dkg.AccusationsIndex; i < len(eon.Accusations); i++ {
-		accusation := eon.Accusations[i]
+func (dkg *DKG) syncAccusations(syncHeight int64, eon observe.Eon) {
+	for _, accusation := range eon.GetAccusations(syncHeight) {
 		phase := dkg.PhaseLength.getPhaseAtHeight(accusation.Height, eon.StartHeight)
 		if phase != puredkg.Accusing {
 			log.Printf("Warning: received accusation in wrong phase %s: %+v", phase, accusation)
@@ -204,12 +198,10 @@ func (dkg *DKG) syncAccusations(eon observe.Eon) {
 			}
 		}
 	}
-	dkg.AccusationsIndex = len(eon.Accusations)
 }
 
-func (dkg *DKG) syncApologies(eon observe.Eon) {
-	for i := dkg.ApologiesIndex; i < len(eon.Apologies); i++ {
-		apology := eon.Apologies[i]
+func (dkg *DKG) syncApologies(syncHeight int64, eon observe.Eon) {
+	for _, apology := range eon.GetApologies(syncHeight) {
 		phase := dkg.PhaseLength.getPhaseAtHeight(apology.Height, eon.StartHeight)
 		if phase != puredkg.Apologizing {
 			log.Printf("Warning: received apology in wrong phase %s: %+v", phase, apology)
@@ -239,7 +231,6 @@ func (dkg *DKG) syncApologies(eon observe.Eon) {
 			}
 		}
 	}
-	dkg.ApologiesIndex = len(eon.Apologies)
 }
 
 // State is the keyper's internal state.
@@ -259,6 +250,8 @@ type State struct {
 	// actions.
 	ActionCounter uint64
 	Actions       []fx.IAction
+
+	SyncHeight int64
 }
 
 // NewState creates an empty State object.
@@ -267,6 +260,11 @@ func NewState() *State {
 		PendingAppeals: make(map[uint64]struct{}),
 		Batches:        make(map[uint64]*Batch),
 	}
+}
+
+// GetShutterFilter returns the shutter filter to be applied to the Shutter state.
+func (st *State) GetShutterFilter() observe.ShutterFilter {
+	return observe.ShutterFilter{SyncHeight: st.SyncHeight}
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter
@@ -552,7 +550,7 @@ func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
 	decrypt := func(encrypted []byte) ([]byte, error) {
 		return dcdr.Config.EncryptionKey.Decrypt(encrypted, []byte(""), []byte(""))
 	}
-
+	syncHeight := dcdr.State.SyncHeight
 	// We look at the next block's phase, because that is the first block that might make it
 	// into the chain
 	phaseAtNextBlockHeight := dcdr.PhaseLength.getPhaseAtHeight(dcdr.Shutter.CurrentBlock+1, eon.StartHeight)
@@ -560,18 +558,18 @@ func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
 	if dkg.Pure.Phase == puredkg.Off && phaseAtNextBlockHeight >= puredkg.Dealing {
 		dcdr.startPhase1Dealing(dkg, phaseAtNextBlockHeight)
 	}
-	dkg.syncCommitments(eon)
-	dkg.syncPolyEvals(eon, decrypt)
+	dkg.syncCommitments(syncHeight, eon)
+	dkg.syncPolyEvals(syncHeight, eon, decrypt)
 
 	if dkg.Pure.Phase == puredkg.Dealing && phaseAtNextBlockHeight >= puredkg.Accusing {
 		dcdr.startPhase2Accusing(dkg, phaseAtNextBlockHeight)
 	}
-	dkg.syncAccusations(eon)
+	dkg.syncAccusations(syncHeight, eon)
 
 	if dkg.Pure.Phase == puredkg.Accusing && phaseAtNextBlockHeight >= puredkg.Apologizing {
 		dcdr.startPhase3Apologizing(dkg, phaseAtNextBlockHeight)
 	}
-	dkg.syncApologies(eon)
+	dkg.syncApologies(syncHeight, eon)
 
 	if dkg.Pure.Phase == puredkg.Apologizing && phaseAtNextBlockHeight >= puredkg.Finalized {
 		dcdr.dkgFinalize(dkg)
@@ -581,6 +579,9 @@ func (dcdr *Decider) syncDKGWithEon(dkg *DKG, eon observe.Eon) {
 func (dcdr *Decider) handleDKGs() {
 	for i := range dcdr.State.DKGs {
 		dkg := &dcdr.State.DKGs[i]
+		if dkg.IsFinalized() {
+			continue
+		}
 		eon, err := dcdr.Shutter.FindEon(dkg.Eon)
 		if err != nil {
 			panic(err)
@@ -605,9 +606,9 @@ func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
 	dcdr.sendEpochSecretKeyShare(ekg.EpochKG, epoch)
 }
 
-func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
-	for i := ekg.EpochSecretKeySharesIndex; i < len(eon.EpochSecretKeyShares); i++ {
-		share := eon.EpochSecretKeyShares[i]
+func (dcdr *Decider) syncEKGWithEon(syncHeight int64, ekg *EKG, eon *observe.Eon) {
+	shares := eon.GetEpochSecretKeyShares(syncHeight)
+	for _, share := range shares {
 		sender, err := medley.FindAddressIndex(ekg.Keypers, share.Sender)
 		if err != nil {
 			continue
@@ -635,7 +636,6 @@ func (dcdr *Decider) syncEKGWithEon(ekg *EKG, eon *observe.Eon) {
 			}
 		}
 	}
-	ekg.EpochSecretKeySharesIndex = len(eon.EpochSecretKeyShares)
 }
 
 // Add a prefix to avoid accidentally signing data with special meaning in different context, in
@@ -735,7 +735,7 @@ func (dcdr *Decider) syncEKGs() {
 		if err != nil {
 			panic(err)
 		}
-		dcdr.syncEKGWithEon(ekg, eon)
+		dcdr.syncEKGWithEon(dcdr.State.SyncHeight, ekg, eon)
 	}
 }
 
@@ -1035,4 +1035,5 @@ func (dcdr *Decider) Decide() {
 	dcdr.handleDecryptionSignatures()
 	dcdr.maybeExecuteBatch()
 	dcdr.maybeAppeal()
+	dcdr.State.SyncHeight = dcdr.Shutter.CurrentBlock + 1
 }
