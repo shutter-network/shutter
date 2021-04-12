@@ -39,7 +39,7 @@ func gobsize(st storedState) int {
 func report(id string, full int, st storedState) {
 	size := gobsize(st)
 	percent := 100.0 * float64(size) / float64(full)
-	fmt.Printf("%16s: %10d   %5.1f\n", id, size, percent)
+	fmt.Printf("%18s: %10d   %5.1f\n", id, size, percent)
 }
 
 func main() {
@@ -63,4 +63,11 @@ func main() {
 	report("shutter full", full, storedState{Shutter: st.Shutter})
 	report("shutter batches", full, storedState{Shutter: &observe.Shutter{Batches: st.Shutter.Batches}})
 	report("shutter eons", full, storedState{Shutter: &observe.Shutter{Eons: st.Shutter.Eons}})
+
+	cl := st.Shutter.Clone()
+	for i := 0; i < len(cl.Eons); i++ {
+		d := &cl.Eons[i]
+		d.EpochSecretKeyShares = nil
+	}
+	report("shutter no shares", full, storedState{Shutter: cl})
 }
