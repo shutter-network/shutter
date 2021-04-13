@@ -139,20 +139,32 @@ func (kpr *Keyper) init() error {
 	return nil
 }
 
-func (kpr *Keyper) ShortInfo() string {
-	var dkgInfo []string
-	for _, dkg := range kpr.State.DKGs {
-		dkgInfo = append(dkgInfo, dkg.ShortInfo())
+func (kpr *Keyper) dkginfo() string {
+	var ds []string
+	for i := len(kpr.State.DKGs) - 1; i >= 0; i-- {
+		dkg := kpr.State.DKGs[i]
+		if dkg.IsFinalized() {
+			break
+		}
+		ds = append(ds, dkg.ShortInfo())
 	}
+
+	if len(ds) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(", DKGs: %s", strings.Join(ds, " - "))
+}
+
+func (kpr *Keyper) ShortInfo() string {
 	world := kpr.CurrentWorld()
 	return fmt.Sprintf(
-		"shutter block %d, main chain %d, %s, last eon started %d, num half steps: %d, DKGs: %s",
+		"shutter block %d, main chain %d, %s, last eon started %d, num half steps: %d%s",
 		world.Shutter.CurrentBlock,
 		world.MainChain.CurrentBlock,
 		kpr.runenv.ShortInfo(),
 		kpr.State.LastEonStarted,
 		world.MainChain.NumExecutionHalfSteps,
-		strings.Join(dkgInfo, " - "),
+		kpr.dkginfo(),
 	)
 }
 
