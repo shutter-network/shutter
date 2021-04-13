@@ -253,7 +253,6 @@ type storedState struct {
 	State     *State
 	Shutter   *observe.Shutter
 	MainChain *observe.MainChain
-	Actions   []fx.IAction
 }
 
 func (kpr *Keyper) pathStateGob() string {
