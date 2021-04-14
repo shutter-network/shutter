@@ -4,6 +4,7 @@ from typing import List
 import brownie
 from brownie.network.account import Account
 from brownie.network.state import Chain
+from eth_typing import Hash32
 from eth_utils import encode_hex
 from eth_utils import to_canonical_address
 
@@ -130,7 +131,9 @@ def test_call_target_function(
     mine_until(config.start_block_number + config.batch_span, chain)
 
     batch = make_batch(3)
-    tx = executor_contract.executeCipherBatch(0, ZERO_HASH32, batch, 0, {"from": keypers[0]})
+    cipher_batch_hash = Hash32(b"\xde" * 32)
+    mock_batcher_contract.setBatchHash(0, 0, cipher_batch_hash)
+    tx = executor_contract.executeCipherBatch(0, cipher_batch_hash, batch, 0, {"from": keypers[0]})
     assert len(tx.events["Called"]) == len(batch)
     for i, transaction in enumerate(batch):
         assert tx.events["Called"][i]["transaction"] == encode_hex(transaction)
@@ -174,8 +177,10 @@ def test_emit_event(
 
     for batch_index in range(3):
         cipher_batch = make_batch(3)
+        cipher_batch_hash = Hash32(b"\xfc" * 32)
+        mock_batcher_contract.setBatchHash(batch_index, 0, cipher_batch_hash)
         tx = executor_contract.executeCipherBatch(
-            batch_index, ZERO_HASH32, cipher_batch, 0, {"from": keypers[0]}
+            batch_index, cipher_batch_hash, cipher_batch, 0, {"from": keypers[0]}
         )
         assert len(tx.events["BatchExecuted"]) == 1
         assert tx.events["BatchExecuted"][0] == {
@@ -254,8 +259,8 @@ def test_check_cipher_batch_hash(
     with brownie.reverts("ExecutorContract: incorrect cipher batch hash"):
         executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": keypers[0]})
     with brownie.reverts("ExecutorContract: incorrect cipher batch hash"):
-        executor_contract.executeCipherBatch(0, make_bytes(32), [], 0, {"from": keypers[0]})
-    executor_contract.executeCipherBatch(0, batch_hash, [], 0, {"from": keypers[0]})
+        executor_contract.executeCipherBatch(0, make_bytes(32), [b""], 0, {"from": keypers[0]})
+    executor_contract.executeCipherBatch(0, batch_hash, [b""], 0, {"from": keypers[0]})
 
 
 def test_check_keyper(

@@ -113,6 +113,13 @@ contract ExecutorContract {
             "ExecutorContract: incorrect cipher batch hash"
         );
 
+        // Check the number of transactions is zero iff we provide the ZERO_HASH
+        require(
+            (cipherBatchHash == bytes32(0) && transactions.length == 0) ||
+                (cipherBatchHash != bytes32(0) && transactions.length > 0),
+            "ExecutorContract: cipherBatchHash should be zero iff transactions is empty"
+        );
+
         // Execute the batch
         bytes32 batchHash =
             executeTransactions(

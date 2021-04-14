@@ -80,7 +80,10 @@ contract KeyperSlasher {
         CipherExecutionReceipt memory receipt =
             executorContract.getReceipt(halfStep);
         require(receipt.executed, "KeyperSlasher: half step not yet executed");
-
+        require(
+            receipt.cipherBatchHash != bytes32(0),
+            "KeyperSlasher: cannot accuse empty batch"
+        );
         accusations[halfStep] = Accusation({
             accused: true,
             appealed: false,
