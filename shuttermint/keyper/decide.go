@@ -721,7 +721,7 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 		log.Panicf("no main chain config for batch %d", batchIndex)
 	}
 
-	if uint64(stBatch.SignatureCount) < config.Threshold {
+	if uint64(stBatch.SignatureCount) < config.Threshold && len(txs) > 0 {
 		decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
 		dcdr.sendShuttermintMessage(
 			fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
@@ -887,7 +887,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		return nil
 	}
 
-	if uint64(stBatch.SignatureCount) < config.Threshold {
+	if len(stBatch.DecryptedTransactions) > 0 && uint64(stBatch.SignatureCount) < config.Threshold {
 		log.Printf("not enough votes for batch %d", batchIndex)
 		return nil
 	}
