@@ -263,8 +263,11 @@ func NewState() *State {
 }
 
 // GetShutterFilter returns the shutter filter to be applied to the Shutter state.
-func (st *State) GetShutterFilter() observe.ShutterFilter {
-	return observe.ShutterFilter{SyncHeight: st.SyncHeight}
+func (st *State) GetShutterFilter(mainChain *observe.MainChain) observe.ShutterFilter {
+	return observe.ShutterFilter{
+		SyncHeight: st.SyncHeight,
+		BatchIndex: mainChain.NumExecutionHalfSteps / 2,
+	}
 }
 
 // Decider decides on the next actions to take based on our internal State and the current Shutter

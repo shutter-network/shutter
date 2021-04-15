@@ -73,7 +73,7 @@ func main() {
 	if st.State.SyncHeight == 0 {
 		st.State.SyncHeight = st.Shutter.CurrentBlock + 1
 	}
-	filter := st.State.GetShutterFilter()
+	filter := st.State.GetShutterFilter(st.MainChain)
 	fmt.Printf("FILTER: %+v\n", filter)
 	report("filtered", full, storedState{Shutter: st.Shutter.ApplyFilter(filter)})
 }

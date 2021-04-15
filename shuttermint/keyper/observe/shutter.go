@@ -200,6 +200,11 @@ func (shutter *Shutter) filterBatchIndex() {
 			newBatches[b] = bd
 		}
 	}
+	// log.Printf("Filter batch index: old=%d new=%d diff=%d",
+	//	len(shutter.Batches),
+	//	len(newBatches),
+	//	len(shutter.Batches)-len(newBatches),
+	// )
 	shutter.Batches = newBatches
 }
 
