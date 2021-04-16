@@ -237,7 +237,7 @@ func initScheduleFlags() {
 	scheduleCmd.Flags().IntVar(
 		&scheduleFlags.TransactionSizeLimit,
 		"transaction-size-limit",
-		100,
+		1000,
 		"the size limit for transactions in bytes",
 	)
 	scheduleCmd.Flags().IntVar(
