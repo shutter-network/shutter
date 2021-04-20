@@ -984,7 +984,11 @@ func (dcdr *Decider) maybeAppeal() {
 		}
 
 		if uint64(len(signatures)) < batchConfig.Threshold {
-			log.Printf("Error: cannot appeal accusation because of not enough signatures (%d at a threshold of %d)", len(signatures), batchConfig.Threshold)
+			log.Printf(
+				"Error: cannot appeal accusation because of not enough signatures (%d at a threshold of %d)",
+				len(signatures),
+				batchConfig.Threshold,
+			)
 			return
 		}
 
@@ -995,7 +999,7 @@ func (dcdr *Decider) maybeAppeal() {
 		}
 		batchHashSlice := transactionsHash(stBatch.DecryptedTransactions)
 		batchHash := [32]byte{}
-		copy(batchHash[:], batchHashSlice[:])
+		copy(batchHash[:], batchHashSlice)
 
 		authorization := contract.Authorization{
 			HalfStep:      accusation.HalfStep,
