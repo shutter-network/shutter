@@ -801,6 +801,10 @@ func (dcdr *Decider) syncBatch(batch *Batch) {
 		panic("Error in syncBatch: config is not active")
 	}
 
+	if len(batch.DecryptedTransactions) == 0 {
+		return
+	}
+
 	signatureCount := 0
 	for i := batch.DecryptionSignatureIndex; i < len(shBatch.DecryptionSignatures); i++ {
 		ev := shBatch.DecryptionSignatures[i]
