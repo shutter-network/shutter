@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	// If the state hasn't been updated for more than this duration, we treat it as unsynced.
-	mainChainSyncedGracePeriod = 120 * time.Second
 	// mainChainTimeout is the time after which we assume the connection to the main chain
 	// node is lost if no new block is received.
 	mainChainTimeout           = 30 * time.Second
