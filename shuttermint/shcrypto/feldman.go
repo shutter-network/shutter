@@ -182,7 +182,7 @@ func RandomPolynomial(r io.Reader, degree uint64) (*Polynomial, error) {
 	for i := uint64(0); i < degree+1; i++ {
 		c, err := rand.Int(r, bn256.Order)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		coefficients = append(coefficients, c)
 	}

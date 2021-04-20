@@ -487,7 +487,7 @@ func (dcdr *Decider) sendPolyEvals(dkg *DKG) {
 func (dcdr *Decider) startPhase1Dealing(dkg *DKG, phaseAtNextBlockHeight puredkg.Phase) {
 	commitment, polyEvals, err := dkg.Pure.StartPhase1Dealing()
 	if err != nil {
-		panic(err) // XXX fix error handling
+		log.Fatalf("Aborting due to unexpected error: %+v", err)
 	}
 	if phaseAtNextBlockHeight != puredkg.Dealing {
 		return
