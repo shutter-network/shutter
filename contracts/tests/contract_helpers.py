@@ -174,6 +174,7 @@ def compute_decryption_signature_preimage(
     decrypted_transaction_hash = compute_decrypted_transaction_hash(decrypted_transactions)
     preimage = b"".join(
         [
+            b"\x19dectx",
             batcher_contract_address,
             batch_index_bytes,
             cipher_batch_hash,

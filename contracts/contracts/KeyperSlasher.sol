@@ -118,6 +118,25 @@ contract KeyperSlasher {
         });
     }
 
+    function slash(uint64 halfStep) external {
+        Accusation memory accusation = accusations[halfStep];
+        require(accusation.accused, "KeyperSlasher: no accusation");
+        require(!accusation.appealed, "KeyperSlasher: successfully appealed");
+        require(!accusation.slashed, "KeyperSlasher: already slashed");
+        require(
+            block.number >= accusation.blockNumber + appealBlocks,
+            "KeyperSlasher: appeal period not over yet"
+        );
+
+        depositContract.slash(accusation.executor);
+        accusations[halfStep].slashed = true;
+
+        emit Slashed({
+            halfStep: accusation.halfStep,
+            executor: accusation.executor
+        });
+    }
+
     function _verifyAuthorization(
         Authorization memory authorization,
         CipherExecutionReceipt memory receipt
@@ -136,11 +155,9 @@ contract KeyperSlasher {
         );
         bytes32 decryptionSignatureHash =
             keccak256(
-                abi.encodePacked(
+                _decryptionSignaturePreimage(
                     address(executorContract.batcherContract()),
-                    receipt.halfStep / 2,
-                    receipt.cipherBatchHash,
-                    receipt.batchHash
+                    receipt
                 )
             );
         for (uint64 i = 0; i < authorization.signatures.length; i++) {
@@ -165,22 +182,17 @@ contract KeyperSlasher {
         }
     }
 
-    function slash(uint64 halfStep) external {
-        Accusation memory accusation = accusations[halfStep];
-        require(accusation.accused, "KeyperSlasher: no accusation");
-        require(!accusation.appealed, "KeyperSlasher: successfully appealed");
-        require(!accusation.slashed, "KeyperSlasher: already slashed");
-        require(
-            block.number >= accusation.blockNumber + appealBlocks,
-            "KeyperSlasher: appeal period not over yet"
-        );
-
-        depositContract.slash(accusation.executor);
-        accusations[halfStep].slashed = true;
-
-        emit Slashed({
-            halfStep: accusation.halfStep,
-            executor: accusation.executor
-        });
+    function _decryptionSignaturePreimage(
+        address batcherContract,
+        CipherExecutionReceipt memory receipt
+    ) internal view returns (bytes memory) {
+        return
+            abi.encodePacked(
+                "\x19dectx",
+                batcherContract,
+                receipt.halfStep / 2, // uint64
+                receipt.cipherBatchHash,
+                receipt.batchHash
+            );
     }
 }
