@@ -215,25 +215,19 @@ func (mainchain *MainChain) syncExecutionState(cc *contract.Caller, opts *bind.C
 		return errors.Wrap(err, "failed to get number of execution half steps from contract")
 	}
 
-	receipts := []contract.CipherExecutionReceipt{}
-	for i := lastNumExecutionHalfSteps; i < numExecutionHalfSteps; i++ {
-		if i%2 != 0 {
+	for halfStep := lastNumExecutionHalfSteps; halfStep < numExecutionHalfSteps; halfStep++ {
+		if halfStep%2 != 0 {
 			// there will only be receipts for cipher execution steps, which are the even ones
 			continue
 		}
 
-		receipt, err := cc.ExecutorContract.CipherExecutionReceipts(opts, i)
+		receipt, err := cc.ExecutorContract.GetReceipt(opts, halfStep)
 		if err != nil {
 			return errors.Wrap(err, "failed to get cipher execution receipt from contract")
 		}
-		receipts = append(receipts, receipt)
+		mainchain.CipherExecutionReceipts[receipt.HalfStep] = &receipt
 	}
-
 	mainchain.NumExecutionHalfSteps = numExecutionHalfSteps
-	for i := range receipts {
-		mainchain.CipherExecutionReceipts[receipts[i].HalfStep] = &receipts[i]
-	}
-
 	return nil
 }
 
