@@ -962,8 +962,7 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 func (dcdr *Decider) maybeAppeal() {
 	dcdr.syncPendingAppeals()
 
-	accusations := dcdr.MainChain.AccusationsAgainst(dcdr.Config.Address())
-	for _, accusation := range accusations {
+	for _, accusation := range dcdr.MainChain.Accusations {
 		if accusation.Appealed {
 			continue
 		}

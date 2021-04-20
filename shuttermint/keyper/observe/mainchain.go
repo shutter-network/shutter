@@ -316,17 +316,6 @@ func (mainchain *MainChain) GetDeposit(account common.Address) *Deposit {
 	return deposit
 }
 
-// AccusationsAgainst returns all known accusations with the given account as executor.
-func (mainchain *MainChain) AccusationsAgainst(account common.Address) []*Accusation {
-	accusations := []*Accusation{}
-	for _, a := range mainchain.Accusations {
-		if a.Executor == account {
-			accusations = append(accusations, a)
-		}
-	}
-	return accusations
-}
-
 // SyncToHead fetches the latest state from the ethereum node. It returns a new object with the
 // latest state.
 func (mainchain *MainChain) SyncToHead(
