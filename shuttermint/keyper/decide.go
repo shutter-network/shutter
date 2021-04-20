@@ -971,13 +971,44 @@ func (dcdr *Decider) maybeAppeal() {
 			continue // don't send appeal if we've already done so and the tx is still pending
 		}
 
-		// XXX: we have to create a contract.Authorization here
+		batchIndex := accusation.HalfStep / 2
+		signatures, indices, err := dcdr.Shutter.GetSortedDecryptionSignaturesWithIndices(batchIndex)
+		if err != nil {
+			log.Printf("Error: cannot appeal accusation because getting decryption signatures for batch %d failed", batchIndex)
+			return
+		}
 
-		// action := Appeal{
-		// 	authorization: authorization,
-		// }
-		// dcdr.State.PendingAppeals[accusation.HalfStep] = struct{}{}
-		// dcdr.addAction(action)
+		batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(batchIndex)
+		if err != nil {
+			log.Printf("Error: cannot appeal accusation because getting batch config for batch %d failed", batchIndex)
+			return
+		}
+
+		if uint64(len(signatures)) < batchConfig.Threshold {
+			log.Printf("Error: cannot appeal accusation because of not enough signatures (%d at a threshold of %d)", len(signatures), batchConfig.Threshold)
+			return
+		}
+
+		stBatch, ok := dcdr.State.Batches[batchIndex]
+		if !ok {
+			log.Printf("Error: cannot appeal because batch %d is missing", batchIndex)
+			return
+		}
+		batchHashSlice := transactionsHash(stBatch.DecryptedTransactions)
+		batchHash := [32]byte{}
+		copy(batchHash[:], batchHashSlice[:])
+
+		authorization := contract.Authorization{
+			HalfStep:      accusation.HalfStep,
+			BatchHash:     batchHash,
+			SignerIndices: indices,
+			Signatures:    contract.SignaturesToContractFormat(signatures),
+		}
+		action := fx.Appeal{
+			Authorization: authorization,
+		}
+		dcdr.State.PendingAppeals[accusation.HalfStep] = struct{}{}
+		dcdr.addAction(&action)
 	}
 }
 
