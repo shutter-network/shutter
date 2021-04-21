@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -28,10 +29,11 @@ import (
 )
 
 var (
-	logger  = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	rootDir = ""
-	devMode = false
-	index   = 0
+	logger            = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	rootDir           = ""
+	devMode           = false
+	index             = 0
+	blockTime float64 = 1.0
 )
 
 var initCmd = &cobra.Command{
@@ -45,12 +47,28 @@ func init() {
 	initCmd.PersistentFlags().StringVar(&rootDir, "root", "", "root directory")
 	initCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "turn on devmode (disables validator set changes)")
 	initCmd.PersistentFlags().IntVar(&index, "index", 0, "keyper index")
+	initCmd.PersistentFlags().Float64Var(&blockTime, "blocktime", 1.0, "block time in seconds")
 	initCmd.MarkPersistentFlagRequired("root")
+}
+
+func scaleToBlockTime(config *cfg.Config, blockTime float64) {
+	f := blockTime * float64(time.Second) / float64(config.Consensus.TimeoutCommit)
+	scale := func(d *time.Duration) {
+		*d = time.Duration(float64(*d) * f)
+	}
+	scale(&config.Consensus.TimeoutPropose)
+	scale(&config.Consensus.TimeoutProposeDelta)
+	scale(&config.Consensus.TimeoutPrevote)
+	scale(&config.Consensus.TimeoutPrecommit)
+	scale(&config.Consensus.TimeoutPrecommitDelta)
+	scale(&config.Consensus.TimeoutCommit)
+	scale(&config.RPC.TimeoutBroadcastTxCommit)
 }
 
 func initFiles(cmd *cobra.Command, args []string) error {
 	config := cfg.DefaultConfig()
 	config.LogLevel = "*:error"
+	scaleToBlockTime(config, blockTime)
 	keyper0RPCAddress := config.RPC.ListenAddress
 	rpcAddress, err := adjustPort(keyper0RPCAddress, index)
 	if err != nil {
