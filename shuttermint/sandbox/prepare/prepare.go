@@ -28,12 +28,31 @@ import (
 	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
-	"github.com/brainbot-com/shutter/shuttermint/cmd"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
+
+// RawKeyperConfig contains raw, unvalidated configuration parameters.
+type RawKeyperConfig struct {
+	ShuttermintURL          string
+	EthereumURL             string
+	SigningKey              string
+	ValidatorSeed           string
+	EncryptionKey           string
+	ConfigContract          string
+	BatcherContract         string
+	KeyBroadcastContract    string
+	ExecutorContract        string
+	DepositContract         string
+	KeyperSlasher           string
+	MainChainFollowDistance uint64
+	ExecutionStaggering     uint64
+	DKGPhaseLength          uint64
+	DBDir                   string
+}
 
 var configFlags struct {
 	Dir                  string
@@ -368,7 +387,7 @@ func loadContractsJSON(path string) error {
 }
 
 func configs() error {
-	configs := []*cmd.RawKeyperConfig{}
+	configs := []*RawKeyperConfig{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
 		config, err := rawConfig(i)
 		if err != nil {
@@ -379,7 +398,7 @@ func configs() error {
 	return saveConfigs(configs)
 }
 
-func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
+func rawConfig(keyperIndex int) (*RawKeyperConfig, error) {
 	signingKey, err := randomSigningKey()
 	if err != nil {
 		return nil, err
@@ -402,7 +421,7 @@ func rawConfig(keyperIndex int) (*cmd.RawKeyperConfig, error) {
 
 	shuttermintURL := configFlags.ShuttermintURLBase + ":" + strconv.Itoa(shuttermintPort)
 
-	config := cmd.RawKeyperConfig{
+	config := RawKeyperConfig{
 		ShuttermintURL:          shuttermintURL,
 		EthereumURL:             configFlags.EthereumURL,
 		SigningKey:              hex.EncodeToString(crypto.FromECDSA(signingKey)),
@@ -442,7 +461,7 @@ func randomValidatorSeed() (string, error) {
 	return hex.EncodeToString(seed), nil
 }
 
-func saveConfigs(configs []*cmd.RawKeyperConfig) error {
+func saveConfigs(configs []*RawKeyperConfig) error {
 	for i, c := range configs {
 		configToml, err := toml.Marshal(*c)
 		if err != nil {
@@ -514,30 +533,28 @@ func findConfigFiles(dir string) ([]string, error) {
 	return configPaths, nil
 }
 
-func loadConfigs(paths []string) ([]keyper.KeyperConfig, error) {
-	configs := []keyper.KeyperConfig{}
+func loadConfigs(paths []string) ([]keyper.Config, error) {
+	configs := []keyper.Config{}
 	for _, path := range paths {
-		data, err := ioutil.ReadFile(path)
+		v := viper.New()
+		v.SetConfigFile(path)
+		err := v.ReadInConfig()
 		if err != nil {
-			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to read config file at %s", path)
+			return []keyper.Config{}, errors.Wrapf(err, "failed to read config file at %s", path)
 		}
 
-		var r cmd.RawKeyperConfig
-		if err := toml.Unmarshal(data, &r); err != nil {
-			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to read config file %s", path)
-		}
-
-		c, err := cmd.ValidateKeyperConfig(r)
+		config := keyper.Config{}
+		err = config.Unmarshal(v)
 		if err != nil {
-			return []keyper.KeyperConfig{}, errors.Wrapf(err, "failed to parse config file %s", path)
+			return []keyper.Config{}, errors.Wrapf(err, "failed to read config file %s", path)
 		}
 
-		configs = append(configs, c)
+		configs = append(configs, config)
 	}
 	return configs, nil
 }
 
-func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, ownerKey *ecdsa.PrivateKey, configs []keyper.KeyperConfig) error {
+func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, ownerKey *ecdsa.PrivateKey, configs []keyper.Config) error {
 	numKeypers := len(configs)
 	threshold := uint64((numKeypers*2 + 2) / 3) // 2/3 rounded up
 	keypers := []common.Address{}

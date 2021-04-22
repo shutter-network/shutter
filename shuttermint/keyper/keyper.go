@@ -14,8 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kr/pretty"
 	"github.com/pkg/errors"
@@ -34,17 +32,12 @@ func IsWebsocketURL(url string) bool {
 	return strings.HasPrefix(url, "ws://") || strings.HasPrefix(url, "wss://")
 }
 
-// Address returns the keyper's Ethereum address.
-func (c *KeyperConfig) Address() common.Address {
-	return crypto.PubkeyToAddress(c.SigningKey.PublicKey)
-}
-
 type Keyper struct {
 	// Keep the atomic.Value as first field in order to make sure it's 64-bit aligned. Visit
 	// https://golang.org/pkg/sync/atomic/#pkg-note-BUG for more information
 	world atomic.Value // holds an observe.World struct
 
-	Config KeyperConfig
+	Config Config
 	State  *State
 
 	ContractCaller contract.Caller
@@ -54,7 +47,7 @@ type Keyper struct {
 	runenv         *fx.RunEnv
 }
 
-func NewKeyper(kc KeyperConfig) Keyper {
+func NewKeyper(kc Config) Keyper {
 	world := atomic.Value{}
 	world.Store(observe.World{
 		Shutter:   observe.NewShutter(),
@@ -68,7 +61,7 @@ func NewKeyper(kc KeyperConfig) Keyper {
 	}
 }
 
-func NewContractCallerFromConfig(config KeyperConfig) (contract.Caller, error) {
+func NewContractCallerFromConfig(config Config) (contract.Caller, error) {
 	ethcl, err := ethclient.Dial(config.EthereumURL)
 	if err != nil {
 		return contract.Caller{}, err

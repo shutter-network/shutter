@@ -274,7 +274,7 @@ func (st *State) GetShutterFilter(mainChain *observe.MainChain) observe.ShutterF
 // and MainChain state for a single step. For each step the keyper creates a new Decider. The
 // actions to run are stored inside the Actions field.
 type Decider struct {
-	Config      KeyperConfig
+	Config      Config
 	State       *State
 	Shutter     *observe.Shutter
 	MainChain   *observe.MainChain
