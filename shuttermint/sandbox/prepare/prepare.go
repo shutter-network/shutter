@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -25,7 +24,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,25 +32,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
-
-// RawKeyperConfig contains raw, unvalidated configuration parameters.
-type RawKeyperConfig struct {
-	ShuttermintURL          string
-	EthereumURL             string
-	SigningKey              string
-	ValidatorSeed           string
-	EncryptionKey           string
-	ConfigContract          string
-	BatcherContract         string
-	KeyBroadcastContract    string
-	ExecutorContract        string
-	DepositContract         string
-	KeyperSlasher           string
-	MainChainFollowDistance uint64
-	ExecutionStaggering     uint64
-	DKGPhaseLength          uint64
-	DBDir                   string
-}
 
 var configFlags struct {
 	Dir                  string
@@ -387,7 +366,7 @@ func loadContractsJSON(path string) error {
 }
 
 func configs() error {
-	configs := []*RawKeyperConfig{}
+	configs := []*keyper.Config{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
 		config, err := rawConfig(i)
 		if err != nil {
@@ -398,7 +377,7 @@ func configs() error {
 	return saveConfigs(configs)
 }
 
-func rawConfig(keyperIndex int) (*RawKeyperConfig, error) {
+func rawConfig(keyperIndex int) (*keyper.Config, error) {
 	signingKey, err := randomSigningKey()
 	if err != nil {
 		return nil, err
@@ -407,7 +386,7 @@ func rawConfig(keyperIndex int) (*RawKeyperConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	validatorSeed, err := randomValidatorSeed()
+	validatorKey, err := randomValidatorKey()
 	if err != nil {
 		return nil, err
 	}
@@ -421,23 +400,24 @@ func rawConfig(keyperIndex int) (*RawKeyperConfig, error) {
 
 	shuttermintURL := configFlags.ShuttermintURLBase + ":" + strconv.Itoa(shuttermintPort)
 
-	config := RawKeyperConfig{
-		ShuttermintURL:          shuttermintURL,
-		EthereumURL:             configFlags.EthereumURL,
-		SigningKey:              hex.EncodeToString(crypto.FromECDSA(signingKey)),
-		ValidatorSeed:           validatorSeed,
-		EncryptionKey:           hex.EncodeToString(crypto.FromECDSA(encryptionKey.ExportECDSA())),
-		ConfigContract:          contractsJSON.ConfigContract.Hex(),
-		BatcherContract:         contractsJSON.BatcherContract.Hex(),
-		KeyBroadcastContract:    contractsJSON.KeyBroadcastContract.Hex(),
-		ExecutorContract:        contractsJSON.ExecutorContract.Hex(),
-		DepositContract:         contractsJSON.DepositContract.Hex(),
-		KeyperSlasher:           contractsJSON.KeyperSlasherContract.Hex(),
-		MainChainFollowDistance: 0,
-		ExecutionStaggering:     5,
-		DKGPhaseLength:          30,
-	}
-	return &config, nil
+	return &keyper.Config{
+		ChainID:                     "",
+		ShuttermintURL:              shuttermintURL,
+		EthereumURL:                 configFlags.EthereumURL,
+		DBDir:                       "",
+		SigningKey:                  signingKey,
+		ValidatorKey:                validatorKey,
+		EncryptionKey:               encryptionKey,
+		ConfigContractAddress:       contractsJSON.ConfigContract,
+		BatcherContractAddress:      contractsJSON.BatcherContract,
+		KeyBroadcastContractAddress: contractsJSON.KeyBroadcastContract,
+		ExecutorContractAddress:     contractsJSON.ExecutorContract,
+		DepositContractAddress:      contractsJSON.DepositContract,
+		KeyperSlasherAddress:        contractsJSON.KeyperSlasherContract,
+		MainChainFollowDistance:     0,
+		ExecutionStaggering:         5,
+		DKGPhaseLength:              30,
+	}, nil
 }
 
 func randomSigningKey() (*ecdsa.PrivateKey, error) {
@@ -449,25 +429,20 @@ func randomEncryptionKey() (*ecies.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	encryptionKey := ecies.ImportECDSA(encryptionKeyECDSA)
-	return encryptionKey, nil
+	return ecies.ImportECDSA(encryptionKeyECDSA), nil
 }
 
-func randomValidatorSeed() (string, error) {
+func randomValidatorKey() (ed25519.PrivateKey, error) {
 	seed := make([]byte, ed25519.SeedSize)
 	if _, err := rand.Read(seed); err != nil {
-		return "", err
+		return nil, err
 	}
-	return hex.EncodeToString(seed), nil
+	return ed25519.NewKeyFromSeed(seed), nil
 }
 
-func saveConfigs(configs []*RawKeyperConfig) error {
+func saveConfigs(configs []*keyper.Config) error {
 	for i, c := range configs {
-		configToml, err := toml.Marshal(*c)
-		if err != nil {
-			return err
-		}
-
+		var err error
 		dir := filepath.Join(configFlags.Dir, "keyper"+strconv.Itoa(i))
 		if err = os.MkdirAll(dir, 0o755); err != nil {
 			return errors.Wrap(err, "failed to create keyper directory")
@@ -478,7 +453,7 @@ func saveConfigs(configs []*RawKeyperConfig) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create keyper config file")
 		}
-		if _, err = file.Write(configToml); err != nil {
+		if err = c.WriteTOML(file); err != nil {
 			return errors.Wrap(err, "failed to write keyper config file")
 		}
 	}

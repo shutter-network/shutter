@@ -5,7 +5,9 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"reflect"
+	"text/template"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,6 +35,41 @@ type Config struct {
 	MainChainFollowDistance     uint64         // in main chain blocks
 	ExecutionStaggering         uint64         // in main chain blocks
 	DKGPhaseLength              uint64         // in shuttermint blocks
+}
+
+const configTemplate = `# Shutter keyper configuration for {{ .Address }}
+
+# Contract addresses
+BatcherContract		= "{{ .BatcherContractAddress }}"
+ConfigContract		= "{{ .ConfigContractAddress }}"
+DepositContract		= "{{ .DepositContractAddress }}"
+ExecutorContract	= "{{ .ExecutorContractAddress }}"
+KeyBroadcastContract	= "{{ .KeyBroadcastContractAddress }}"
+KeyperSlasher		= "{{ .KeyperSlasherAddress }}"
+
+EthereumURL		= "{{ .EthereumURL }}"
+ShuttermintURL		= "{{ .ShuttermintURL }}"
+DBDir			= "{{ .DBDir }}"
+DKGPhaseLength		= {{ .DKGPhaseLength }}
+ExecutionStaggering	= {{ .ExecutionStaggering }}
+MainChainFollowDistance = {{ .MainChainFollowDistance }}
+
+# Secret Keys
+EncryptionKey	= "{{ .EncryptionKey.ExportECDSA | FromECDSA | printf "%x" }}"
+SigningKey	= "{{ .SigningKey | FromECDSA | printf "%x" }}"
+ValidatorSeed	= "{{ .ValidatorKey.Seed | printf "%x" }}"
+`
+
+var tmpl *template.Template
+
+func init() {
+	var err error
+	tmpl, err = template.New("keyper").Funcs(template.FuncMap{
+		"FromECDSA": crypto.FromECDSA,
+	}).Parse(configTemplate)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func stringToEd25519PrivateKey(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
@@ -101,4 +138,9 @@ func (config *Config) Unmarshal(v *viper.Viper) error {
 // Address returns the keyper's Ethereum address.
 func (config *Config) Address() common.Address {
 	return crypto.PubkeyToAddress(config.SigningKey.PublicKey)
+}
+
+// WriteTOML writes a toml configuratio file with the given config.
+func (config *Config) WriteTOML(w io.Writer) error {
+	return tmpl.Execute(w, config)
 }
