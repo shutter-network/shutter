@@ -37,6 +37,7 @@ type Batch struct {
 	BatchIndex               uint64
 	DecryptionSignatureHash  []byte
 	DecryptedTransactions    [][]byte
+	DecryptedBatchHash       []byte
 	DecryptionSignatureIndex int
 	SignatureCount           int // number of valid signatures
 }
@@ -244,6 +245,7 @@ type State struct {
 	PendingAppeals           map[uint64]struct{}
 	NextEpochSecretShare     uint64
 	Batches                  map[uint64]*Batch
+	HalfStepsChecked         uint64
 
 	// We store the actions that should be executed together with a counter. When starting the
 	// program, we feed these actions into runenv, which can use the counter to identify the
@@ -634,8 +636,9 @@ func (dcdr *Decider) syncEKGWithEon(syncHeight int64, ekg *EKG, eon *observe.Eon
 		}
 		if key, ok := ekg.EpochKG.SecretKeys[share.Epoch]; ok {
 			log.Printf("Epoch secret key generated for epoch %d", share.Epoch)
+			dcdr.decryptTransactions(key, share.Epoch)
 			if !dcdr.executionTimeoutReachedOrInactive(share.Epoch) {
-				dcdr.sendDecryptionSignature(key, share.Epoch)
+				dcdr.sendDecryptionSignature(share.Epoch)
 			}
 		}
 	}
@@ -692,7 +695,7 @@ func (dcdr *Decider) computeDecryptionSignatureHash(batchIndex uint64, cipherBat
 	return keccak.Sum(nil)
 }
 
-func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch uint64) {
+func (dcdr *Decider) decryptTransactions(key *shcrypto.EpochSecretKey, epoch uint64) {
 	batchIndex := epoch
 	batch, ok := dcdr.MainChain.Batches[batchIndex]
 	if !ok {
@@ -702,19 +705,25 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 		batch = &observe.Batch{BatchIndex: batchIndex}
 	}
 	txs := batch.DecryptTransactions(key)
-	decryptedTxsHash := transactionsHash(txs)
-	hash := dcdr.computeDecryptionSignatureHash(batchIndex, batch.EncryptedBatchHash.Bytes(), decryptedTxsHash)
+	decryptedBatchHash := transactionsHash(txs)
+	hash := dcdr.computeDecryptionSignatureHash(batchIndex, batch.EncryptedBatchHash.Bytes(), decryptedBatchHash)
 
-	signature, err := crypto.Sign(hash, dcdr.Config.SigningKey)
-	if err != nil {
-		log.Panicf("Cannot sign the decryption signature: %s", err)
-	}
 	stBatch := &Batch{
 		BatchIndex:              batchIndex,
 		DecryptionSignatureHash: hash,
 		DecryptedTransactions:   txs,
+		DecryptedBatchHash:      decryptedBatchHash,
 	}
 	dcdr.State.Batches[batchIndex] = stBatch
+}
+
+func (dcdr *Decider) sendDecryptionSignature(epoch uint64) {
+	batchIndex := epoch
+	stBatch, ok := dcdr.State.Batches[batchIndex]
+	if !ok {
+		log.Printf("Batch %d is missing", batchIndex)
+		return
+	}
 
 	// Let's sync this with shutter to see if we still need to send a decryption message
 	dcdr.syncBatch(stBatch)
@@ -724,7 +733,12 @@ func (dcdr *Decider) sendDecryptionSignature(key *shcrypto.EpochSecretKey, epoch
 		log.Panicf("no main chain config for batch %d", batchIndex)
 	}
 
-	if uint64(stBatch.SignatureCount) < config.Threshold && len(txs) > 0 {
+	if uint64(stBatch.SignatureCount) < config.Threshold && len(stBatch.DecryptedTransactions) > 0 {
+		signature, err := crypto.Sign(stBatch.DecryptionSignatureHash, dcdr.Config.SigningKey)
+		if err != nil {
+			log.Panicf("Cannot sign the decryption signature: %s", err)
+		}
+
 		decryptionSignature := shmsg.NewDecryptionSignature(batchIndex, signature)
 		dcdr.sendShuttermintMessage(
 			fmt.Sprintf("decryption signature, batch index=%d", batchIndex),
@@ -958,7 +972,8 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 	return nil
 }
 
-// maybeAppeal checks if there are any accusations against us and if so sends an appeal if possible.
+// maybeAppeal checks if there are any accusations against anyone and if so sends an appeal if
+// possible.
 func (dcdr *Decider) maybeAppeal() {
 	dcdr.syncPendingAppeals()
 
@@ -1013,6 +1028,51 @@ func (dcdr *Decider) maybeAppeal() {
 		dcdr.State.PendingAppeals[accusation.HalfStep] = struct{}{}
 		dcdr.addAction(&action)
 	}
+}
+
+func (dcdr *Decider) maybeAccuse() {
+	for halfStep := dcdr.State.HalfStepsChecked; halfStep < dcdr.MainChain.NumExecutionHalfSteps; halfStep++ {
+		if halfStep%2 != 0 {
+			continue // only accuse for cipher execution half steps, not plain ones
+		}
+
+		batchIndex := halfStep / 2
+
+		receipt := dcdr.MainChain.CipherExecutionReceipts[halfStep]
+		if receipt == nil {
+			// half step was skipped
+			continue
+		}
+
+		stBatch, ok := dcdr.State.Batches[batchIndex]
+		if !ok {
+			continue
+		}
+
+		if !bytes.Equal(stBatch.DecryptedBatchHash, receipt.BatchHash[:]) {
+			// what was decrypted does not match what we've decrypted
+
+			if _, ok := dcdr.MainChain.Accusations[halfStep]; ok {
+				log.Printf("Not accusing executor for batch %d because accusation already present", batchIndex)
+				continue
+			}
+
+			config, ok := dcdr.MainChain.ConfigForBatchIndex(batchIndex)
+			if !ok {
+				log.Printf("Error: cannot accuse executor of batch %d because config is missing", batchIndex)
+				continue
+			}
+
+			keyperIndex, _ := config.KeyperIndex(dcdr.Config.Address())
+			action := fx.Accuse{
+				HalfStep:    halfStep,
+				KeyperIndex: keyperIndex,
+			}
+			dcdr.addAction(&action)
+		}
+	}
+
+	dcdr.State.HalfStepsChecked = dcdr.MainChain.NumExecutionHalfSteps
 }
 
 // syncPendingAppeals removes any pending appeals that have been successfully handled by the main
@@ -1076,5 +1136,6 @@ func (dcdr *Decider) Decide() {
 	dcdr.handleDecryptionSignatures()
 	dcdr.maybeExecuteBatch()
 	dcdr.maybeAppeal()
+	dcdr.maybeAccuse()
 	dcdr.State.SyncHeight = dcdr.Shutter.CurrentBlock + 1
 }
