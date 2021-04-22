@@ -366,15 +366,18 @@ func loadContractsJSON(path string) error {
 }
 
 func configs() error {
-	configs := []*keyper.Config{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
 		config, err := rawConfig(i)
 		if err != nil {
 			return err
 		}
-		configs = append(configs, config)
+		dir := filepath.Join(configFlags.Dir, "keyper"+strconv.Itoa(i))
+		err = saveConfig(config, dir)
+		if err != nil {
+			return err
+		}
 	}
-	return saveConfigs(configs)
+	return nil
 }
 
 func rawConfig(keyperIndex int) (*keyper.Config, error) {
@@ -440,22 +443,19 @@ func randomValidatorKey() (ed25519.PrivateKey, error) {
 	return ed25519.NewKeyFromSeed(seed), nil
 }
 
-func saveConfigs(configs []*keyper.Config) error {
-	for i, c := range configs {
-		var err error
-		dir := filepath.Join(configFlags.Dir, "keyper"+strconv.Itoa(i))
-		if err = os.MkdirAll(dir, 0o755); err != nil {
-			return errors.Wrap(err, "failed to create keyper directory")
-		}
-		path := filepath.Join(dir, "config.toml")
+func saveConfig(c *keyper.Config, dir string) error {
+	var err error
+	if err = os.MkdirAll(dir, 0o755); err != nil {
+		return errors.Wrap(err, "failed to create keyper directory")
+	}
+	path := filepath.Join(dir, "config.toml")
 
-		file, err := os.Create(path)
-		if err != nil {
-			return errors.Wrap(err, "failed to create keyper config file")
-		}
-		if err = c.WriteTOML(file); err != nil {
-			return errors.Wrap(err, "failed to write keyper config file")
-		}
+	file, err := os.Create(path)
+	if err != nil {
+		return errors.Wrap(err, "failed to create keyper config file")
+	}
+	if err = c.WriteTOML(file); err != nil {
+		return errors.Wrap(err, "failed to write keyper config file")
 	}
 	return nil
 }
