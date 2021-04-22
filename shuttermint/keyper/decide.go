@@ -978,6 +978,8 @@ func (dcdr *Decider) maybeAppeal() {
 	dcdr.syncPendingAppeals()
 
 	for _, accusation := range dcdr.MainChain.Accusations {
+		batchIndex := accusation.HalfStep / 2
+
 		if accusation.Appealed {
 			continue
 		}
@@ -985,17 +987,32 @@ func (dcdr *Decider) maybeAppeal() {
 			continue // don't send appeal if we've already done so and the tx is still pending
 		}
 
-		batchIndex := accusation.HalfStep / 2
+		receipt, ok := dcdr.MainChain.CipherExecutionReceipts[accusation.HalfStep]
+		if !ok {
+			log.Printf("Error: got accusation for batch %d, but no receipt", batchIndex)
+			continue
+		}
+
+		stBatch, ok := dcdr.State.Batches[batchIndex]
+		if !ok {
+			log.Printf("Error: cannot appeal because batch %d is missing", batchIndex)
+			continue
+		}
+
+		if !bytes.Equal(receipt.BatchHash[:], stBatch.DecryptedBatchHash) {
+			continue // don't send appeal if we agree with accusation
+		}
+
 		signatures, indices, err := dcdr.Shutter.GetSortedDecryptionSignaturesWithIndices(batchIndex)
 		if err != nil {
 			log.Printf("Error: cannot appeal accusation because getting decryption signatures for batch %d failed", batchIndex)
-			return
+			continue
 		}
 
 		batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(batchIndex)
 		if err != nil {
 			log.Printf("Error: cannot appeal accusation because getting batch config for batch %d failed", batchIndex)
-			return
+			continue
 		}
 
 		if uint64(len(signatures)) < batchConfig.Threshold {
@@ -1004,18 +1021,11 @@ func (dcdr *Decider) maybeAppeal() {
 				len(signatures),
 				batchConfig.Threshold,
 			)
-			return
+			continue
 		}
 
-		stBatch, ok := dcdr.State.Batches[batchIndex]
-		if !ok {
-			log.Printf("Error: cannot appeal because batch %d is missing", batchIndex)
-			return
-		}
-		batchHashSlice := transactionsHash(stBatch.DecryptedTransactions)
 		batchHash := [32]byte{}
-		copy(batchHash[:], batchHashSlice)
-
+		copy(batchHash[:], stBatch.DecryptedBatchHash)
 		authorization := contract.Authorization{
 			HalfStep:      accusation.HalfStep,
 			BatchHash:     batchHash,
