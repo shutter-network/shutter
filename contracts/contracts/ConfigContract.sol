@@ -69,24 +69,43 @@ contract ConfigContract is Ownable {
         return uint64(configs.length);
     }
 
+    /// @notice Get the index of the config for the batch with the given index.
+    /// @param batchIndex The index of the batch.
+    function configIndexForBatchIndex(uint64 batchIndex)
+        public
+        view
+        returns (uint64)
+    {
+        for (uint256 i = configs.length - 1; i >= 0; i--) {
+            if (configs[i].startBatchIndex <= batchIndex) {
+                return uint64(i);
+            }
+        }
+        assert(false);
+        return 0; // only for the linter
+    }
+
     /// @notice Get the config for a certain batch.
     /// @param batchIndex The index of the batch.
-    function getConfig(uint64 batchIndex)
+    function configForBatchIndex(uint64 batchIndex)
         external
         view
         returns (BatchConfig memory)
     {
-        for (uint256 i = configs.length - 1; i >= 0; i--) {
-            BatchConfig storage config = configs[i];
-            if (config.startBatchIndex <= batchIndex) {
-                return config;
-            }
-        }
-        assert(false);
+        uint64 configIndex = configIndexForBatchIndex(batchIndex);
+        return configs[configIndex];
+    }
+
+    function configForConfigIndex(uint64 configIndex)
+        external
+        view
+        returns (BatchConfig memory)
+    {
+        return configs[configIndex];
     }
 
     //
-    // Config keyper getters
+    // Config field getters
     //
     function configKeypers(uint64 configIndex, uint64 keyperIndex)
         external
@@ -102,6 +121,86 @@ contract ConfigContract is Ownable {
         returns (uint64)
     {
         return uint64(configs[configIndex].keypers.length);
+    }
+
+    function configStartBatchIndex(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].startBatchIndex;
+    }
+
+    function configStartBlockNumber(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].startBlockNumber;
+    }
+
+    function configThreshold(uint64 configIndex) public view returns (uint64) {
+        return configs[configIndex].threshold;
+    }
+
+    function configBatchSpan(uint64 configIndex) public view returns (uint64) {
+        return configs[configIndex].batchSpan;
+    }
+
+    function configBatchSizeLimit(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].batchSizeLimit;
+    }
+
+    function configTransactionSizeLimit(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].transactionSizeLimit;
+    }
+
+    function configTransactionGasLimit(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].transactionGasLimit;
+    }
+
+    function configFeeReceiver(uint64 configIndex)
+        public
+        view
+        returns (address)
+    {
+        return configs[configIndex].feeReceiver;
+    }
+
+    function configTargetAddress(uint64 configIndex)
+        public
+        view
+        returns (address)
+    {
+        return configs[configIndex].targetAddress;
+    }
+
+    function configTargetFunctionSelector(uint64 configIndex)
+        public
+        view
+        returns (bytes4)
+    {
+        return configs[configIndex].targetFunctionSelector;
+    }
+
+    function configExecutionTimeout(uint64 configIndex)
+        public
+        view
+        returns (uint64)
+    {
+        return configs[configIndex].executionTimeout;
     }
 
     //
@@ -200,14 +299,62 @@ contract ConfigContract is Ownable {
     }
 
     //
-    // nextConfig keyper getters
+    // nextConfig getters
     //
-    function nextConfigKeypers(uint64 index) external view returns (address) {
-        return nextConfig.keypers[index];
+    function nextConfigKeypers(uint64 keyperIndex)
+        external
+        view
+        returns (address)
+    {
+        return nextConfig.keypers[keyperIndex];
     }
 
     function nextConfigNumKeypers() external view returns (uint64) {
         return uint64(nextConfig.keypers.length);
+    }
+
+    function nextConfigStartBatchIndex() public view returns (uint64) {
+        return nextConfig.startBatchIndex;
+    }
+
+    function nextConfigStartBlockNumber() public view returns (uint64) {
+        return nextConfig.startBlockNumber;
+    }
+
+    function nextConfigThreshold() public view returns (uint64) {
+        return nextConfig.threshold;
+    }
+
+    function nextConfigBatchSpan() public view returns (uint64) {
+        return nextConfig.batchSpan;
+    }
+
+    function nextConfigBatchSizeLimit() public view returns (uint64) {
+        return nextConfig.batchSizeLimit;
+    }
+
+    function nextConfigTransactionSizeLimit() public view returns (uint64) {
+        return nextConfig.transactionSizeLimit;
+    }
+
+    function nextConfigTransactionGasLimit() public view returns (uint64) {
+        return nextConfig.transactionGasLimit;
+    }
+
+    function nextConfigFeeReceiver() public view returns (address) {
+        return nextConfig.feeReceiver;
+    }
+
+    function nextConfigTargetAddress() public view returns (address) {
+        return nextConfig.targetAddress;
+    }
+
+    function nextConfigTargetFunctionSelector() public view returns (bytes4) {
+        return nextConfig.targetFunctionSelector;
+    }
+
+    function nextConfigExecutionTimeout() public view returns (uint64) {
+        return nextConfig.executionTimeout;
     }
 
     //
@@ -291,5 +438,38 @@ contract ConfigContract is Ownable {
             "ConfigContract: no configs unscheduled"
         );
         emit ConfigUnscheduled(uint64(configs.length));
+    }
+
+    function batchingActive(uint64 configIndex) public view returns (bool) {
+        return configs[configIndex].batchSpan > 0;
+    }
+
+    function batchBoundaryBlocks(uint64 configIndex, uint64 batchIndex)
+        public
+        view
+        returns (
+            uint64,
+            uint64,
+            uint64
+        )
+    {
+        uint64 startBlockNumber = configs[configIndex].startBlockNumber;
+        uint64 startBatchIndex = configs[configIndex].startBatchIndex;
+        uint64 batchSpan = configs[configIndex].batchSpan;
+        uint64 executionTimeout = configs[configIndex].executionTimeout;
+
+        assert(batchSpan > 0);
+        assert(batchIndex >= startBatchIndex);
+
+        uint64 relativeBatchIndex = batchIndex - startBatchIndex;
+        uint64 end =
+            startBlockNumber + relativeBatchIndex * batchSpan + batchSpan;
+        uint64 start = end - batchSpan;
+        if (relativeBatchIndex >= 1) {
+            start -= batchSpan;
+        }
+        uint64 timeout = end + executionTimeout;
+
+        return (start, end, timeout);
     }
 }

@@ -55,31 +55,23 @@ contract BatcherContract is Ownable {
         TransactionType transactionType,
         bytes calldata transaction
     ) external payable {
-        BatchConfig memory config = configContract.getConfig(batchIndex);
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 transactionSizeLimit =
+            configContract.configTransactionSizeLimit(configIndex);
+        uint64 batchSizeLimit =
+            configContract.configBatchSizeLimit(configIndex);
+        address feeReceiver = configContract.configFeeReceiver(configIndex);
 
-        // check batching is active
-        require(config.batchSpan > 0, "BatcherContract: batch not active");
-
-        // check given batch is open
-        assert(batchIndex >= config.startBatchIndex); // ensured by configContract.getConfig
-        uint64 relativeBatchIndex = batchIndex - config.startBatchIndex;
-        uint64 batchEndBlock =
-            config.startBlockNumber +
-                (relativeBatchIndex + 1) *
-                config.batchSpan;
-        uint64 batchStartBlock = batchEndBlock - config.batchSpan;
-        if (batchStartBlock >= config.batchSpan && relativeBatchIndex >= 1) {
-            batchStartBlock -= config.batchSpan;
-        }
-
+        // check batching is active and open
         require(
-            block.number >= batchStartBlock,
-            "BatcherContract: batch not started yet"
+            configContract.batchingActive(configIndex),
+            "BatcherContract: batch not active"
         );
-        require(
-            block.number < batchEndBlock,
-            "BatcherContract: batch already ended"
-        );
+        (uint64 start, uint64 end, ) =
+            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        require(block.number >= start, "BatcherContract: batch not open yet");
+        require(block.number < end, "BatcherContract: batch already closed");
 
         // check tx and batch size limits
         require(
@@ -87,12 +79,11 @@ contract BatcherContract is Ownable {
             "BatcherContract: transaction is empty"
         );
         require(
-            transaction.length <= config.transactionSizeLimit,
+            transaction.length <= transactionSizeLimit,
             "BatcherContract: transaction too big"
         );
         require(
-            batchSizes[batchIndex] + transaction.length <=
-                config.batchSizeLimit,
+            batchSizes[batchIndex] + transaction.length <= batchSizeLimit,
             "BatcherContract: batch already full"
         ); // overflow can be ignored here because number of txs and their sizes are both small
 
@@ -110,8 +101,8 @@ contract BatcherContract is Ownable {
         batchSizes[batchIndex] += uint64(transaction.length);
 
         // pay fee to fee bank and emit event
-        if (msg.value > 0 && config.feeReceiver != address(0)) {
-            feeBankContract.deposit{value: msg.value}(config.feeReceiver);
+        if (msg.value > 0 && feeReceiver != address(0)) {
+            feeBankContract.deposit{value: msg.value}(feeReceiver);
         }
         emit TransactionAdded(
             batchIndex,

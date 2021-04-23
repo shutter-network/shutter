@@ -47,7 +47,7 @@ def print_gas_summary(txs: Sequence[TransactionReceipt]) -> None:
     print(f"Samples: {len(txs)}")
 
 
-@pytest.mark.skip(reason="benchmark")
+# @pytest.mark.skip(reason="benchmark")
 def benchmark_add_cipher_txs(batcher_contract: Any) -> None:
     txs = []
     for _ in range(10):

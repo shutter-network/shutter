@@ -73,36 +73,44 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        BatchConfig memory config = configContract.getConfig(batchIndex);
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
+        address targetAddress = configContract.configTargetAddress(configIndex);
+        bytes4 targetFunctionSelector =
+            configContract.configTargetFunctionSelector(configIndex);
+        uint64 transactionGasLimit =
+            configContract.configTransactionGasLimit(configIndex);
 
-        // Check that batching is active and the batch is closed
-        require(config.batchSpan > 0, "ExecutorContract: config is inactive");
+        // Check that batching is active
+        require(
+            configContract.batchingActive(configIndex),
+            "ExecutorContract: config is inactive"
+        );
+        (, uint64 end, uint64 executionTimeout) =
+            configContract.batchBoundaryBlocks(configIndex, batchIndex);
 
         // skip cipher execution if we reached the execution timeout.
-        if (
-            block.number >=
-            config.startBlockNumber +
-                config.batchSpan *
-                (batchIndex + 1) +
-                config.executionTimeout
-        ) {
+        if (block.number >= executionTimeout) {
             numExecutionHalfSteps++;
             emit CipherExecutionSkipped(numExecutionHalfSteps);
             return;
         }
+
         require(
-            block.number >=
-                config.startBlockNumber + config.batchSpan * (batchIndex + 1),
+            block.number >= end,
             "ExecutorContract: batch is not closed yet"
         );
 
         // Check that caller is keyper
+        uint64 numKeypers = configContract.configNumKeypers(configIndex);
         require(
-            keyperIndex < config.keypers.length,
+            keyperIndex < numKeypers,
             "ExecutorContract: keyper index out of bounds"
         );
+        address keyperAtIndex =
+            configContract.configKeypers(configIndex, keyperIndex);
         require(
-            msg.sender == config.keypers[keyperIndex],
+            msg.sender == keyperAtIndex,
             "ExecutorContract: sender is not specified keyper"
         );
 
@@ -123,9 +131,9 @@ contract ExecutorContract {
         // Execute the batch
         bytes32 batchHash =
             executeTransactions(
-                config.targetAddress,
-                config.targetFunctionSelector,
-                config.transactionGasLimit,
+                targetAddress,
+                targetFunctionSelector,
+                transactionGasLimit,
                 transactions
             );
 
@@ -156,15 +164,16 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        BatchConfig memory config = configContract.getConfig(batchIndex);
-
-        require(config.batchSpan > 0, "ExecutorContract: config is inactive");
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
         require(
-            block.number >=
-                config.startBlockNumber +
-                    config.batchSpan *
-                    (batchIndex + 1) +
-                    config.executionTimeout,
+            configContract.batchingActive(configIndex),
+            "ExecutorContract: config is inactive"
+        );
+        (, , uint64 executionTimeout) =
+            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        require(
+            block.number >= executionTimeout,
             "ExecutorContract: execution timeout not reached yet"
         );
 
@@ -190,22 +199,27 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        BatchConfig memory config = configContract.getConfig(batchIndex);
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
+        address targetAddress = configContract.configTargetAddress(configIndex);
+        bytes4 targetFunctionSelector =
+            configContract.configTargetFunctionSelector(configIndex);
+        uint64 transactionGasLimit =
+            configContract.configTransactionGasLimit(configIndex);
 
         // Since the cipher part of the batch has already been executed or skipped and the
         // config cannot be changed anymore (since the batching period is over), the following
         // checks remain true.
-        assert(config.batchSpan > 0);
-        assert(
-            block.number >=
-                config.startBlockNumber + config.batchSpan * (batchIndex + 1)
-        );
+        assert(configContract.batchingActive(configIndex));
+        (, uint64 end, ) =
+            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        assert(block.number >= end);
 
         bytes32 batchHash =
             executeTransactions(
-                config.targetAddress,
-                config.targetFunctionSelector,
-                config.transactionGasLimit,
+                targetAddress,
+                targetFunctionSelector,
+                transactionGasLimit,
                 transactions
             );
 

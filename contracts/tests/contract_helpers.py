@@ -98,7 +98,7 @@ def fetch_next_config(config_contract: Any) -> BatchConfig:
 
 
 def fetch_config(config_contract: Any, batch_index: int) -> BatchConfig:
-    full_config_tuple = config_contract.getConfig(batch_index)
+    full_config_tuple = config_contract.configForBatchIndex(batch_index)
     return BatchConfig.from_tuple(full_config_tuple)
 
 

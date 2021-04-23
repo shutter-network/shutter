@@ -46,18 +46,19 @@ contract KeyBroadcastContract {
         uint64 startBatchIndex,
         bytes memory key
     ) public {
-        BatchConfig memory config = configContract.getConfig(startBatchIndex);
-        require(
-            config.batchSpan > 0,
-            "KeyBroadcastContract: config is inactive"
-        );
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(startBatchIndex);
+        uint64 batchSpan = configContract.configBatchSpan(configIndex);
+
+        require(batchSpan > 0, "KeyBroadcastContract: config is inactive");
 
         require(
-            keyperIndex < config.keypers.length,
+            keyperIndex < configContract.configNumKeypers(configIndex),
             "KeyBroadcastContract: keyper index out of range"
         );
         require(
-            msg.sender == config.keypers[keyperIndex],
+            msg.sender ==
+                configContract.configKeypers(configIndex, keyperIndex),
             "KeyBroadcastContract: sender is not keyper"
         );
 

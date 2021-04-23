@@ -65,13 +65,16 @@ contract KeyperSlasher {
             "KeyperSlasher: already accused"
         );
 
-        BatchConfig memory config = configContract.getConfig(halfStep / 2);
+        uint64 batchIndex = halfStep / 2;
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
         require(
-            keyperIndex < config.keypers.length,
+            keyperIndex < configContract.configNumKeypers(configIndex),
             "KeyperSlasher: keyper index out of range"
         );
         require(
-            msg.sender == config.keypers[keyperIndex],
+            msg.sender ==
+                configContract.configKeypers(configIndex, keyperIndex),
             "KeyperSlasher: sender does not match keyper"
         );
 
@@ -139,11 +142,13 @@ contract KeyperSlasher {
         Authorization memory authorization,
         CipherExecutionReceipt memory receipt
     ) internal view {
-        BatchConfig memory config =
-            configContract.getConfig(receipt.halfStep / 2);
+        uint64 batchIndex = receipt.halfStep / 2;
+        uint64 configIndex =
+            configContract.configIndexForBatchIndex(batchIndex);
 
         require(
-            authorization.signatures.length >= config.threshold,
+            authorization.signatures.length >=
+                configContract.configThreshold(configIndex),
             "KeyperSlasher: not enough signatures"
         );
         require(
@@ -162,7 +167,7 @@ contract KeyperSlasher {
             bytes memory signature = authorization.signatures[i];
             uint64 signerIndex = authorization.signerIndices[i];
             require(
-                signerIndex < config.keypers.length,
+                signerIndex < configContract.configNumKeypers(configIndex),
                 "KeyperSlasher: signer index out of range"
             );
 
@@ -174,7 +179,8 @@ contract KeyperSlasher {
 
             address signer = ECDSA.recover(decryptionSignatureHash, signature);
             require(
-                signer == config.keypers[signerIndex],
+                signer ==
+                    configContract.configKeypers(configIndex, signerIndex),
                 "KeyperSlasher: wrong signer"
             );
         }
