@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -22,7 +20,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -381,19 +378,6 @@ func configs() error {
 }
 
 func rawConfig(keyperIndex int) (*keyper.Config, error) {
-	signingKey, err := randomSigningKey()
-	if err != nil {
-		return nil, err
-	}
-	encryptionKey, err := randomEncryptionKey()
-	if err != nil {
-		return nil, err
-	}
-	validatorKey, err := randomValidatorKey()
-	if err != nil {
-		return nil, err
-	}
-
 	var shuttermintPort int
 	if configFlags.FixedShuttermintPort {
 		shuttermintPort = configFlags.FirstShuttermintPort
@@ -403,14 +387,10 @@ func rawConfig(keyperIndex int) (*keyper.Config, error) {
 
 	shuttermintURL := configFlags.ShuttermintURLBase + ":" + strconv.Itoa(shuttermintPort)
 
-	return &keyper.Config{
-		ChainID:                     "",
+	config := keyper.Config{
 		ShuttermintURL:              shuttermintURL,
 		EthereumURL:                 configFlags.EthereumURL,
 		DBDir:                       "",
-		SigningKey:                  signingKey,
-		ValidatorKey:                validatorKey,
-		EncryptionKey:               encryptionKey,
 		ConfigContractAddress:       contractsJSON.ConfigContract,
 		BatcherContractAddress:      contractsJSON.BatcherContract,
 		KeyBroadcastContractAddress: contractsJSON.KeyBroadcastContract,
@@ -420,27 +400,12 @@ func rawConfig(keyperIndex int) (*keyper.Config, error) {
 		MainChainFollowDistance:     0,
 		ExecutionStaggering:         5,
 		DKGPhaseLength:              30,
-	}, nil
-}
-
-func randomSigningKey() (*ecdsa.PrivateKey, error) {
-	return crypto.GenerateKey()
-}
-
-func randomEncryptionKey() (*ecies.PrivateKey, error) {
-	encryptionKeyECDSA, err := crypto.GenerateKey()
+	}
+	err := config.GenerateNewKeys()
 	if err != nil {
 		return nil, err
 	}
-	return ecies.ImportECDSA(encryptionKeyECDSA), nil
-}
-
-func randomValidatorKey() (ed25519.PrivateKey, error) {
-	seed := make([]byte, ed25519.SeedSize)
-	if _, err := rand.Read(seed); err != nil {
-		return nil, err
-	}
-	return ed25519.NewKeyFromSeed(seed), nil
+	return &config, nil
 }
 
 func saveConfig(c *keyper.Config, dir string) error {

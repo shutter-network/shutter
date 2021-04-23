@@ -3,6 +3,7 @@ package keyper
 import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -19,7 +20,6 @@ import (
 
 // Config contains validated configuration parameters for the keyper client.
 type Config struct {
-	ChainID                     string
 	ShuttermintURL              string
 	EthereumURL                 string
 	DBDir                       string
@@ -116,6 +116,47 @@ func stringToAddress(f reflect.Type, t reflect.Type, data interface{}) (interfac
 		return nil, fmt.Errorf("not a checksummed address: %s", ds)
 	}
 	return addr, nil
+}
+
+func randomSigningKey() (*ecdsa.PrivateKey, error) {
+	return crypto.GenerateKey()
+}
+
+func randomEncryptionKey() (*ecies.PrivateKey, error) {
+	encryptionKeyECDSA, err := crypto.GenerateKey()
+	if err != nil {
+		return nil, err
+	}
+	return ecies.ImportECDSA(encryptionKeyECDSA), nil
+}
+
+func randomValidatorKey() (ed25519.PrivateKey, error) {
+	seed := make([]byte, ed25519.SeedSize)
+	if _, err := rand.Read(seed); err != nil {
+		return nil, err
+	}
+	return ed25519.NewKeyFromSeed(seed), nil
+}
+
+// GenerateNewKeys generates new keys and stores them inside the Config object.
+func (config *Config) GenerateNewKeys() error {
+	signingKey, err := randomSigningKey()
+	if err != nil {
+		return err
+	}
+	encryptionKey, err := randomEncryptionKey()
+	if err != nil {
+		return err
+	}
+	validatorKey, err := randomValidatorKey()
+	if err != nil {
+		return err
+	}
+
+	config.SigningKey = signingKey
+	config.ValidatorKey = validatorKey
+	config.EncryptionKey = encryptionKey
+	return nil
 }
 
 // Unmarshal unmarshals a keyper Config from the the given Viper object.
