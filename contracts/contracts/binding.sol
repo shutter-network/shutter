@@ -3,7 +3,7 @@
 // This file is the sole input file we use when running abigen to generate the bindings in shuttermint/contract/binding.go
 
 // Please keep the version in sync with ../brownie-config.yaml
-pragma solidity =0.7.6;
+pragma solidity =0.8.4;
 
 import "./BatcherContract.sol";
 import "./ConfigContract.sol";

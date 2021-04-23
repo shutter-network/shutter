@@ -37,7 +37,7 @@ commands:
           name: Install solidity
           command: |
             mkdir -p ~/bin
-            curl -sSL -o ~/bin/solc https://github.com/ethereum/solidity/releases/download/v0.7.6/solc-static-linux
+            curl -sSL -o ~/bin/solc https://github.com/ethereum/solidity/releases/download/v0.8.4/solc-static-linux
             chmod +x ~/bin/solc
             echo >${BASH_ENV} 'export PATH=~/bin:${PATH}'
 executors:
