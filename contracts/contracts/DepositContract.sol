@@ -3,15 +3,13 @@
 pragma solidity =0.8.4;
 pragma experimental ABIEncoderV2;
 
-import {
-    IERC777
-} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/token/ERC777/IERC777.sol";
+import {IERC777} from "openzeppelin/contracts/token/ERC777/IERC777.sol";
 import {
     IERC777Recipient
-} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/token/ERC777/IERC777Recipient.sol";
+} from "openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import {
     IERC1820Registry
-} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/introspection/IERC1820Registry.sol";
+} from "openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
 
 struct Deposit {
     uint256 amount;

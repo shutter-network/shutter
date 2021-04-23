@@ -3,9 +3,7 @@
 pragma solidity =0.8.4;
 pragma experimental ABIEncoderV2;
 
-import {
-    Ownable
-} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/access/Ownable.sol";
+import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 import {ConfigContract, BatchConfig} from "./ConfigContract.sol";
 import {FeeBankContract} from "./FeeBankContract.sol";
 

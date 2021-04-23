@@ -3,9 +3,7 @@
 pragma solidity =0.8.4;
 pragma experimental ABIEncoderV2;
 
-import {
-    ECDSA
-} from "OpenZeppelin/openzeppelin-contracts@3.3.0/contracts/cryptography/ECDSA.sol";
+import {ECDSA} from "openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ConfigContract, BatchConfig} from "./ConfigContract.sol";
 import {DepositContract} from "./DepositContract.sol";
 import {ExecutorContract, CipherExecutionReceipt} from "./ExecutorContract.sol";
