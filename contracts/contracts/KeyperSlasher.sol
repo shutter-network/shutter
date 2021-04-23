@@ -183,7 +183,7 @@ contract KeyperSlasher {
     function _decryptionSignaturePreimage(
         address batcherContract,
         CipherExecutionReceipt memory receipt
-    ) internal view returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 "\x19dectx",
