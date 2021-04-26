@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity =0.8.4;
-pragma experimental ABIEncoderV2;
 
 import {ERC777} from "openzeppelin/contracts/token/ERC777/ERC777.sol";
 
