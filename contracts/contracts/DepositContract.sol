@@ -46,7 +46,7 @@ contract DepositContract is IERC777Recipient {
         );
     }
 
-    function setSlasher(address slasherAddress) external {
+    function setSlasher(address slasherAddress) public {
         require(
             slasher == address(0),
             "DepositContract: slasher address already set"
@@ -61,7 +61,7 @@ contract DepositContract is IERC777Recipient {
         uint256 amount,
         bytes calldata userData,
         bytes calldata // operatorData
-    ) external override {
+    ) public override {
         require(
             msg.sender == address(token),
             "DepositContract: received invalid token"
@@ -70,7 +70,7 @@ contract DepositContract is IERC777Recipient {
         _deposit(from, amount, withdrawalInterval);
     }
 
-    function requestWithdrawal() external {
+    function requestWithdrawal() public {
         Deposit memory deposit = _deposits[msg.sender];
         require(deposit.amount > 0, "DepositContract: no deposit");
         assert(!deposit.slashed);
@@ -91,7 +91,7 @@ contract DepositContract is IERC777Recipient {
         });
     }
 
-    function withdraw(address recipient) external {
+    function withdraw(address recipient) public {
         Deposit memory deposit = _deposits[msg.sender];
         require(deposit.amount > 0, "DepositContract: no deposit");
         assert(!deposit.slashed);
@@ -119,7 +119,7 @@ contract DepositContract is IERC777Recipient {
         });
     }
 
-    function slash(address account) external {
+    function slash(address account) public {
         require(msg.sender == slasher);
 
         Deposit memory deposit = _deposits[account];

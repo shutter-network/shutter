@@ -53,7 +53,7 @@ contract BatcherContract is Ownable {
         uint64 batchIndex,
         TransactionType transactionType,
         bytes calldata transaction
-    ) external payable {
+    ) public payable {
         uint64 configIndex =
             configContract.configIndexForBatchIndex(batchIndex);
         uint64 transactionSizeLimit =

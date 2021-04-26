@@ -61,7 +61,7 @@ contract ExecutorContract {
         bytes32 cipherBatchHash,
         bytes[] calldata transactions,
         uint64 keyperIndex
-    ) external {
+    ) public {
         require(
             numExecutionHalfSteps / 2 == batchIndex,
             "ExecutorContract: unexpected batch index"

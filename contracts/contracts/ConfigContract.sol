@@ -64,7 +64,7 @@ contract ConfigContract is Ownable {
             });
     }
 
-    function numConfigs() external view returns (uint64) {
+    function numConfigs() public view returns (uint64) {
         return uint64(configs.length);
     }
 
@@ -87,7 +87,7 @@ contract ConfigContract is Ownable {
     /// @notice Get the config for a certain batch.
     /// @param batchIndex The index of the batch.
     function configForBatchIndex(uint64 batchIndex)
-        external
+        public
         view
         returns (BatchConfig memory)
     {
@@ -96,7 +96,7 @@ contract ConfigContract is Ownable {
     }
 
     function configForConfigIndex(uint64 configIndex)
-        external
+        public
         view
         returns (BatchConfig memory)
     {
@@ -107,18 +107,14 @@ contract ConfigContract is Ownable {
     // Config field getters
     //
     function configKeypers(uint64 configIndex, uint64 keyperIndex)
-        external
+        public
         view
         returns (address)
     {
         return configs[configIndex].keypers[keyperIndex];
     }
 
-    function configNumKeypers(uint64 configIndex)
-        external
-        view
-        returns (uint64)
-    {
+    function configNumKeypers(uint64 configIndex) public view returns (uint64) {
         return uint64(configs[configIndex].keypers.length);
     }
 
@@ -206,75 +202,75 @@ contract ConfigContract is Ownable {
     // next config setters
     //
     function nextConfigSetStartBatchIndex(uint64 startBatchIndex)
-        external
+        public
         onlyOwner
     {
         nextConfig.startBatchIndex = startBatchIndex;
     }
 
     function nextConfigSetStartBlockNumber(uint64 startBlockNumber)
-        external
+        public
         onlyOwner
     {
         nextConfig.startBlockNumber = startBlockNumber;
     }
 
-    function nextConfigSetThreshold(uint64 threshold) external onlyOwner {
+    function nextConfigSetThreshold(uint64 threshold) public onlyOwner {
         nextConfig.threshold = threshold;
     }
 
-    function nextConfigSetBatchSpan(uint64 batchSpan) external onlyOwner {
+    function nextConfigSetBatchSpan(uint64 batchSpan) public onlyOwner {
         nextConfig.batchSpan = batchSpan;
     }
 
     function nextConfigSetBatchSizeLimit(uint64 batchSizeLimit)
-        external
+        public
         onlyOwner
     {
         nextConfig.batchSizeLimit = batchSizeLimit;
     }
 
     function nextConfigSetTransactionSizeLimit(uint64 transactionSizeLimit)
-        external
+        public
         onlyOwner
     {
         nextConfig.transactionSizeLimit = transactionSizeLimit;
     }
 
     function nextConfigSetTransactionGasLimit(uint64 transactionGasLimit)
-        external
+        public
         onlyOwner
     {
         nextConfig.transactionGasLimit = transactionGasLimit;
     }
 
-    function nextConfigSetFeeReceiver(address feeReceiver) external onlyOwner {
+    function nextConfigSetFeeReceiver(address feeReceiver) public onlyOwner {
         nextConfig.feeReceiver = feeReceiver;
     }
 
     function nextConfigSetTargetAddress(address targetAddress)
-        external
+        public
         onlyOwner
     {
         nextConfig.targetAddress = targetAddress;
     }
 
     function nextConfigSetTargetFunctionSelector(bytes4 targetFunctionSelector)
-        external
+        public
         onlyOwner
     {
         nextConfig.targetFunctionSelector = targetFunctionSelector;
     }
 
     function nextConfigSetExecutionTimeout(uint64 executionTimeout)
-        external
+        public
         onlyOwner
     {
         nextConfig.executionTimeout = executionTimeout;
     }
 
     function nextConfigAddKeypers(address[] calldata newKeypers)
-        external
+        public
         onlyOwner
     {
         require(
@@ -286,7 +282,7 @@ contract ConfigContract is Ownable {
         }
     }
 
-    function nextConfigRemoveKeypers(uint64 n) external onlyOwner {
+    function nextConfigRemoveKeypers(uint64 n) public onlyOwner {
         uint256 currentLength = nextConfig.keypers.length;
         if (n <= currentLength) {
             for (uint64 i = 0; i < n; i++) {
@@ -301,14 +297,14 @@ contract ConfigContract is Ownable {
     // nextConfig getters
     //
     function nextConfigKeypers(uint64 keyperIndex)
-        external
+        public
         view
         returns (address)
     {
         return nextConfig.keypers[keyperIndex];
     }
 
-    function nextConfigNumKeypers() external view returns (uint64) {
+    function nextConfigNumKeypers() public view returns (uint64) {
         return uint64(nextConfig.keypers.length);
     }
 
@@ -365,7 +361,7 @@ contract ConfigContract is Ownable {
     ///     blocks or the batch span of the current config in the future, whatever is greater.
     /// @notice The transition between the next config and the config currently at the end of the
     ///     config sequence must be seamless, i.e., the batches must not be cut short.
-    function scheduleNextConfig() external onlyOwner {
+    function scheduleNextConfig() public onlyOwner {
         require(
             configs.length < type(uint64).max - 1,
             "ConfigContract: number of configs exceeds uint64"
@@ -415,7 +411,7 @@ contract ConfigContract is Ownable {
     /// @notice `fromStartBlockNumber` must be `configChangeHeadsUpBlocks` blocks in the future.
     /// @notice This method can remove one or more configs. If no config would be removed, an error
     ///     is thrown.
-    function unscheduleConfigs(uint64 fromStartBlockNumber) external onlyOwner {
+    function unscheduleConfigs(uint64 fromStartBlockNumber) public onlyOwner {
         require(
             fromStartBlockNumber > block.number + configChangeHeadsUpBlocks,
             "ConfigContract: from start block too early"
