@@ -12,15 +12,22 @@ import (
 var scheduleCmd = &cobra.Command{
 	Use:   "schedule",
 	Short: "Schedule the next batch config",
-	Long: `This command schedules the next batch config. The next batch config can be
-configured using the 'shuttermint config set-next' command and queried with
-'shuttermint config query -i next'.`,
+	Long: `This command schedules the next batch config. The next batch config can be configured using the
+'shuttermint config set-next' command and queried with 'shuttermint config query -i next'. If
+--config is specified, this command will set the next config and schedule it.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var err error
 		ctx := context.Background()
-		err := processConfigFlags(ctx)
+		err = processConfigFlags(ctx)
 		if err != nil {
 			return err
+		}
+		if setNextFlags.ConfigPath != "" {
+			err = setNext(ctx)
+			if err != nil {
+				return err
+			}
 		}
 		return schedule(ctx)
 	},
@@ -28,6 +35,12 @@ configured using the 'shuttermint config set-next' command and queried with
 
 func init() {
 	addOwnerKeyFlag(scheduleCmd)
+	scheduleCmd.PersistentFlags().StringVar(
+		&setNextFlags.ConfigPath,
+		"config",
+		"",
+		"path to the config JSON file",
+	)
 }
 
 func schedule(ctx context.Context) error {
