@@ -135,10 +135,6 @@ type DKGInstance struct {
 	PolyCommitmentsSeen map[common.Address]struct{}
 	AccusationsSeen     map[common.Address]struct{}
 	ApologiesSeen       map[common.Address]struct{}
-
-	SubmissionsClosed bool
-	AccusationsClosed bool
-	ApologiesClosed   bool
 }
 
 type (
