@@ -4,3 +4,4 @@
 /testchain/
 /testrun/
 /contract/combined.json
+*.json
