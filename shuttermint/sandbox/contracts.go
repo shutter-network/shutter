@@ -138,7 +138,7 @@ func (c ConfigJSON) Validate() error {
 func validateAddress(address string) error {
 	addressParsed := common.HexToAddress(address)
 	if addressParsed.Hex() != address {
-		return errors.Errorf("invalid address")
+		return errors.Errorf("invalid address: %s", address)
 	}
 	return nil
 }
@@ -214,12 +214,12 @@ func LoadConfigJSON(path string) (*ConfigJSON, error) {
 	c := &ConfigJSON{}
 	err = json.Unmarshal(d, c)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unmarshal json")
 	}
 
 	err = c.Validate()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "load json config from %s", path)
 	}
 
 	return c, nil
