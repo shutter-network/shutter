@@ -3,8 +3,6 @@ package config
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -18,45 +16,22 @@ var scheduleCmd = &cobra.Command{
 configured using the 'shuttermint config set-next' command and queried with
 'shuttermint config query -i next'.`,
 	Args: cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		sandbox.ExitIfError(processConfigFlags(ctx))
-		if flag, err := validateScheduleFlags(); err != nil {
-			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
 		}
-		sandbox.ExitIfError(schedule(ctx))
+		return schedule(ctx)
 	},
 }
 
-var scheduleFlags struct {
-	Key string
-}
-
 func init() {
-	scheduleCmd.PersistentFlags().StringVarP(
-		&scheduleFlags.Key,
-		keyFlagName,
-		"k",
-		"",
-		"private key of the owner",
-	)
-	sandbox.MarkFlagRequired(scheduleCmd, keyFlagName)
-}
-
-func validateScheduleFlags() (string, error) {
-	if err := sandbox.ValidatePrivateKey(scheduleFlags.Key); err != nil {
-		return keyFlagName, err
-	}
-
-	return "", nil
+	addOwnerKeyFlag(scheduleCmd)
 }
 
 func schedule(ctx context.Context) error {
-	key, err := crypto.HexToECDSA(scheduleFlags.Key)
-	if err != nil {
-		return err // should be already checked during parameter validation
-	}
-	o, err := sandbox.InitTransactOpts(ctx, client, key)
+	o, err := sandbox.InitTransactOpts(ctx, client, ownerKey)
 	if err != nil {
 		return err
 	}

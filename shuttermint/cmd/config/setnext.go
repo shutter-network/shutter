@@ -7,8 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -20,19 +18,18 @@ var setNextCmd = &cobra.Command{
 	Use:   "set-next",
 	Short: "Set the next config in order to schedule it later",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-		sandbox.ExitIfError(processConfigFlags(ctx))
-		if flag, err := validateSetNextFlags(); err != nil {
-			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
 		}
-		sandbox.ExitIfError(setNext(ctx))
+		return setNext(ctx)
 	},
 }
 
 var setNextFlags struct {
 	ConfigPath string
-	Key        string
 }
 
 func init() {
@@ -44,22 +41,7 @@ func init() {
 	)
 	sandbox.MarkFlagRequired(setNextCmd, "config")
 
-	setNextCmd.PersistentFlags().StringVarP(
-		&setNextFlags.Key,
-		keyFlagName,
-		"k",
-		"",
-		"private key of the owner",
-	)
-	sandbox.MarkFlagRequired(setNextCmd, keyFlagName)
-}
-
-func validateSetNextFlags() (string, error) {
-	if err := sandbox.ValidatePrivateKey(setNextFlags.Key); err != nil {
-		return keyFlagName, err
-	}
-
-	return "", nil
+	addOwnerKeyFlag(setNextCmd)
 }
 
 func setNext(ctx context.Context) error {
@@ -69,18 +51,13 @@ func setNext(ctx context.Context) error {
 	}
 	batchConfig := configJSON.ToBatchConfig()
 
-	key, err := crypto.HexToECDSA(setNextFlags.Key)
-	if err != nil {
-		return err // should be already checked during parameter validation
-	}
-
 	callOpts := &bind.CallOpts{Context: ctx}
 	currentNextConfig, err := configContract.GetNextConfig(callOpts)
 	if err != nil {
 		return err
 	}
 
-	txs, err := sendSetNextTransactions(ctx, key, batchConfig, &currentNextConfig)
+	txs, err := sendSetNextTransactions(ctx, ownerKey, batchConfig, &currentNextConfig)
 	if err != nil {
 		return err
 	}

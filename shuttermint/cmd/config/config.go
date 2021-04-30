@@ -2,7 +2,9 @@ package config
 
 import (
 	"context"
+	"crypto/ecdsa"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -11,22 +13,52 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
-const keyFlagName = "owner-key"
-
 var ConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Send batch configs to and query them from Shutter's config contract",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+		if cmd.PersistentFlags().Lookup("owner-key") != nil {
+			err := parseOwnerKey()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	},
 }
 
 var (
 	client         *ethclient.Client
 	contractsJSON  *sandbox.ContractsJSON
 	configContract *contract.ConfigContract
+	ownerKey       *ecdsa.PrivateKey
 )
 
 var configFlags struct {
 	EthereumURL   string
 	ContractsPath string
+	OwnerKey      string
+}
+
+func parseOwnerKey() error {
+	key, err := crypto.HexToECDSA(configFlags.OwnerKey)
+	if err != nil {
+		return errors.Wrap(err, "parse -k / --owner-key flag")
+	}
+	ownerKey = key
+	return nil
+}
+
+func addOwnerKeyFlag(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(
+		&configFlags.OwnerKey,
+		"owner-key",
+		"k",
+		"",
+		"private key of the owner",
+	)
+	sandbox.MarkFlagRequired(cmd, "owner-key")
 }
 
 func init() {
@@ -57,15 +89,7 @@ func initConfigRootFlags() {
 	sandbox.MarkFlagRequired(ConfigCmd, "contracts")
 }
 
-func validateConfigFlags() (string, error) {
-	return "", nil
-}
-
 func processConfigFlags(ctx context.Context) error {
-	if flag, err := validateConfigFlags(); err != nil {
-		return errors.Wrapf(err, "invalid flag %s", flag)
-	}
-
 	var err error
 
 	client, err = ethclient.DialContext(ctx, configFlags.EthereumURL)
