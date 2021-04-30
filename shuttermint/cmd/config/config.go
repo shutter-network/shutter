@@ -94,7 +94,7 @@ func processConfigFlags(ctx context.Context) error {
 
 	client, err = ethclient.DialContext(ctx, configFlags.EthereumURL)
 	if err != nil {
-		return errors.Wrapf(err, "faild to connect to Ethereum node at %s", configFlags.EthereumURL)
+		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
 	}
 
 	contractsJSON, err = sandbox.LoadContractsJSON(configFlags.ContractsPath)
