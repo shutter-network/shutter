@@ -28,11 +28,17 @@ def test_broadcasting_checks_sender(
     ]:
         with brownie.reverts("KeyBroadcastContract: sender is not keyper"):
             key_broadcast_contract.vote(
-                keyper_index, start_batch_index, key, {"from": sender},
+                keyper_index,
+                start_batch_index,
+                key,
+                {"from": sender},
             )
     with brownie.reverts("KeyBroadcastContract: keyper index out of range"):
         key_broadcast_contract.vote(
-            3, start_batch_index, key, {"from": keypers[0]},
+            3,
+            start_batch_index,
+            key,
+            {"from": keypers[0]},
         )
 
 

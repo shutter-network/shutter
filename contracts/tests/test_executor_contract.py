@@ -344,7 +344,8 @@ def test_cipher_execution_skips_after_timeout(
     )
 
     mine_until(
-        forbidden_from_block - 2, chain,
+        forbidden_from_block - 2,
+        chain,
     )
     chain.snapshot()
 
@@ -362,7 +363,8 @@ def test_cipher_execution_skips_after_timeout(
     # execution
     chain.revert()
     mine_until(
-        forbidden_from_block - 1, chain,
+        forbidden_from_block - 1,
+        chain,
     )
     tx = executor_contract.executeCipherBatch(
         batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}

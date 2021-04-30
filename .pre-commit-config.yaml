@@ -54,17 +54,17 @@ repos:
         exclude: "^contracts/openzeppelin/.*"
 
   - repo: https://github.com/psf/black
-    rev: 19.10b0
+    rev: 20.8b1
     hooks:
       - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 3.9.1
     hooks:
       - id: flake8
 
   - repo: https://github.com/sqlalchemyorg/zimports
-    rev: cfdf326902fe8e4478d11a7cb2e837bab1cde1d0
+    rev: 38c16831e6ee709aa9b4395b9b1efb6ed4d6ad8c
     hooks:
       - id: zimports
 

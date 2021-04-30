@@ -101,14 +101,18 @@ def erc_1820_registry(owner: Account, web3: Web3) -> None:
 
 @pytest.fixture
 def deposit_token_contract(
-    TestDepositTokenContract: ContractContainer, owner: Account, erc_1820_registry: None,
+    TestDepositTokenContract: ContractContainer,
+    owner: Account,
+    erc_1820_registry: None,
 ) -> Any:
     return owner.deploy(TestDepositTokenContract)
 
 
 @pytest.fixture
 def deposit_contract(
-    DepositContract: ContractContainer, deposit_token_contract: Any, owner: Account,
+    DepositContract: ContractContainer,
+    deposit_token_contract: Any,
+    owner: Account,
 ) -> Any:
     deposit_contract = owner.deploy(DepositContract, deposit_token_contract)
     return deposit_contract
