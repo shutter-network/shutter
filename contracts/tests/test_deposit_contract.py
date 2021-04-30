@@ -104,7 +104,7 @@ def test_withdraw(
     mine_until(withdraw_block_number - 2, chain)
     with brownie.reverts():
         deposit_contract.withdraw(recipient, {"from": owner})
-    assert web3.eth.blockNumber == withdraw_block_number - 1  # one block mined by sending tx
+    assert web3.eth.block_number == withdraw_block_number - 1  # one block mined by sending tx
     tx = deposit_contract.withdraw(recipient, {"from": owner})
 
     check_deposit_changed_event(tx, 0, 0, 0, withdrawn=True)

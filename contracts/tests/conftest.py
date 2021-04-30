@@ -96,7 +96,7 @@ def keyper_slasher(
 @pytest.fixture
 def erc_1820_registry(owner: Account, web3: Web3) -> None:
     owner.transfer(ERC_1820_DEPLOYMENT_ADDRESS, "0.08 ether")
-    web3.eth.sendRawTransaction(ERC_1820_DEPLOYMENT_TX)
+    web3.eth.send_raw_transaction(ERC_1820_DEPLOYMENT_TX)
 
 
 @pytest.fixture

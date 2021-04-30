@@ -134,7 +134,7 @@ def test_scheduling_must_happen_with_heads_up(
     config = make_batch_config(start_batch_index=0, batch_span=1)
     set_next_config(config_contract, config, owner=owner)
 
-    block_number = web3.eth.blockNumber
+    block_number = web3.eth.block_number
     block_number_at_schedule = block_number + 2
     config_contract.nextConfigSetStartBlockNumber(
         block_number_at_schedule + config_change_heads_up_blocks
@@ -142,7 +142,7 @@ def test_scheduling_must_happen_with_heads_up(
     with brownie.reverts():
         config_contract.scheduleNextConfig({"from": owner})
 
-    block_number = web3.eth.blockNumber
+    block_number = web3.eth.block_number
     block_number_at_schedule = block_number + 2
     config_contract.nextConfigSetStartBlockNumber(
         block_number_at_schedule + config_change_heads_up_blocks + 1
@@ -248,10 +248,10 @@ def test_unscheduling_must_happen_with_heads_up(
     config = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=1)
     schedule_config(config_contract, config, owner=owner)
 
-    block_number = web3.eth.blockNumber
+    block_number = web3.eth.block_number
     with brownie.reverts():
         config_contract.unscheduleConfigs(block_number + config_change_heads_up_blocks)
-    config_contract.unscheduleConfigs(web3.eth.blockNumber + config_change_heads_up_blocks + 2)
+    config_contract.unscheduleConfigs(web3.eth.block_number + config_change_heads_up_blocks + 2)
 
 
 def test_unscheduling_emits_event(config_contract: Any, owner: Account) -> None:
