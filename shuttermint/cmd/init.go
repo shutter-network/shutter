@@ -29,11 +29,12 @@ import (
 )
 
 var (
-	logger            = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	rootDir           = ""
-	devMode           = false
-	index             = 0
-	blockTime float64 = 1.0
+	logger                 = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	rootDir                = ""
+	devMode                = false
+	index                  = 0
+	blockTime      float64 = 1.0
+	genesisKeypers         = []string{}
 )
 
 var initCmd = &cobra.Command{
@@ -48,6 +49,7 @@ func init() {
 	initCmd.PersistentFlags().BoolVar(&devMode, "dev", false, "turn on devmode (disables validator set changes)")
 	initCmd.PersistentFlags().IntVar(&index, "index", 0, "keyper index")
 	initCmd.PersistentFlags().Float64Var(&blockTime, "blocktime", 1.0, "block time in seconds")
+	initCmd.PersistentFlags().StringSliceVar(&genesisKeypers, "genesis-keyper", nil, "genesis keyper address")
 	initCmd.MarkPersistentFlagRequired("root")
 }
 
@@ -66,6 +68,19 @@ func scaleToBlockTime(config *cfg.Config, blockTime float64) {
 }
 
 func initFiles(cmd *cobra.Command, args []string) error {
+	keypers := []common.Address{}
+
+	for _, a := range genesisKeypers {
+		if !common.IsHexAddress(a) {
+			return errors.New("--genesis-validator argument is not an address")
+		}
+		keypers = append(keypers, common.HexToAddress(a))
+	}
+
+	if len(genesisKeypers) == 0 {
+		keypers = append(keypers, crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys()-1).PublicKey))
+	}
+
 	config := cfg.DefaultConfig()
 	config.LogLevel = "*:error"
 	scaleToBlockTime(config, blockTime)
@@ -94,11 +109,7 @@ func initFiles(cmd *cobra.Command, args []string) error {
 	// EnsureRoot also write the config file but with the default config. We want our own, so
 	// let's overwrite it.
 	cfg.WriteConfigFile(filepath.Join(rootDir, "config", "config.toml"), config)
-	appState := app.NewGenesisAppState(
-		[]common.Address{
-			crypto.PubkeyToAddress(sandbox.GanacheKey(sandbox.NumGanacheKeys() - 1).PublicKey),
-		},
-		1)
+	appState := app.NewGenesisAppState(keypers, (2*len(keypers)+2)/3)
 
 	return initFilesWithConfig(config, appState)
 }
