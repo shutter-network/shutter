@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"crypto/ecdsa"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -17,14 +18,12 @@ var ConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Send batch configs to and query them from Shutter's config contract",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SilenceUsage = true
-		if cmd.PersistentFlags().Lookup("owner-key") != nil {
-			err := parseOwnerKey()
-			if err != nil {
-				return err
-			}
+		err := cmd.Root().PersistentPreRunE(cmd, args)
+		if err != nil {
+			return err
 		}
-		return nil
+		cmd.SilenceUsage = true
+		return parseOwnerKey(cmd)
 	},
 }
 
@@ -41,10 +40,16 @@ var configFlags struct {
 	OwnerKey      string
 }
 
-func parseOwnerKey() error {
-	key, err := crypto.HexToECDSA(configFlags.OwnerKey)
+func parseOwnerKey(cmd *cobra.Command) error {
+	pflag := cmd.PersistentFlags().Lookup("owner-key")
+	if pflag == nil || !pflag.Changed {
+		return nil
+	}
+
+	val := pflag.Value.String()
+	key, err := crypto.HexToECDSA(strings.TrimPrefix(val, "0x"))
 	if err != nil {
-		return errors.Wrap(err, "parse -k / --owner-key flag")
+		return errors.Wrapf(err, "parse -k / --owner-key '%s'", val)
 	}
 	ownerKey = key
 	return nil

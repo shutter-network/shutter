@@ -7,6 +7,8 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -14,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	pkgErrors "github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 const receiptPollInterval = 500 * time.Millisecond
@@ -113,4 +117,32 @@ func CloneWithGob(src, dst interface{}) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func argumentFromEnvironmentVariable(cmd *cobra.Command, f *pflag.Flag) error {
+	if f.Changed {
+		return nil
+	}
+	envvar := fmt.Sprintf("SHUTTER_%s", strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_")))
+	val := os.Getenv(envvar)
+	if val == "" {
+		return nil
+	}
+	err := cmd.Flags().Set(f.Name, val)
+	if err != nil {
+		return pkgErrors.Wrapf(err, "argument from environment variable %s", envvar)
+	}
+	return nil
+}
+
+// BindFlags automatically sets options to command line flags from environment variables.
+func BindFlags(cmd *cobra.Command) error {
+	var err error
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if err != nil {
+			return
+		}
+		err = argumentFromEnvironmentVariable(cmd, f)
+	})
+	return err
 }

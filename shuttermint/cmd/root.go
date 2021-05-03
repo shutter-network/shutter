@@ -10,6 +10,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 var (
@@ -23,6 +24,10 @@ var rootCmd = &cobra.Command{
 	Short:   "A collection of commands to run and interact with Shutter keyper nodes",
 	Version: shversion.Version(),
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		err := medley.BindFlags(cmd)
+		if err != nil {
+			return err
+		}
 		var flags int
 
 		switch logformat {

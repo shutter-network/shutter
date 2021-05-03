@@ -27,6 +27,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
@@ -61,6 +62,9 @@ var contractsJSON sandbox.ContractsJSON
 var rootCmd = &cobra.Command{
 	Use:   "prepare",
 	Short: "Prepare everything needed to test shutter.",
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		return medley.BindFlags(cmd)
+	},
 }
 
 var configCmd = &cobra.Command{
