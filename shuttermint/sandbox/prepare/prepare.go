@@ -366,7 +366,48 @@ func loadContractsJSON(path string) error {
 	return nil
 }
 
+func generateConfigJSON(keypers []string) error {
+	cfg := sandbox.ConfigJSON{
+		StartBatchIndex:        0,
+		StartBlockNumber:       0,
+		Keypers:                keypers,
+		Threshold:              uint64(twothirds(len(keypers))),
+		BatchSpan:              10,
+		BatchSizeLimit:         100000,
+		TransactionSizeLimit:   1000,
+		TransactionGasLimit:    10000,
+		FeeReceiver:            "0x1111111111111111111111111111111111111111",
+		TargetAddress:          contractsJSON.TargetContract.Hex(),
+		TargetFunctionSelector: "0x943d7209",
+		ExecutionTimeout:       15,
+	}
+
+	j, err := json.MarshalIndent(cfg, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "marshal json")
+	}
+
+	path := filepath.Join(configFlags.Dir, "config.json")
+	file, err := os.Create(path)
+	if err != nil {
+		return errors.Wrapf(err, "create %s", path)
+	}
+	defer file.Close()
+	_, err = file.Write(j)
+	if err != nil {
+		return errors.Wrapf(err, "write to %s", path)
+	}
+
+	fmt.Printf(
+		"Please adapt the following and use it as config.json. A copy has also been saved to %s.\n\n",
+		path,
+	)
+	fmt.Println(string(j))
+	return nil
+}
+
 func configs() error {
+	keypers := []string{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
 		config, err := rawConfig(i)
 		if err != nil {
@@ -377,8 +418,9 @@ func configs() error {
 		if err != nil {
 			return err
 		}
+		keypers = append(keypers, config.Address().Hex())
 	}
-	return nil
+	return generateConfigJSON(keypers)
 }
 
 func rawConfig(keyperIndex int) (*keyper.Config, error) {
@@ -477,30 +519,41 @@ func findConfigFiles(dir string) ([]string, error) {
 	return configPaths, nil
 }
 
+func loadConfig(path string) (keyper.Config, error) {
+	v := viper.New()
+	v.SetConfigFile(path)
+	err := v.ReadInConfig()
+	if err != nil {
+		return keyper.Config{}, errors.Wrapf(err, "failed to read config file %s", path)
+	}
+
+	config := keyper.Config{}
+	err = config.Unmarshal(v)
+	if err != nil {
+		return keyper.Config{}, errors.Wrapf(err, "failed to unmarshal config file %s", path)
+	}
+	return config, nil
+}
+
 func loadConfigs(paths []string) ([]keyper.Config, error) {
 	configs := []keyper.Config{}
 	for _, path := range paths {
-		v := viper.New()
-		v.SetConfigFile(path)
-		err := v.ReadInConfig()
+		config, err := loadConfig(path)
 		if err != nil {
-			return []keyper.Config{}, errors.Wrapf(err, "failed to read config file at %s", path)
+			return nil, err
 		}
-
-		config := keyper.Config{}
-		err = config.Unmarshal(v)
-		if err != nil {
-			return []keyper.Config{}, errors.Wrapf(err, "failed to read config file %s", path)
-		}
-
 		configs = append(configs, config)
 	}
 	return configs, nil
 }
 
+func twothirds(numKeypers int) int {
+	return (2*numKeypers + 2) / 3
+}
+
 func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, ownerKey *ecdsa.PrivateKey, configs []keyper.Config) error {
 	numKeypers := len(configs)
-	threshold := uint64((numKeypers*2 + 2) / 3) // 2/3 rounded up
+	threshold := uint64(twothirds(numKeypers))
 	keypers := []common.Address{}
 	for _, c := range configs {
 		keypers = append(keypers, c.Address())
