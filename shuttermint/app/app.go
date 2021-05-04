@@ -177,7 +177,7 @@ func (app *ShutterApp) getBatchState(batchIndex uint64) BatchState {
 	return bs
 }
 
-func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery {
+func (app *ShutterApp) Query(_ abcitypes.RequestQuery) abcitypes.ResponseQuery {
 	return abcitypes.ResponseQuery{
 		Code: 1,
 		Log:  "query not implemented",
@@ -187,7 +187,7 @@ func (app *ShutterApp) Query(req abcitypes.RequestQuery) abcitypes.ResponseQuery
 // Info should return the latest committed state of the app. On startup, tendermint calls the Info
 // method and will replay blocks that are not yet committed.
 // See https://github.com/tendermint/spec/blob/master/spec/abci/apps.md#crash-recovery
-func (app *ShutterApp) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
+func (app *ShutterApp) Info(_ abcitypes.RequestInfo) abcitypes.ResponseInfo {
 	return abcitypes.ResponseInfo{
 		LastBlockHeight:  app.LastBlockHeight,
 		LastBlockAppHash: []byte(""),

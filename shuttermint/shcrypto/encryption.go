@@ -60,7 +60,7 @@ func RandomSigma(r io.Reader) (Block, error) {
 	data := make([]byte, BlockSize)
 	_, err := r.Read(data)
 	if err != nil {
-		return Block{}, nil
+		return Block{}, errors.WithStack(err)
 	}
 	var b Block
 	copy(b[:], data)
