@@ -37,14 +37,19 @@ type Keyper struct {
 	// https://golang.org/pkg/sync/atomic/#pkg-note-BUG for more information
 	world atomic.Value // holds an observe.World struct
 
-	Config Config
-	State  *State
+	Config Config // Configuration of the keyper client read from the config file
+	State  *State // keyper's internal state
 
 	ContractCaller contract.Caller
 	shmcl          client.Client
 	MessageSender  fx.MessageSender
 	lastlogTime    time.Time
 	runenv         *fx.RunEnv
+
+	mainChainCh     chan *observe.MainChain    // observed main chain updates
+	shutterCh       chan *observe.Shutter      // observed shutter updates
+	signalCh        chan os.Signal             // signals received
+	shutterFilterCh chan observe.ShutterFilter // new shutter filter for garbage collecting the shutter state
 }
 
 func NewKeyper(kc Config) Keyper {
@@ -129,6 +134,12 @@ func (kpr *Keyper) init() error {
 		return err
 	}
 	kpr.runenv = fx.NewRunEnv(kpr.MessageSender, &kpr.ContractCaller, kpr.CurrentWorld, kpr.pathActionsGob())
+	kpr.mainChainCh = make(chan *observe.MainChain)
+	kpr.shutterCh = make(chan *observe.Shutter)
+	kpr.signalCh = make(chan os.Signal, 1)
+	kpr.shutterFilterCh = make(chan observe.ShutterFilter, 3)
+	signal.Notify(kpr.signalCh, syscall.SIGUSR1)
+
 	return nil
 }
 
@@ -169,43 +180,60 @@ func (kpr *Keyper) dumpInternalState() {
 	pretty.Println("State:", kpr.State)
 }
 
-func (kpr *Keyper) Run() error {
-	err := kpr.init()
-	if err != nil {
-		return err
-	}
-	g, ctx := errgroup.WithContext(context.Background())
-
-	mainChains := make(chan *observe.MainChain)
-	shutters := make(chan *observe.Shutter)
-	signals := make(chan os.Signal, 1)
-	filter := make(chan observe.ShutterFilter, 3)
-	signal.Notify(signals, syscall.SIGUSR1)
-	g.Go(func() error {
-		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, mainChains)
-	})
-	g.Go(func() error {
-		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, shutters, filter)
-	})
-
+// syncOnce syncs the main and shutter chain at least once. Otherwise, the state of one of the two
+// will be much more recent than the other one when the first block appears.
+func (kpr *Keyper) syncOnce(ctx context.Context) {
 	var world observe.World
-	// Sync main and shutter chain at least once. Otherwise, the state of one of the two will
-	// be much more recent than the other one when the first block appears.
 	for world.MainChain == nil || world.Shutter == nil {
 		select {
-		case <-signals:
+		case <-kpr.signalCh:
 			kpr.dumpInternalState()
 			continue
-		case mainChain := <-mainChains:
+		case mainChain := <-kpr.mainChainCh:
 			world.MainChain = mainChain
-		case shutter := <-shutters:
+		case shutter := <-kpr.shutterCh:
 			world.Shutter = shutter
 		case <-ctx.Done():
-			return g.Wait()
+			return
 		}
 	}
 	kpr.world.Store(world)
-	kpr.runenv.StartBackgroundTasks(ctx, g)
+}
+
+func (kpr *Keyper) syncLoop(ctx context.Context) {
+	var world observe.World = kpr.CurrentWorld()
+
+	for {
+		select {
+		case <-kpr.signalCh:
+			kpr.dumpInternalState()
+			continue
+		case <-ctx.Done():
+			return
+		case mainChain := <-kpr.mainChainCh:
+			world.MainChain = mainChain
+		case shutter := <-kpr.shutterCh:
+			world.Shutter = shutter
+		}
+		kpr.world.Store(world)
+		kpr.runOneStep(ctx)
+		select {
+		case kpr.shutterFilterCh <- kpr.State.GetShutterFilter(world.MainChain):
+		default:
+		}
+	}
+}
+
+func (kpr *Keyper) startSyncTasks(ctx context.Context, g *errgroup.Group) {
+	g.Go(func() error {
+		return observe.SyncMain(ctx, &kpr.ContractCaller, kpr.CurrentWorld().MainChain, kpr.mainChainCh)
+	})
+	g.Go(func() error {
+		return observe.SyncShutter(ctx, kpr.shmcl, kpr.CurrentWorld().Shutter, kpr.shutterCh, kpr.shutterFilterCh)
+	})
+}
+
+func (kpr *Keyper) loadRunenv() error {
 	havePendingActions, err := kpr.runenv.Load()
 	if err != nil {
 		return err
@@ -215,30 +243,36 @@ func (kpr *Keyper) Run() error {
 		log.Printf("Fixing State: PendingHalfStep should be nil!")
 		kpr.State.PendingHalfStep = nil
 	}
+	return nil
+}
+
+func (kpr *Keyper) run(ctx context.Context, g *errgroup.Group) error {
+	kpr.startSyncTasks(ctx, g)
+	kpr.syncOnce(ctx)
+	kpr.runenv.StartBackgroundTasks(ctx, g)
+	if err := kpr.loadRunenv(); err != nil {
+		return err
+	}
 
 	if len(kpr.State.Actions) > 0 {
 		kpr.runActions(ctx)
 	}
+	kpr.syncLoop(ctx)
+	return nil
+}
 
-	for {
-		select {
-		case <-signals:
-			kpr.dumpInternalState()
-			continue
-		case <-ctx.Done():
-			return g.Wait()
-		case mainChain := <-mainChains:
-			world.MainChain = mainChain
-		case shutter := <-shutters:
-			world.Shutter = shutter
-		}
-		kpr.world.Store(world)
-		kpr.runOneStep(ctx)
-		select {
-		case filter <- kpr.State.GetShutterFilter(world.MainChain):
-		default:
-		}
+func (kpr *Keyper) Run() error {
+	if err := kpr.init(); err != nil {
+		return err
 	}
+
+	g, ctx := errgroup.WithContext(context.Background())
+
+	g.Go(func() error {
+		return kpr.run(ctx, g)
+	})
+
+	return g.Wait()
 }
 
 func (kpr *Keyper) CurrentWorld() observe.World {

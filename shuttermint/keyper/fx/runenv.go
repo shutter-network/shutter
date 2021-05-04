@@ -107,6 +107,7 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 }
 
 func (runenv *RunEnv) RunActions(ctx context.Context, actionCounter uint64, actions []IAction) {
+	// XXX Cancellation is not yet implemented for this function
 	if len(actions) == 0 {
 		return
 	}
