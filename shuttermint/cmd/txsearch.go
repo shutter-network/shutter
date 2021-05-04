@@ -79,7 +79,7 @@ func txsearchShutter(shuttermintURL string, fromHeight, toHeight int64) {
 			panic(err)
 		}
 		for _, tx := range res.Txs {
-			fmt.Printf("==> TX height=%d hash=%s\n", tx.Height, tx.Hash)
+			fmt.Printf("==> TX height=%d hash=%s size=%d\n", tx.Height, tx.Hash, len(tx.Tx))
 			events := tx.TxResult.GetEvents()
 			for _, ev := range events {
 				x, err := shutterevents.MakeEvent(ev, tx.Height)
