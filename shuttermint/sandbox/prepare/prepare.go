@@ -493,7 +493,7 @@ func schedule() error {
 	ethereumURL := configs[0].EthereumURL
 	client, err := ethclient.DialContext(context.Background(), ethereumURL)
 	if err != nil {
-		return errors.Wrapf(err, "faild to connect to Ethereum node at %s", ethereumURL)
+		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", ethereumURL)
 	}
 
 	if err := scheduleForKeyperConfigs(context.Background(), client, ownerKey, configs); err != nil {
@@ -555,8 +555,8 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	numKeypers := len(configs)
 	threshold := uint64(twothirds(numKeypers))
 	keypers := []common.Address{}
-	for _, c := range configs {
-		keypers = append(keypers, c.Address())
+	for i := range configs {
+		keypers = append(keypers, configs[i].Address())
 	}
 
 	if err := checkContractExists(ctx, client, configs[0].ConfigContractAddress); err != nil {
@@ -801,7 +801,7 @@ func fund() error {
 	ethereumURL := configs[0].EthereumURL
 	client, err := ethclient.DialContext(context.Background(), ethereumURL)
 	if err != nil {
-		return errors.Wrapf(err, "faild to connect to Ethereum node at %s", ethereumURL)
+		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", ethereumURL)
 	}
 
 	chainID, err := client.ChainID(ctx)
@@ -825,9 +825,14 @@ func fund() error {
 		return errors.Wrap(err, "failed to query nonce")
 	}
 
+	keypers := []common.Address{}
+	for i := range configs {
+		keypers = append(keypers, configs[i].Address())
+	}
+
 	txs := []*types.Transaction{}
-	for _, config := range configs {
-		unsignedTx := types.NewTransaction(nonce, config.Address(), amount, 21000, gasPrice, []byte{})
+	for _, addr := range keypers {
+		unsignedTx := types.NewTransaction(nonce, addr, amount, 21000, gasPrice, []byte{})
 		tx, err := types.SignTx(unsignedTx, signer, ownerKey)
 		if err != nil {
 			return errors.Wrap(err, "failed to sign transaction")
@@ -895,10 +900,6 @@ func createRunScript() error {
 		return errors.Wrap(err, "failed to execute template")
 	}
 
-	// err := ioutil.WriteFile(path, []byte(runScriptTemplate), 0755)
-	// if err != nil {
-	// 	return errors.Wrap(err, "failed to write run script")
-	// }
 	return nil
 }
 
