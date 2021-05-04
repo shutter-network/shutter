@@ -506,9 +506,14 @@ func (dcdr *Decider) startPhase2Accusing(dkg *DKG, phaseAtNextBlockHeight puredk
 	if phaseAtNextBlockHeight != puredkg.Accusing {
 		return
 	}
-	dcdr.sendShuttermintMessage(
-		fmt.Sprintf("accusations, eon=%d, count=%d", dkg.Eon, len(accusations)),
-		dkg.newAccusation(accusations))
+
+	if len(accusations) > 0 {
+		dcdr.sendShuttermintMessage(
+			fmt.Sprintf("accusations, eon=%d, count=%d", dkg.Eon, len(accusations)),
+			dkg.newAccusation(accusations))
+	} else {
+		log.Printf("No one to accuse in eon %d", dkg.Eon)
+	}
 }
 
 func (dcdr *Decider) startPhase3Apologizing(dkg *DKG, phaseAtNextBlockHeight puredkg.Phase) {
@@ -516,9 +521,13 @@ func (dcdr *Decider) startPhase3Apologizing(dkg *DKG, phaseAtNextBlockHeight pur
 	if phaseAtNextBlockHeight != puredkg.Apologizing {
 		return
 	}
-	dcdr.sendShuttermintMessage(
-		fmt.Sprintf("apologies, eon=%d, count=%d", dkg.Eon, len(apologies)),
-		dkg.newApology(apologies))
+	if len(apologies) > 0 {
+		dcdr.sendShuttermintMessage(
+			fmt.Sprintf("apologies, eon=%d, count=%d", dkg.Eon, len(apologies)),
+			dkg.newApology(apologies))
+	} else {
+		log.Printf("No apologies needed in eon %d", dkg.Eon)
+	}
 }
 
 func (dcdr *Decider) dkgFinalize(dkg *DKG) {
