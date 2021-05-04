@@ -376,7 +376,7 @@ func (dcdr *Decider) maybeSendBatchConfig() {
 	}
 }
 
-func (dcdr *Decider) startDKG(eon observe.Eon) {
+func (dcdr *Decider) startDKG(eon *observe.Eon) {
 	batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(eon.StartEvent.BatchIndex)
 	keyperIndex, err := medley.FindAddressIndex(batchConfig.Keypers, dcdr.Config.Address())
 	if err != nil {
@@ -395,7 +395,8 @@ func (dcdr *Decider) startDKG(eon observe.Eon) {
 }
 
 func (dcdr *Decider) maybeStartDKG() {
-	for _, eon := range dcdr.Shutter.Eons {
+	for i := range dcdr.Shutter.Eons {
+		eon := &dcdr.Shutter.Eons[i]
 		if eon.Eon > dcdr.State.LastEonStarted {
 			// TODO we should check that we do not start eons that are in the past
 			dcdr.startDKG(eon)
