@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,7 +21,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/contract/erc1820"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
@@ -68,22 +67,28 @@ var deployCmd = &cobra.Command{
 		}
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
 		defer cancel()
 		var err error
 
 		client, err := ethclient.DialContext(ctx, deployFlags.EthereumURL)
-		failIfError(err)
+		if err != nil {
+			return err
+		}
 
 		if gasPrice == nil {
 			gasPrice, err = client.SuggestGasPrice(ctx)
-			failIfError(err)
+			if err != nil {
+				return err
+			}
 		}
 
 		address := crypto.PubkeyToAddress(key.PublicKey)
 		balance, err := client.BalanceAt(ctx, address, nil)
-		failIfError(err)
+		if err != nil {
+			return err
+		}
 
 		log.Printf("Deploy Address: %s", address)
 		log.Printf("Balance: %f ETH", weiToEther(balance))
@@ -91,9 +96,12 @@ var deployCmd = &cobra.Command{
 		log.Printf("Available gas: %d", new(big.Int).Quo(balance, gasPrice))
 
 		if !deployFlags.NoERC1820 {
-			maybeDeployERC1820(ctx, client)
+			err := maybeDeployERC1820(ctx, client)
+			if err != nil {
+				return err
+			}
 		}
-		deploy(ctx, client)
+		return deploy(ctx, client)
 	},
 }
 
@@ -135,63 +143,73 @@ func init() {
 	)
 }
 
-func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) {
+func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) error {
 	deployed, err := erc1820.IsDeployed(ctx, client)
 	if err != nil {
-		log.Fatalf("Error: %+v", err)
+		return err
 	}
 	if deployed {
 		log.Print("erc1820 contract already deployed")
-		return
+		return nil
 	}
 	log.Print("Deploying erc1820 contract")
-	err = erc1820.DeployContract(ctx, client, key)
-	if err != nil {
-		log.Fatalf("Error: %+v", err)
-	}
+	return erc1820.DeployContract(ctx, client, key)
 }
 
-func deploy(ctx context.Context, client *ethclient.Client) {
-	auth, err := sandbox.InitTransactOpts(ctx, client, key)
-	failIfError(err)
-	auth.GasPrice = gasPrice
-	auth.Context = ctx
-	var txs []*types.Transaction
+func batchContractDeployments(batch *txbatch.TXBatch) (*sandbox.ContractsJSON, error) {
 	var tx *types.Transaction
+	var err error
 
-	addTx := func() {
-		failIfError(err)
-		txs = append(txs, tx)
-		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
+	auth := batch.TransactOpts
+	client := batch.Ethclient
+
+	configAddress, tx, _, err := contract.DeployConfigContract(auth, client, defaultConfigChangeHeadsUpBlocks)
+	if err != nil {
+		return nil, err
 	}
-
-	configAddress, tx, _, err := contract.DeployConfigContract(
-		auth,
-		client,
-		defaultConfigChangeHeadsUpBlocks,
-	)
-	addTx()
+	batch.Add(tx)
 
 	broadcastAddress, tx, _, err := contract.DeployKeyBroadcastContract(auth, client, configAddress)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	feeAddress, tx, _, err := contract.DeployFeeBankContract(auth, client)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	batcherAddress, tx, _, err := contract.DeployBatcherContract(auth, client, configAddress, feeAddress)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	executorAddress, tx, _, err := contract.DeployExecutorContract(auth, client, configAddress, batcherAddress)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	tokenAddress, tx, _, err := contract.DeployTestDepositTokenContract(auth, client)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	depositAddress, tx, _, err := contract.DeployDepositContract(auth, client, tokenAddress)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
-	addTx()
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
 
 	// The keyper slasher requires the deposit contract to exist. Since at this point it doesn't,
 	// gas estimation will fail, so we simply set it manually.
@@ -205,50 +223,71 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 		depositAddress,
 	)
 	auth.GasLimit = 0
-	addTx()
-
-	txHashes := []common.Hash{}
-	for _, tx := range txs {
-		txHashes = append(txHashes, tx.Hash())
+	if err != nil {
+		return nil, err
 	}
-	receipts, err := medley.WaitMinedMany(ctx, client, txHashes)
-	failIfError(err)
+	batch.Add(tx)
 
+	return &sandbox.ContractsJSON{
+		ConfigContract:        configAddress,
+		KeyBroadcastContract:  broadcastAddress,
+		FeeBankContract:       feeAddress,
+		BatcherContract:       batcherAddress,
+		ExecutorContract:      executorAddress,
+		TokenContract:         tokenAddress,
+		DepositContract:       depositAddress,
+		KeyperSlasherContract: keyperSlasherAddress,
+		TargetContract:        targetAddress,
+	}, nil
+}
+
+func deploy(ctx context.Context, client *ethclient.Client) error {
+	batch, err := txbatch.New(ctx, client, key)
+	if err != nil {
+		return err
+	}
+
+	batch.TransactOpts.GasPrice = gasPrice
+	batch.TransactOpts.Context = ctx
+
+	j, err := batchContractDeployments(batch)
+	if err != nil {
+		return err
+	}
+
+	receipts, err := batch.WaitMined(ctx)
+	if err != nil {
+		return err
+	}
 	totalGasUsed := uint64(0)
 	for _, receipt := range receipts {
 		totalGasUsed += receipt.GasUsed
 	}
 	fmt.Println("Gas used:", totalGasUsed)
 
-	fmt.Println("      ConfigContract:", configAddress.Hex())
-	fmt.Println("KeyBroadcastContract:", broadcastAddress.Hex())
-	fmt.Println("     FeeBankContract:", feeAddress.Hex())
-	fmt.Println("     BatcherContract:", batcherAddress.Hex())
-	fmt.Println("    ExecutorContract:", executorAddress.Hex())
-	fmt.Println("       TokenContract:", tokenAddress.Hex())
-	fmt.Println("     DepositContract:", depositAddress.Hex())
-	fmt.Println("       KeyperSlasher:", keyperSlasherAddress.Hex())
-	fmt.Println("      TargetContract:", targetAddress.Hex())
+	fmt.Println("      ConfigContract:", j.ConfigContract.Hex())
+	fmt.Println("KeyBroadcastContract:", j.KeyBroadcastContract.Hex())
+	fmt.Println("     FeeBankContract:", j.FeeBankContract.Hex())
+	fmt.Println("     BatcherContract:", j.BatcherContract.Hex())
+	fmt.Println("    ExecutorContract:", j.ExecutorContract.Hex())
+	fmt.Println("       TokenContract:", j.TokenContract.Hex())
+	fmt.Println("     DepositContract:", j.DepositContract.Hex())
+	fmt.Println("       KeyperSlasher:", j.KeyperSlasherContract.Hex())
+	fmt.Println("      TargetContract:", j.TargetContract.Hex())
 
 	if deployFlags.OutputFile != "" {
 		outputFile := filepath.Clean(deployFlags.OutputFile)
-		j := sandbox.ContractsJSON{
-			ConfigContract:        configAddress,
-			KeyBroadcastContract:  broadcastAddress,
-			FeeBankContract:       feeAddress,
-			BatcherContract:       batcherAddress,
-			ExecutorContract:      executorAddress,
-			TokenContract:         tokenAddress,
-			DepositContract:       depositAddress,
-			KeyperSlasherContract: keyperSlasherAddress,
-			TargetContract:        targetAddress,
-		}
 		s, err := json.MarshalIndent(j, "", "    ")
-		failIfError(err)
+		if err != nil {
+			return err
+		}
 		err = ioutil.WriteFile(outputFile, s, 0o644)
-		failIfError(err)
+		if err != nil {
+			return err
+		}
 		fmt.Println("addresses written to", outputFile)
 	}
+	return nil
 }
 
 func weiToEther(wei *big.Int) *big.Float {
@@ -261,10 +300,4 @@ func weiToGwei(wei *big.Int) *big.Float {
 
 func gweiToWei(gwei *big.Int) *big.Int {
 	return new(big.Int).Mul(gwei, big.NewInt(params.GWei))
-}
-
-func failIfError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
