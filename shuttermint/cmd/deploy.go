@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -49,26 +50,36 @@ var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy all Shutter contracts",
 	Args:  cobra.NoArgs,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.OwnerKey, "0x"))
+		if err != nil {
+			return err
+		}
+
+		if deployFlags.GasPrice != "" {
+			gasPriceGWei, ok := new(big.Int).SetString(deployFlags.GasPrice, 10)
+			if !ok {
+				return errors.Errorf("--gas-price: invalid gas price '%s'", deployFlags.GasPrice)
+			}
+			if gasPriceGWei.Sign() < 0 {
+				return errors.Errorf("--gas-price: must be non-negative")
+			}
+			gasPrice = gweiToWei(gasPriceGWei)
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
 		defer cancel()
 		var err error
 
-		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.OwnerKey, "0x"))
-		failIfError(err)
-
 		client, err := ethclient.DialContext(ctx, deployFlags.EthereumURL)
 		failIfError(err)
 
-		if deployFlags.GasPrice == "" {
+		if gasPrice == nil {
 			gasPrice, err = client.SuggestGasPrice(ctx)
 			failIfError(err)
-		} else {
-			gasPriceGWei, ok := new(big.Int).SetString(deployFlags.GasPrice, 10)
-			if !ok {
-				log.Fatalf("Invalid gas price %s", deployFlags.GasPrice)
-			}
-			gasPrice = gweiToWei(gasPriceGWei)
 		}
 
 		address := crypto.PubkeyToAddress(key.PublicKey)
@@ -80,6 +91,9 @@ var deployCmd = &cobra.Command{
 		log.Printf("Gas Price: %f GWei", weiToGwei(gasPrice))
 		log.Printf("Available gas: %d", new(big.Int).Quo(balance, gasPrice))
 
+		if !deployFlags.NoERC1820 {
+			maybeDeployERC1820(ctx, client)
+		}
 		deploy(ctx, client)
 	},
 }
@@ -163,10 +177,6 @@ func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) {
 }
 
 func deploy(ctx context.Context, client *ethclient.Client) {
-	if !deployFlags.NoERC1820 {
-		maybeDeployERC1820(ctx, client)
-	}
-
 	auth, err := makeAuth(ctx, client, key)
 	failIfError(err)
 	auth.Context = ctx
