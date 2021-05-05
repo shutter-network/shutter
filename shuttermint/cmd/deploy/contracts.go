@@ -93,16 +93,37 @@ func (c *Contracts) UnmarshalJSON(data []byte) error {
 
 // LoadContractsJSON loads and validates a contracts json file.
 func LoadContractsJSON(path string) (*Contracts, error) {
-	d, err := ioutil.ReadFile(path)
+	c := Contracts{}
+	err := c.LoadJSON(path)
 	if err != nil {
 		return nil, err
 	}
+	return &c, nil
+}
 
-	c := &Contracts{}
-	err = json.Unmarshal(d, c)
+// LoadJSON loads a contracts.json file.
+func (c *Contracts) LoadJSON(path string) error {
+	d, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrap(err, "malformed contracts JSON")
+		return err
 	}
 
-	return c, nil
+	err = json.Unmarshal(d, c)
+	if err != nil {
+		return errors.Wrapf(err, "malformed contracts JSON file %s", path)
+	}
+	return nil
+}
+
+// SaveJSON saves a contracts.json file.
+func (c *Contracts) SaveJSON(outputFile string) error {
+	s, err := json.MarshalIndent(c, "", "    ")
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(outputFile, s, 0o644)
+	if err != nil {
+		return err
+	}
+	return nil
 }

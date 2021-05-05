@@ -4,9 +4,7 @@ package deploy
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"path/filepath"
@@ -65,6 +63,7 @@ var DeployCmd = &cobra.Command{
 			}
 			gasPrice = gweiToWei(gasPriceGWei)
 		}
+		deployFlags.OutputFile = filepath.Clean(deployFlags.OutputFile)
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -263,8 +262,6 @@ func deploy(ctx context.Context, client *ethclient.Client) error {
 	for _, receipt := range receipts {
 		totalGasUsed += receipt.GasUsed
 	}
-	fmt.Println("Gas used:", totalGasUsed)
-
 	fmt.Println("      ConfigContract:", contracts.ConfigContract.Hex())
 	fmt.Println("KeyBroadcastContract:", contracts.KeyBroadcastContract.Hex())
 	fmt.Println("     FeeBankContract:", contracts.FeeBankContract.Hex())
@@ -274,18 +271,15 @@ func deploy(ctx context.Context, client *ethclient.Client) error {
 	fmt.Println("     DepositContract:", contracts.DepositContract.Hex())
 	fmt.Println("       KeyperSlasher:", contracts.KeyperSlasherContract.Hex())
 	fmt.Println("      TargetContract:", contracts.TargetContract.Hex())
+	fmt.Println("")
+	fmt.Println("            Gas used:", totalGasUsed)
 
 	if deployFlags.OutputFile != "" {
-		outputFile := filepath.Clean(deployFlags.OutputFile)
-		s, err := json.MarshalIndent(contracts, "", "    ")
+		err := contracts.SaveJSON(deployFlags.OutputFile)
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(outputFile, s, 0o644)
-		if err != nil {
-			return err
-		}
-		fmt.Println("addresses written to", outputFile)
+		fmt.Println("addresses written to:", deployFlags.OutputFile)
 	}
 	return nil
 }
