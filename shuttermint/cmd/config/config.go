@@ -29,7 +29,6 @@ var ConfigCmd = &cobra.Command{
 
 var (
 	client         *ethclient.Client
-	contractsJSON  *sandbox.ContractsJSON
 	configContract *contract.ConfigContract
 	ownerKey       *ecdsa.PrivateKey
 )
@@ -102,7 +101,7 @@ func processConfigFlags(ctx context.Context) error {
 		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
 	}
 
-	contractsJSON, err = sandbox.LoadContractsJSON(configFlags.ContractsPath)
+	contractsJSON, err := sandbox.LoadContractsJSON(configFlags.ContractsPath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to load contracts JSON file at %s", configFlags.ContractsPath)
 	}
