@@ -22,7 +22,6 @@ var ConfigCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		cmd.SilenceUsage = true
 		return parseOwnerKey(cmd)
 	},
 }

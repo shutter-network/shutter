@@ -65,6 +65,7 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return medley.BindFlags(cmd)
 	},
+	SilenceUsage: true,
 }
 
 var configCmd = &cobra.Command{
@@ -132,7 +133,6 @@ func init() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }

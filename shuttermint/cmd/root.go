@@ -45,6 +45,7 @@ var rootCmd = &cobra.Command{
 		log.SetFlags(flags)
 		return nil
 	},
+	SilenceUsage: true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
