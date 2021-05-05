@@ -12,18 +12,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/contract/erc1820"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
@@ -121,47 +120,6 @@ func init() {
 		"",
 		"if given, store the contract addresses as a JSON file at this path",
 	)
-}
-
-func waitForTransactionReceipt(ctx context.Context, cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
-	for {
-		receipt, err := cl.TransactionReceipt(ctx, txHash)
-		if err == ethereum.NotFound {
-			time.Sleep(time.Second)
-			continue
-		}
-		return receipt, err
-	}
-}
-
-func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*types.Transaction) ([]*types.Receipt, error) {
-	defer fmt.Print("\n")
-	var res []*types.Receipt
-
-	failedTxs := []int{}
-	for i, tx := range txs {
-		receipt, err := waitForTransactionReceipt(ctx, client, tx.Hash())
-		if err != nil {
-			return res, err
-		}
-		res = append(res, receipt)
-		if receipt.Status != 1 {
-			fmt.Print("X")
-			failedTxs = append(failedTxs, i)
-		} else {
-			fmt.Print(".")
-		}
-	}
-
-	if len(failedTxs) > 0 {
-		log.Printf("The following transactions have failed:")
-		for _, i := range failedTxs {
-			log.Printf("%s", txs[i].Hash().Hex())
-		}
-		return res, errors.New("some txs have failed")
-	}
-
-	return res, nil
 }
 
 func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
@@ -263,7 +221,11 @@ func deploy(ctx context.Context, client *ethclient.Client) {
 	auth.GasLimit = 0
 	addTx()
 
-	receipts, err := waitForTransactions(ctx, client, txs)
+	txHashes := []common.Hash{}
+	for _, tx := range txs {
+		txHashes = append(txHashes, tx.Hash())
+	}
+	receipts, err := medley.WaitMinedMany(ctx, client, txHashes)
 	failIfError(err)
 
 	totalGasUsed := uint64(0)
