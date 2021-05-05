@@ -132,9 +132,18 @@ func init() {
 }
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+	status := 0
+
+	// Exit with status 1 when called with no arguments.
+	if len(os.Args) <= 1 {
+		status = 1
 	}
+
+	if err := rootCmd.Execute(); err != nil {
+		status = 1
+	}
+
+	os.Exit(status)
 }
 
 func initConfigFlags() {

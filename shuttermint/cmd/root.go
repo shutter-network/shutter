@@ -48,12 +48,20 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// Execute the shuttermint root command and exit the program afterwards. This is called from main.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+	status := 0
+
+	// Exit with status 1 when called with no arguments.
+	if len(os.Args) <= 1 {
+		status = 1
 	}
+
+	if err := rootCmd.Execute(); err != nil {
+		status = 1
+	}
+
+	os.Exit(status)
 }
 
 func init() {
