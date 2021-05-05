@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -57,7 +58,7 @@ var fundFlags struct {
 	OwnerKey string
 }
 
-var contractsJSON sandbox.ContractsJSON
+var contractsJSON deploy.Contracts
 
 var rootCmd = &cobra.Command{
 	Use:   "prepare",

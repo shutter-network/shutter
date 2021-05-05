@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
 
@@ -41,7 +41,7 @@ chain's genesis config.`,
 }
 
 func getConfigContractAddress() common.Address {
-	contracts, err := sandbox.LoadContractsJSON(bootstrapFlags.ContractsPath)
+	contracts, err := deploy.LoadContractsJSON(bootstrapFlags.ContractsPath)
 	if err != nil {
 		log.Fatalf("Could not read contracts from %s: %s", filepath.Clean(bootstrapFlags.ContractsPath), err)
 	}

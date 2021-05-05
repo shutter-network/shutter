@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
@@ -100,7 +101,7 @@ func processConfigFlags(ctx context.Context) error {
 		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
 	}
 
-	contractsJSON, err := sandbox.LoadContractsJSON(configFlags.ContractsPath)
+	contractsJSON, err := deploy.LoadContractsJSON(configFlags.ContractsPath)
 	if err != nil {
 		return errors.Wrapf(err, "failed to load contracts JSON file at %s", configFlags.ContractsPath)
 	}

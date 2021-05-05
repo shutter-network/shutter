@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
+	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
@@ -73,5 +74,5 @@ func init() {
 	rootCmd.AddCommand(txsearchCmd)
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(deploy.DeployCmd)
 }

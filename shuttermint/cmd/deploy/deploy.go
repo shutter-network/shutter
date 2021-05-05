@@ -1,4 +1,5 @@
-package cmd
+// Package deploy contains the implementation of the deploy subcommand
+package deploy
 
 import (
 	"context"
@@ -22,7 +23,6 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/contract/erc1820"
 	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 const (
@@ -44,7 +44,7 @@ var deployFlags struct {
 	OutputFile  string
 }
 
-var deployCmd = &cobra.Command{
+var DeployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy all Shutter contracts",
 	Args:  cobra.NoArgs,
@@ -106,35 +106,35 @@ var deployCmd = &cobra.Command{
 }
 
 func init() {
-	deployCmd.PersistentFlags().StringVarP(
+	DeployCmd.PersistentFlags().StringVarP(
 		&deployFlags.OwnerKey,
 		"owner-key",
 		"k",
 		"",
 		"private key of the deployer",
 	)
-	deployCmd.MarkPersistentFlagRequired("owner-key")
-	deployCmd.PersistentFlags().StringVar(
+	DeployCmd.MarkPersistentFlagRequired("owner-key")
+	DeployCmd.PersistentFlags().StringVar(
 		&deployFlags.GasPrice,
 		"gas-price",
 		"",
 		"gas price in GWei (default: use suggested one)",
 	)
-	deployCmd.PersistentFlags().StringVarP(
+	DeployCmd.PersistentFlags().StringVarP(
 		&deployFlags.EthereumURL,
 		"ethereum-url",
 		"e",
 		"",
 		"Ethereum RPC URL",
 	)
-	deployCmd.MarkPersistentFlagRequired("ethereum-url")
-	deployCmd.PersistentFlags().BoolVar(
+	DeployCmd.MarkPersistentFlagRequired("ethereum-url")
+	DeployCmd.PersistentFlags().BoolVar(
 		&deployFlags.NoERC1820,
 		"no-erc1820",
 		false,
 		"don't deploy the ERC1820 contract",
 	)
-	deployCmd.PersistentFlags().StringVarP(
+	DeployCmd.PersistentFlags().StringVarP(
 		&deployFlags.OutputFile,
 		"output",
 		"o",
@@ -156,7 +156,7 @@ func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) error {
 	return erc1820.DeployContract(ctx, client, key)
 }
 
-func batchContractDeployments(batch *txbatch.TXBatch) (*sandbox.ContractsJSON, error) {
+func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 	var tx *types.Transaction
 	var err error
 
@@ -228,7 +228,7 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*sandbox.ContractsJSON, e
 	}
 	batch.Add(tx)
 
-	return &sandbox.ContractsJSON{
+	return &Contracts{
 		ConfigContract:        configAddress,
 		KeyBroadcastContract:  broadcastAddress,
 		FeeBankContract:       feeAddress,
@@ -250,7 +250,7 @@ func deploy(ctx context.Context, client *ethclient.Client) error {
 	batch.TransactOpts.GasPrice = gasPrice
 	batch.TransactOpts.Context = ctx
 
-	j, err := batchContractDeployments(batch)
+	contracts, err := batchContractDeployments(batch)
 	if err != nil {
 		return err
 	}
@@ -265,19 +265,19 @@ func deploy(ctx context.Context, client *ethclient.Client) error {
 	}
 	fmt.Println("Gas used:", totalGasUsed)
 
-	fmt.Println("      ConfigContract:", j.ConfigContract.Hex())
-	fmt.Println("KeyBroadcastContract:", j.KeyBroadcastContract.Hex())
-	fmt.Println("     FeeBankContract:", j.FeeBankContract.Hex())
-	fmt.Println("     BatcherContract:", j.BatcherContract.Hex())
-	fmt.Println("    ExecutorContract:", j.ExecutorContract.Hex())
-	fmt.Println("       TokenContract:", j.TokenContract.Hex())
-	fmt.Println("     DepositContract:", j.DepositContract.Hex())
-	fmt.Println("       KeyperSlasher:", j.KeyperSlasherContract.Hex())
-	fmt.Println("      TargetContract:", j.TargetContract.Hex())
+	fmt.Println("      ConfigContract:", contracts.ConfigContract.Hex())
+	fmt.Println("KeyBroadcastContract:", contracts.KeyBroadcastContract.Hex())
+	fmt.Println("     FeeBankContract:", contracts.FeeBankContract.Hex())
+	fmt.Println("     BatcherContract:", contracts.BatcherContract.Hex())
+	fmt.Println("    ExecutorContract:", contracts.ExecutorContract.Hex())
+	fmt.Println("       TokenContract:", contracts.TokenContract.Hex())
+	fmt.Println("     DepositContract:", contracts.DepositContract.Hex())
+	fmt.Println("       KeyperSlasher:", contracts.KeyperSlasherContract.Hex())
+	fmt.Println("      TargetContract:", contracts.TargetContract.Hex())
 
 	if deployFlags.OutputFile != "" {
 		outputFile := filepath.Clean(deployFlags.OutputFile)
-		s, err := json.MarshalIndent(j, "", "    ")
+		s, err := json.MarshalIndent(contracts, "", "    ")
 		if err != nil {
 			return err
 		}
