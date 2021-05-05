@@ -563,11 +563,13 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 		return err
 	}
 
-	auth, err := makeAuth(ctx, client, ownerKey)
+	auth, err := sandbox.InitTransactOpts(ctx, client, ownerKey)
 	if err != nil {
 		return err
 	}
+	auth.GasLimit = 1000000
 	auth.Context = ctx
+
 	var txs []*types.Transaction
 	var tx *types.Transaction
 	addTx := func() {
@@ -672,29 +674,6 @@ func checkContractExists(ctx context.Context, client *ethclient.Client, address 
 		return errors.Errorf("no contract exists at address %s", address.Hex())
 	}
 	return nil
-}
-
-func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
-	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	chainID, err := client.ChainID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = 1000000
-	return auth, nil
 }
 
 func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc *contract.ConfigContract) (uint64, uint64, error) {

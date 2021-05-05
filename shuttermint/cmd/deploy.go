@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -136,30 +135,6 @@ func init() {
 	)
 }
 
-func makeAuth(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey) (*bind.TransactOpts, error) {
-	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
-
-	nonce, err := client.PendingNonceAt(ctx, fromAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	chainID, err := client.ChainID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	if err != nil {
-		return nil, err
-	}
-
-	auth.Nonce = big.NewInt(int64(nonce))
-	auth.Value = big.NewInt(0)
-	auth.GasPrice = gasPrice
-	return auth, nil
-}
-
 func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) {
 	deployed, err := erc1820.IsDeployed(ctx, client)
 	if err != nil {
@@ -177,8 +152,9 @@ func maybeDeployERC1820(ctx context.Context, client *ethclient.Client) {
 }
 
 func deploy(ctx context.Context, client *ethclient.Client) {
-	auth, err := makeAuth(ctx, client, key)
+	auth, err := sandbox.InitTransactOpts(ctx, client, key)
 	failIfError(err)
+	auth.GasPrice = gasPrice
 	auth.Context = ctx
 	var txs []*types.Transaction
 	var tx *types.Transaction
