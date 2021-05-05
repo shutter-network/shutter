@@ -101,8 +101,7 @@ func query(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	configJSON := sandbox.ConfigToJSON(&config)
-	s, err := json.MarshalIndent(configJSON, "", "    ")
+	s, err := json.MarshalIndent(config, "", "    ")
 	if err != nil {
 		return err
 	}

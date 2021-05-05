@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -35,14 +34,6 @@ func ExitIfError(err error) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-// ValidatePrivateKey checks that the argument is a valid hex-encoded private key.
-func ValidatePrivateKey(key string) error {
-	if _, err := crypto.HexToECDSA(key); err != nil {
-		return errors.Wrap(err, "invalid private key")
-	}
-	return nil
 }
 
 // InitTransactOpts initializes the transact options struct.

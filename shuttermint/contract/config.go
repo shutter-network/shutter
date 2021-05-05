@@ -3,10 +3,12 @@ package contract
 // This file adds some custom methods to the abigen generated ConfigContract class
 
 import (
+	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -60,6 +62,78 @@ func (bc *BatchConfig) BatchIndex(blockNumber uint64) uint64 {
 		return bc.StartBatchIndex
 	}
 	return bc.StartBatchIndex + (blockNumber-bc.StartBlockNumber)/bc.BatchSpan
+}
+
+type ChecksumAddr = medley.ChecksumAddr
+
+func validateThreshold(threshold uint64, numKeypers int) error {
+	if numKeypers <= 0 {
+		return errors.Errorf("there must be at least one keyper")
+	}
+	if threshold > uint64(numKeypers) {
+		return errors.Errorf("threshold must not be greater than number of keypers")
+	}
+	if threshold == 0 {
+		return errors.Errorf("threshold must not be zero")
+	}
+	return nil
+}
+
+func (bc BatchConfig) MarshalJSON() ([]byte, error) {
+	type Alias BatchConfig
+	keypers := []ChecksumAddr{}
+	for _, k := range bc.Keypers {
+		keypers = append(keypers, ChecksumAddr(k))
+	}
+	return json.Marshal(&struct {
+		TargetFunctionSelector string
+		TargetAddress          ChecksumAddr
+		FeeReceiver            ChecksumAddr
+		Keypers                []ChecksumAddr
+		Alias
+	}{
+		TargetFunctionSelector: hexutil.Encode(bc.TargetFunctionSelector[:]),
+		TargetAddress:          ChecksumAddr(bc.TargetAddress),
+		FeeReceiver:            ChecksumAddr(bc.FeeReceiver),
+		Keypers:                keypers,
+		Alias:                  Alias(bc),
+	})
+}
+
+func (bc *BatchConfig) UnmarshalJSON(data []byte) error {
+	type Alias BatchConfig
+	tmp := &struct {
+		TargetFunctionSelector string
+		TargetAddress          ChecksumAddr
+		FeeReceiver            ChecksumAddr
+		Keypers                []ChecksumAddr
+		*Alias
+	}{
+		Alias: (*Alias)(bc),
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	bc.TargetAddress = common.Address(tmp.TargetAddress)
+	bc.FeeReceiver = common.Address(tmp.FeeReceiver)
+
+	keypers := []common.Address{}
+	for _, k := range tmp.Keypers {
+		keypers = append(keypers, common.Address(k))
+	}
+	bc.Keypers = keypers
+
+	sel, err := hexutil.Decode(tmp.TargetFunctionSelector)
+	if err != nil {
+		return errors.Wrapf(err, "UnmarshalJSON: TargetFunctionSelector")
+	}
+	if len(sel) != 4 {
+		return errors.Errorf("UnmarshalJSON: TargetFunctionSelector must be 4 bytes long")
+	}
+	copy(bc.TargetFunctionSelector[:], sel)
+	return validateThreshold(bc.Threshold, len(bc.Keypers))
 }
 
 // NextBatchIndex determines the next batch index to be started after the given block number.

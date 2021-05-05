@@ -3,10 +3,13 @@ package config
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
+	"io/ioutil"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
@@ -44,12 +47,26 @@ func init() {
 	addOwnerKeyFlag(setNextCmd)
 }
 
+func loadConfigJSON(path string) (*contract.BatchConfig, error) {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &contract.BatchConfig{}
+	err = json.Unmarshal(d, c)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshal json")
+	}
+
+	return c, nil
+}
+
 func setNext(ctx context.Context) error {
-	configJSON, err := sandbox.LoadConfigJSON(setNextFlags.ConfigPath)
+	batchConfig, err := loadConfigJSON(setNextFlags.ConfigPath)
 	if err != nil {
 		return err
 	}
-	batchConfig := configJSON.ToBatchConfig()
 
 	callOpts := &bind.CallOpts{Context: ctx}
 	currentNextConfig, err := configContract.GetNextConfig(callOpts)

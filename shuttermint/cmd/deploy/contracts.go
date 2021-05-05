@@ -6,29 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
-// chksumAddr is used internally to serialize addresses as checksum addresses when writing JSON
-// files.
-type chksumAddr common.Address
-
-func (addr chksumAddr) MarshalJSON() ([]byte, error) {
-	return json.Marshal(common.Address(addr).Hex())
-}
-
-func (addr *chksumAddr) UnmarshalJSON(data []byte) error {
-	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
-		return err
-	}
-	a := common.HexToAddress(s)
-	if a.Hex() != s {
-		return errors.Errorf("invalid address: %s", s)
-	}
-	copy(addr[:], a[:])
-	return nil
-}
+type ChecksumAddr = medley.ChecksumAddr
 
 // Contracts stores the addresses of all contracts.
 type Contracts struct {
@@ -44,30 +26,30 @@ type Contracts struct {
 }
 
 type contractsJSON struct {
-	ConfigContract        chksumAddr
-	KeyBroadcastContract  chksumAddr
-	FeeBankContract       chksumAddr
-	BatcherContract       chksumAddr
-	ExecutorContract      chksumAddr
-	TokenContract         chksumAddr
-	DepositContract       chksumAddr
-	KeyperSlasherContract chksumAddr
-	TargetContract        chksumAddr
+	ConfigContract        ChecksumAddr
+	KeyBroadcastContract  ChecksumAddr
+	FeeBankContract       ChecksumAddr
+	BatcherContract       ChecksumAddr
+	ExecutorContract      ChecksumAddr
+	TokenContract         ChecksumAddr
+	DepositContract       ChecksumAddr
+	KeyperSlasherContract ChecksumAddr
+	TargetContract        ChecksumAddr
 }
 
 // MarshalJSON makes us output checksum addresses when marshaling as json.
 func (c Contracts) MarshalJSON() ([]byte, error) {
 	return json.Marshal(
 		contractsJSON{
-			chksumAddr(c.ConfigContract),
-			chksumAddr(c.KeyBroadcastContract),
-			chksumAddr(c.FeeBankContract),
-			chksumAddr(c.BatcherContract),
-			chksumAddr(c.ExecutorContract),
-			chksumAddr(c.TokenContract),
-			chksumAddr(c.DepositContract),
-			chksumAddr(c.KeyperSlasherContract),
-			chksumAddr(c.TargetContract),
+			ChecksumAddr(c.ConfigContract),
+			ChecksumAddr(c.KeyBroadcastContract),
+			ChecksumAddr(c.FeeBankContract),
+			ChecksumAddr(c.BatcherContract),
+			ChecksumAddr(c.ExecutorContract),
+			ChecksumAddr(c.TokenContract),
+			ChecksumAddr(c.DepositContract),
+			ChecksumAddr(c.KeyperSlasherContract),
+			ChecksumAddr(c.TargetContract),
 		},
 	)
 }

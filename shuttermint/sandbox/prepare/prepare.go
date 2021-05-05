@@ -376,8 +376,8 @@ func loadContractsJSON(path string) error {
 	return nil
 }
 
-func generateConfigJSON(keypers []string) error {
-	cfg := sandbox.ConfigJSON{
+func generateConfigJSON(keypers []common.Address) error {
+	cfg := contract.BatchConfig{
 		StartBatchIndex:        0,
 		StartBlockNumber:       0,
 		Keypers:                keypers,
@@ -386,9 +386,9 @@ func generateConfigJSON(keypers []string) error {
 		BatchSizeLimit:         100000,
 		TransactionSizeLimit:   1000,
 		TransactionGasLimit:    10000,
-		FeeReceiver:            "0x1111111111111111111111111111111111111111",
-		TargetAddress:          contractsJSON.TargetContract.Hex(),
-		TargetFunctionSelector: "0x943d7209",
+		FeeReceiver:            common.HexToAddress("0x1111111111111111111111111111111111111111"),
+		TargetAddress:          contractsJSON.TargetContract,
+		TargetFunctionSelector: [4]byte{0x94, 0x3d, 0x72, 0x09},
 		ExecutionTimeout:       15,
 	}
 
@@ -417,7 +417,7 @@ func generateConfigJSON(keypers []string) error {
 }
 
 func configs() error {
-	keypers := []string{}
+	keypers := []common.Address{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
 		config, err := rawConfig(i)
 		if err != nil {
@@ -428,7 +428,7 @@ func configs() error {
 		if err != nil {
 			return err
 		}
-		keypers = append(keypers, config.Address().Hex())
+		keypers = append(keypers, config.Address())
 	}
 	return generateConfigJSON(keypers)
 }

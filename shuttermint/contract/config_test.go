@@ -1,7 +1,10 @@
 package contract
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -13,6 +16,70 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 )
+
+func makeExampleBatchConfig() BatchConfig {
+	return BatchConfig{
+		StartBatchIndex:  123,
+		StartBlockNumber: 456,
+		Keypers: []common.Address{
+			common.HexToAddress("0x6ab87f620cb46764C6466e9Ca7Ac193711855D09"),
+			common.HexToAddress("0xd64c1dBD939ED3A9947CDB812e706342Dc4A15FC"),
+		},
+		Threshold:              2,
+		BatchSpan:              10,
+		BatchSizeLimit:         100000,
+		TransactionSizeLimit:   1000,
+		TransactionGasLimit:    10000,
+		FeeReceiver:            common.HexToAddress("0x1111111111111111111111111111111111111111"),
+		TargetAddress:          common.HexToAddress("0x0CF414a5c990e859327E2bB19537EBf5684E58Ce"),
+		TargetFunctionSelector: [4]byte{0x01, 0x02, 0x03, 0x04},
+		ExecutionTimeout:       15,
+	}
+}
+
+func TestBatchConfigJSONMarshaling(t *testing.T) {
+	bc := makeExampleBatchConfig()
+
+	d, err := json.MarshalIndent(bc, "", "    ")
+	require.Nil(t, err)
+	bc2 := BatchConfig{}
+	err = json.Unmarshal(d, &bc2)
+	require.Nil(t, err)
+	require.Equal(t, bc, bc2)
+}
+
+func TestBatchConfigUnmarshaling(t *testing.T) {
+	bc := makeExampleBatchConfig()
+	d, err := json.MarshalIndent(bc, "", "    ")
+	require.Nil(t, err)
+	fmt.Println(string(d))
+	bc2 := BatchConfig{}
+	replaceUnmarshal := func(t *testing.T, old, new string) {
+		t.Helper()
+		err = json.Unmarshal(bytes.ReplaceAll(d, []byte(old), []byte(new)), &bc2)
+		require.NotNil(t, err)
+		fmt.Println("ERROR:", err)
+	}
+
+	t.Run("malformed fee receiver address",
+		func(t *testing.T) {
+			replaceUnmarshal(t, "0x1111", "0xABCD")
+			replaceUnmarshal(t, "0x1111", "0x11")
+		},
+	)
+	t.Run("malformed keyper address",
+		func(t *testing.T) {
+			replaceUnmarshal(t, "0x6ab87f", "0X6AB87F")
+		},
+	)
+	t.Run("malformed target function selector",
+		func(t *testing.T) {
+			replaceUnmarshal(t, "0x01020304", "0x010203")
+			replaceUnmarshal(t, "0x01020304", "0x0102030405")
+			replaceUnmarshal(t, "0x01020304", "0xX1020304")
+		},
+	)
+}
 
 func TestNextBatchIndex(t *testing.T) {
 	key, err := crypto.GenerateKey()
