@@ -11,17 +11,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all configs",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		sandbox.ExitIfError(processConfigFlags(ctx))
-		sandbox.ExitIfError(list(ctx))
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return list(context.Background())
 	},
 }
 
