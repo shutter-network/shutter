@@ -70,53 +70,42 @@ var rootCmd = &cobra.Command{
 var configCmd = &cobra.Command{
 	Use:   "configs",
 	Short: "Generate the keyper config files",
-	Run: func(cmd *cobra.Command, args []string) {
-		if flag, err := validateConfigFlags(); err != nil {
-			fmt.Printf("Invalid flag %s: %s\n", flag, err)
-			os.Exit(1)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateConfigFlags(); err != nil {
+			return err
 		}
 		if err := loadContractsJSON(configFlags.ContractsPath); err != nil {
-			fmt.Printf("Error loading contracts JSON file: %s\n", err)
-			os.Exit(1)
+			return errors.WithMessage(err, "load contracts JSON file")
 		}
 		if err := configs(); err != nil {
-			fmt.Printf("Error creating configs: %s\n", err)
-			os.Exit(1)
+			return errors.WithMessage(err, "create config files")
 		}
 		if err := createRunScript(); err != nil {
-			fmt.Printf("Error creating run script: %s\n", err)
-			os.Exit(1)
+			return errors.WithMessage(err, "create run script")
 		}
+		return nil
 	},
 }
 
 var scheduleCmd = &cobra.Command{
 	Use:   "schedule",
 	Short: "Schedule a config in line with a set of earlier prepared keyper set",
-	Run: func(cmd *cobra.Command, args []string) {
-		if flag, err := validateScheduleFlags(); err != nil {
-			fmt.Printf("Invalid flag %s: %s\n", flag, err)
-			os.Exit(1)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateScheduleFlags(); err != nil {
+			return err
 		}
-		if err := schedule(); err != nil {
-			fmt.Printf("Error: %s\n", err)
-			os.Exit(1)
-		}
+		return schedule()
 	},
 }
 
 var fundCmd = &cobra.Command{
 	Use:   "fund",
 	Short: "Fund the accounts of an earlier prepared keyper set",
-	Run: func(cmd *cobra.Command, args []string) {
-		if flag, err := validateFundFlags(); err != nil {
-			fmt.Printf("Invalid flag %s: %s\n", flag, err)
-			os.Exit(1)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateFundFlags(); err != nil {
+			return err
 		}
-		if err := fund(); err != nil {
-			fmt.Printf("Error: %s\n", err)
-			os.Exit(1)
-		}
+		return fund()
 	},
 }
 
@@ -272,66 +261,66 @@ func initFundFlags() {
 	)
 }
 
-func validateConfigFlags() (string, error) {
+func validateConfigFlags() error {
 	if configFlags.NumKeypers <= 0 {
-		return "num-keypers", errors.Errorf("must be at least 1")
+		return errors.Errorf("invalid flag --num-keypers: must be at least 1")
 	}
 	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
-		return "dir", errors.Errorf("output directory %s already exists", configFlags.Dir)
+		return errors.Errorf("invalid flag --dir: output directory %s already exists", configFlags.Dir)
 	}
 	var err error
 	if configFlags.Bin, err = LookPath(configFlags.Bin); err != nil {
-		return "", err
+		return err
 	}
-	return "", nil
+	return nil
 }
 
-func validateScheduleFlags() (string, error) {
+func validateScheduleFlags() error {
 	stats, err := os.Stat(scheduleFlags.Dir)
 	if os.IsNotExist(err) {
-		return "dir", errors.Errorf("directory %s does not exists", configFlags.Dir)
+		return errors.Errorf("invalid flag --dir: directory %s does not exists", configFlags.Dir)
 	}
 	if !stats.IsDir() {
-		return "dir", errors.Errorf("%s is not a directory", configFlags.Dir)
+		return errors.Errorf("invalid flag --dir: %s is not a directory", configFlags.Dir)
 	}
 
 	if err := validatePrivateKey(scheduleFlags.OwnerKey); err != nil {
-		return "owner-key", err
+		return errors.WithMessage(err, "invalid flag --owner-key")
 	}
 
 	if err := validateAddress(scheduleFlags.TargetContractAddress); err != nil {
-		return "target-contract", err
+		return errors.WithMessage(err, "invalid flag --target-contract")
 	}
 	if err := validateFunctionSelector(scheduleFlags.TargetFunctionSelector); err != nil {
-		return "target-selector", err
+		return errors.WithMessage(err, "invalid flag --target-selector")
 	}
 	if scheduleFlags.BatchSpan < 0 {
-		return "batch-span", errors.Errorf("must not be negative")
+		return errors.Errorf("invalid flag --batch-span: must not be negative")
 	}
 	if scheduleFlags.TransactionSizeLimit < 0 {
-		return "transaction-size-limt", errors.Errorf("must not be negative")
+		return errors.Errorf("invalid flag --transaction-size-limit: must not be negative")
 	}
 	if scheduleFlags.BatchSizeLimit < 0 {
-		return "batch-size-limit", errors.Errorf("must not be negative")
+		return errors.Errorf("invalid flag --batch-size-limit: must not be negative")
 	}
 
-	return "", nil
+	return nil
 }
 
-func validateFundFlags() (string, error) {
+func validateFundFlags() error {
 	stats, err := os.Stat(fundFlags.Dir)
 	if os.IsNotExist(err) {
-		return "dir", errors.Errorf("directory %s does not exists", fundFlags.Dir)
+		return errors.Errorf("invalid flag --dir: directory %s does not exists", fundFlags.Dir)
 	}
 	if !stats.IsDir() {
-		return "dir", errors.Errorf("%s is not a directory", fundFlags.Dir)
+		return errors.Errorf("invalid flag --dir: %s is not a directory", fundFlags.Dir)
 	}
 
 	if err := validatePrivateKey(fundFlags.OwnerKey); err != nil {
-		return "owner-key", err
+		return errors.WithMessage(err, "invalid flag --owner-key")
 	}
 
-	return "", nil
+	return nil
 }
 
 func validateAddress(address string) error {
@@ -344,7 +333,7 @@ func validateAddress(address string) error {
 
 func validatePrivateKey(key string) error {
 	if _, err := crypto.HexToECDSA(key); err != nil {
-		return errors.Wrap(err, "invalid private key")
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -417,7 +406,7 @@ func generateConfigJSON(keypers []common.Address) error {
 func configs() error {
 	keypers := []common.Address{}
 	for i := 0; i < configFlags.NumKeypers; i++ {
-		config, err := rawConfig(i)
+		config, err := newConfig(i)
 		if err != nil {
 			return err
 		}
@@ -431,7 +420,7 @@ func configs() error {
 	return generateConfigJSON(keypers)
 }
 
-func rawConfig(keyperIndex int) (*keyper.Config, error) {
+func newConfig(keyperIndex int) (*keyper.Config, error) {
 	var shuttermintPort int
 	if configFlags.FixedShuttermintPort {
 		shuttermintPort = configFlags.FirstShuttermintPort
