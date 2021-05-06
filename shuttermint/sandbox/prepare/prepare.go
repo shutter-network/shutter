@@ -12,9 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -29,7 +27,7 @@ import (
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
+	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
 )
 
 var configFlags struct {
@@ -573,48 +571,45 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 		return err
 	}
 
-	auth, err := sandbox.InitTransactOpts(ctx, client, ownerKey)
-	if err != nil {
-		return err
-	}
-	auth.GasLimit = 1000000
-	auth.Context = ctx
-
-	var txs []*types.Transaction
-	var tx *types.Transaction
-	addTx := func() {
-		txs = append(txs, tx)
-		auth.Nonce.SetInt64(auth.Nonce.Int64() + 1)
-	}
-
 	cc, err := contract.NewConfigContract(configs[0].ConfigContractAddress, client)
 	if err != nil {
 		return err
 	}
 
+	batch, err := txbatch.New(ctx, client, ownerKey)
+	if err != nil {
+		return err
+	}
+
+	batch.TransactOpts.GasLimit = 1000000
+	batch.TransactOpts.Context = ctx
+
+	auth := batch.TransactOpts
+	var tx *types.Transaction
+
 	tx, err = cc.NextConfigSetBatchSpan(auth, uint64(scheduleFlags.BatchSpan))
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigAddKeypers(auth, keypers)
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigSetThreshold(auth, threshold)
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigSetTargetAddress(auth, common.HexToAddress(scheduleFlags.TargetContractAddress))
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	selectorBytesSlice, err := hexutil.Decode(scheduleFlags.TargetFunctionSelector)
 	if err != nil {
@@ -626,25 +621,25 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigSetExecutionTimeout(auth, uint64(scheduleFlags.BatchSpan))
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigSetTransactionSizeLimit(auth, uint64(scheduleFlags.TransactionSizeLimit))
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.NextConfigSetBatchSizeLimit(auth, uint64(scheduleFlags.BatchSizeLimit))
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	startBlockNumber, startBatchIndex, err := chooseStartBlockAndBatch(ctx, client, cc)
 	if err != nil {
@@ -654,25 +649,20 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 	tx, err = cc.NextConfigSetStartBatchIndex(auth, startBatchIndex)
 	if err != nil {
 		return err
 	}
-	addTx()
+	batch.Add(tx)
 
 	tx, err = cc.ScheduleNextConfig(auth)
 	if err != nil {
 		return err
 	}
-	addTx()
-
-	_, err = waitForTransactions(ctx, client, txs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	batch.Add(tx)
+	_, err = batch.WaitMined(ctx)
+	return err
 }
 
 func checkContractExists(ctx context.Context, client *ethclient.Client, address common.Address) error {
@@ -732,43 +722,6 @@ func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc 
 	return newStartBlockNumber, newStartBatchIndex, nil
 }
 
-func waitForTransactionReceipt(ctx context.Context, cl *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
-	for {
-		receipt, err := cl.TransactionReceipt(ctx, txHash)
-		if err == ethereum.NotFound {
-			time.Sleep(time.Second)
-			continue
-		}
-		return receipt, err
-	}
-}
-
-func waitForTransactions(ctx context.Context, client *ethclient.Client, txs []*types.Transaction) ([]*types.Receipt, error) {
-	defer fmt.Print("\n")
-	var res []*types.Receipt
-
-	failedTxs := []int{}
-	for i, tx := range txs {
-		receipt, err := waitForTransactionReceipt(ctx, client, tx.Hash())
-		if err != nil {
-			return res, err
-		}
-		res = append(res, receipt)
-		if receipt.Status != 1 {
-			fmt.Print("X")
-			failedTxs = append(failedTxs, i)
-		} else {
-			fmt.Print(".")
-		}
-	}
-
-	if len(failedTxs) > 0 {
-		return res, errors.New("some txs have failed")
-	}
-
-	return res, nil
-}
-
 func fund() error {
 	ctx := context.Background()
 
@@ -785,7 +738,6 @@ func fund() error {
 	if err != nil {
 		return errors.Errorf("invalid owner key")
 	}
-	ownerAddress := crypto.PubkeyToAddress(ownerKey.PublicKey)
 
 	ethereumURL := configs[0].EthereumURL
 	client, err := ethclient.DialContext(context.Background(), ethereumURL)
@@ -809,19 +761,18 @@ func fund() error {
 		panic("unexpected error")
 	}
 
-	nonce, err := client.PendingNonceAt(ctx, ownerAddress)
-	if err != nil {
-		return errors.Wrap(err, "failed to query nonce")
-	}
-
 	keypers := []common.Address{}
 	for i := range configs {
 		keypers = append(keypers, configs[i].Address())
 	}
 
-	txs := []*types.Transaction{}
+	batch, err := txbatch.New(ctx, client, ownerKey)
+	if err != nil {
+		return err
+	}
+
 	for _, addr := range keypers {
-		unsignedTx := types.NewTransaction(nonce, addr, amount, 21000, gasPrice, []byte{})
+		unsignedTx := types.NewTransaction(batch.TransactOpts.Nonce.Uint64(), addr, amount, 21000, gasPrice, []byte{})
 		tx, err := types.SignTx(unsignedTx, signer, ownerKey)
 		if err != nil {
 			return errors.Wrap(err, "failed to sign transaction")
@@ -831,12 +782,9 @@ func fund() error {
 		if err != nil {
 			return errors.Wrap(err, "failed to send transaction")
 		}
-		nonce++
-
-		txs = append(txs, tx)
+		batch.Add(tx)
 	}
-
-	_, err = waitForTransactions(ctx, client, txs)
+	_, err = batch.WaitMined(ctx)
 	return err
 }
 
