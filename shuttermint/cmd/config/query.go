@@ -3,59 +3,80 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 const (
 	nextConfigIndexPlaceholder = "next"
 	lastConfigIndexPlaceholder = "last"
+	allConfigsIndexPlaceholder = "all"
 )
 
 var queryCmd = &cobra.Command{
 	Use:   "query",
 	Short: "Download a batch config and print it as JSON",
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		sandbox.ExitIfError(processConfigFlags(ctx))
-		if flag, err := validateQueryFlags(); err != nil {
-			sandbox.ExitIfError(errors.Wrapf(err, "invalid value for flag %s", flag))
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		switch queryFlags.Index {
+		case nextConfigIndexPlaceholder, lastConfigIndexPlaceholder, allConfigsIndexPlaceholder:
+			return nil
+		default:
+			var err error
+			queryFlags.IndexValue, err = strconv.ParseUint(queryFlags.Index, 10, 64)
+			if err != nil {
+				return errors.Wrap(err, "--index argument not valid")
+			}
+			return err
 		}
-		sandbox.ExitIfError(query(ctx))
+	},
+
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
+		}
+		return query(ctx)
 	},
 }
 
 var queryFlags struct {
-	Index string
+	Index      string // the --index argument
+	IndexValue uint64 // --index argument if user passed an integer
 }
 
 func init() {
+	placeholders := []string{}
+	for _, p := range []string{nextConfigIndexPlaceholder, lastConfigIndexPlaceholder, allConfigsIndexPlaceholder} {
+		placeholders = append(placeholders, strconv.Quote(p))
+	}
 	queryCmd.PersistentFlags().StringVarP(
 		&queryFlags.Index,
 		"index",
 		"i",
-		"last",
-		"the index of the config to query or `last` or `next` (for the next config)",
+		allConfigsIndexPlaceholder,
+		fmt.Sprintf("the index of the config to query or %s", strings.Join(placeholders, ", ")),
 	)
 }
 
-func validateQueryFlags() (string, error) {
-	if queryFlags.Index != nextConfigIndexPlaceholder && queryFlags.Index != lastConfigIndexPlaceholder {
-		if _, err := strconv.ParseInt(queryFlags.Index, 10, 64); err != nil {
-			return "index", errors.Wrapf(err, "not a valid index or `next`")
-		}
+func printjson(d interface{}) error {
+	s, err := json.MarshalIndent(d, "", "    ")
+	if err != nil {
+		return err
 	}
-
-	return "", nil
+	os.Stdout.Write(s)
+	os.Stdout.Write([]byte{'\n'})
+	return nil
 }
 
 func query(ctx context.Context) error {
@@ -72,41 +93,42 @@ func query(ctx context.Context) error {
 		Context:     ctx,
 	}
 
-	if queryFlags.Index == nextConfigIndexPlaceholder {
-		config, err = configContract.GetNextConfig(callOpts)
-	} else {
-		var index uint64
-		if queryFlags.Index == lastConfigIndexPlaceholder {
-			numConfigs, err := configContract.NumConfigs(callOpts)
-			if err != nil {
-				return errors.Wrapf(err, "failed to call config contract")
-			}
-			if numConfigs == 0 {
-				return errors.Errorf("no configs scheduled in contract")
-			}
-			index = numConfigs - 1
-		} else {
-			index, err = strconv.ParseUint(queryFlags.Index, 10, 64)
-			if err != nil {
-				return err // should already be catched during argument validation
-			}
-		}
+	numConfigs, err := configContract.NumConfigs(callOpts)
+	if err != nil {
+		return errors.Wrapf(err, "failed to call config contract")
+	}
 
-		config, err = configContract.GetConfigByIndex(callOpts, index)
+	var index uint64
+
+	switch queryFlags.Index {
+	case nextConfigIndexPlaceholder:
+		config, err = configContract.GetNextConfig(callOpts)
 		if err != nil {
 			return err
 		}
+		return printjson(config)
+	case allConfigsIndexPlaceholder:
+		configs := []contract.BatchConfig{}
+		for index = 0; index < numConfigs; index++ {
+			config, err = configContract.GetConfigByIndex(callOpts, index)
+			if err != nil {
+				return err
+			}
+			configs = append(configs, config)
+		}
+		return printjson(configs)
+	case lastConfigIndexPlaceholder:
+		if numConfigs == 0 {
+			return errors.Errorf("no configs scheduled in contract")
+		}
+		index = numConfigs - 1
+	default:
+		index = queryFlags.IndexValue
 	}
 
+	config, err = configContract.GetConfigByIndex(callOpts, index)
 	if err != nil {
 		return err
 	}
-	s, err := json.MarshalIndent(config, "", "    ")
-	if err != nil {
-		return err
-	}
-	os.Stdout.Write(s)
-	os.Stdout.Write([]byte{'\n'})
-
-	return nil
+	return printjson(config)
 }
