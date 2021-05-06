@@ -3,15 +3,18 @@ package contract
 // This file adds some custom methods to the abigen generated ConfigContract class
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
 )
 
 // KeyperIndex returns the index of the keyper identified by the given address.
@@ -286,4 +289,105 @@ func (cc *ConfigContract) CurrentAndFutureConfigs(opts *bind.CallOpts, blockNumb
 	}
 
 	return configs, nil
+}
+
+func (cc *ConfigContract) SetNextBatchConfig(ctx context.Context, batch *txbatch.TXBatch, newbc BatchConfig) error { //nolint:funlen,gocyclo
+	callOpts := &bind.CallOpts{Context: ctx}
+	curbc, err := cc.GetNextConfig(callOpts)
+	if err != nil {
+		return err
+	}
+
+	txopts := batch.TransactOpts
+	var tx *types.Transaction
+	if newbc.StartBatchIndex != curbc.StartBatchIndex {
+		if tx, err = cc.NextConfigSetStartBatchIndex(txopts, newbc.StartBatchIndex); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.StartBlockNumber != curbc.StartBlockNumber {
+		if tx, err = cc.NextConfigSetStartBlockNumber(txopts, newbc.StartBlockNumber); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.Threshold != curbc.Threshold {
+		if tx, err = cc.NextConfigSetThreshold(txopts, newbc.Threshold); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.BatchSpan != curbc.BatchSpan {
+		if tx, err = cc.NextConfigSetBatchSpan(txopts, newbc.BatchSpan); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.BatchSizeLimit != curbc.BatchSizeLimit {
+		if tx, err = cc.NextConfigSetBatchSizeLimit(txopts, newbc.BatchSizeLimit); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.TransactionSizeLimit != curbc.TransactionSizeLimit {
+		if tx, err = cc.NextConfigSetTransactionSizeLimit(txopts, newbc.TransactionSizeLimit); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.TransactionGasLimit != curbc.TransactionGasLimit {
+		if tx, err = cc.NextConfigSetTransactionGasLimit(txopts, newbc.TransactionGasLimit); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.FeeReceiver != curbc.FeeReceiver {
+		if tx, err = cc.NextConfigSetFeeReceiver(txopts, newbc.FeeReceiver); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.TargetAddress != curbc.TargetAddress {
+		if tx, err = cc.NextConfigSetTargetAddress(txopts, newbc.TargetAddress); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.TargetFunctionSelector != curbc.TargetFunctionSelector {
+		if tx, err = cc.NextConfigSetTargetFunctionSelector(txopts, newbc.TargetFunctionSelector); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if newbc.ExecutionTimeout != curbc.ExecutionTimeout {
+		if tx, err = cc.NextConfigSetExecutionTimeout(txopts, newbc.ExecutionTimeout); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	if !addressesEqual(newbc.Keypers, curbc.Keypers) {
+		// TODO: remove and keypers in groups if there are too many of them
+		if tx, err = cc.NextConfigRemoveKeypers(txopts, uint64(len(curbc.Keypers))); err != nil {
+			return err
+		}
+		batch.Add(tx)
+		if tx, err = cc.NextConfigAddKeypers(txopts, newbc.Keypers); err != nil {
+			return err
+		}
+		batch.Add(tx)
+	}
+	return nil
+}
+
+func addressesEqual(s1, s2 []common.Address) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for i := range s1 {
+		if s1[i] != s2[i] {
+			return false
+		}
+	}
+	return true
 }

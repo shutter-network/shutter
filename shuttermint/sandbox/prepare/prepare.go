@@ -587,74 +587,34 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	auth := batch.TransactOpts
 	var tx *types.Transaction
 
-	tx, err = cc.NextConfigSetBatchSpan(auth, uint64(scheduleFlags.BatchSpan))
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigAddKeypers(auth, keypers)
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigSetThreshold(auth, threshold)
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigSetTargetAddress(auth, common.HexToAddress(scheduleFlags.TargetContractAddress))
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
 	selectorBytesSlice, err := hexutil.Decode(scheduleFlags.TargetFunctionSelector)
 	if err != nil {
 		return err // this should already be catched during flag validation
 	}
 	var selectorBytes [4]byte
 	copy(selectorBytes[:], selectorBytesSlice)
-	tx, err = cc.NextConfigSetTargetFunctionSelector(auth, selectorBytes)
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigSetExecutionTimeout(auth, uint64(scheduleFlags.BatchSpan))
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigSetTransactionSizeLimit(auth, uint64(scheduleFlags.TransactionSizeLimit))
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
-
-	tx, err = cc.NextConfigSetBatchSizeLimit(auth, uint64(scheduleFlags.BatchSizeLimit))
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
 
 	startBlockNumber, startBatchIndex, err := chooseStartBlockAndBatch(ctx, client, cc)
 	if err != nil {
 		return err
 	}
-	tx, err = cc.NextConfigSetStartBlockNumber(auth, startBlockNumber)
+
+	bc := contract.BatchConfig{
+		BatchSpan:              uint64(scheduleFlags.BatchSpan),
+		Keypers:                keypers,
+		Threshold:              threshold,
+		TargetAddress:          common.HexToAddress(scheduleFlags.TargetContractAddress),
+		TargetFunctionSelector: selectorBytes,
+		ExecutionTimeout:       uint64(scheduleFlags.BatchSpan),
+		TransactionSizeLimit:   uint64(scheduleFlags.TransactionSizeLimit),
+		BatchSizeLimit:         uint64(scheduleFlags.BatchSizeLimit),
+		StartBlockNumber:       startBlockNumber,
+		StartBatchIndex:        startBatchIndex,
+	}
+	err = cc.SetNextBatchConfig(ctx, batch, bc)
 	if err != nil {
 		return err
 	}
-	batch.Add(tx)
-	tx, err = cc.NextConfigSetStartBatchIndex(auth, startBatchIndex)
-	if err != nil {
-		return err
-	}
-	batch.Add(tx)
 
 	tx, err = cc.ScheduleNextConfig(auth)
 	if err != nil {
