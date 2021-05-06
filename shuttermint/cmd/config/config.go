@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"strings"
 
@@ -22,27 +23,7 @@ var ConfigCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = parseOwnerKey(cmd)
-		if err != nil {
-			return err
-		}
-		ctx := cmd.Context()
-		client, err = ethclient.DialContext(ctx, configFlags.EthereumURL)
-		if err != nil {
-			return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
-		}
-
-		contractsJSON, err := deploy.LoadContractsJSON(configFlags.ContractsPath)
-		if err != nil {
-			return errors.Wrapf(err, "failed to load contracts JSON file at %s", configFlags.ContractsPath)
-		}
-
-		configContract, err = contract.NewConfigContract(contractsJSON.ConfigContract, client)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return parseOwnerKey(cmd)
 	},
 }
 
@@ -110,4 +91,25 @@ func initConfigRootFlags() {
 		"path to the contracts.json file",
 	)
 	sandbox.MarkFlagRequired(ConfigCmd, "contracts")
+}
+
+func processConfigFlags(ctx context.Context) error {
+	var err error
+
+	client, err = ethclient.DialContext(ctx, configFlags.EthereumURL)
+	if err != nil {
+		return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
+	}
+
+	contractsJSON, err := deploy.LoadContractsJSON(configFlags.ContractsPath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to load contracts JSON file at %s", configFlags.ContractsPath)
+	}
+
+	configContract, err = contract.NewConfigContract(contractsJSON.ConfigContract, client)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

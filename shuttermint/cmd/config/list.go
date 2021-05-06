@@ -18,7 +18,12 @@ var listCmd = &cobra.Command{
 	Short: "List all configs",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return list(context.Background())
+		ctx := context.Background()
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
+		}
+		return list(ctx)
 	},
 }
 

@@ -19,6 +19,10 @@ var scheduleCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		ctx := context.Background()
+		err = processConfigFlags(ctx)
+		if err != nil {
+			return err
+		}
 		if setNextFlags.ConfigPath != "" {
 			err = setNext(ctx)
 			if err != nil {

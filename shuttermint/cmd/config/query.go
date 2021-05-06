@@ -41,7 +41,12 @@ var queryCmd = &cobra.Command{
 	},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return query(context.Background())
+		ctx := context.Background()
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
+		}
+		return query(ctx)
 	},
 }
 

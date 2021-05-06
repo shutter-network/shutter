@@ -18,7 +18,12 @@ var setNextCmd = &cobra.Command{
 	Short: "Set the next config in order to schedule it later",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return setNext(context.Background())
+		ctx := context.Background()
+		err := processConfigFlags(ctx)
+		if err != nil {
+			return err
+		}
+		return setNext(ctx)
 	},
 }
 
