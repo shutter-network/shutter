@@ -10,23 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/spf13/cobra"
 )
-
-// MarkFlagRequired marks a cobra flag as required and panics if this fails.
-func MarkFlagRequired(cmd *cobra.Command, name string) {
-	if cmd.Flags().Lookup(name) != nil {
-		if err := cmd.MarkFlagRequired(name); err != nil {
-			panic(err)
-		}
-	}
-
-	if cmd.PersistentFlags().Lookup(name) != nil {
-		if err := cmd.MarkPersistentFlagRequired(name); err != nil {
-			panic(err)
-		}
-	}
-}
 
 // ExitIfError exits the program with an error message and status if the given error is non-nil.
 func ExitIfError(err error) {

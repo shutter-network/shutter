@@ -12,7 +12,6 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 var ConfigCmd = &cobra.Command{
@@ -62,7 +61,7 @@ func addOwnerKeyFlag(cmd *cobra.Command) {
 		"",
 		"private key of the owner",
 	)
-	sandbox.MarkFlagRequired(cmd, "owner-key")
+	cmd.MarkPersistentFlagRequired("owner-key")
 }
 
 func init() {
@@ -90,7 +89,8 @@ func initConfigRootFlags() {
 		"",
 		"path to the contracts.json file",
 	)
-	sandbox.MarkFlagRequired(ConfigCmd, "contracts")
+
+	ConfigCmd.MarkPersistentFlagRequired("contracts")
 }
 
 func processConfigFlags(ctx context.Context) error {

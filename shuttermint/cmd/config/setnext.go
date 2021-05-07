@@ -10,7 +10,6 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
 )
 
 var setNextCmd = &cobra.Command{
@@ -38,7 +37,7 @@ func init() {
 		"",
 		"path to the config JSON file",
 	)
-	sandbox.MarkFlagRequired(setNextCmd, "config")
+	setNextCmd.MarkPersistentFlagRequired("config")
 
 	addOwnerKeyFlag(setNextCmd)
 }
