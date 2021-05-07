@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
+	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
 )
 
 var scheduleCmd = &cobra.Command{
@@ -44,7 +44,7 @@ func init() {
 }
 
 func schedule(ctx context.Context) error {
-	o, err := sandbox.InitTransactOpts(ctx, client, ownerKey)
+	o, err := txbatch.InitTransactOpts(ctx, client, ownerKey)
 	if err != nil {
 		return err
 	}
