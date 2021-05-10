@@ -9,6 +9,7 @@ import {
 import {
     IERC1820Registry
 } from "openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
+import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 
 struct Deposit {
     uint256 amount;
@@ -17,7 +18,7 @@ struct Deposit {
     bool slashed;
 }
 
-contract DepositContract is IERC777Recipient {
+contract DepositContract is IERC777Recipient, Ownable {
     event DepositChanged(
         address indexed account,
         uint256 amount,
@@ -26,6 +27,7 @@ contract DepositContract is IERC777Recipient {
         bool withdrawn,
         bool slashed
     );
+    event SlashingReceiverSet(address newSlashingReceiver);
 
     IERC1820Registry private _erc1820 =
         IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
@@ -35,8 +37,9 @@ contract DepositContract is IERC777Recipient {
     IERC777 public token;
     address public slasher;
     mapping(address => Deposit) private _deposits;
+    address public slashingReceiver;
 
-    constructor(IERC777 tokenContract) {
+    constructor(IERC777 tokenContract) Ownable() {
         token = tokenContract;
 
         _erc1820.setInterfaceImplementer(
@@ -52,6 +55,11 @@ contract DepositContract is IERC777Recipient {
             "DepositContract: slasher address already set"
         );
         slasher = slasherAddress;
+    }
+
+    function setSlashingReceiver(address newSlashingReceiver) public onlyOwner {
+        slashingReceiver = newSlashingReceiver;
+        emit SlashingReceiverSet({newSlashingReceiver: newSlashingReceiver});
     }
 
     function tokensReceived(
@@ -124,6 +132,8 @@ contract DepositContract is IERC777Recipient {
 
         Deposit memory deposit = _deposits[account];
 
+        uint256 amount = deposit.amount;
+
         deposit.amount = 0;
         deposit.withdrawalDelayBlocks = 0;
         deposit.withdrawalRequestedBlock = 0;
@@ -139,6 +149,12 @@ contract DepositContract is IERC777Recipient {
             withdrawn: false,
             slashed: true
         });
+
+        if (slashingReceiver == address(0)) {
+            token.burn(amount, "");
+        } else {
+            token.send(slashingReceiver, amount, "");
+        }
     }
 
     function getDepositAmount(address account) public view returns (uint256) {

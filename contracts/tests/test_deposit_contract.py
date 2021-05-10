@@ -7,8 +7,10 @@ from brownie.network.account import Accounts
 from brownie.network.contract import ContractTx
 from brownie.network.state import Chain
 from brownie.network.web3 import Web3
+from eth_utils import to_checksum_address
 
 from tests.contract_helpers import mine_until
+from tests.contract_helpers import ZERO_ADDRESS
 from tests.factories import make_int
 
 
@@ -110,3 +112,92 @@ def test_withdraw(
     check_deposit_changed_event(tx, 0, 0, 0, withdrawn=True)
     check_deposit(deposit_contract, owner, 0, 0, 0)
     assert deposit_token_contract.balanceOf(recipient) == 100
+
+
+def test_slash_and_burn(
+    deposit_contract: Any,
+    deposit_token_contract: Any,
+    owner: Account,
+    accounts: Accounts,
+) -> None:
+    slashed = accounts[1]
+    slasher = accounts[2]
+    deposit_contract.setSlasher(slasher, {"from": owner})
+
+    deposit_token_contract.send(slashed, 100, "", {"from": owner})
+    deposit_token_contract.send(deposit_contract, 100, encode_data(0), {"from": slashed})
+
+    tx = deposit_contract.slash(slashed, {"from": slasher})
+    assert len(tx.events) == 3
+    ev1, ev2, ev3 = tx.events
+
+    assert ev1.name == "DepositChanged"
+    assert ev1 == {
+        "account": slashed,
+        "amount": 0,
+        "withdrawalDelayBlocks": 0,
+        "withdrawalRequestedBlock": 0,
+        "withdrawn": False,
+        "slashed": True,
+    }
+    assert ev2.name == "Burned"
+    assert ev2 == {
+        "operator": deposit_contract,
+        "from": deposit_contract,
+        "amount": 100,
+        "data": "0x00",
+        "operatorData": "0x00",
+    }
+    assert ev3.name == "Transfer"
+    assert ev3 == {
+        "from": deposit_contract,
+        "to": to_checksum_address(ZERO_ADDRESS),
+        "value": 100,
+    }
+
+
+def test_slash_and_send(
+    deposit_contract: Any,
+    deposit_token_contract: Any,
+    owner: Account,
+    accounts: Accounts,
+) -> None:
+    slashed = accounts[1]
+    slasher = accounts[2]
+    slashing_receiver = accounts[3]
+    deposit_contract.setSlasher(slasher, {"from": owner})
+    deposit_contract.setSlashingReceiver(slashing_receiver, {"from": owner})
+
+    deposit_token_contract.send(slashed, 100, "", {"from": owner})
+    deposit_token_contract.send(deposit_contract, 100, encode_data(0), {"from": slashed})
+
+    tx = deposit_contract.slash(slashed, {"from": slasher})
+    assert len(tx.events) == 3
+    ev1, ev2, ev3 = tx.events
+
+    assert ev1.name == "DepositChanged"
+    assert ev1 == {
+        "account": slashed,
+        "amount": 0,
+        "withdrawalDelayBlocks": 0,
+        "withdrawalRequestedBlock": 0,
+        "withdrawn": False,
+        "slashed": True,
+    }
+    assert ev2.name == "Sent"
+    assert ev2 == {
+        "operator": deposit_contract,
+        "from": deposit_contract,
+        "to": slashing_receiver,
+        "amount": 100,
+        "data": "0x00",
+        "operatorData": "0x00",
+    }
+    assert ev3.name == "Transfer"
+    assert ev3 == {
+        "from": deposit_contract,
+        "to": slashing_receiver,
+        "value": 100,
+    }
+
+    assert deposit_token_contract.balanceOf(slashing_receiver) == 100
