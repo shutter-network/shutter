@@ -3,6 +3,8 @@ package config
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -51,12 +53,18 @@ func schedule(ctx context.Context) error {
 
 	tx, err := configContract.ScheduleNextConfig(o)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "ScheduleNextConfig")
 	}
-	_, err = medley.WaitMined(ctx, client, tx.Hash())
+	receipt, err := medley.WaitMined(ctx, client, tx.Hash())
 	if err != nil {
 		return err
 	}
 
-	return nil
+	if receipt.Status == 1 {
+		return nil
+	}
+
+	from := crypto.PubkeyToAddress(ownerKey.PublicKey)
+	reason := medley.GetRevertReason(ctx, client, from, tx, receipt.BlockNumber)
+	return errors.Errorf("ScheduleNextConfig, tx %s: %s", receipt.TxHash.Hex(), reason)
 }
