@@ -119,18 +119,31 @@ func CloneWithGob(src, dst interface{}) {
 	}
 }
 
+func normName(s string) string {
+	return strings.ToUpper(strings.ReplaceAll(s, "-", "_"))
+}
+
 func argumentFromEnvironmentVariable(cmd *cobra.Command, f *pflag.Flag) error {
 	if f.Changed {
 		return nil
 	}
-	envvar := fmt.Sprintf("SHUTTER_%s", strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_")))
-	val := os.Getenv(envvar)
-	if val == "" {
-		return nil
+
+	candidates := []string{}
+	if cmd.Parent() != nil {
+		candidates = append(candidates, normName(fmt.Sprintf("SHUTTER_%s_%s", cmd.Name(), f.Name)))
 	}
-	err := cmd.Flags().Set(f.Name, val)
-	if err != nil {
-		return pkgErrors.Wrapf(err, "argument from environment variable %s", envvar)
+	candidates = append(candidates, normName(fmt.Sprintf("SHUTTER_%s", f.Name)))
+
+	for _, envvar := range candidates {
+		val, ok := os.LookupEnv(envvar)
+		if !ok {
+			continue
+		}
+		err := cmd.Flags().Set(f.Name, val)
+		if err != nil {
+			return pkgErrors.Wrapf(err, "argument from environment variable %s", envvar)
+		}
+		return nil
 	}
 	return nil
 }
