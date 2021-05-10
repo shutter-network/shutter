@@ -200,7 +200,7 @@ func (kpr *Keyper) syncOnce(ctx context.Context) {
 	kpr.world.Store(world)
 }
 
-func (kpr *Keyper) syncLoop(ctx context.Context) {
+func (kpr *Keyper) syncLoop(ctx context.Context) error {
 	var world observe.World = kpr.CurrentWorld()
 
 	for {
@@ -209,14 +209,17 @@ func (kpr *Keyper) syncLoop(ctx context.Context) {
 			kpr.dumpInternalState()
 			continue
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		case mainChain := <-kpr.mainChainCh:
 			world.MainChain = mainChain
 		case shutter := <-kpr.shutterCh:
 			world.Shutter = shutter
 		}
 		kpr.world.Store(world)
-		kpr.runOneStep(ctx)
+		err := kpr.runOneStep(ctx)
+		if err != nil {
+			return err
+		}
 		select {
 		case kpr.shutterFilterCh <- kpr.State.GetShutterFilter(world.MainChain):
 		default:
@@ -233,8 +236,8 @@ func (kpr *Keyper) startSyncTasks(ctx context.Context, g *errgroup.Group) {
 	})
 }
 
-func (kpr *Keyper) loadRunenv() error {
-	havePendingActions, err := kpr.runenv.Load()
+func (kpr *Keyper) loadRunenv(ctx context.Context) error {
+	havePendingActions, err := kpr.runenv.Load(ctx)
 	if err != nil {
 		return err
 	}
@@ -250,26 +253,27 @@ func (kpr *Keyper) run(ctx context.Context, g *errgroup.Group) error {
 	kpr.startSyncTasks(ctx, g)
 	kpr.syncOnce(ctx)
 	kpr.runenv.StartBackgroundTasks(ctx, g)
-	if err := kpr.loadRunenv(); err != nil {
+	if err := kpr.loadRunenv(ctx); err != nil {
 		return err
 	}
 
 	if len(kpr.State.Actions) > 0 {
-		kpr.runActions(ctx)
+		err := kpr.runActions(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	kpr.syncLoop(ctx)
-	return nil
+	return kpr.syncLoop(ctx)
 }
 
-func (kpr *Keyper) Run() error {
+func (kpr *Keyper) Run(ctx context.Context) error {
 	if err := kpr.init(); err != nil {
 		return err
 	}
-
-	g, ctx := errgroup.WithContext(context.Background())
+	g, groupCtx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return kpr.run(ctx, g)
+		return kpr.run(groupCtx, g)
 	})
 
 	return g.Wait()
@@ -354,16 +358,20 @@ func (kpr *Keyper) saveState() error {
 	return err
 }
 
-func (kpr *Keyper) runActions(ctx context.Context) {
+func (kpr *Keyper) runActions(ctx context.Context) error {
 	now := time.Now()
 	if len(kpr.State.Actions) > 0 || now.Sub(kpr.lastlogTime) > 10*time.Second {
 		log.Println(kpr.ShortInfo())
 		kpr.lastlogTime = now
 	}
 
-	kpr.runenv.RunActions(ctx, kpr.State.ActionCounter, kpr.State.Actions)
+	err := kpr.runenv.RunActions(ctx, kpr.State.ActionCounter, kpr.State.Actions)
+	if err != nil {
+		return err
+	}
 	kpr.State.ActionCounter += uint64(len(kpr.State.Actions))
 	kpr.State.Actions = nil
+	return nil
 }
 
 func (kpr *Keyper) decide() []fx.IAction {
@@ -372,7 +380,7 @@ func (kpr *Keyper) decide() []fx.IAction {
 	return decider.Actions
 }
 
-func (kpr *Keyper) runOneStep(ctx context.Context) {
+func (kpr *Keyper) runOneStep(ctx context.Context) error {
 	if len(kpr.State.Actions) > 0 {
 		panic("internal errror: kpr.State.Actions is not empty")
 	}
@@ -380,5 +388,5 @@ func (kpr *Keyper) runOneStep(ctx context.Context) {
 	if err := kpr.saveState(); err != nil {
 		panic(err)
 	}
-	kpr.runActions(ctx)
+	return kpr.runActions(ctx)
 }

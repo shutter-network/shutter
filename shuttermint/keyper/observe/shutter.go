@@ -599,15 +599,22 @@ func SyncShutter(ctx context.Context, shmcl client.Client, shutter *Shutter, shu
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return ctx.Err()
 		case f := <-filter:
 			shutter = shutter.ApplyFilter(f)
 		case <-events:
 			newShutter, err := shutter.SyncToHead(ctx, shmcl)
 			if err != nil {
-				log.Printf("Error in Shutter.SyncToHead: %+v", err)
+				if err != context.Canceled {
+					log.Printf("Error in Shutter.SyncToHead: %+v", err)
+				}
 			} else {
-				shutters <- newShutter
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case shutters <- newShutter:
+				}
+
 				shutter = newShutter
 			}
 		case <-time.After(shuttermintTimeout):

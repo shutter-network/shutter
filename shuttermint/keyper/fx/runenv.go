@@ -89,12 +89,11 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 		log.Fatalf("internal error: cannot wait for the zero hash, id=%d", id)
 	}
 	receipt, err := medley.WaitMined(ctx, runenv.ContractCaller.Ethclient, hash)
-	if err != nil {
-		log.Printf("Error waiting for transaction id=%d, %s: %v", id, hash.Hex(), err)
+	if err == context.Canceled {
 		return
 	}
-	if receipt == nil {
-		// This happens if the context is canceled.
+	if err != nil {
+		log.Printf("Error waiting for transaction id=%d, %s: %v", id, hash.Hex(), err)
 		return
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
@@ -114,40 +113,50 @@ func (runenv *RunEnv) waitMined(ctx context.Context, id ActionID) {
 	}
 }
 
-func (runenv *RunEnv) RunActions(ctx context.Context, actionCounter uint64, actions []IAction) {
-	// XXX Cancellation is not yet implemented for this function
+func (runenv *RunEnv) RunActions(ctx context.Context, actionCounter uint64, actions []IAction) error {
 	if len(actions) == 0 {
-		return
+		return nil
 	}
 
 	log.Printf("Running %d actions", len(actions))
 	startID, endID := runenv.PendingActions.AddActions(ActionID(actionCounter), actions)
 	for id := startID; id < endID; id++ {
-		runenv.scheduleAction(id)
+		err := runenv.scheduleAction(ctx, id)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // scheduleAction schedules an action to be run. The given action must already be stored in the
 // pending actions struct.
-func (runenv *RunEnv) scheduleAction(id ActionID) {
+func (runenv *RunEnv) scheduleAction(ctx context.Context, id ActionID) error {
 	act := runenv.PendingActions.GetAction(id)
+	var ch chan ActionID
 	switch a := act.(type) {
 	case *SendShuttermintMessage:
-		runenv.shuttermintMessages <- id
+		ch = runenv.shuttermintMessages
 	case MainChainTX:
 		txhash := runenv.PendingActions.GetMainChainTXHash(id)
 		if txhash != zerohash {
-			runenv.inFlightMainChainTXs <- id
+			ch = runenv.inFlightMainChainTXs
 		} else {
-			runenv.mainChainTXs <- id
+			ch = runenv.mainChainTXs
 		}
 	default:
 		log.Fatalf("cannot run %s", a)
 	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case ch <- id:
+	}
+	return nil
 }
 
 // Load loads the pending actions from disk and schedules the actions to be run.
-func (runenv *RunEnv) Load() (bool, error) {
+func (runenv *RunEnv) Load(ctx context.Context) (bool, error) {
 	err := runenv.PendingActions.Load()
 	if err != nil {
 		return false, err
@@ -155,7 +164,10 @@ func (runenv *RunEnv) Load() (bool, error) {
 
 	sortedIDs := runenv.PendingActions.SortedIDs()
 	for _, id := range sortedIDs {
-		runenv.scheduleAction(id)
+		err = runenv.scheduleAction(ctx, id)
+		if err != nil {
+			return false, err
+		}
 	}
 	return len(sortedIDs) > 0, nil
 }
@@ -206,7 +218,11 @@ func (runenv *RunEnv) handleActions(ctx context.Context, actions chan ActionID) 
 					log.Printf("Non-retriable error id=%d, %s; err=%s", id, a, err)
 					break
 				}
-				time.Sleep(time.Second)
+				select {
+				case <-time.After(time.Second):
+				case <-ctx.Done():
+					return
+				}
 			}
 			if remove {
 				runenv.PendingActions.RemoveAction(id)

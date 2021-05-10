@@ -450,13 +450,19 @@ func SyncMain(
 		select {
 		case <-ctx.Done():
 			sub.Unsubscribe()
-			return nil
+			return ctx.Err()
 		case <-headers:
 			newMainChain, err := mainChain.SyncToHead(ctx, caller)
 			if err != nil {
-				log.Printf("Error in MainChain.SyncToHead: %+v", err)
+				if err != context.Canceled {
+					log.Printf("Error in MainChain.SyncToHead: %+v", err)
+				}
 			} else {
-				mainChains <- newMainChain
+				select {
+				case mainChains <- newMainChain:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
 				mainChain = newMainChain
 			}
 		case err := <-sub.Err():

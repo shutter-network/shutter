@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"log"
+	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -19,8 +23,8 @@ var keyperCmd = &cobra.Command{
 	Long: `This command runs a keyper node. It will connect to both an Ethereum and a
 Shuttermint node which have to be started separately in advance.`,
 	Args: cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		keyperMain()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return keyperMain()
 	},
 }
 
@@ -92,10 +96,10 @@ func readKeyperConfig() (keyper.Config, error) {
 	return config, err
 }
 
-func keyperMain() {
+func keyperMain() error {
 	kc, err := readKeyperConfig()
 	if err != nil {
-		log.Fatalf("Error: %s\nPlease check your configuration", err)
+		return errors.WithMessage(err, "Please check your configuration")
 	}
 
 	log.Printf(
@@ -108,11 +112,24 @@ func keyperMain() {
 	kpr := keyper.NewKeyper(kc)
 	err = kpr.LoadState()
 	if err != nil {
-		log.Fatalf("Error in LoadState: %+v", err)
+		return errors.WithMessage(err, "LoadState")
 	}
 	log.Printf("Loaded state with %d actions, %s", len(kpr.State.Actions), kpr.ShortInfo())
-	err = kpr.Run()
-	if err != nil {
-		log.Fatalf("Error in Run: %+v", err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	termChan := make(chan os.Signal)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-termChan
+		log.Printf("Received %s signal, shutting down", sig)
+		cancel()
+	}()
+
+	err = kpr.Run(ctx)
+	if err == context.Canceled {
+		log.Printf("Bye.")
+		return nil
 	}
+	return err
 }
