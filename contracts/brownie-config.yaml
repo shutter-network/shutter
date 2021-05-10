@@ -2,3 +2,6 @@ compiler:
   solc:
     # Please keep the version in sync with contracts/binding.sol
     version: 0.8.4
+    optimizer:
+      enabled: true
+      runs: 200
