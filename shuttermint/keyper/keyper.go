@@ -101,7 +101,7 @@ func NewContractCallerFromConfig(config Config) (contract.Caller, error) {
 		return contract.Caller{}, err
 	}
 
-	return contract.NewContractCaller(
+	return contract.NewCaller(
 		ethcl,
 		config.SigningKey,
 		configContract,

@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// ContractCaller interacts with the contracts on Ethereum.
+// Caller interacts with the contracts on Ethereum.
 type Caller struct {
 	Ethclient  *ethclient.Client
 	signingKey *ecdsa.PrivateKey
@@ -24,8 +24,8 @@ type Caller struct {
 	KeyperSlasher        *KeyperSlasher
 }
 
-// NewContractCaller creates a new ContractCaller.
-func NewContractCaller(
+// NewCaller creates a new ContractCaller.
+func NewCaller(
 	ethcl *ethclient.Client,
 	signingKey *ecdsa.PrivateKey,
 	configContract *ConfigContract,
