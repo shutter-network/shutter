@@ -145,7 +145,7 @@ def test_slashing(
     mine_until(tx.block_number + appeal_blocks, chain)
     tx = keyper_slasher.slash(0)
 
-    assert "Slashed" in tx.events and "DepositChanged" in tx.events and len(tx.events) == 2
+    assert "Slashed" in tx.events and "DepositChanged" in tx.events
     slasher_event = tx.events["Slashed"][0]
     deposit_event = tx.events["DepositChanged"][0]
 
