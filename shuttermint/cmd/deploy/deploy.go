@@ -63,7 +63,10 @@ var DeployCmd = &cobra.Command{
 			}
 			gasPrice = gweiToWei(gasPriceGWei)
 		}
-		deployFlags.OutputFile = filepath.Clean(deployFlags.OutputFile)
+		if deployFlags.OutputFile != "" {
+			deployFlags.OutputFile = filepath.Clean(deployFlags.OutputFile)
+		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
