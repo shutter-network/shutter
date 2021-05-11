@@ -60,7 +60,7 @@ key under `SigningKey`. This key is randomly generated, so doesn't yet have acce
 to send transactions. To change this, run
 
 ```
-shuttermint prepare fund -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 --config testrun/config.json
+shuttermint prepare fund -e ws://localhost:8545 -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 --config testrun/config.json
 ```
 
 which will send 1 (dev chain) ETH from the deployer account to each keyper.
