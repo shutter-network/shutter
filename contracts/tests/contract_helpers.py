@@ -89,13 +89,7 @@ def fetch_config_by_index(config_contract: Any, config_index: int) -> BatchConfi
 
 def fetch_next_config(config_contract: Any) -> BatchConfig:
     next_config_tuple = config_contract.nextConfig()
-    next_config_num_keypers = config_contract.nextConfigNumKeypers()
-    next_config_keypers = []
-    for keyper_index in range(next_config_num_keypers):
-        keyper = config_contract.nextConfigKeypers(keyper_index)
-        next_config_keypers.append(to_canonical_address(keyper))
-
-    return BatchConfig.from_tuple_without_keypers(next_config_tuple, next_config_keypers)
+    return BatchConfig.from_tuple(next_config_tuple)
 
 
 def fetch_config(config_contract: Any, batch_index: int) -> BatchConfig:
