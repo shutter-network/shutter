@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -23,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
@@ -583,7 +583,7 @@ func scheduleForKeyperConfigs(ctx context.Context, client *ethclient.Client, own
 	var selectorBytes [4]byte
 	copy(selectorBytes[:], selectorBytesSlice)
 
-	startBlockNumber, startBatchIndex, err := chooseStartBlockAndBatch(ctx, client, cc)
+	startBlockNumber, startBatchIndex, err := config.ChooseStartBlockAndBatch(ctx, client, cc)
 	if err != nil {
 		return err
 	}
@@ -623,52 +623,6 @@ func checkContractExists(ctx context.Context, client *ethclient.Client, address 
 		return errors.Errorf("no contract exists at address %s", address.Hex())
 	}
 	return nil
-}
-
-func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc *contract.ConfigContract) (uint64, uint64, error) {
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-	numConfigs, err := cc.NumConfigs(callOpts)
-	if err != nil {
-		return 0, 0, errors.Errorf("failed to query number of configs")
-	}
-
-	var batchSpan uint64
-	var startBlockNumber uint64
-	var startBatchIndex uint64
-	if numConfigs != 0 {
-		config, err := cc.GetConfigByIndex(callOpts, numConfigs-1)
-		if err != nil {
-			return 0, 0, errors.Wrapf(err, "failed to query config %d", numConfigs-1)
-		}
-		batchSpan = config.BatchSpan
-		startBlockNumber = config.StartBlockNumber
-		startBatchIndex = config.StartBatchIndex
-	} else {
-		batchSpan = 0
-		startBlockNumber = 0
-		startBatchIndex = 0
-	}
-
-	headsUp, err := cc.ConfigChangeHeadsUpBlocks(callOpts)
-	if err != nil {
-		return 0, 0, errors.Wrap(err, "failed to query config change heads up blocks")
-	}
-	header, err := client.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return 0, 0, errors.Wrap(err, "failed to get header")
-	}
-	minStartBlock := header.Number.Uint64() + headsUp + 10
-
-	if batchSpan == 0 {
-		return minStartBlock, startBatchIndex, nil
-	}
-	delta := minStartBlock - startBlockNumber
-	numStartedBatches := (delta + batchSpan + 1) / batchSpan
-	newStartBlockNumber := startBlockNumber + numStartedBatches*batchSpan
-	newStartBatchIndex := startBatchIndex + numStartedBatches
-	return newStartBlockNumber, newStartBatchIndex, nil
 }
 
 func fund() error {
