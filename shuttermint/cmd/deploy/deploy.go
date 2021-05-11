@@ -46,13 +46,8 @@ var DeployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy all Shutter contracts",
 	Args:  cobra.NoArgs,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.OwnerKey, "0x"))
-		if err != nil {
-			return err
-		}
-
 		if deployFlags.GasPrice != "" {
 			gasPriceGWei, ok := new(big.Int).SetString(deployFlags.GasPrice, 10)
 			if !ok {
@@ -67,12 +62,13 @@ var DeployCmd = &cobra.Command{
 			deployFlags.OutputFile = filepath.Clean(deployFlags.OutputFile)
 		}
 
-		return nil
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+		key, err = crypto.HexToECDSA(strings.TrimPrefix(deployFlags.OwnerKey, "0x"))
+		if err != nil {
+			return errors.WithMessage(err, "invalid --owner-key argument")
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), deployDefaultTimeout)
 		defer cancel()
-		var err error
 
 		client, err := ethclient.DialContext(ctx, deployFlags.EthereumURL)
 		if err != nil {
