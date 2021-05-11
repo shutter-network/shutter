@@ -47,17 +47,13 @@ var rootCmd = &cobra.Command{
 		log.SetFlags(flags)
 		return nil
 	},
+	Run:          medley.ShowHelpAndExit,
 	SilenceUsage: true,
 }
 
 // Execute the shuttermint root command and exit the program afterwards. This is called from main.
 func Execute() {
 	status := 0
-
-	// Exit with status 1 when called with no arguments.
-	if len(os.Args) <= 1 {
-		status = 1
-	}
 
 	if err := rootCmd.Execute(); err != nil {
 		status = 1

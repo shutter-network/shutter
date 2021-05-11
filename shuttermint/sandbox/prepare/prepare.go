@@ -65,6 +65,7 @@ var rootCmd = &cobra.Command{
 		return medley.BindFlags(cmd)
 	},
 	SilenceUsage: true,
+	Run:          medley.ShowHelpAndExit,
 }
 
 var configCmd = &cobra.Command{
@@ -121,11 +122,6 @@ func init() {
 
 func main() {
 	status := 0
-
-	// Exit with status 1 when called with no arguments.
-	if len(os.Args) <= 1 {
-		status = 1
-	}
 
 	if err := rootCmd.Execute(); err != nil {
 		status = 1

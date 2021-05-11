@@ -159,3 +159,10 @@ func BindFlags(cmd *cobra.Command) error {
 	})
 	return err
 }
+
+// ShowHelpAndExit shows the commands help message and exits the program with status 1.
+func ShowHelpAndExit(cmd *cobra.Command, args []string) {
+	_ = args
+	_ = cmd.Help()
+	os.Exit(1)
+}

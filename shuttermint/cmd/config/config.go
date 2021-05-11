@@ -12,6 +12,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 var ConfigCmd = &cobra.Command{
@@ -24,6 +25,11 @@ var ConfigCmd = &cobra.Command{
 		}
 		return parseOwnerKey(cmd)
 	},
+
+	// We want to bail out in PreRun, because otherwise cobra checks for required arguments. We
+	// need to set 'Run' here, otherwise PreRun is not called by cobra.
+	PreRun: medley.ShowHelpAndExit,
+	Run:    medley.ShowHelpAndExit,
 }
 
 var (
