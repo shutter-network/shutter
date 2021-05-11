@@ -10,6 +10,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
+	"github.com/brainbot-com/shutter/shuttermint/cmd/prepare"
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
@@ -75,4 +76,5 @@ func init() {
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(deploy.DeployCmd)
+	rootCmd.AddCommand(prepare.PrepareCmd)
 }

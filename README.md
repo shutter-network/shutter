@@ -48,18 +48,19 @@ This will output the addresses into a JSON file for later reference.
 Now, we can initialize the keypers. Running
 
 ```
-prepare configs -c contracts.json -e ws://localhost:8545 --fixed-shuttermint-port -n 3
+shuttermint prepare configs -c contracts.json -e ws://localhost:8545 --num-keypers 3
 ```
 
 creates a new directory called `testrun` (customizable via the `-d` flag) with one subdirectory for
-each of three keypers.
+each of three keypers. It also creates the file `testrun/config.json`, which contains an example batch
+config for later use.
 
 The newly created config files found in `testrun/keyper<n>/config.toml` contain an Ethereum private
 key under `SigningKey`. This key is randomly generated, so doesn't yet have access to ETH needed
 to send transactions. To change this, run
 
 ```
-prepare fund -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773
+shuttermint prepare fund -k b0057716d5917badaf911b193b12b910811c1497b5bada8d7711f758981c3773 --config testrun/config.json
 ```
 
 which will send 1 (dev chain) ETH from the deployer account to each keyper.
@@ -67,7 +68,8 @@ which will send 1 (dev chain) ETH from the deployer account to each keyper.
 ### 4) Schedule a Batch Config
 
 Next, a batch config has to be defined and scheduled on the main chain, defining some important
-system parameters. Write the following contents to a new file called `config.json`:
+system parameters. Write the following contents to a new file called `config.json` or use the
+example config `testrun/config.json` generated in the previous step.
 
 ```
 {
@@ -91,18 +93,15 @@ system parameters. Write the following contents to a new file called `config.jso
 Make sure to fill in the following fields:
 
 - `StartBlockNumber`: Use a block number of the Ethereum dev chain that's in the near future (e.g.,
-  current block number plus 100 blocks)
+  current block number plus 100 blocks). For testing purposes it's also okay to use 0
+  here. `shuttermint config` will choose a valid value for `StartBlockNumber` and `StartBatchIndex`
+  in that case.
 - `TargetAddress`: The hex encoded, checksummed address of the test target contract to be found in
   `contracts.json` under `TargetContract`.
 - `Threshold`: The threshold parameter to use. We suggest two thirds of the number of keypers,
   rounded up.
 - `Keypers`: The list of keyper addresses. The addresses must correspond to the private keys
-  defined in the keyper config files. To convert a private key to an address, you can use the
-  following command, provided you have installed the right packages:
-
-  ```
-  python -c "import sys; from eth_utils import *; from eth_keys import keys; print(keys.PrivateKey(decode_hex(sys.argv[1])).public_key.to_checksum_address())" <private key>
-  ```
+  defined in the keyper config files. The generated files show the keyper address in the first line.
 
 Now, send the config to the config contract:
 

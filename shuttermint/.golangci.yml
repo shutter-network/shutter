@@ -127,7 +127,7 @@ linters:
 
 issues:
   exclude:
-    - "Error return value of `.*MarkPersistentFlagRequired` is not checked"
+    - "Error return value of `.*Mark.*FlagRequired` is not checked"
     - "Error return value of `viper.BindEnv` is not checked"
     - 'shadow: declaration of "err" shadows declaration at line'
     - "Expect WriteFile permissions to be"

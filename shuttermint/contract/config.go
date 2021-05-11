@@ -5,6 +5,7 @@ package contract
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -137,6 +138,21 @@ func (bc *BatchConfig) UnmarshalJSON(data []byte) error {
 	}
 	copy(bc.TargetFunctionSelector[:], sel)
 	return validateThreshold(bc.Threshold, len(bc.Keypers))
+}
+
+// ReadJSONFile reads a BatchConfig from JSON file.
+func (bc *BatchConfig) ReadJSONFile(path string) error {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(d, bc)
+	if err != nil {
+		return errors.Wrap(err, "unmarshal json")
+	}
+
+	return nil
 }
 
 // NextBatchIndex determines the next batch index to be started after the given block number.
