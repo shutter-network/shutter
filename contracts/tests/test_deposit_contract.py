@@ -1,7 +1,6 @@
 from typing import Any
 
 import brownie
-import eth_abi
 from brownie.network.account import Account
 from brownie.network.account import Accounts
 from brownie.network.contract import ContractTx
@@ -9,13 +8,10 @@ from brownie.network.state import Chain
 from brownie.network.web3 import Web3
 from eth_utils import to_checksum_address
 
+from tests.contract_helpers import encode_withdrawal_delay
 from tests.contract_helpers import mine_until
 from tests.contract_helpers import ZERO_ADDRESS
 from tests.factories import make_int
-
-
-def encode_data(withdrawal_delay: int) -> bytes:
-    return eth_abi.encode_single("uint64", withdrawal_delay)  # type: ignore
 
 
 def check_deposit(
@@ -52,20 +48,20 @@ def check_deposit_changed_event(
 
 
 def test_deposit(deposit_contract: Any, deposit_token_contract: Any, owner: Account) -> None:
-    invalid_data = ["", encode_data(123)[:-2]]
+    invalid_data = ["", encode_withdrawal_delay(123)[:-2]]
     for data in invalid_data:
         with brownie.reverts():
             deposit_token_contract.send(deposit_contract, 100, data, {"from": owner})
 
     withdrawal_delay_blocks = make_int()
-    valid_data = encode_data(withdrawal_delay_blocks)
+    valid_data = encode_withdrawal_delay(withdrawal_delay_blocks)
 
     tx = deposit_token_contract.send(deposit_contract, 100, valid_data, {"from": owner})
     check_deposit_changed_event(tx, 100, withdrawal_delay_blocks, 0)
     check_deposit(deposit_contract, owner, 100, withdrawal_delay_blocks, 0)
 
     # depositing twice works, but only if withdrawal delay isn't decreased
-    data_too_short = encode_data(withdrawal_delay_blocks - 1)
+    data_too_short = encode_withdrawal_delay(withdrawal_delay_blocks - 1)
     with brownie.reverts():
         deposit_token_contract.send(deposit_contract, 50, data_too_short, {"from": owner})
 
@@ -73,7 +69,7 @@ def test_deposit(deposit_contract: Any, deposit_token_contract: Any, owner: Acco
     check_deposit_changed_event(tx, 150, withdrawal_delay_blocks, 0)
     check_deposit(deposit_contract, owner, 150, withdrawal_delay_blocks, 0)
 
-    data_longer = encode_data(withdrawal_delay_blocks + 1)
+    data_longer = encode_withdrawal_delay(withdrawal_delay_blocks + 1)
     tx = deposit_token_contract.send(deposit_contract, 0, data_longer, {"from": owner})
     check_deposit_changed_event(tx, 150, withdrawal_delay_blocks + 1, 0)
     check_deposit(deposit_contract, owner, 150, withdrawal_delay_blocks + 1, 0)
@@ -88,7 +84,7 @@ def test_withdraw(
     web3: Web3,
 ) -> None:
     withdrawal_delay = 10
-    withdrawal_delay_data = encode_data(withdrawal_delay)
+    withdrawal_delay_data = encode_withdrawal_delay(withdrawal_delay)
     deposit_token_contract.send(deposit_contract, 100, withdrawal_delay_data)
     recipient = accounts[-1]
 
@@ -125,7 +121,9 @@ def test_slash_and_burn(
     deposit_contract.setSlasher(slasher, {"from": owner})
 
     deposit_token_contract.send(slashed, 100, "", {"from": owner})
-    deposit_token_contract.send(deposit_contract, 100, encode_data(0), {"from": slashed})
+    deposit_token_contract.send(
+        deposit_contract, 100, encode_withdrawal_delay(0), {"from": slashed}
+    )
 
     tx = deposit_contract.slash(slashed, {"from": slasher})
     assert len(tx.events) == 3
@@ -169,7 +167,9 @@ def test_slash_and_send(
     deposit_contract.setSlashingReceiver(slashing_receiver, {"from": owner})
 
     deposit_token_contract.send(slashed, 100, "", {"from": owner})
-    deposit_token_contract.send(deposit_contract, 100, encode_data(0), {"from": slashed})
+    deposit_token_contract.send(
+        deposit_contract, 100, encode_withdrawal_delay(0), {"from": slashed}
+    )
 
     tx = deposit_contract.slash(slashed, {"from": slasher})
     assert len(tx.events) == 3

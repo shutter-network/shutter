@@ -6,6 +6,7 @@ from typing import Sequence
 from typing import Tuple
 
 import attr
+import eth_abi
 from brownie.network.state import Chain
 from brownie.network.transaction import TransactionReceipt
 from eth_typing import Address
@@ -120,7 +121,9 @@ def set_next_config(config_contract: Any, config: BatchConfig, owner: Address) -
 
 
 def schedule_config(
-    config_contract: Any, config: BatchConfig, owner: Address
+    config_contract: Any,
+    config: BatchConfig,
+    owner: Address,
 ) -> TransactionReceipt:
     set_next_config(config_contract, config, owner=owner)
     tx = config_contract.scheduleNextConfig({"from": owner})
@@ -182,3 +185,7 @@ def compute_decryption_signature_preimage(
         ]
     )
     return preimage
+
+
+def encode_withdrawal_delay(withdrawal_delay: int) -> bytes:
+    return eth_abi.encode_single("uint64", withdrawal_delay)  # type: ignore

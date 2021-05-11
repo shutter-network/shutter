@@ -9,6 +9,7 @@ from eth_utils import encode_hex
 from eth_utils import to_canonical_address
 
 from tests.contract_helpers import compute_batch_hash
+from tests.contract_helpers import encode_withdrawal_delay
 from tests.contract_helpers import mine_until
 from tests.contract_helpers import schedule_config
 from tests.contract_helpers import ZERO_HASH32
@@ -347,21 +348,20 @@ def test_cipher_execution_skips_after_timeout(
         forbidden_from_block - 2,
         chain,
     )
-    chain.snapshot()
 
     # test that skipCipherExecution still fails
     with brownie.reverts("ExecutorContract: execution timeout not reached yet"):
         executor_contract.skipCipherExecution(batch_index)
+    chain.undo()
 
     # test that we could still executeCipherBatch for block forbidden_from_block -1
-    chain.revert()
     tx = executor_contract.executeCipherBatch(
         batch_index, ZERO_HASH32, [], 0, {"from": keypers[0]}
     )
-    assert tx.events["BatchExecuted"]
+    chain.undo()
     # test that calling executeCipherBatch after the timeout results in skipping the cipher
+    assert tx.events["BatchExecuted"]
     # execution
-    chain.revert()
     mine_until(
         forbidden_from_block - 1,
         chain,
@@ -482,3 +482,37 @@ def test_skip_cipher_execution_checks_active(
     schedule_config(config_contract, config, owner=owner)
     with brownie.reverts("ExecutorContract: config is inactive"):
         executor_contract.skipCipherExecution(0)
+
+
+def test_slashed_keypers_cannot_execute_cipher_batch(
+    executor_contract: Any,
+    config_contract: Any,
+    deposit_contract: Any,
+    deposit_token_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        keypers=keypers,
+        threshold=0,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    slashed_keyper = keypers[0]
+
+    deposit_contract.setSlasher(owner, {"from": owner})
+    deposit_token_contract.send(slashed_keyper, 100, "", {"from": owner})
+    deposit_token_contract.send(
+        deposit_contract, 100, encode_withdrawal_delay(0), {"from": slashed_keyper}
+    )
+    deposit_contract.slash(slashed_keyper, {"from": owner})
+
+    mine_until(config.start_block_number + config.batch_span, chain)
+
+    with brownie.reverts("ExecutorContract: keyper is slashed"):
+        executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": slashed_keyper})

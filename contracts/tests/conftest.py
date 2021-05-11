@@ -72,9 +72,12 @@ def executor_contract(
     ExecutorContract: ContractContainer,
     config_contract: Any,
     mock_batcher_contract: Any,
+    deposit_contract: Any,
     owner: Account,
 ) -> Any:
-    executor_contract = owner.deploy(ExecutorContract, config_contract, mock_batcher_contract)
+    executor_contract = owner.deploy(
+        ExecutorContract, config_contract, mock_batcher_contract, deposit_contract
+    )
     return executor_contract
 
 

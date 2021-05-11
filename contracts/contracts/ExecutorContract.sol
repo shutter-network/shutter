@@ -8,6 +8,7 @@ import {
     BatchConfig,
     TransactionType
 } from "./BatcherContract.sol";
+import {DepositContract} from "./DepositContract.sol";
 
 struct CipherExecutionReceipt {
     bool executed;
@@ -37,16 +38,19 @@ contract ExecutorContract {
 
     ConfigContract public configContract;
     BatcherContract public batcherContract;
+    DepositContract public depositContract;
 
     uint64 public numExecutionHalfSteps;
     mapping(uint64 => CipherExecutionReceipt) public cipherExecutionReceipts;
 
     constructor(
         ConfigContract configContractAddress,
-        BatcherContract batcherContractAddress
+        BatcherContract batcherContractAddress,
+        DepositContract depositContractAddress
     ) {
         configContract = configContractAddress;
         batcherContract = batcherContractAddress;
+        depositContract = depositContractAddress;
     }
 
     /// @notice Execute the cipher portion of a batch.
@@ -111,6 +115,12 @@ contract ExecutorContract {
         require(
             msg.sender == keyperAtIndex,
             "ExecutorContract: sender is not specified keyper"
+        );
+
+        // Check that keyper is not slashed
+        require(
+            !depositContract.isSlashed(msg.sender),
+            "ExecutorContract: keyper is slashed"
         );
 
         // Check the cipher batch hash is correct

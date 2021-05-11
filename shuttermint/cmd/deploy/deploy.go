@@ -186,12 +186,6 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 	}
 	batch.Add(tx)
 
-	executorAddress, tx, _, err := contract.DeployExecutorContract(auth, client, configAddress, batcherAddress)
-	if err != nil {
-		return nil, err
-	}
-	batch.Add(tx)
-
 	tokenAddress, tx, _, err := contract.DeployTestDepositTokenContract(auth, client)
 	if err != nil {
 		return nil, err
@@ -199,6 +193,12 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 	batch.Add(tx)
 
 	depositAddress, tx, _, err := contract.DeployDepositContract(auth, client, tokenAddress)
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
+
+	executorAddress, tx, _, err := contract.DeployExecutorContract(auth, client, configAddress, batcherAddress, depositAddress)
 	if err != nil {
 		return nil, err
 	}
