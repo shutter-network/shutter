@@ -7,9 +7,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"math/big"
-	"time"
 
-	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -17,6 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/pkg/errors"
+
+	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
 
 const (
@@ -122,17 +122,11 @@ func DeployContract(ctx context.Context, client *ethclient.Client, key *ecdsa.Pr
 }
 
 func waitMinedSuccessful(ctx context.Context, client *ethclient.Client, tx *types.Transaction) error {
-	// bind.WaitMined doesn't work for some reason, at least not with Ganache
-	const sleepDuration = time.Millisecond * 500
-	var receipt *types.Receipt
-	var err error
-	for receipt == nil {
-		receipt, err = client.TransactionReceipt(ctx, tx.Hash())
-		if err != nil && err != ethereum.NotFound {
-			return err
-		}
-		time.Sleep(sleepDuration)
+	receipt, err := medley.WaitMined(ctx, client, tx.Hash())
+	if err != nil {
+		return err
 	}
+
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		return errors.Errorf("deployment of ERC1820 contract failed")
 	}
