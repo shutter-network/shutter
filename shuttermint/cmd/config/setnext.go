@@ -43,7 +43,7 @@ func init() {
 	addOwnerKeyFlag(setNextCmd)
 }
 
-func ChooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc *contract.ConfigContract) (uint64, uint64, error) {
+func chooseStartBlockAndBatch(ctx context.Context, client *ethclient.Client, cc *contract.ConfigContract) (uint64, uint64, error) {
 	callOpts := &bind.CallOpts{
 		Context: ctx,
 	}
@@ -97,7 +97,7 @@ func setNext(ctx context.Context) error {
 	}
 
 	if batchConfig.StartBlockNumber == 0 {
-		startBlock, startBatch, err := ChooseStartBlockAndBatch(ctx, client, configContract)
+		startBlock, startBatch, err := chooseStartBlockAndBatch(ctx, client, configContract)
 		if err != nil {
 			return err
 		}

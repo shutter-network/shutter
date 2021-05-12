@@ -13,7 +13,7 @@ OPENZEPPELIN_CONTRACTS_DIR=../contracts/openzeppelin
 build:
 	@VERSION=`git describe --tags --always --abbrev=4 --dirty`; \
 	echo "Building shuttermint $${VERSION}"; \
-	${GO} build ${GOFLAGS} -o ${BINDIR} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=$${VERSION}" . ./sandbox/testclient ./sandbox/prepare
+	${GO} build ${GOFLAGS} -o ${BINDIR} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=$${VERSION}" . ./sandbox/testclient
 
 wasm:
 	GOARCH=wasm GOOS=js ${GO} build ${GOFLAGS} -o ${BINDIR}/shcrypto.wasm ./shcryptowasm/main_wasm.go
@@ -41,7 +41,7 @@ coverage:
 
 clean:
 	rm -rf ${TESTROOT}
-	rm -f ${BINDIR}/shuttermint ${BINDIR}/testclient ${BINDIR}/keyper ${BINDIR}/deploy ${BINDIR}/prepare
+	rm -f ${BINDIR}/shuttermint ${BINDIR}/testclient ${BINDIR}/prepare
 
 install:
 	install -o root -m 0555 ${BINDIR}/shuttermint ${PREFIX}/bin/shuttermint
