@@ -73,4 +73,5 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(deploy.DeployCmd)
 	rootCmd.AddCommand(prepare.PrepareCmd)
+	rootCmd.AddCommand(completionCmd)
 }
