@@ -35,16 +35,28 @@ func FindAddressIndex(addresses []common.Address, addr common.Address) (int, err
 	return -1, pkgErrors.WithStack(errAddressNotFound)
 }
 
+// Sleep pauses the current goroutine for the given duration.
+func Sleep(ctx context.Context, d time.Duration) {
+	if d <= 0 {
+		return
+	}
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(d):
+	}
+}
+
 // WaitMined waits for a transaction to be mined and returns its receipt. It's a replacement for
 // bind.WaitMined which doesn't seem to work with Ganache in some cases.
 func WaitMined(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*types.Receipt, error) {
 	for {
 		receipt, err := client.TransactionReceipt(ctx, txHash)
+		if err == ethereum.NotFound {
+			Sleep(ctx, receiptPollInterval)
+			continue
+		}
 		if err != nil {
-			if err == ethereum.NotFound {
-				time.Sleep(receiptPollInterval)
-				continue
-			}
 			return nil, err
 		}
 		return receipt, nil
