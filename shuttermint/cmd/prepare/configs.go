@@ -88,9 +88,6 @@ func validateConfigFlags() error {
 	if configFlags.NumKeypers <= 0 {
 		return errors.Errorf("invalid flag --num-keypers: must be at least 1")
 	}
-	if _, err := os.Stat(configFlags.Dir); !os.IsNotExist(err) {
-		return errors.Errorf("invalid flag --dir: output directory %s already exists", configFlags.Dir)
-	}
 	return nil
 }
 
@@ -180,7 +177,7 @@ func saveConfig(c *keyper.Config, dir string) error {
 	}
 	path := filepath.Join(dir, "config.toml")
 
-	file, err := os.Create(path)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return errors.Wrap(err, "failed to create keyper config file")
 	}
