@@ -24,7 +24,7 @@ func Shuffle(txs [][]byte, key *EpochSecretKey) [][]byte {
 	}
 	// XXX Using go's stdlib for shuffling may mean the result of this function changes when
 	// using a different go version
-	r := rand.New(rand.NewSource(computeSeed(key)))
+	r := rand.New(rand.NewSource(computeSeed(key))) //nolint:gosec
 	r.Shuffle(len(shuffledTxs), swap)
 	return shuffledTxs
 }
