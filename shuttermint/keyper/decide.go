@@ -607,6 +607,12 @@ func (dcdr *Decider) handleDKGs() {
 }
 
 func (dcdr *Decider) publishEpochSecretKeyShare(batchIndex uint64) {
+	batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(batchIndex)
+	if !batchConfig.IsKeyper(dcdr.Config.Address()) {
+		// not a keyper, cannot publish epoch secret key
+		return
+	}
+
 	epoch := batchIndex
 	eon, err := dcdr.Shutter.FindEonByBatchIndex(batchIndex)
 	if err != nil {

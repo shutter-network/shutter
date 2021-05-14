@@ -161,8 +161,15 @@ func (kpr *Keyper) dkginfo() string {
 
 func (kpr *Keyper) ShortInfo() string {
 	world := kpr.CurrentWorld()
+	configIndex := world.MainChain.ActiveConfigIndex(world.MainChain.CurrentBlock)
+	batchConfig := world.MainChain.BatchConfigs[configIndex]
+	var notAKeyper string
+	if !batchConfig.IsKeyper(kpr.Config.Address()) {
+		notAKeyper = fmt.Sprintf("not configured as keyper in config %d, ", configIndex)
+	}
 	return fmt.Sprintf(
-		"shutter block %d, main chain %d, %s, last eon started %d, num half steps: %d%s",
+		"%sshutter block %d, main chain %d, %s, last eon started %d, num half steps: %d%s",
+		notAKeyper,
 		world.Shutter.CurrentBlock,
 		world.MainChain.CurrentBlock,
 		kpr.runenv.ShortInfo(),
