@@ -4,13 +4,15 @@ package txbatch
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/pkg/errors"
 
 	"github.com/brainbot-com/shutter/shuttermint/medley"
 )
@@ -42,12 +44,29 @@ func (txbatch *TXBatch) Add(tx *types.Transaction) {
 }
 
 func (txbatch *TXBatch) WaitMined(ctx context.Context) ([]*types.Receipt, error) {
-	txHashes := []common.Hash{}
-	for _, tx := range txbatch.transactions {
-		txHashes = append(txHashes, tx.Hash())
+	defer fmt.Print("\n")
+	var res []*types.Receipt
+	numFailed := 0
+	for i, tx := range txbatch.transactions {
+		receipt, err := medley.WaitMined(ctx, txbatch.Ethclient, tx.Hash())
+		if err != nil {
+			return res, err
+		}
+		res = append(res, receipt)
+		if receipt.Status != 1 {
+			err = medley.GetRevertReason(ctx, txbatch.Ethclient, crypto.PubkeyToAddress(txbatch.key.PublicKey), tx, receipt.BlockNumber)
+			fmt.Print("\n")
+			log.Printf("tx #%d %s reverted: %s", i, tx.Hash(), err)
+			numFailed++
+		} else {
+			fmt.Print(".")
+		}
+	}
+	if numFailed > 0 {
+		return res, errors.Errorf("%d transactions failed.", numFailed)
 	}
 
-	return medley.WaitMinedMany(ctx, txbatch.Ethclient, txHashes)
+	return res, nil
 }
 
 // InitTransactOpts initializes the transact options struct.
