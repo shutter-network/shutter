@@ -453,9 +453,9 @@ func (shutter *Shutter) FindBatchConfigByConfigIndex(configIndex uint64) (shutte
 }
 
 func (shutter *Shutter) FindBatchConfigByBatchIndex(batchIndex uint64) shutterevents.BatchConfig {
-	for i := len(shutter.BatchConfigs); i > 0; i++ {
-		if shutter.BatchConfigs[i-1].StartBatchIndex <= batchIndex {
-			return shutter.BatchConfigs[i-1]
+	for i := len(shutter.BatchConfigs) - 1; i >= 0; i-- {
+		if shutter.BatchConfigs[i].StartBatchIndex <= batchIndex {
+			return shutter.BatchConfigs[i]
 		}
 	}
 	return shutterevents.BatchConfig{}

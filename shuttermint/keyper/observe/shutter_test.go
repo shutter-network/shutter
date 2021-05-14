@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 )
 
 // encryptionPublicKey generates an EncryptionPublicKey.
@@ -25,4 +26,26 @@ func TestGobSerializationIssue45(t *testing.T) {
 	sh := NewShutter()
 	sh.KeyperEncryptionKeys[common.Address{}] = encryptionPublicKey(t)
 	shtest.EnsureGobable(t, sh, new(Shutter))
+}
+
+func TestFindBatchConfigByBatchIndex(t *testing.T) {
+	sh := NewShutter()
+
+	sh.BatchConfigs = append(sh.BatchConfigs,
+		shutterevents.BatchConfig{
+			Height:          1,
+			StartBatchIndex: 5,
+		},
+		shutterevents.BatchConfig{
+			Height:          2,
+			StartBatchIndex: 10,
+		},
+	)
+
+	require.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(0).Height)
+	require.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(4).Height)
+	require.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(5).Height)
+	require.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(9).Height)
+	require.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(10).Height)
+	require.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(11).Height)
 }
