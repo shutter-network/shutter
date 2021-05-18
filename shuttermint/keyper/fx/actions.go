@@ -178,7 +178,11 @@ func (a Appeal) String() string {
 }
 
 func (a Appeal) IsExpired(world observe.World) bool {
-	return false
+	acc, ok := world.MainChain.Accusations[a.Authorization.HalfStep]
+	if !ok {
+		return true
+	}
+	return acc.Appealed
 }
 
 // EonKeyBroadcast is an action sending a vote for an eon public key to the key broadcast contract.
