@@ -161,11 +161,13 @@ func (kpr *Keyper) dkginfo() string {
 
 func (kpr *Keyper) ShortInfo() string {
 	world := kpr.CurrentWorld()
-	configIndex := world.MainChain.ActiveConfigIndex(world.MainChain.CurrentBlock)
-	batchConfig := world.MainChain.BatchConfigs[configIndex]
 	var notAKeyper string
-	if !batchConfig.IsKeyper(kpr.Config.Address()) {
-		notAKeyper = fmt.Sprintf("not configured as keyper in config %d, ", configIndex)
+	if len(world.MainChain.BatchConfigs) > 0 {
+		configIndex := world.MainChain.ActiveConfigIndex(world.MainChain.CurrentBlock)
+		batchConfig := world.MainChain.BatchConfigs[configIndex]
+		if !batchConfig.IsKeyper(kpr.Config.Address()) {
+			notAKeyper = fmt.Sprintf("not configured as keyper in config %d, ", configIndex)
+		}
 	}
 	return fmt.Sprintf(
 		"%sshutter block %d, main chain %d, %s, last eon started %d, num half steps: %d%s",
