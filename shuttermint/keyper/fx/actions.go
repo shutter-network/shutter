@@ -160,7 +160,8 @@ func (a Accuse) String() string {
 }
 
 func (a Accuse) IsExpired(world observe.World) bool {
-	return false
+	_, ok := world.MainChain.Accusations[a.HalfStep]
+	return ok
 }
 
 // Appeal is an action countering an earlier invalid accusation.
