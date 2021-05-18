@@ -25,8 +25,8 @@ type Block [BlockSize]byte
 const BlockSize = 32
 
 // HashBytesToBlock hashes the given byte slice and returns the result as a block.
-func HashBytesToBlock(d []byte) Block {
-	h := crypto.Keccak256(d)
+func HashBytesToBlock(d ...[]byte) Block {
+	h := crypto.Keccak256(d...)
 	var b Block
 	copy(b[:], h)
 	return b
@@ -111,8 +111,7 @@ func computeBlockKeys(sigma Block, n int) []Block {
 	buf := make([]byte, binary.MaxVarintLen64)
 	for i := int64(0); i < int64(n); i++ {
 		binary.PutVarint(buf, i)
-		preimage := append(sigma[:], buf...)
-		key := HashBytesToBlock(preimage)
+		key := HashBytesToBlock(sigma[:], buf)
 		keys = append(keys, key)
 	}
 	return keys
