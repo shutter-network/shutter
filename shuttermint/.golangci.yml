@@ -41,8 +41,6 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: github.com/brainbot-com/shutter/shuttermint
-  golint:
-    min-confidence: 0
   gomnd:
     settings:
       mnd:
@@ -68,6 +66,38 @@ linters-settings:
     allow-unused: false # report any unused nolint directives
     require-explanation: false # don't require an explanation for nolint directives
     require-specific: false # don't require nolint directives to be specific about which linter is being skipped
+  revive:
+    ignore-generated-header: true
+    severity: warning
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      # - name: exported
+      # - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      #- name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+      - name: unnecessary-stmt
+      - name: range-val-in-closure
+      - name: atomic
+      - name: superfluous-else
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
@@ -86,7 +116,7 @@ linters:
     - gocritic
     - gocyclo
     - gofumpt
-    - golint
+    - revive
     - goprintffuncname
     - gosec
     - gosimple

@@ -210,7 +210,7 @@ func (ShutterApp) OfferSnapshot(abcitypes.RequestOfferSnapshot) abcitypes.Respon
 	return abcitypes.ResponseOfferSnapshot{}
 }
 
-func (ShutterApp) SetOption(req abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
+func (ShutterApp) SetOption(_ abcitypes.RequestSetOption) abcitypes.ResponseSetOption {
 	return abcitypes.ResponseSetOption{}
 }
 
@@ -265,7 +265,7 @@ func (app *ShutterApp) InitChain(req abcitypes.RequestInitChain) abcitypes.Respo
 	return abcitypes.ResponseInitChain{}
 }
 
-func (ShutterApp) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+func (ShutterApp) BeginBlock(_ abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
 	return abcitypes.ResponseBeginBlock{}
 }
 

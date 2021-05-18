@@ -10,7 +10,7 @@ import (
 	shcrypto "github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
-// NewBatchtchConfig creates a new BatchConfig message.
+// NewBatchConfig creates a new BatchConfig message.
 func NewBatchConfig(
 	startBatchIndex uint64,
 	keypers []common.Address,

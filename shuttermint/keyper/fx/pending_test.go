@@ -16,7 +16,7 @@ type MyAction struct {
 	ID ActionID
 }
 
-func (a *MyAction) IsExpired(world observe.World) bool {
+func (a *MyAction) IsExpired(_ observe.World) bool {
 	return false
 }
 

@@ -67,7 +67,7 @@ func scaleToBlockTime(config *cfg.Config, blockTime float64) {
 	scale(&config.RPC.TimeoutBroadcastTxCommit)
 }
 
-func initFiles(cmd *cobra.Command, args []string) error {
+func initFiles(_ *cobra.Command, _ []string) error {
 	keypers := []common.Address{}
 
 	for _, a := range genesisKeypers {
