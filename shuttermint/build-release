@@ -3,13 +3,13 @@ set -euo pipefail
 
 : "${GO:=go}"
 : "${VERSION:=}"
+: "${TARGETS:=linux-amd64 linux-arm linux-arm64 freebsd-amd64 openbsd-amd64 darwin-amd64}"
 
 if [[ -z "${VERSION}" ]]; then
    VERSION=$(git describe --tags --always --abbrev=4 --dirty)
 fi
 
-
-for osarch in linux-amd64 linux-arm linux-arm64 freebsd-amd64 openbsd-amd64 darwin-amd64; do
+for osarch in ${TARGETS}; do
     IFS='-' read os arch <<< "${osarch}"
     target=bin/shuttermint-${os}-${arch}-${VERSION}
     echo "Building ${target}"
