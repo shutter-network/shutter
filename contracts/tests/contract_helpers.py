@@ -77,14 +77,8 @@ ZERO_CONFIG = BatchConfig(
 
 
 def fetch_config_by_index(config_contract: Any, config_index: int) -> BatchConfig:
-    config_tuple = config_contract.configs(config_index)
-    config_num_keypers = config_contract.configNumKeypers(config_index)
-    config_keypers = []
-    for keyper_index in range(config_num_keypers):
-        keyper = config_contract.configKeypers(config_index, keyper_index)
-        config_keypers.append(to_canonical_address(keyper))
-
-    return BatchConfig.from_tuple_without_keypers(config_tuple, config_keypers)
+    config_tuple = config_contract.configForConfigIndex(config_index)
+    return BatchConfig.from_tuple(config_tuple)
 
 
 def fetch_next_config(config_contract: Any) -> BatchConfig:

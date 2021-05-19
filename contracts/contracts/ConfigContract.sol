@@ -36,7 +36,7 @@ contract ConfigContract is Ownable {
     event ConfigUnscheduled(uint64 numConfigs);
 
     // Stores all scheduled configs, plus the next config at the end
-    BatchConfig[] public configs;
+    BatchConfig[] private configs;
 
     uint64 public immutable configChangeHeadsUpBlocks;
 
