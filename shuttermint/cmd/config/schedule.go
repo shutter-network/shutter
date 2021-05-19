@@ -50,6 +50,7 @@ func schedule(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	o.GasPrice = gasPrice
 
 	tx, err := configContract.ScheduleNextConfig(o)
 	if err != nil {

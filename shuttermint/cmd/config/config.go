@@ -3,10 +3,12 @@ package config
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -36,12 +38,14 @@ var (
 	client         *ethclient.Client
 	configContract *contract.ConfigContract
 	ownerKey       *ecdsa.PrivateKey
+	gasPrice       *big.Int
 )
 
 var configFlags struct {
 	EthereumURL   string
 	ContractsPath string
 	OwnerKey      string
+	GasPrice      string
 }
 
 func parseOwnerKey(cmd *cobra.Command) error {
@@ -97,6 +101,13 @@ func initConfigRootFlags() {
 	)
 
 	ConfigCmd.MarkPersistentFlagRequired("contracts")
+
+	ConfigCmd.PersistentFlags().StringVar(
+		&configFlags.GasPrice,
+		"gas-price",
+		"",
+		"gas price in GWei (default: use suggested one)",
+	)
 }
 
 func processConfigFlags(ctx context.Context) error {
@@ -115,6 +126,22 @@ func processConfigFlags(ctx context.Context) error {
 	configContract, err = contract.NewConfigContract(contractsJSON.ConfigContract, client)
 	if err != nil {
 		return err
+	}
+
+	if configFlags.GasPrice != "" {
+		gasPriceGWei, ok := new(big.Int).SetString(configFlags.GasPrice, 10)
+		if !ok {
+			return errors.Errorf("--gas-price: invalid gas price '%s'", configFlags.GasPrice)
+		}
+		if gasPriceGWei.Sign() < 0 {
+			return errors.Errorf("--gas-price: must be non-negative")
+		}
+		gasPrice = new(big.Int).Mul(gasPriceGWei, big.NewInt(params.GWei))
+	} else {
+		gasPrice, err = client.SuggestGasPrice(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get suggested gas price")
+		}
 	}
 
 	return nil

@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -167,7 +166,7 @@ func (cc *ConfigContract) NextBatchIndex(blockNumber uint64) (uint64, error) {
 		}
 		i--
 
-		cfg, err := cc.Configs(nil, big.NewInt(0).SetUint64(i))
+		cfg, err := cc.ConfigForConfigIndex(nil, i)
 		if err != nil {
 			return 0, err
 		}
@@ -226,7 +225,7 @@ func (cc *ConfigContract) GetNextConfigKeypers(opts *bind.CallOpts) ([]common.Ad
 
 // GetConfigByIndex queries the batch config by its index (not the batch index, but the config index).
 func (cc *ConfigContract) GetConfigByIndex(opts *bind.CallOpts, configIndex uint64) (BatchConfig, error) {
-	config, err := cc.Configs(opts, big.NewInt(0).SetUint64(configIndex))
+	config, err := cc.ConfigForConfigIndex(opts, configIndex)
 	if err != nil {
 		return BatchConfig{}, err
 	}

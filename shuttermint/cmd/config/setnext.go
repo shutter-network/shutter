@@ -110,6 +110,7 @@ func setNext(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	batch.TransactOpts.GasPrice = gasPrice
 	err = configContract.SetNextBatchConfig(ctx, batch, batchConfig)
 	if err != nil {
 		return err
