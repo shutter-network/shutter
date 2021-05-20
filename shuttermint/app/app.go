@@ -787,7 +787,7 @@ func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Respons
 		return abcitypes.ResponseEndBlock{}
 	}
 	if len(validatorUpdates) > 0 {
-		log.Printf("Applyimg %d validator updates", len(validatorUpdates))
+		log.Printf("Applying %d validator updates", len(validatorUpdates))
 	}
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
