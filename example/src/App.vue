@@ -78,11 +78,9 @@ export default {
       const blockNumber = await getBlockNumber(this.$provider);
       const config = await getConfigAtBlock(blockNumber, this.$configContract);
 
-      const bestKey = await this.$keyBroadcastContract.getBestKey(
-        config.startBatchIndex
-      );
+      const bestKey = await this.$keyBroadcastContract.getBestKey(0);
       const bestKeyNumVotes = await this.$keyBroadcastContract.getBestKeyNumVotes(
-        config.startBatchIndex
+        0
       );
 
       this.config = config;

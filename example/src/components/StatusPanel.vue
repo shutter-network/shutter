@@ -22,7 +22,7 @@
     <p>
       Here you can see the execution status. The current batch is the batch that
       will close next, so transactions usually go into this one. It advances
-      every five blocks.
+      every ten blocks.
     </p>
     <p>
       Once a batch is closed, keypers will execute it, so the last executed
