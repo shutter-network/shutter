@@ -76,7 +76,8 @@ lint:
 	golangci-lint run --tests
 
 lint-changes:
-	golangci-lint run --new-from-rev origin/main
+	base=`git merge-base HEAD origin/main`; \
+	golangci-lint run --new-from-rev $${base}
 
 abigen:
 	solc --allow-paths . ${OPENZEPPELIN_CONTRACTS}=${OPENZEPPELIN_CONTRACTS_DIR} --combined-json=bin,bin-runtime,ast,metadata,abi,srcmap,srcmap-runtime,storage-layout --optimize ../contracts/contracts/binding.sol > contract/combined.json
