@@ -3,6 +3,7 @@ package fx
 import (
 	"encoding/gob"
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -152,7 +153,15 @@ type Accuse struct {
 }
 
 func (a Accuse) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
-	return caller.KeyperSlasher.Accuse(auth, a.HalfStep, a.KeyperIndex)
+	tx, err := caller.KeyperSlasher.Accuse(auth, a.HalfStep, a.KeyperIndex)
+	// If we try to accuse an empty batch, we may have run into a fork.  In an perfect world we
+	// would detect that and not try to run any actions that rely on obsolete information.
+	// Alas, we don't do that at the moment, but know for sure that we cannot accuse an empty
+	// batch, so there's no need to retry this action
+	if err != nil && strings.Contains(err.Error(), "cannot accuse empty batch") {
+		err = &NonRetriableError{Err: err}
+	}
+	return tx, err
 }
 
 func (a Accuse) String() string {

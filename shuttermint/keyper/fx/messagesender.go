@@ -29,6 +29,24 @@ type RemoteError struct {
 
 var _ IRetriable = &RemoteError{}
 
+type NonRetriableError struct {
+	Err error
+}
+
+func (*NonRetriableError) IsRetriable() bool {
+	return false
+}
+
+func (e *NonRetriableError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *NonRetriableError) Unwrap() error {
+	return e.Err
+}
+
+var _ IRetriable = &NonRetriableError{}
+
 // IsRetriable checks if we should retry an action that resulted in the given error.
 func IsRetriable(err error) bool {
 	switch e := err.(type) {
