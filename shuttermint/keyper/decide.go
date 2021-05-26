@@ -10,6 +10,7 @@ import (
 	"log"
 	"math/big"
 	"reflect"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -39,7 +40,7 @@ type Batch struct {
 	DecryptedTransactions    [][]byte
 	DecryptedBatchHash       []byte
 	DecryptionSignatureIndex int
-	SignatureCount           int // number of valid signatures
+	VerifiedSignatures       map[common.Address][]byte
 }
 
 // VerifySignature checks if the sender signed the batches' DecryptionSignatureHash.
@@ -50,6 +51,13 @@ func (batch *Batch) VerifySignature(sender common.Address, signature []byte) boo
 	}
 	signer := crypto.PubkeyToAddress(*pubkey)
 	return signer == sender
+}
+
+func (batch *Batch) AddSignature(sender common.Address, signature []byte) {
+	if batch.VerifiedSignatures == nil {
+		batch.VerifiedSignatures = make(map[common.Address][]byte)
+	}
+	batch.VerifiedSignatures[sender] = signature
 }
 
 // DKG is used to store local state about active DKG processes. Each DKG has a corresponding
@@ -729,6 +737,7 @@ func (dcdr *Decider) decryptTransactions(key *shcrypto.EpochSecretKey, epoch uin
 		DecryptionSignatureHash: hash,
 		DecryptedTransactions:   txs,
 		DecryptedBatchHash:      decryptedBatchHash,
+		VerifiedSignatures:      nil,
 	}
 	dcdr.State.Batches[batchIndex] = stBatch
 }
@@ -749,7 +758,7 @@ func (dcdr *Decider) sendDecryptionSignature(epoch uint64) {
 		log.Panicf("no main chain config for batch %d", batchIndex)
 	}
 
-	if uint64(stBatch.SignatureCount) < config.Threshold && len(stBatch.DecryptedTransactions) > 0 {
+	if uint64(len(stBatch.VerifiedSignatures)) < config.Threshold && len(stBatch.DecryptedTransactions) > 0 {
 		signature, err := crypto.Sign(stBatch.DecryptionSignatureHash, dcdr.Config.SigningKey)
 		if err != nil {
 			log.Panicf("Cannot sign the decryption signature: %s", err)
@@ -839,18 +848,27 @@ func (dcdr *Decider) syncBatch(batch *Batch) {
 	for i := batch.DecryptionSignatureIndex; i < len(shBatch.DecryptionSignatures); i++ {
 		ev := shBatch.DecryptionSignatures[i]
 		if !config.IsKeyper(ev.Sender) {
-			log.Printf("Error: received signature for batch %d from non-keyper %s", batch.BatchIndex, ev.Sender.Hex())
+			log.Printf("Ignoring signature for batch %d from non-keyper %s", batch.BatchIndex, ev.Sender.Hex())
 			continue
 		}
-		if batch.VerifySignature(ev.Sender, ev.Signature) {
-			signatureCount++
-		} else {
-			log.Printf("Bad signature from %s for batch %d", ev.Sender.Hex(), batch.BatchIndex)
+		if _, ok := batch.VerifiedSignatures[ev.Sender]; ok {
+			log.Printf("Ignoring duplicate signature for batch %d from keyper %s", batch.BatchIndex, ev.Sender.Hex())
+			continue
+		}
+		if !batch.VerifySignature(ev.Sender, ev.Signature) {
+			log.Printf("Ignoring bad signature for batch %d from keyper %s", batch.BatchIndex, ev.Sender.Hex())
+			continue
+		}
+		batch.AddSignature(ev.Sender, ev.Signature)
+		signatureCount++
+		if uint64(len(batch.VerifiedSignatures)) >= config.Threshold {
+			break
 		}
 	}
+
 	if signatureCount > 0 {
-		batch.SignatureCount += signatureCount
-		log.Printf("Verified %d signatures for batch %d, total %d signatures", signatureCount, batch.BatchIndex, batch.SignatureCount)
+		log.Printf("Verified %d signatures for batch %d, total %d signatures",
+			signatureCount, batch.BatchIndex, len(batch.VerifiedSignatures))
 	}
 	batch.DecryptionSignatureIndex = len(shBatch.DecryptionSignatures)
 }
@@ -924,7 +942,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		return nil
 	}
 
-	if len(stBatch.DecryptedTransactions) > 0 && uint64(stBatch.SignatureCount) < config.Threshold {
+	if len(stBatch.DecryptedTransactions) > 0 && uint64(len(stBatch.VerifiedSignatures)) < config.Threshold {
 		log.Printf("not enough votes for batch %d", batchIndex)
 		return nil
 	}
@@ -988,6 +1006,47 @@ func (dcdr *Decider) maybeExecuteHalfStep(nextHalfStep uint64) fx.IAction {
 	return nil
 }
 
+func (dcdr *Decider) getSortedDecryptionSignaturesWithIndices(batch *Batch) ([][]byte, []uint64, error) {
+	config, ok := dcdr.MainChain.ConfigForBatchIndex(batch.BatchIndex)
+	if !ok {
+		panic("Error in syncBatch: config is not active")
+	}
+	if uint64(len(batch.VerifiedSignatures)) < config.Threshold {
+		return nil, nil, pkgErrors.Errorf("not enough signatures (only %d out of %d)", len(batch.VerifiedSignatures), config.Threshold)
+	}
+
+	type SigAndIndex struct {
+		signature []byte
+		index     uint64
+	}
+
+	sigsAndIndices := []SigAndIndex{}
+	for addr, sig := range batch.VerifiedSignatures {
+		keyperIndex, ok := config.KeyperIndex(addr)
+		if !ok {
+			return nil, nil, pkgErrors.Errorf("signer %s not a keyper in batch %d", addr.Hex(), batch.BatchIndex)
+		}
+
+		sigsAndIndices = append(sigsAndIndices, SigAndIndex{
+			signature: sig,
+			index:     keyperIndex,
+		})
+	}
+
+	sort.Slice(sigsAndIndices, func(i, j int) bool {
+		return sigsAndIndices[i].index < sigsAndIndices[j].index
+	})
+
+	signatures := [][]byte{}
+	indices := []uint64{}
+	for _, sigAndIndex := range sigsAndIndices {
+		signatures = append(signatures, sigAndIndex.signature)
+		indices = append(indices, sigAndIndex.index)
+	}
+
+	return signatures, indices, nil
+}
+
 // maybeAppeal checks if there are any accusations against anyone and if so sends an appeal if
 // possible.
 func (dcdr *Decider) maybeAppeal() {
@@ -1019,24 +1078,9 @@ func (dcdr *Decider) maybeAppeal() {
 			continue // don't send appeal if we agree with accusation
 		}
 
-		signatures, indices, err := dcdr.Shutter.GetSortedDecryptionSignaturesWithIndices(batchIndex)
+		signatures, indices, err := dcdr.getSortedDecryptionSignaturesWithIndices(stBatch)
 		if err != nil {
-			log.Printf("Error: cannot appeal accusation because getting decryption signatures for batch %d failed", batchIndex)
-			continue
-		}
-
-		batchConfig := dcdr.Shutter.FindBatchConfigByBatchIndex(batchIndex)
-		if err != nil {
-			log.Printf("Error: cannot appeal accusation because getting batch config for batch %d failed", batchIndex)
-			continue
-		}
-
-		if uint64(len(signatures)) < batchConfig.Threshold {
-			log.Printf(
-				"Error: cannot appeal accusation because of not enough signatures (%d at a threshold of %d)",
-				len(signatures),
-				batchConfig.Threshold,
-			)
+			log.Printf("Error: cannot appeal batch %d: %s", batchIndex, err)
 			continue
 		}
 
