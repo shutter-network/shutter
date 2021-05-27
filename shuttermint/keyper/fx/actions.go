@@ -179,7 +179,11 @@ type Appeal struct {
 }
 
 func (a Appeal) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
-	return caller.KeyperSlasher.Appeal(auth, a.Authorization)
+	tx, err := caller.KeyperSlasher.Appeal(auth, a.Authorization)
+	if err != nil && strings.Contains(err.Error(), "wrong signer") {
+		err = &NonRetriableError{Err: err}
+	}
+	return tx, err
 }
 
 func (a Appeal) String() string {
