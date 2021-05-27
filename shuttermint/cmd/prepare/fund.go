@@ -2,12 +2,16 @@ package prepare
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"os"
+	"text/tabwriter"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -32,7 +36,51 @@ var fundCmd = &cobra.Command{
 	},
 }
 
-func initFundFlags() {
+func weiToEther(wei *big.Int) *big.Float {
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.Ether))
+}
+
+var queryCmd = &cobra.Command{
+	Use:   "query",
+	Short: "Query balances",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		bc := contract.BatchConfig{}
+		err := bc.ReadJSONFile(fundFlags.ConfigPath)
+		if err != nil {
+			return err
+		}
+		keypers := bc.Keypers
+
+		client, err := ethclient.DialContext(context.Background(), fundFlags.EthereumURL)
+		if err != nil {
+			return errors.Wrapf(err, "failed to connect to Ethereum node at %s", configFlags.EthereumURL)
+		}
+		w := tabwriter.NewWriter(os.Stdout, 1, 1, 2, ' ', 0)
+		defer w.Flush()
+
+		fmt.Fprintf(w, "#\tAddress\tBalance (Eth)\n")
+
+		ctx := context.Background()
+		sum := big.NewInt(0)
+		for i, k := range keypers {
+			balance, err := client.BalanceAt(ctx, k, nil)
+			if err != nil {
+				return err
+			}
+
+			fmt.Fprintf(w, "%d\t%s\t%f\n", i, k.Hex(), weiToEther(balance))
+			sum.Add(sum, balance)
+		}
+		fmt.Fprintf(w, "---\t---\t---\n")
+		fmt.Fprintf(w, "\t\t%f\n", weiToEther(sum))
+
+		return nil
+	},
+}
+
+func init() {
+	PrepareCmd.AddCommand(fundCmd)
+	fundCmd.AddCommand(queryCmd)
 	fundCmd.Flags().StringVarP(
 		&fundFlags.OwnerKey,
 		"owner-key",
@@ -42,14 +90,14 @@ func initFundFlags() {
 	)
 	fundCmd.MarkFlagRequired("owner-key")
 
-	fundCmd.Flags().StringVarP(
+	fundCmd.PersistentFlags().StringVarP(
 		&fundFlags.EthereumURL,
 		"ethereum-url",
 		"e",
 		"",
 		"Ethereum JSON RPC URL",
 	)
-	fundCmd.MarkFlagRequired("ethereum-url")
+	fundCmd.MarkPersistentFlagRequired("ethereum-url")
 
 	fundCmd.PersistentFlags().StringVar(
 		&fundFlags.ConfigPath,

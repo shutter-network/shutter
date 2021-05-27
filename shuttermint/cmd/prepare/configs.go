@@ -44,7 +44,9 @@ var configCmd = &cobra.Command{
 	},
 }
 
-func initConfigFlags() {
+func init() {
+	PrepareCmd.AddCommand(configCmd)
+
 	configCmd.Flags().StringVarP(
 		&configFlags.Dir,
 		"dir",

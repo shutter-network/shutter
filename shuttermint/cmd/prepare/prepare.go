@@ -12,11 +12,3 @@ var PrepareCmd = &cobra.Command{
 	Short: "Prepare everything needed to test shutter.",
 	Run:   medley.ShowHelpAndExit,
 }
-
-func init() {
-	PrepareCmd.AddCommand(configCmd)
-	PrepareCmd.AddCommand(fundCmd)
-
-	initConfigFlags()
-	initFundFlags()
-}
