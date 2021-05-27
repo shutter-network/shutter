@@ -132,7 +132,52 @@ func fund() error {
 	return fundAddresses(context.Background(), client, keypers)
 }
 
+type funding struct {
+	receiver common.Address
+	amount   *big.Int
+	balance  *big.Int
+}
+
+func determineFundings(
+	ctx context.Context,
+	client *ethclient.Client,
+	addresses []common.Address,
+	lowAmount, highAmount *big.Int) ([]funding, error) {
+	res := []funding{}
+	for _, addr := range addresses {
+		balance, err := client.BalanceAt(ctx, addr, nil)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get balance")
+		}
+		amount := new(big.Int)
+
+		if lowAmount.Cmp(balance) > 0 {
+			amount.Sub(highAmount, balance)
+		}
+
+		res = append(res, funding{receiver: addr, amount: amount, balance: balance})
+	}
+	return res, nil
+}
+
+func report(fundings []funding) {
+	w := tabwriter.NewWriter(os.Stdout, 1, 1, 2, ' ', 0)
+	defer w.Flush()
+	fmt.Fprintf(w, "Receiver\tBalance\tFund\n")
+	for _, f := range fundings {
+		fmt.Fprintf(w, "%s\t%f\t%f\n", f.receiver.Hex(), weiToEther(f.balance), weiToEther(f.amount))
+	}
+}
+
 func fundAddresses(ctx context.Context, client *ethclient.Client, addresses []common.Address) error {
+	highAmount := big.NewInt(params.Ether)
+	lowAmount := big.NewInt(params.Ether / 2)
+
+	fundings, err := determineFundings(ctx, client, addresses, lowAmount, highAmount)
+	if err != nil {
+		return err
+	}
+	report(fundings)
 	ownerKey, err := crypto.HexToECDSA(fundFlags.OwnerKey)
 	if err != nil {
 		return errors.Errorf("invalid owner key")
@@ -142,25 +187,23 @@ func fundAddresses(ctx context.Context, client *ethclient.Client, addresses []co
 	if err != nil {
 		return errors.Wrap(err, "failed to query chain id")
 	}
-	signer := types.NewEIP155Signer(chainID)
-
 	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		return errors.Wrap(err, "failed to query gas price")
 	}
 
-	amount, ok := new(big.Int).SetString("1000000000000000000", 10)
-	if !ok {
-		panic("unexpected error")
-	}
+	signer := types.NewEIP155Signer(chainID)
 
 	batch, err := txbatch.New(ctx, client, ownerKey)
 	if err != nil {
 		return err
 	}
 
-	for _, addr := range addresses {
-		unsignedTx := types.NewTransaction(batch.TransactOpts.Nonce.Uint64(), addr, amount, 21000, gasPrice, []byte{})
+	for _, f := range fundings {
+		if f.amount.Sign() <= 0 {
+			continue
+		}
+		unsignedTx := types.NewTransaction(batch.TransactOpts.Nonce.Uint64(), f.receiver, f.amount, 21000, gasPrice, []byte{})
 		tx, err := types.SignTx(unsignedTx, signer, ownerKey)
 		if err != nil {
 			return errors.Wrap(err, "failed to sign transaction")
