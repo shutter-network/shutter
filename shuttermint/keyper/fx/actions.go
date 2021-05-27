@@ -152,13 +152,29 @@ type Accuse struct {
 	KeyperIndex uint64 // index of the accuser, not the executor
 }
 
+func errorMsgContains(err error, msgs []string) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	for _, m := range msgs {
+		if strings.Contains(s, m) {
+			return true
+		}
+	}
+	return false
+}
+
 func (a Accuse) SendTX(caller *contract.Caller, auth *bind.TransactOpts) (*types.Transaction, error) {
 	tx, err := caller.KeyperSlasher.Accuse(auth, a.HalfStep, a.KeyperIndex)
-	// If we try to accuse an empty batch, we may have run into a fork.  In an perfect world we
+	// If we try to accuse an empty batch, we may have run into a fork.  In a perfect world we
 	// would detect that and not try to run any actions that rely on obsolete information.
 	// Alas, we don't do that at the moment, but know for sure that we cannot accuse an empty
 	// batch, so there's no need to retry this action
-	if err != nil && strings.Contains(err.Error(), "cannot accuse empty batch") {
+	if errorMsgContains(err, []string{
+		"cannot accuse empty batch",
+		"already accused",
+	}) {
 		err = &NonRetriableError{Err: err}
 	}
 	return tx, err
