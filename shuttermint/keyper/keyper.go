@@ -166,7 +166,7 @@ func (kpr *Keyper) ShortInfo() string {
 		configIndex := world.MainChain.ActiveConfigIndex(world.MainChain.CurrentBlock)
 		batchConfig := world.MainChain.BatchConfigs[configIndex]
 		if !batchConfig.IsKeyper(kpr.Config.Address()) {
-			notAKeyper = fmt.Sprintf("not configured as keyper in config %d, ", configIndex)
+			notAKeyper = fmt.Sprintf("Not configured as keyper in config %d, ", configIndex)
 		}
 	}
 	return fmt.Sprintf(

@@ -369,7 +369,7 @@ func (dcdr *Decider) sendBatchConfig(configIndex uint64, config contract.BatchCo
 
 func (dcdr *Decider) maybeSendBatchConfig() {
 	if len(dcdr.Shutter.BatchConfigs) == 0 {
-		log.Printf("shutter is not bootstrapped")
+		log.Printf("Shutter is not bootstrapped")
 		return
 	}
 	configIndex := 1 + dcdr.Shutter.BatchConfigs[len(dcdr.Shutter.BatchConfigs)-1].ConfigIndex
@@ -943,7 +943,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 	}
 
 	if len(stBatch.DecryptedTransactions) > 0 && uint64(len(stBatch.VerifiedSignatures)) < config.Threshold {
-		log.Printf("not enough votes for batch %d", batchIndex)
+		log.Printf("Not enough votes for batch %d", batchIndex)
 		return nil
 	}
 
@@ -1186,16 +1186,16 @@ func (dcdr *Decider) executionDelay(config contract.BatchConfig, halfStep uint64
 // Decide determines the next actions to run.
 func (dcdr *Decider) Decide() {
 	if !dcdr.Shutter.IsSynced() {
-		log.Printf("shuttermint chain out of sync, waiting")
+		log.Printf("Shuttermint chain out of sync, waiting")
 		return
 	}
 	if !dcdr.MainChain.IsSynced() {
-		log.Printf("main chain out of sync, waiting")
+		log.Printf("Main chain out of sync, waiting")
 		return
 	}
 	// We can't go on unless we're registered as keyper in shuttermint
 	if !dcdr.Shutter.IsKeyper(dcdr.Config.Address()) {
-		log.Printf("not registered as keyper in shuttermint, nothing to do")
+		log.Printf("Not registered as keyper in shuttermint, nothing to do")
 		return
 	}
 	dcdr.maybeSendCheckIn()
