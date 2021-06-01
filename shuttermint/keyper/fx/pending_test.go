@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
 )
@@ -35,7 +35,7 @@ func TestAddActions(t *testing.T) {
 		pending.RemoveAction(ActionID(i))
 	}
 
-	require.Equal(t, 8, len(pending.SortedIDs()))
+	assert.Equal(t, 8, len(pending.SortedIDs()))
 	pending.AddActions(ActionID(3), myactions[3:5])
-	require.Equal(t, 8, len(pending.SortedIDs()))
+	assert.Equal(t, 8, len(pending.SortedIDs()))
 }

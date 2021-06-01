@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+	"gotest.tools/v3/assert"
 )
 
 func makeKey(n int) []byte {
@@ -23,8 +23,8 @@ func newpk(n int) ValidatorPubkey {
 
 func TestMakePowermapEmpty(t *testing.T) {
 	pm, err := MakePowermap([]abcitypes.ValidatorUpdate{})
-	require.Nil(t, err)
-	require.Equal(t, 0, len(pm))
+	assert.NilError(t, err)
+	assert.Equal(t, 0, len(pm))
 }
 
 func TestMakePowermapBadType(t *testing.T) {
@@ -34,7 +34,7 @@ func TestMakePowermapBadType(t *testing.T) {
 			PubKey: tmcrypto.PublicKey{Sum: &tmcrypto.PublicKey_Ed25519{Ed25519: []byte("xxx")}},
 		},
 	})
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 }
 
 func TestMakePowermap(t *testing.T) {
@@ -42,9 +42,9 @@ func TestMakePowermap(t *testing.T) {
 	pm, err := MakePowermap([]abcitypes.ValidatorUpdate{
 		{Power: power, PubKey: tmcrypto.PublicKey{Sum: &tmcrypto.PublicKey_Ed25519{Ed25519: makeKey(1)}}},
 	})
-	require.Nil(t, err)
-	require.Equal(t, 1, len(pm))
-	require.Equal(t, power, pm[newpk(1)])
+	assert.NilError(t, err)
+	assert.Equal(t, 1, len(pm))
+	assert.Equal(t, power, pm[newpk(1)])
 }
 
 func TestDiffPowermaps(t *testing.T) {
@@ -59,7 +59,7 @@ func TestDiffPowermaps(t *testing.T) {
 	newpm[newpk(3)] = 15              // change 3
 	newpm[newpk(4)] = 20              // add 4
 
-	require.Equal(t, 0, len(DiffPowermaps(oldpm, oldpm)))
+	assert.Equal(t, 0, len(DiffPowermaps(oldpm, oldpm)))
 
 	diff := DiffPowermaps(oldpm, newpm)
 
@@ -71,5 +71,5 @@ func TestDiffPowermaps(t *testing.T) {
 	}
 	fmt.Println("DIFF", diff)
 
-	require.Equal(t, expected, diff)
+	assert.DeepEqual(t, expected, diff)
 }

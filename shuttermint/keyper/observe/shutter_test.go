@@ -1,12 +1,14 @@
 package observe
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/stretchr/testify/require"
+	gocmp "github.com/google/go-cmp/cmp"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
@@ -16,16 +18,21 @@ import (
 func encryptionPublicKey(t *testing.T) *EncryptionPublicKey {
 	t.Helper()
 	privkey, err := crypto.GenerateKey()
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	return (*EncryptionPublicKey)(ecies.ImportECDSAPublic(&privkey.PublicKey))
 }
+
+var encryptionPublicKeyComparer = gocmp.Comparer(func(x, y *EncryptionPublicKey) bool {
+	return reflect.DeepEqual(x, y)
+})
 
 // TestGobSerializationIssue45 tests that we can serialize the encryption public key, see
 // https://github.com/brainbot-com/shutter/issues/45
 func TestGobSerializationIssue45(t *testing.T) {
 	sh := NewShutter()
-	sh.KeyperEncryptionKeys[common.Address{}] = encryptionPublicKey(t)
-	shtest.EnsureGobable(t, sh, new(Shutter))
+	epk := encryptionPublicKey(t)
+	sh.KeyperEncryptionKeys[common.Address{}] = epk
+	shtest.EnsureGobable(t, sh, new(Shutter), shtest.BigIntComparer, encryptionPublicKeyComparer)
 }
 
 func TestFindBatchConfigByBatchIndex(t *testing.T) {
@@ -42,10 +49,10 @@ func TestFindBatchConfigByBatchIndex(t *testing.T) {
 		},
 	)
 
-	require.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(0).Height)
-	require.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(4).Height)
-	require.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(5).Height)
-	require.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(9).Height)
-	require.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(10).Height)
-	require.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(11).Height)
+	assert.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(0).Height)
+	assert.Equal(t, int64(0), sh.FindBatchConfigByBatchIndex(4).Height)
+	assert.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(5).Height)
+	assert.Equal(t, int64(1), sh.FindBatchConfigByBatchIndex(9).Height)
+	assert.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(10).Height)
+	assert.Equal(t, int64(2), sh.FindBatchConfigByBatchIndex(11).Height)
 }

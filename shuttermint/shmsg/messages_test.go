@@ -1,13 +1,12 @@
 package shmsg
 
 import (
-	"bytes"
 	"crypto/rand"
 	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
@@ -16,18 +15,18 @@ func TestNewPolyCommitmentMsg(t *testing.T) {
 	eon := uint64(10)
 	threshold := uint64(5)
 	poly, err := shcrypto.RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	gammas := poly.Gammas()
 
 	msgContainer := NewPolyCommitment(eon, gammas)
 	msg := msgContainer.GetPolyCommitment()
-	require.NotNil(t, msg)
+	assert.Assert(t, msg != nil)
 
-	require.Equal(t, eon, msg.Eon)
-	require.Equal(t, int(threshold)+1, len(msg.Gammas))
+	assert.Equal(t, eon, msg.Eon)
+	assert.Equal(t, int(threshold)+1, len(msg.Gammas))
 	for i := 0; i < int(threshold)+1; i++ {
 		gammaBytes := msg.Gammas[i]
-		require.True(t, bytes.Equal(gammaBytes, (*gammas)[i].Marshal()))
+		assert.DeepEqual(t, gammaBytes, (*gammas)[i].Marshal())
 	}
 }
 
@@ -38,8 +37,8 @@ func TestNewPolyEvalMsg(t *testing.T) {
 
 	msgContainer := NewPolyEval(eon, []common.Address{receiver}, [][]byte{encryptedEval})
 	msg := msgContainer.GetPolyEval()
-	require.NotNil(t, msg)
+	assert.Assert(t, msg != nil)
 
-	require.Equal(t, eon, msg.Eon)
-	require.Equal(t, receiver.Bytes(), msg.Receivers[0])
+	assert.Equal(t, eon, msg.Eon)
+	assert.DeepEqual(t, receiver.Bytes(), msg.Receivers[0])
 }

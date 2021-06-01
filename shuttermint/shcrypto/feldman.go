@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 )
 
@@ -52,6 +53,21 @@ func (p *Polynomial) Degree() uint64 {
 // Degree returns the degree of the underlying polynomial.
 func (g *Gammas) Degree() uint64 {
 	return uint64(len(*g)) - 1
+}
+
+func (g Gammas) Equal(g2 Gammas) bool {
+	gs := []*bn256.G2(g)
+	gs2 := []*bn256.G2(g2)
+
+	if len(gs) != len(gs2) {
+		return false
+	}
+	for i := range gs {
+		if !EqualG2(gs[i], gs2[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // ZeroGammas returns the zero value for gammas.
@@ -152,19 +168,32 @@ func KeyperX(keyperIndex int) *big.Int {
 	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
 }
 
-// EqualG1 checks if two points on G1 are requal.
+// EqualG1 checks if two points on G1 are equal.
 func EqualG1(p1, p2 *bn256.G1) bool {
 	p1Bytes := new(bn256.G1).Set(p1).Marshal()
 	p2Bytes := new(bn256.G1).Set(p2).Marshal()
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
 
-// EqualG2 checks if two points on G2 are requal.
+var G1Comparer = gocmp.Comparer(EqualG1)
+
+// EqualG2 checks if two points on G2 are equal.
 func EqualG2(p1, p2 *bn256.G2) bool {
 	p1Bytes := new(bn256.G2).Set(p1).Marshal()
 	p2Bytes := new(bn256.G2).Set(p2).Marshal()
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
+
+var G2Comparer = gocmp.Comparer(EqualG2)
+
+// EqualGT checks if two points on GT are equal.
+func EqualGT(p1, p2 *bn256.GT) bool {
+	p1Bytes := new(bn256.GT).Set(p1).Marshal()
+	p2Bytes := new(bn256.GT).Set(p2).Marshal()
+	return bytes.Equal(p1Bytes, p2Bytes)
+}
+
+var GTComparer = gocmp.Comparer(EqualGT)
 
 // VerifyPolyEval checks that the evaluation of a polynomial is consistent with the public gammas.
 func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshold uint64) bool {

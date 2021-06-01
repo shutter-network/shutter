@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/medley"
@@ -48,8 +48,8 @@ func TestSendShuttermintMessageGobable(t *testing.T) {
 	medley.CloneWithGob(a1, &a2)
 	s1 := a1.Action.(*SendShuttermintMessage)
 	s2 := a2.Action.(*SendShuttermintMessage)
-	require.Equal(t, s1.Description, s2.Description)
-	require.True(t, proto.Equal(s1.Msg, s2.Msg))
+	assert.Equal(t, s1.Description, s2.Description)
+	assert.Assert(t, proto.Equal(s1.Msg, s2.Msg))
 }
 
 var actions []IAction = []IAction{

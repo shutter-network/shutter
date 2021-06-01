@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
 )
@@ -24,21 +24,21 @@ func TestCheckTxStateCouting(t *testing.T) {
 	}
 
 	s := NewCheckTxState()
-	require.Zero(t, len(s.Members))
-	require.Zero(t, len(s.TxCounts))
+	assert.Assert(t, len(s.Members) == 0)
+	assert.Assert(t, len(s.TxCounts) == 0)
 
-	require.True(t, s.AddTx(a1, makeMsg())) // no members set yet, so anyone can send
+	assert.Assert(t, s.AddTx(a1, makeMsg())) // no members set yet, so anyone can send
 	s.Reset()
 
 	s.SetMembers([]common.Address{a1})
-	require.False(t, s.AddTx(a2, makeMsg())) // not a member
+	assert.Assert(t, !s.AddTx(a2, makeMsg())) // not a member
 
 	for i := 0; i < MaxTxsPerBlock; i++ {
-		require.True(t, s.AddTx(a1, makeMsg()))
+		assert.Assert(t, s.AddTx(a1, makeMsg()))
 	}
-	require.False(t, s.AddTx(a1, makeMsg())) // too many txs
+	assert.Assert(t, !s.AddTx(a1, makeMsg())) // too many txs
 	s.Reset()
-	require.True(t, s.AddTx(a1, makeMsg()))
+	assert.Assert(t, s.AddTx(a1, makeMsg()))
 }
 
 func TestCheckTxStateNonce(t *testing.T) {
@@ -57,10 +57,10 @@ func TestCheckTxStateNonce(t *testing.T) {
 	s := NewCheckTxState()
 	s.SetMembers([]common.Address{a1, a2})
 
-	require.True(t, s.AddTx(a1, msg1))
-	require.False(t, s.AddTx(a1, msg1))
-	require.True(t, s.AddTx(a1, msg2))
-	require.True(t, s.AddTx(a2, msg1))
+	assert.Assert(t, s.AddTx(a1, msg1))
+	assert.Assert(t, !s.AddTx(a1, msg1))
+	assert.Assert(t, s.AddTx(a1, msg2))
+	assert.Assert(t, s.AddTx(a2, msg1))
 	s.Reset()
-	require.True(t, s.AddTx(a1, msg1))
+	assert.Assert(t, s.AddTx(a1, msg1))
 }

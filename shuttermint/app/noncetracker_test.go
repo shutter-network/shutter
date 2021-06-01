@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 )
 
 func TestNonceTracker(t *testing.T) {
@@ -15,9 +15,9 @@ func TestNonceTracker(t *testing.T) {
 	r1 := uint64(10)
 	r2 := uint64(20)
 
-	require.True(t, tracker.Check(a1, r1))
+	assert.Assert(t, tracker.Check(a1, r1))
 	tracker.Add(a1, r1)
-	require.False(t, tracker.Check(a1, r1))
-	require.True(t, tracker.Check(a1, r2))
-	require.True(t, tracker.Check(a2, r1))
+	assert.Assert(t, !tracker.Check(a1, r1))
+	assert.Assert(t, tracker.Check(a1, r2))
+	assert.Assert(t, tracker.Check(a2, r1))
 }

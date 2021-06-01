@@ -6,19 +6,22 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/stretchr/testify/require"
+	gocmp "github.com/google/go-cmp/cmp"
+	"gotest.tools/v3/assert"
+
+	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 )
 
 func TestEonSecretKeyShare(t *testing.T) {
 	zeroKey := ComputeEonSecretKeyShare([]*big.Int{})
-	require.Zero(t, (*big.Int)(zeroKey).Sign())
+	assert.DeepEqual(t, big.NewInt(0), (*big.Int)(zeroKey), shtest.BigIntComparer)
 
 	key1 := ComputeEonSecretKeyShare([]*big.Int{
 		big.NewInt(10),
 		big.NewInt(20),
 		big.NewInt(30),
 	})
-	require.Zero(t, big.NewInt(60).Cmp((*big.Int)(key1)))
+	assert.DeepEqual(t, big.NewInt(60), (*big.Int)(key1), shtest.BigIntComparer)
 
 	key2 := ComputeEonSecretKeyShare([]*big.Int{
 		bn256.Order,
@@ -27,7 +30,7 @@ func TestEonSecretKeyShare(t *testing.T) {
 		big.NewInt(20),
 		bn256.Order,
 	})
-	require.Zero(t, big.NewInt(30).Cmp((*big.Int)(key2)))
+	assert.DeepEqual(t, big.NewInt(30), (*big.Int)(key2), shtest.BigIntComparer)
 }
 
 func TestEonPublicKeyShare(t *testing.T) {
@@ -70,19 +73,19 @@ func TestEonPublicKeyShare(t *testing.T) {
 	pks2 := new(bn256.G2).Add(mu20, mu21)
 	pks2.Add(pks2, mu22)
 
-	require.True(t, EqualG2(pks0, (*bn256.G2)(ComputeEonPublicKeyShare(0, gammas))))
-	require.True(t, EqualG2(pks1, (*bn256.G2)(ComputeEonPublicKeyShare(1, gammas))))
-	require.True(t, EqualG2(pks2, (*bn256.G2)(ComputeEonPublicKeyShare(2, gammas))))
+	assert.DeepEqual(t, pks0, (*bn256.G2)(ComputeEonPublicKeyShare(0, gammas)), G2Comparer)
+	assert.DeepEqual(t, pks1, (*bn256.G2)(ComputeEonPublicKeyShare(1, gammas)), G2Comparer)
+	assert.DeepEqual(t, pks2, (*bn256.G2)(ComputeEonPublicKeyShare(2, gammas)), G2Comparer)
 }
 
 func TestEonSharesMatch(t *testing.T) {
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p2, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p3, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	x1 := KeyperX(0)
 	x2 := KeyperX(1)
@@ -108,43 +111,43 @@ func TestEonSharesMatch(t *testing.T) {
 	epk2 := ComputeEonPublicKeyShare(1, gammas)
 	epk3 := ComputeEonPublicKeyShare(2, gammas)
 
-	epk1Exp := new(bn256.G2).ScalarBaseMult((*big.Int)(esk1))
-	epk2Exp := new(bn256.G2).ScalarBaseMult((*big.Int)(esk2))
-	epk3Exp := new(bn256.G2).ScalarBaseMult((*big.Int)(esk3))
+	epk1Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk1)))
+	epk2Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk2)))
+	epk3Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk3)))
 
-	require.True(t, EqualG2((*bn256.G2)(epk1), epk1Exp))
-	require.True(t, EqualG2((*bn256.G2)(epk2), epk2Exp))
-	require.True(t, EqualG2((*bn256.G2)(epk3), epk3Exp))
+	assert.DeepEqual(t, epk1, epk1Exp)
+	assert.DeepEqual(t, epk2, epk2Exp)
+	assert.DeepEqual(t, epk3, epk3Exp)
 }
 
 func TestEonPublicKey(t *testing.T) {
 	zeroEPK := ComputeEonPublicKey([]*Gammas{})
-	require.True(t, EqualG2((*bn256.G2)(zeroEPK), zeroG2))
+	assert.DeepEqual(t, (*bn256.G2)(zeroEPK), zeroG2, G2Comparer)
 
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p2, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p3, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	k1 := ComputeEonPublicKey([]*Gammas{p1.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0]))
+	assert.DeepEqual(t, (*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0], G2Comparer)
 	k2 := ComputeEonPublicKey([]*Gammas{p2.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0]))
+	assert.DeepEqual(t, (*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0], G2Comparer)
 	k3 := ComputeEonPublicKey([]*Gammas{p3.Gammas()})
-	require.True(t, EqualG2((*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0]))
+	assert.DeepEqual(t, (*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0], G2Comparer)
 }
 
 func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p2, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p3, err := RandomPolynomial(rand.Reader, threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	esk := big.NewInt(0)
 	for _, p := range []*Polynomial{p1, p2, p3} {
@@ -154,8 +157,13 @@ func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
 
 	gammas := []*Gammas{p1.Gammas(), p2.Gammas(), p3.Gammas()}
 	epk := ComputeEonPublicKey(gammas)
-	require.True(t, EqualG2((*bn256.G2)(epk), epkExp))
+	assert.DeepEqual(t, (*bn256.G2)(epk), epkExp, G2Comparer)
 }
+
+var modbn256Comparer = gocmp.Comparer(func(x, y *big.Int) bool {
+	d := new(big.Int).Sub(x, y)
+	return d.Mod(d, bn256.Order).Sign() == 0
+})
 
 func TestInverse(t *testing.T) {
 	testCases := []*big.Int{
@@ -165,24 +173,19 @@ func TestInverse(t *testing.T) {
 		new(big.Int).Sub(bn256.Order, big.NewInt(2)),
 		new(big.Int).Sub(bn256.Order, big.NewInt(1)),
 	}
-	for _, test := range testCases {
-		inv := invert(test)
-		one := new(big.Int).Mul(test, inv)
-		one = one.Mod(one, bn256.Order)
-		require.Equal(t, big.NewInt(1), one)
-	}
-
 	for i := 0; i < 100; i++ {
 		x, err := rand.Int(rand.Reader, bn256.Order)
-		require.Nil(t, err)
+		assert.NilError(t, err)
 		if x.Sign() == 0 {
 			continue
 		}
+		testCases = append(testCases, x)
+	}
 
-		inv := invert(x)
-		one := new(big.Int).Mul(x, inv)
-		one = one.Mod(one, bn256.Order)
-		require.Equal(t, big.NewInt(1), one)
+	for _, test := range testCases {
+		inv := invert(test)
+		one := new(big.Int).Mul(test, inv)
+		assert.DeepEqual(t, big.NewInt(1), one, modbn256Comparer)
 	}
 }
 
@@ -198,53 +201,46 @@ func TestLagrangeCoefficientFactors(t *testing.T) {
 	qMinus2 := new(big.Int).Sub(bn256.Order, big.NewInt(2))
 
 	l01.Mul(l01, qMinus1)
-	l01.Mod(l01, bn256.Order)
-	require.Equal(t, big.NewInt(1), l01)
+	assert.DeepEqual(t, big.NewInt(1), l01, modbn256Comparer)
 	l02.Mul(l02, qMinus2)
-	l02.Mod(l02, bn256.Order)
-	require.Equal(t, big.NewInt(1), l02)
+	assert.DeepEqual(t, big.NewInt(1), l02, modbn256Comparer)
 
-	require.Equal(t, big.NewInt(2), l10)
+	assert.DeepEqual(t, big.NewInt(2), l10, modbn256Comparer)
 	l12.Mul(l12, qMinus1)
-	l12.Mod(l12, bn256.Order)
-	require.Equal(t, big.NewInt(2), l12)
+	assert.DeepEqual(t, big.NewInt(2), l12, modbn256Comparer)
 
 	l20.Mul(l20, big.NewInt(2))
-	l20.Mod(l20, bn256.Order)
-	require.Equal(t, big.NewInt(3), l20)
-	require.Equal(t, big.NewInt(3), l21)
+	assert.DeepEqual(t, big.NewInt(3), l20, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(3), l21, modbn256Comparer)
 }
 
 func TestLagrangeCoefficients(t *testing.T) {
-	require.Equal(t, big.NewInt(1), lagrangeCoefficient(0, []int{0}))
-	require.Equal(t, big.NewInt(1), lagrangeCoefficient(1, []int{1}))
-	require.Equal(t, big.NewInt(1), lagrangeCoefficient(2, []int{2}))
+	assert.DeepEqual(t, big.NewInt(1), lagrangeCoefficient(0, []int{0}), shtest.BigIntComparer)
+	assert.DeepEqual(t, big.NewInt(1), lagrangeCoefficient(1, []int{1}), shtest.BigIntComparer)
+	assert.DeepEqual(t, big.NewInt(1), lagrangeCoefficient(2, []int{2}), shtest.BigIntComparer)
 
-	require.Equal(t, lagrangeCoefficientFactor(1, 0), lagrangeCoefficient(0, []int{0, 1}))
-	require.Equal(t, lagrangeCoefficientFactor(0, 1), lagrangeCoefficient(1, []int{0, 1}))
+	assert.DeepEqual(t, lagrangeCoefficientFactor(1, 0), lagrangeCoefficient(0, []int{0, 1}), shtest.BigIntComparer)
+	assert.DeepEqual(t, lagrangeCoefficientFactor(0, 1), lagrangeCoefficient(1, []int{0, 1}), shtest.BigIntComparer)
 
 	l0 := lagrangeCoefficient(0, []int{0, 1, 2})
 	l0Exp := lagrangeCoefficientFactor(1, 0)
 	l0Exp.Mul(l0Exp, lagrangeCoefficientFactor(2, 0))
-	l0Exp.Mod(l0Exp, bn256.Order)
-	require.Equal(t, l0Exp, l0)
+	assert.DeepEqual(t, l0Exp, l0, modbn256Comparer)
 
 	l1 := lagrangeCoefficient(1, []int{0, 1, 2})
 	l1Exp := lagrangeCoefficientFactor(0, 1)
 	l1Exp.Mul(l1Exp, lagrangeCoefficientFactor(2, 1))
-	l1Exp.Mod(l1Exp, bn256.Order)
-	require.Equal(t, l1Exp, l1)
+	assert.DeepEqual(t, l1Exp, l1, modbn256Comparer)
 
 	l2 := lagrangeCoefficient(2, []int{0, 1, 2})
 	l2Exp := lagrangeCoefficientFactor(0, 2)
 	l2Exp.Mul(l2Exp, lagrangeCoefficientFactor(1, 2))
-	l2Exp.Mod(l2Exp, bn256.Order)
-	require.Equal(t, l2Exp, l2)
+	assert.DeepEqual(t, l2Exp, l2, modbn256Comparer)
 }
 
 func TestLagrangeReconstruct(t *testing.T) {
 	p, err := RandomPolynomial(rand.Reader, uint64(2))
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	l1 := lagrangeCoefficient(0, []int{0, 1, 2})
 	l2 := lagrangeCoefficient(1, []int{0, 1, 2})
@@ -264,7 +260,7 @@ func TestLagrangeReconstruct(t *testing.T) {
 	y.Add(y, y3)
 	y.Mod(y, bn256.Order)
 
-	require.Equal(t, p.Eval(big.NewInt(0)), y)
+	assert.DeepEqual(t, p.Eval(big.NewInt(0)), y, shtest.BigIntComparer)
 }
 
 func TestComputeEpochSecretKeyShare(t *testing.T) {
@@ -272,18 +268,18 @@ func TestComputeEpochSecretKeyShare(t *testing.T) {
 	epochID := ComputeEpochID(uint64(456))
 	epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
 	expectedEpochSecretKeyShare := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
-	require.Equal(t, (*bn256.G1)(epochSecretKeyShare).String(), expectedEpochSecretKeyShare.String())
+	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bn256.G1)(epochSecretKeyShare), G1Comparer)
 }
 
 func TestVerifyEpochSecretKeyShare(t *testing.T) {
 	threshold := uint64(2)
 	epochID := ComputeEpochID(uint64(10))
 	p1, err := RandomPolynomial(rand.Reader, threshold-1)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p2, err := RandomPolynomial(rand.Reader, threshold-1)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	p3, err := RandomPolynomial(rand.Reader, threshold-1)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	gammas := []*Gammas{
 		p1.Gammas(),
@@ -301,13 +297,13 @@ func TestVerifyEpochSecretKeyShare(t *testing.T) {
 	epsk2 := ComputeEpochSecretKeyShare(esk2, epochID)
 	epsk3 := ComputeEpochSecretKeyShare(esk3, epochID)
 
-	require.True(t, VerifyEpochSecretKeyShare(epsk1, epk1, epochID))
-	require.True(t, VerifyEpochSecretKeyShare(epsk2, epk2, epochID))
-	require.True(t, VerifyEpochSecretKeyShare(epsk3, epk3, epochID))
+	assert.Assert(t, VerifyEpochSecretKeyShare(epsk1, epk1, epochID))
+	assert.Assert(t, VerifyEpochSecretKeyShare(epsk2, epk2, epochID))
+	assert.Assert(t, VerifyEpochSecretKeyShare(epsk3, epk3, epochID))
 
-	require.False(t, VerifyEpochSecretKeyShare(epsk1, epk2, epochID))
-	require.False(t, VerifyEpochSecretKeyShare(epsk2, epk1, epochID))
-	require.False(t, VerifyEpochSecretKeyShare(epsk1, epk1, ComputeEpochID(uint64(11))))
+	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk2, epochID))
+	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk2, epk1, epochID))
+	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk1, ComputeEpochID(uint64(11))))
 }
 
 func TestComputeEpochSecretKey(t *testing.T) {
@@ -318,7 +314,7 @@ func TestComputeEpochSecretKey(t *testing.T) {
 	ps := []*Polynomial{}
 	for i := 0; i < n; i++ {
 		p, err := RandomPolynomial(rand.Reader, threshold-1)
-		require.Nil(t, err)
+		assert.NilError(t, err)
 		ps = append(ps, p)
 	}
 
@@ -337,32 +333,32 @@ func TestComputeEpochSecretKey(t *testing.T) {
 
 	var err error
 	_, err = ComputeEpochSecretKey([]int{0}, epochSecretKeyShares[:1], threshold)
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 	_, err = ComputeEpochSecretKey([]int{0, 1, 2}, epochSecretKeyShares[:2], threshold)
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 	_, err = ComputeEpochSecretKey([]int{0, 1}, epochSecretKeyShares[:1], threshold)
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 	_, err = ComputeEpochSecretKey([]int{0}, epochSecretKeyShares[:2], threshold)
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 
 	epochSecretKey12, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
 		threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	epochSecretKey13, err := ComputeEpochSecretKey(
 		[]int{0, 2},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]},
 		threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	epochSecretKey23, err := ComputeEpochSecretKey(
 		[]int{1, 2},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]},
 		threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
-	require.True(t, EqualG1((*bn256.G1)(epochSecretKey12), (*bn256.G1)(epochSecretKey13)))
-	require.True(t, EqualG1((*bn256.G1)(epochSecretKey12), (*bn256.G1)(epochSecretKey23)))
+	assert.DeepEqual(t, epochSecretKey12, epochSecretKey13)
+	assert.DeepEqual(t, epochSecretKey12, epochSecretKey23)
 }
 
 func TestFull(t *testing.T) {
@@ -374,7 +370,7 @@ func TestFull(t *testing.T) {
 	gammas := []*Gammas{}
 	for i := 0; i < n; i++ {
 		p, err := RandomPolynomial(rand.Reader, threshold-1)
-		require.Nil(t, err)
+		assert.NilError(t, err)
 		ps = append(ps, p)
 		gammas = append(gammas, p.Gammas())
 	}
@@ -404,25 +400,25 @@ func TestFull(t *testing.T) {
 
 	// verify (published) epoch sk shares
 	for i := 0; i < n; i++ {
-		require.True(t, VerifyEpochSecretKeyShare(epochSecretKeyShares[i], eonPublicKeyShares[i], epochID))
+		assert.Assert(t, VerifyEpochSecretKeyShare(epochSecretKeyShares[i], eonPublicKeyShares[i], epochID))
 	}
 
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
 		threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	epochSecretKey13, err := ComputeEpochSecretKey(
 		[]int{0, 2},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[2]},
 		threshold)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	epochSecretKey23, err := ComputeEpochSecretKey(
 		[]int{1, 2},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[1], epochSecretKeyShares[2]},
 		threshold)
-	require.Nil(t, err)
-	require.True(t, EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(epochSecretKey13)))
-	require.True(t, EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(epochSecretKey23)))
+	assert.NilError(t, err)
+	assert.DeepEqual(t, epochSecretKey, epochSecretKey13)
+	assert.DeepEqual(t, epochSecretKey, epochSecretKey23)
 }

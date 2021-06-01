@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	bn256cf "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"gotest.tools/v3/assert"
+
+	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
 
 func randomG1() *bn256cf.G1 {
@@ -36,14 +38,14 @@ func TestG1Marshal(t *testing.T) {
 	msg := G1{}
 	msg.Set(g)
 	marshaled, err := proto.Marshal(&msg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	umsg := G1{}
 	err = proto.Unmarshal(marshaled, &umsg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	ug, err := umsg.Get()
-	require.Nil(t, err)
-	require.Equal(t, g, ug)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, g, ug, shcrypto.G1Comparer)
 }
 
 func TestG2Marshal(t *testing.T) {
@@ -51,14 +53,14 @@ func TestG2Marshal(t *testing.T) {
 	msg := G2{}
 	msg.Set(g)
 	marshaled, err := proto.Marshal(&msg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	umsg := G2{}
 	err = proto.Unmarshal(marshaled, &umsg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	ug, err := umsg.Get()
-	require.Nil(t, err)
-	require.Equal(t, g, ug)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, g, ug, shcrypto.G2Comparer)
 }
 
 func TestGTMarshal(t *testing.T) {
@@ -66,12 +68,12 @@ func TestGTMarshal(t *testing.T) {
 	msg := GT{}
 	msg.Set(g)
 	marshaled, err := proto.Marshal(&msg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	umsg := GT{}
 	err = proto.Unmarshal(marshaled, &umsg)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	ug, err := umsg.Get()
-	require.Nil(t, err)
-	require.Equal(t, g, ug)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, g, ug, shcrypto.GTComparer)
 }

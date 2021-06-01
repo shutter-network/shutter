@@ -33,6 +33,10 @@ func (eonpubkey *EonPublicKey) GobDecode(data []byte) error {
 	return eonpubkey.Unmarshal(data)
 }
 
+func (eonpubkey *EonPublicKey) Equal(pk2 *EonPublicKey) bool {
+	return EqualG2((*bn256.G2)(eonpubkey), (*bn256.G2)(pk2))
+}
+
 func (g2 *EonPublicKeyShare) GobEncode() ([]byte, error) {
 	return (*bn256.G2)(g2).Marshal(), nil
 }
@@ -40,6 +44,10 @@ func (g2 *EonPublicKeyShare) GobEncode() ([]byte, error) {
 func (g2 *EonPublicKeyShare) GobDecode(data []byte) error {
 	_, err := (*bn256.G2)(g2).Unmarshal(data)
 	return err
+}
+
+func (g2 *EonPublicKeyShare) Equal(pk2 *EonPublicKeyShare) bool {
+	return EqualG2((*bn256.G2)(g2), (*bn256.G2)(pk2))
 }
 
 func (g *EpochID) GobEncode() ([]byte, error) {
@@ -51,6 +59,10 @@ func (g *EpochID) GobDecode(data []byte) error {
 	return err
 }
 
+func (g *EpochID) Equal(g2 *EpochID) bool {
+	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
+}
+
 func (g *EpochSecretKeyShare) GobEncode() ([]byte, error) {
 	return (*bn256.G1)(g).Marshal(), nil
 }
@@ -58,6 +70,10 @@ func (g *EpochSecretKeyShare) GobEncode() ([]byte, error) {
 func (g *EpochSecretKeyShare) GobDecode(data []byte) error {
 	_, err := (*bn256.G1)(g).Unmarshal(data)
 	return err
+}
+
+func (g *EpochSecretKeyShare) Equal(g2 *EpochSecretKeyShare) bool {
+	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
 }
 
 func (g *EpochSecretKey) GobEncode() ([]byte, error) {
@@ -69,12 +85,20 @@ func (g *EpochSecretKey) GobDecode(data []byte) error {
 	return err
 }
 
+func (g *EpochSecretKey) Equal(g2 *EpochSecretKey) bool {
+	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
+}
+
 func (esks *EonSecretKeyShare) GobEncode() ([]byte, error) {
 	return (*big.Int)(esks).GobEncode()
 }
 
 func (esks *EonSecretKeyShare) GobDecode(data []byte) error {
 	return (*big.Int)(esks).GobDecode(data)
+}
+
+func (esks *EonSecretKeyShare) Equal(e2 *EonSecretKeyShare) bool {
+	return (*big.Int)(esks).Cmp((*big.Int)(e2)) == 0
 }
 
 // ComputeEonSecretKeyShare computes the keyper's secret key share from the set of poly evals

@@ -11,7 +11,7 @@ import (
 
 func TestEonSecretKeyShareGobable(t *testing.T) {
 	share := (*EonSecretKeyShare)(big.NewInt(1111))
-	shtest.EnsureGobable(t, share, new(EonSecretKeyShare))
+	shtest.EnsureGobable(t, share, new(EonSecretKeyShare), shtest.BigIntComparer)
 }
 
 func TestEonPublicKeyShareGobable(t *testing.T) {
@@ -36,5 +36,5 @@ func TestEpochSecretKeyShareGobable(t *testing.T) {
 
 func TestEpochSecretKeyGobable(t *testing.T) {
 	key := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
-	shtest.EnsureGobable(t, key, new(EpochSecretKey))
+	shtest.EnsureGobable(t, key, new(EpochSecretKey), G1Comparer)
 }

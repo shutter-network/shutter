@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 )
 
 func makeMessage() *MessageWithNonce {
@@ -32,7 +32,7 @@ func TestSignMessage(t *testing.T) {
 		t.Fatalf("fatal: %s", err)
 	}
 	signedMessage, err := SignMessage(makeMessage(), privateKey)
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	t.Logf("signed message size %d", len(signedMessage))
 	signer, err := GetSigner(signedMessage)
 	if err != nil {

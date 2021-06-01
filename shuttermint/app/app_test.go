@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
 
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/shmsg"
@@ -13,8 +14,8 @@ import (
 
 func TestNewShutterApp(t *testing.T) {
 	app := NewShutterApp()
-	require.Equal(t, len(app.Configs), 1, "Configs should contain exactly one guard element")
-	require.Equal(t, app.Configs[0], &BatchConfig{}, "Bad guard element")
+	assert.Equal(t, len(app.Configs), 1, "Configs should contain exactly one guard element")
+	assert.Assert(t, is.DeepEqual(app.Configs[0], &BatchConfig{}), "Bad guard element")
 }
 
 func TestGetBatch(t *testing.T) {
@@ -26,7 +27,7 @@ func TestGetBatch(t *testing.T) {
 		Threshold:       1,
 		Keypers:         addr,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = app.addConfig(BatchConfig{
 		ConfigIndex:     2,
@@ -34,7 +35,7 @@ func TestGetBatch(t *testing.T) {
 		Threshold:       2,
 		Keypers:         addr,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = app.addConfig(BatchConfig{
 		ConfigIndex:     3,
@@ -42,15 +43,15 @@ func TestGetBatch(t *testing.T) {
 		Threshold:       3,
 		Keypers:         addr,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
-	require.Equal(t, uint64(0), app.getBatchState(0).Config.Threshold)
-	require.Equal(t, uint64(0), app.getBatchState(99).Config.Threshold)
-	require.Equal(t, uint64(1), app.getBatchState(100).Config.Threshold)
-	require.Equal(t, uint64(1), app.getBatchState(101).Config.Threshold)
-	require.Equal(t, uint64(1), app.getBatchState(199).Config.Threshold)
-	require.Equal(t, uint64(2), app.getBatchState(200).Config.Threshold)
-	require.Equal(t, uint64(3), app.getBatchState(1000).Config.Threshold)
+	assert.Equal(t, uint64(0), app.getBatchState(0).Config.Threshold)
+	assert.Equal(t, uint64(0), app.getBatchState(99).Config.Threshold)
+	assert.Equal(t, uint64(1), app.getBatchState(100).Config.Threshold)
+	assert.Equal(t, uint64(1), app.getBatchState(101).Config.Threshold)
+	assert.Equal(t, uint64(1), app.getBatchState(199).Config.Threshold)
+	assert.Equal(t, uint64(2), app.getBatchState(200).Config.Threshold)
+	assert.Equal(t, uint64(3), app.getBatchState(1000).Config.Threshold)
 }
 
 func TestAddConfig(t *testing.T) {
@@ -62,7 +63,7 @@ func TestAddConfig(t *testing.T) {
 		Threshold:       1,
 		Keypers:         addr,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = app.addConfig(BatchConfig{
 		ConfigIndex:     2,
@@ -70,7 +71,7 @@ func TestAddConfig(t *testing.T) {
 		Threshold:       1,
 		Keypers:         addr,
 	})
-	require.NotNil(t, err, "Expected error, StartBatchIndex must not decrease")
+	assert.Assert(t, err != nil, "Expected error, StartBatchIndex must not decrease")
 
 	err = app.addConfig(BatchConfig{
 		ConfigIndex:     1,
@@ -78,7 +79,7 @@ func TestAddConfig(t *testing.T) {
 		Threshold:       1,
 		Keypers:         addr,
 	})
-	require.NotNil(t, err, "Expected error, ConfigIndex must increase")
+	assert.Assert(t, err != nil, "Expected error, ConfigIndex must increase")
 
 	err = app.addConfig(BatchConfig{
 		ConfigIndex:     2,
@@ -86,7 +87,7 @@ func TestAddConfig(t *testing.T) {
 		Threshold:       2,
 		Keypers:         addr,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 }
 
 func TestAddDecryptionSignature(t *testing.T) {
@@ -98,7 +99,7 @@ func TestAddDecryptionSignature(t *testing.T) {
 		Threshold:       2,
 		Keypers:         keypers,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	// don't accept signature from non-keyper
 	res1 := app.deliverDecryptionSignature(
@@ -108,8 +109,8 @@ func TestAddDecryptionSignature(t *testing.T) {
 		},
 		addresses[3],
 	)
-	require.True(t, res1.IsErr())
-	require.Empty(t, res1.Events)
+	assert.Assert(t, res1.IsErr())
+	assert.Assert(t, is.Len(res1.Events, 0))
 
 	// accept signature from keyper
 	res2 := app.deliverDecryptionSignature(
@@ -119,18 +120,18 @@ func TestAddDecryptionSignature(t *testing.T) {
 		},
 		keypers[0],
 	)
-	require.True(t, res2.IsOK())
-	require.Equal(t, 1, len(res2.Events))
+	assert.Assert(t, res2.IsOK())
+	assert.Equal(t, 1, len(res2.Events))
 
 	ev := res2.Events[0]
-	require.Equal(t, "shutter.decryption-signature", ev.Type)
-	require.Equal(t, []byte("BatchIndex"), ev.Attributes[0].Key)
-	require.Equal(t, []byte("200"), ev.Attributes[0].Value)
-	require.Equal(t, []byte("Sender"), ev.Attributes[1].Key)
-	require.Equal(t, []byte(keypers[0].Hex()), ev.Attributes[1].Value)
-	require.Equal(t, []byte("Signature"), ev.Attributes[2].Key)
+	assert.Equal(t, "shutter.decryption-signature", ev.Type)
+	assert.DeepEqual(t, []byte("BatchIndex"), ev.Attributes[0].Key)
+	assert.DeepEqual(t, []byte("200"), ev.Attributes[0].Value)
+	assert.DeepEqual(t, []byte("Sender"), ev.Attributes[1].Key)
+	assert.DeepEqual(t, []byte(keypers[0].Hex()), ev.Attributes[1].Value)
+	assert.DeepEqual(t, []byte("Signature"), ev.Attributes[2].Key)
 	decodedSignature, _ := base64.RawURLEncoding.DecodeString(string(ev.Attributes[2].Value))
-	require.Equal(t, []byte("signature"), decodedSignature)
+	assert.DeepEqual(t, []byte("signature"), decodedSignature)
 
 	// don't accept another signature
 	res3 := app.deliverDecryptionSignature(
@@ -140,8 +141,8 @@ func TestAddDecryptionSignature(t *testing.T) {
 		},
 		keypers[0],
 	)
-	require.True(t, res3.IsErr())
-	require.Empty(t, res1.Events)
+	assert.Assert(t, res3.IsErr())
+	assert.Assert(t, is.Len(res1.Events, 0))
 }
 
 func TestGobDKG(t *testing.T) {
@@ -160,20 +161,20 @@ func TestGobDKG(t *testing.T) {
 		Eon:     eon,
 		Accused: []common.Address{keypers[1]},
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = dkg.RegisterApologyMsg(Apology{
 		Sender:   keypers[0],
 		Eon:      eon,
 		Accusers: []common.Address{keypers[1]},
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = dkg.RegisterPolyCommitmentMsg(PolyCommitment{
 		Sender: keypers[0],
 		Eon:    eon,
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	err = dkg.RegisterPolyEvalMsg(PolyEval{
 		Sender:         keypers[0],
@@ -181,7 +182,7 @@ func TestGobDKG(t *testing.T) {
 		Receivers:      []common.Address{keypers[1]},
 		EncryptedEvals: [][]byte{{}},
 	})
-	require.Nil(t, err)
+	assert.NilError(t, err)
 
 	shtest.EnsureGobable(t, &dkg, new(DKGInstance))
 }

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 
 	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
@@ -25,30 +25,30 @@ func Results(t *testing.T) []*puredkg.Result {
 	// dealing phase
 	for _, dkg := range dkgs {
 		polyCommitmentMsg, polyEvalMsgs, err := dkg.StartPhase1Dealing()
-		require.Nil(t, err)
+		assert.NilError(t, err)
 
 		for _, receiverDKG := range dkgs {
 			err := receiverDKG.HandlePolyCommitmentMsg(polyCommitmentMsg)
-			require.Nil(t, err)
+			assert.NilError(t, err)
 		}
 
-		require.Equal(t, int(numKeypers), 1+len(polyEvalMsgs))
+		assert.Equal(t, int(numKeypers), 1+len(polyEvalMsgs))
 		for _, msg := range polyEvalMsgs {
 			err := dkgs[msg.Receiver].HandlePolyEvalMsg(msg)
-			require.Nil(t, err)
+			assert.NilError(t, err)
 		}
 	}
 
 	// accusation phase
 	for _, dkg := range dkgs {
 		accusations := dkg.StartPhase2Accusing()
-		require.Zero(t, len(accusations))
+		assert.Assert(t, len(accusations) == 0)
 	}
 
 	// apology phase
 	for _, dkg := range dkgs {
 		apologies := dkg.StartPhase3Apologizing()
-		require.Zero(t, len(apologies))
+		assert.Assert(t, len(apologies) == 0)
 	}
 
 	// finalize
@@ -60,11 +60,11 @@ func Results(t *testing.T) []*puredkg.Result {
 
 	for _, dkg := range dkgs {
 		result, err := dkg.ComputeResult()
-		require.Nil(t, err)
+		assert.NilError(t, err)
 		results = append(results, &result)
 	}
 	for _, r := range results {
-		require.True(t, reflect.DeepEqual(r.PublicKey, results[0].PublicKey))
+		assert.Assert(t, reflect.DeepEqual(r.PublicKey, results[0].PublicKey))
 	}
 	return results
 }
@@ -87,18 +87,18 @@ func TestEpochKG(t *testing.T) {
 		}
 		for _, k := range kgs {
 			err := k.HandleEpochSecretKeyShare(&share)
-			require.Nil(t, err)
+			assert.NilError(t, err)
 		}
 	}
 
 	// every EpochKG should end up with the same key
 	for _, kg := range kgs {
 		_, ok := kg.SecretShares[epoch]
-		require.False(t, ok)
+		assert.Assert(t, !ok)
 		key, ok := kg.SecretKeys[epoch]
-		require.True(t, ok)
-		require.NotNil(t, key)
-		require.Equal(t, kgs[0].SecretKeys[epoch], key)
+		assert.Assert(t, ok)
+		assert.Assert(t, key != nil)
+		assert.DeepEqual(t, kgs[0].SecretKeys[epoch], key)
 	}
 
 	shtest.EnsureGobable(t, kgs[0], new(EpochKG))

@@ -6,22 +6,22 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 )
 
 func TestShuffleEmpty(t *testing.T) {
 	txs := [][]byte{}
 	key := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
 	shuffledTxs := Shuffle(txs, key)
-	require.Zero(t, len(shuffledTxs))
+	assert.Assert(t, len(shuffledTxs) == 0)
 }
 
 func TestShuffleSingle(t *testing.T) {
 	txs := [][]byte{{1, 2, 3}}
 	key := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
 	shuffledTxs := Shuffle(txs, key)
-	require.Equal(t, 1, len(shuffledTxs))
-	require.True(t, bytes.Equal(txs[0], shuffledTxs[0]))
+	assert.Equal(t, 1, len(shuffledTxs))
+	assert.DeepEqual(t, txs[0], shuffledTxs[0])
 }
 
 func TestShuffleMany(t *testing.T) {
@@ -31,8 +31,8 @@ func TestShuffleMany(t *testing.T) {
 	shuffledTxs1 := Shuffle(txs, key1)
 	shuffledTxs2 := Shuffle(txs, key2)
 
-	require.Equal(t, len(txs), len(shuffledTxs1))
-	require.Equal(t, len(txs), len(shuffledTxs2))
+	assert.Equal(t, len(txs), len(shuffledTxs1))
+	assert.Equal(t, len(txs), len(shuffledTxs2))
 
 	equalOriginal := true
 	equalShuffled := true
@@ -44,6 +44,6 @@ func TestShuffleMany(t *testing.T) {
 			equalShuffled = false
 		}
 	}
-	require.False(t, equalOriginal)
-	require.False(t, equalShuffled)
+	assert.Assert(t, !equalOriginal)
+	assert.Assert(t, !equalShuffled)
 }

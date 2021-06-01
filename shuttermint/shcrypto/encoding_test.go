@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 )
 
 func encryptedMessage() *EncryptedMessage {
@@ -29,8 +29,8 @@ func TestMarshalUnmarshal(t *testing.T) {
 	m1 := encryptedMessage()
 	m2 := &EncryptedMessage{}
 	err := m2.Unmarshal(m1.Marshal())
-	require.Nil(t, err)
-	require.Equal(t, m1, m2)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, m1, m2, G2Comparer)
 }
 
 func TestUnmarshalBroken(t *testing.T) {
@@ -38,14 +38,14 @@ func TestUnmarshalBroken(t *testing.T) {
 	m := EncryptedMessage{}
 
 	err := m.Unmarshal(d[:16])
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 
 	err = m.Unmarshal(d[:32])
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 
 	err = m.Unmarshal(d[:65])
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 
 	err = m.Unmarshal(d[:len(d)-1])
-	require.NotNil(t, err)
+	assert.Assert(t, err != nil)
 }

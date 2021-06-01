@@ -4,14 +4,17 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/stretchr/testify/require"
+	gocmp "github.com/google/go-cmp/cmp"
+	"gotest.tools/v3/assert"
 
+	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
 	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
 	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
 )
@@ -38,13 +41,17 @@ func init() {
 	gammas = *polynomial.Gammas()
 }
 
+var eciesPublicKeyComparer = gocmp.Comparer(func(x, y *ecies.PublicKey) bool {
+	return reflect.DeepEqual(x, y)
+})
+
 // roundtrip checks that the given IEvent round-trips, i.e. it can be serialized as an ABCI Event
 // and deserialized back again to an equal value.
 func roundtrip(t *testing.T, ev shutterevents.IEvent) {
 	t.Helper()
 	ev2, err := shutterevents.MakeEvent(ev.MakeABCIEvent(), 0)
-	require.Nil(t, err)
-	require.Equal(t, ev, ev2)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, ev, ev2, shtest.BigIntComparer, eciesPublicKeyComparer)
 }
 
 func TestAccusation(t *testing.T) {
@@ -100,7 +107,7 @@ func TestBatchConfig(t *testing.T) {
 
 func TestCheckIn(t *testing.T) {
 	privateKeyECDSA, err := ethcrypto.GenerateKey()
-	require.Nil(t, err)
+	assert.NilError(t, err)
 	publicKey := ecies.ImportECDSAPublic(&privateKeyECDSA.PublicKey)
 	ev := &shutterevents.CheckIn{Sender: sender, EncryptionPublicKey: publicKey}
 	roundtrip(t, ev)
