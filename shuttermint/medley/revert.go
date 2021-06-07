@@ -39,12 +39,12 @@ var (
 )
 
 func unpackError(result []byte) error {
-	if !bytes.Equal(result[:4], errorSig) {
+	if len(result) < 4 || !bytes.Equal(result[:4], errorSig) {
 		return errors.New("TX result not of type Error(string)")
 	}
 	vs, err := abi.Arguments{{Type: abiString}}.UnpackValues(result[4:])
 	if err != nil {
-		return errors.Wrap(err, "unpacking revert reason")
+		return errors.Wrap(err, "unpack revert reason")
 	}
 	return errors.Errorf("Error: %s", vs[0].(string))
 }
