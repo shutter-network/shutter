@@ -191,6 +191,8 @@ func fundAddresses(ctx context.Context, client *ethclient.Client, addresses []co
 	if err != nil {
 		return errors.Wrap(err, "failed to query gas price")
 	}
+	gasPrice.Mul(gasPrice, big.NewInt(3))
+	gasPrice.Div(gasPrice, big.NewInt(2))
 
 	signer := types.NewEIP155Signer(chainID)
 
