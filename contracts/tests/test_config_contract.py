@@ -1,5 +1,6 @@
 from typing import Any
 
+import attr
 import brownie
 from brownie.network.account import Account
 from brownie.network.state import Chain
@@ -33,6 +34,13 @@ def test_set_next_config_fields(config_contract: Any, owner: Account) -> None:
     set_next_config(config_contract, batch_config_template, owner=owner)
     next_config = fetch_next_config(config_contract)
     assert next_config == batch_config_template
+
+
+def test_threshold_too_large(config_contract: Any, owner: Account) -> None:
+    t = make_batch_config(start_batch_index=0, start_block_number=500, batch_span=1)
+    set_next_config(config_contract, attr.evolve(t, threshold=len(t.keypers) + 1), owner=owner)
+    with brownie.reverts("ConfigContract: threshold too large"):
+        config_contract.scheduleNextConfig({"from": owner})
 
 
 def test_num_configs_returns_number_of_configs(config_contract: Any, owner: Account) -> None:

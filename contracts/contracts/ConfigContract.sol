@@ -440,6 +440,11 @@ contract ConfigContract is Ownable {
         BatchConfig memory config1 = lastScheduledConfig();
         BatchConfig memory config2 = nextConfig();
 
+        require(
+            config2.threshold <= config2.keypers.length,
+            "ConfigContract: threshold too large"
+        );
+
         // check start block is not too early
         uint64 headsUp = configChangeHeadsUpBlocks;
         if (config1.batchSpan > headsUp) {
