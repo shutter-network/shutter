@@ -35,6 +35,7 @@ type Config struct {
 	MainChainFollowDistance     uint64         // in main chain blocks
 	ExecutionStaggering         uint64         // in main chain blocks
 	DKGPhaseLength              uint64         // in shuttermint blocks
+	GasPriceMultiplier          float64
 }
 
 const configTemplate = `# Shutter keyper configuration for {{ .Address }}
@@ -53,6 +54,7 @@ DBDir			= "{{ .DBDir }}"
 DKGPhaseLength		= {{ .DKGPhaseLength }}
 ExecutionStaggering	= {{ .ExecutionStaggering }}
 MainChainFollowDistance = {{ .MainChainFollowDistance }}
+GasPriceMultiplier      = {{ .GasPriceMultiplier }}
 
 # Secret Keys
 EncryptionKey	= "{{ .EncryptionKey.ExportECDSA | FromECDSA | printf "%x" }}"

@@ -9,6 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/brainbot-com/shutter/shuttermint/keyper/gaspricer"
 )
 
 // Caller interacts with the contracts on Ethereum.
@@ -75,9 +77,7 @@ func (cc *Caller) Auth() (*bind.TransactOpts, error) {
 	if err != nil {
 		return nil, err
 	}
-	// multiply gas price by 1.5 because suggested gas price seems to be too optimistic sometimes
-	gasPrice.Mul(gasPrice, big.NewInt(3))
-	gasPrice.Div(gasPrice, big.NewInt(2))
+	gasPrice = gaspricer.Adjust(gasPrice)
 	auth.GasPrice = gasPrice
 	return auth, nil
 }

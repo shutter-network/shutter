@@ -14,6 +14,7 @@ import (
 
 	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
 	"github.com/brainbot-com/shutter/shuttermint/keyper"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/gaspricer"
 )
 
 // keyperCmd represents the keyper command.
@@ -98,6 +99,10 @@ func readKeyperConfig() (keyper.Config, error) {
 
 func keyperMain() error {
 	kc, err := readKeyperConfig()
+	if err != nil {
+		return errors.WithMessage(err, "Please check your configuration")
+	}
+	err = gaspricer.SetMultiplier(kc.GasPriceMultiplier)
 	if err != nil {
 		return errors.WithMessage(err, "Please check your configuration")
 	}

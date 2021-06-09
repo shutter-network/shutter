@@ -164,6 +164,7 @@ func newConfig() (*keyper.Config, error) {
 		MainChainFollowDistance:     0,
 		ExecutionStaggering:         5,
 		DKGPhaseLength:              30,
+		GasPriceMultiplier:          1.5,
 	}
 	err := config.GenerateNewKeys()
 	if err != nil {

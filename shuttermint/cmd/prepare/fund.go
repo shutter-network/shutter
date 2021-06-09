@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/brainbot-com/shutter/shuttermint/keyper/gaspricer"
 	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
 )
 
@@ -191,8 +192,7 @@ func fundAddresses(ctx context.Context, client *ethclient.Client, addresses []co
 	if err != nil {
 		return errors.Wrap(err, "failed to query gas price")
 	}
-	gasPrice.Mul(gasPrice, big.NewInt(3))
-	gasPrice.Div(gasPrice, big.NewInt(2))
+	gasPrice = gaspricer.Adjust(gasPrice)
 
 	signer := types.NewEIP155Signer(chainID)
 
