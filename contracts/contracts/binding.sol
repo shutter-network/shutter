@@ -12,6 +12,7 @@ import "./ExecutorContract.sol";
 import "./FeeBankContract.sol";
 import "./KeyBroadcastContract.sol";
 import "./KeyperSlasher.sol";
+import "./TargetProxyContract.sol";
 
 import "./TestDepositTokenContract.sol";
 import "./TestTargetContract.sol";

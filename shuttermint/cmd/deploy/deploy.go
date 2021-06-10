@@ -203,6 +203,12 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 	}
 	batch.Add(tx)
 
+	targetProxyAddress, tx, _, err := contract.DeployTargetProxyContract(auth, client, executorAddress)
+	if err != nil {
+		return nil, err
+	}
+	batch.Add(tx)
+
 	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
 	if err != nil {
 		return nil, err
@@ -235,6 +241,7 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 		TokenContract:         tokenAddress,
 		DepositContract:       depositAddress,
 		KeyperSlasherContract: keyperSlasherAddress,
+		TargetProxyContract:   targetProxyAddress,
 		TargetContract:        targetAddress,
 	}, nil
 }
@@ -269,6 +276,7 @@ func deploy(ctx context.Context, client *ethclient.Client) error {
 	fmt.Println("       TokenContract:", contracts.TokenContract.Hex())
 	fmt.Println("     DepositContract:", contracts.DepositContract.Hex())
 	fmt.Println("       KeyperSlasher:", contracts.KeyperSlasherContract.Hex())
+	fmt.Println(" TargetProxyContract:", contracts.TargetProxyContract.Hex())
 	fmt.Println("      TargetContract:", contracts.TargetContract.Hex())
 	fmt.Println("")
 	fmt.Println("            Gas used:", totalGasUsed)

@@ -23,6 +23,7 @@ type Contracts struct {
 	DepositContract       common.Address
 	KeyperSlasherContract common.Address
 	TargetContract        common.Address
+	TargetProxyContract   common.Address
 }
 
 type contractsJSON struct {
@@ -35,6 +36,7 @@ type contractsJSON struct {
 	DepositContract       ChecksumAddr
 	KeyperSlasherContract ChecksumAddr
 	TargetContract        ChecksumAddr
+	TargetProxyContract   ChecksumAddr
 }
 
 // MarshalJSON makes us output checksum addresses when marshaling as json.
@@ -49,6 +51,7 @@ func (c Contracts) MarshalJSON() ([]byte, error) {
 			ChecksumAddr(c.TokenContract),
 			ChecksumAddr(c.DepositContract),
 			ChecksumAddr(c.KeyperSlasherContract),
+			ChecksumAddr(c.TargetProxyContract),
 			ChecksumAddr(c.TargetContract),
 		},
 	)
@@ -69,6 +72,7 @@ func (c *Contracts) UnmarshalJSON(data []byte) error {
 	c.TokenContract = common.Address(tmp.TokenContract)
 	c.DepositContract = common.Address(tmp.DepositContract)
 	c.KeyperSlasherContract = common.Address(tmp.KeyperSlasherContract)
+	c.TargetProxyContract = common.Address(tmp.TargetProxyContract)
 	c.TargetContract = common.Address(tmp.TargetContract)
 	return nil
 }
