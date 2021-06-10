@@ -176,4 +176,4 @@ def compute_decryption_signature_preimage(
 
 
 def encode_withdrawal_delay(withdrawal_delay: int) -> bytes:
-    return eth_abi.encode_single("uint64", withdrawal_delay)  # type: ignore
+    return eth_abi.encode_single("uint64", withdrawal_delay)

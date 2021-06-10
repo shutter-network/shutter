@@ -156,6 +156,25 @@ def key_broadcast_contract(
     return key_broadcast_contract
 
 
+@pytest.fixture
+def target_proxy_contract(
+    TargetProxyContract: ContractContainer,
+    owner: Account,
+) -> Any:
+    # make owner executor so that we can call it directly to simplify tests
+    target_proxy_contract = owner.deploy(TargetProxyContract, owner)
+    return target_proxy_contract
+
+
+@pytest.fixture
+def test_proxy_receiver(
+    TestProxyReceiver: ContractContainer,
+    accounts: Sequence[Account],
+) -> Any:
+    test_proxy_receiver = accounts[0].deploy(TestProxyReceiver)
+    return test_proxy_receiver
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation: Any) -> None:
     pass

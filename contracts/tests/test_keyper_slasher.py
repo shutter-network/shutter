@@ -134,7 +134,7 @@ def test_slashing(
     schedule_config(config_contract, config, owner=owner)
     mine_until(config.start_block_number + config.batch_span * 10, chain)
 
-    data = eth_abi.encode_single("uint8", 0)  # type: ignore
+    data = eth_abi.encode_single("uint8", 0)
     deposit_token_contract.send(keypers[0], 100, data, {"from": owner})
     deposit_token_contract.send(deposit_contract, 100, data, {"from": keypers[0]})
 
