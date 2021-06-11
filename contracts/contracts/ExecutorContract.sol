@@ -161,6 +161,56 @@ contract ExecutorContract {
         emit BatchExecuted(numExecutionHalfSteps, batchHash);
     }
 
+    function skipEmptyOrTimedOutBatches(uint64 maxBatches) public {
+        uint64 halfSteps = numExecutionHalfSteps;
+        uint64 batchIndex = halfSteps / 2;
+
+        while (maxBatches > 0) {
+            if (halfSteps % 2 == 0) {
+                uint64 configIndex = configContract.configIndexForBatchIndex(
+                    batchIndex
+                );
+
+                if (!configContract.batchingActive(configIndex)) {
+                    break;
+                }
+                (, uint64 end, uint64 executionTimeout) = configContract
+                .batchBoundaryBlocks(configIndex, batchIndex);
+                if (block.number < end) {
+                    // Users may still submit transactions
+                    break;
+                }
+
+                if (
+                    block.number < executionTimeout &&
+                    batcherContract.batchHashes(
+                        batchIndex,
+                        TransactionType.Cipher
+                    ) !=
+                    bytes32(0)
+                ) {
+                    break;
+                }
+                halfSteps += 1;
+                emit CipherExecutionSkipped(halfSteps);
+            }
+
+            if (
+                batcherContract.batchHashes(
+                    batchIndex,
+                    TransactionType.Plain
+                ) != bytes32(0)
+            ) {
+                break;
+            }
+            halfSteps += 1;
+            batchIndex += 1;
+            emit BatchExecuted(halfSteps, bytes32(0));
+            maxBatches -= 1;
+        }
+        numExecutionHalfSteps = halfSteps;
+    }
+
     /// @notice Skip execution of the cipher portion of a batch.
     /// @notice This is only possible if successful execution has not been carried out in time
     ///     (according to the execution timeout defined in the config)

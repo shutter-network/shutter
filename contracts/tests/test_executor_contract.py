@@ -18,6 +18,75 @@ from tests.factories import make_batch_config
 from tests.factories import make_bytes
 
 
+def test_skip(
+    executor_contract: Any,
+    config_contract: Any,
+    mock_batcher_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+    keypers: List[Account],
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=5,
+        keypers=keypers,
+        threshold=0,
+        execution_timeout=5,
+    )
+    schedule_config(config_contract, config, owner=owner)
+    # check that we cannot skip cipher batches before the execution timeout is reached
+    mine_until(config.start_block_number, chain)
+    tx = executor_contract.skipEmptyOrTimedOutBatches(10000)
+    print(tx.events)
+    assert executor_contract.numExecutionHalfSteps() == 0
+
+    # check that we can skip multiple batches at once
+    mine_until(config.start_block_number + config.batch_span * 3, chain)
+    tx = executor_contract.skipEmptyOrTimedOutBatches(10000)
+    print(tx.events)
+    assert len(tx.events["CipherExecutionSkipped"]) == 3
+    assert len(tx.events["BatchExecuted"]) == 3
+    assert executor_contract.numExecutionHalfSteps() == 6
+
+    tx = executor_contract.skipEmptyOrTimedOutBatches(10000)
+    print(tx.events)
+    assert executor_contract.numExecutionHalfSteps() == 6
+
+
+def test_skip_non_empty(
+    executor_contract: Any,
+    config_contract: Any,
+    mock_batcher_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+    keypers: List[Account],
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=5,
+        keypers=keypers,
+        threshold=0,
+        execution_timeout=5,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mock_batcher_contract.setBatchHash(
+        0, 0, Hash32(b"\xde" * 32)
+    )  # non-empty, can be skipped after timeout
+    mock_batcher_contract.setBatchHash(2, 1, Hash32(b"\x01" * 32))  # non-empty, cannot be skipped
+
+    mine_until(config.start_block_number + config.batch_span * 3, chain)
+    tx = executor_contract.skipEmptyOrTimedOutBatches(10000)
+    print(tx.events)
+    assert len(tx.events["CipherExecutionSkipped"]) == 3
+    assert len(tx.events["BatchExecuted"]) == 2
+    assert executor_contract.numExecutionHalfSteps() == 5
+
+
 def test_check_and_increment_half_steps(
     executor_contract: Any,
     config_contract: Any,
