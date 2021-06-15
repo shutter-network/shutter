@@ -131,13 +131,13 @@ jobs:
       - checkout
       - install-nox
       - restore_cache:
-          key: prettier-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
       - run:
           name: "Run prettier with nox"
           command: |
             nox -s prettier
       - save_cache:
-          key: prettier-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
           paths:
             - ~/shutter/.nox
 
