@@ -22,8 +22,8 @@ type Contracts struct {
 	TokenContract         common.Address
 	DepositContract       common.Address
 	KeyperSlasherContract common.Address
-	TargetContract        common.Address
 	TargetProxyContract   common.Address
+	TargetContract        common.Address
 }
 
 type contractsJSON struct {
@@ -35,8 +35,8 @@ type contractsJSON struct {
 	TokenContract         ChecksumAddr
 	DepositContract       ChecksumAddr
 	KeyperSlasherContract ChecksumAddr
-	TargetContract        ChecksumAddr
 	TargetProxyContract   ChecksumAddr
+	TargetContract        ChecksumAddr
 }
 
 // MarshalJSON makes us output checksum addresses when marshaling as json.

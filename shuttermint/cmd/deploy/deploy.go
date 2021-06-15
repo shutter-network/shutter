@@ -209,7 +209,7 @@ func batchContractDeployments(batch *txbatch.TXBatch) (*Contracts, error) {
 	}
 	batch.Add(tx)
 
-	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, executorAddress)
+	targetAddress, tx, _, err := contract.DeployTestTargetContract(auth, client, targetProxyAddress)
 	if err != nil {
 		return nil, err
 	}
