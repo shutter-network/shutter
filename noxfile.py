@@ -68,7 +68,7 @@ def install_prettier(session: Session) -> None:
 
         session.run("nodeenv", str(nodeenv_dir))
 
-        for pkg in ["prettier@2.2.1", "prettier-plugin-solidity@1.0.0-beta.5"]:
+        for pkg in ["prettier@2.3.1", "prettier-plugin-solidity@1.0.0-beta.13"]:
             session.run(
                 str(bindir.joinpath("npm")), "install", "-g", pkg, silent=True, external=True
             )
