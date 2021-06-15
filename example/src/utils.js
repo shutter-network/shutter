@@ -1,5 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 
+const targetContractSelector = "0x943d7209";
+
 async function getConfigIndexAtBlock(blockNumber, configContract) {
   let numConfigs = await configContract.numConfigs();
   for (let i = numConfigs - 1; i >= 0; i--) {
@@ -49,21 +51,52 @@ function getRandomNonce() {
   return Math.floor(Math.random() * 100000);
 }
 
-async function encodeMessage(message, nonce, privateKey) {
-  let messageBytes = ethers.utils.toUtf8Bytes(message);
-  let payload = ethers.utils.defaultAbiCoder.encode(
+async function encodeTargetContractData(message, nonce, privateKey) {
+  const messageBytes = ethers.utils.toUtf8Bytes(message);
+  const data = ethers.utils.defaultAbiCoder.encode(
     ["uint64", "bytes"],
     [nonce, messageBytes]
   );
-  let payloadHash = ethers.utils.keccak256(payload);
-  let wallet = new ethers.Wallet(privateKey);
-  let flatSig = await wallet.signMessage(ethers.utils.arrayify(payloadHash));
-  let sig = ethers.utils.splitSignature(flatSig);
-  let encoded = ethers.utils.defaultAbiCoder.encode(
+  const dataHash = ethers.utils.keccak256(data);
+
+  const wallet = new ethers.Wallet(privateKey);
+  const flatSig = await wallet.signMessage(ethers.utils.arrayify(dataHash));
+  const sig = ethers.utils.splitSignature(flatSig);
+
+  let dataWithSignature = ethers.utils.defaultAbiCoder.encode(
     ["bytes", "uint8", "bytes32", "bytes32"],
-    [payload, sig.v, sig.r, sig.s]
+    [data, sig.v, sig.r, sig.s]
   );
-  return encoded;
+
+  return dataWithSignature;
+}
+
+function encodeTargetContractCall(data) {
+  return ethers.utils.concat([
+    targetContractSelector,
+    ethers.utils.defaultAbiCoder.encode(["bytes"], [data]),
+  ]);
+}
+
+function encodeProxyContractData(receiver, data) {
+  return ethers.utils.defaultAbiCoder.encode(
+    ["address", "bytes"],
+    [receiver, data]
+  );
+}
+
+async function encodeMessage(receiver, message, nonce, privateKey) {
+  const targetContractData = await encodeTargetContractData(
+    message,
+    nonce,
+    privateKey
+  );
+  const targetContractCall = encodeTargetContractCall(targetContractData);
+  const proxyContractData = encodeProxyContractData(
+    receiver,
+    targetContractCall
+  );
+  return proxyContractData;
 }
 
 async function encryptMessage(message, eonPublicKey, batchIndex) {

@@ -80,6 +80,7 @@ import {
   encryptMessage,
 } from "../utils.js";
 import { getBlockNumber } from "../blocknumber.js";
+import contracts from "../assets/contracts.json";
 
 // number of blocks between sending the tx and it being included in the chain
 const expectedInclusionDelay = 3;
@@ -154,6 +155,7 @@ export default {
     async sendTransaction(type) {
       let nonce = getRandomNonce();
       let encodedMessage = await encodeMessage(
+        contracts.TargetContract,
         this.message,
         nonce,
         this.privateKey
