@@ -3,12 +3,8 @@
 pragma solidity =0.8.4;
 
 import {IERC777} from "openzeppelin/contracts/token/ERC777/IERC777.sol";
-import {
-    IERC777Recipient
-} from "openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import {
-    IERC1820Registry
-} from "openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
+import {IERC777Recipient} from "openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import {IERC1820Registry} from "openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
 import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 
 struct Deposit {

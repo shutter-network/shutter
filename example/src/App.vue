@@ -79,9 +79,8 @@ export default {
       const config = await getConfigAtBlock(blockNumber, this.$configContract);
 
       const bestKey = await this.$keyBroadcastContract.getBestKey(0);
-      const bestKeyNumVotes = await this.$keyBroadcastContract.getBestKeyNumVotes(
-        0
-      );
+      const bestKeyNumVotes =
+        await this.$keyBroadcastContract.getBestKeyNumVotes(0);
 
       this.config = config;
       if (bestKeyNumVotes >= config.threshold) {

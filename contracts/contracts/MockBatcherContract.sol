@@ -3,7 +3,10 @@
 pragma solidity =0.8.4;
 
 contract MockBatcherContract {
-    enum TransactionType {Cipher, Plain}
+    enum TransactionType {
+        Cipher,
+        Plain
+    }
 
     mapping(uint64 => mapping(TransactionType => bytes32)) public batchHashes;
 

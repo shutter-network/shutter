@@ -45,8 +45,9 @@ contract KeyBroadcastContract {
         uint64 startBatchIndex,
         bytes memory key
     ) public {
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(startBatchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            startBatchIndex
+        );
         uint64 batchSpan = configContract.configBatchSpan(configIndex);
 
         require(batchSpan > 0, "KeyBroadcastContract: config is inactive");

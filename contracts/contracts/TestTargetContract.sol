@@ -18,19 +18,19 @@ contract TestTargetContract {
             "TestTargetContract: only executor can execute"
         );
 
-        (bytes memory payload, uint8 v, bytes32 r, bytes32 s) =
-            abi.decode(txData, (bytes, uint8, bytes32, bytes32));
+        (bytes memory payload, uint8 v, bytes32 r, bytes32 s) = abi.decode(
+            txData,
+            (bytes, uint8, bytes32, bytes32)
+        );
         bytes32 payloadHash = keccak256(payload);
-        bytes32 signedHash =
-            keccak256(
-                abi.encodePacked(
-                    "\x19Ethereum Signed Message:\n32",
-                    payloadHash
-                )
-            );
+        bytes32 signedHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", payloadHash)
+        );
         address sender = ecrecover(signedHash, v, r, s);
-        (uint64 nonce, bytes memory data) =
-            abi.decode(payload, (uint64, bytes));
+        (uint64 nonce, bytes memory data) = abi.decode(
+            payload,
+            (uint64, bytes)
+        );
 
         require(
             !_nonces[sender][nonce],

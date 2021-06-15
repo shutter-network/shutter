@@ -329,7 +329,7 @@ contract ConfigContract is Ownable {
         onlyOwner
     {
         configs[nextConfigIndex()]
-            .targetFunctionSelector = targetFunctionSelector;
+        .targetFunctionSelector = targetFunctionSelector;
     }
 
     function nextConfigSetExecutionTimeout(uint64 executionTimeout)
@@ -462,8 +462,8 @@ contract ConfigContract is Ownable {
                 config2.startBatchIndex > config1.startBatchIndex,
                 "ConfigContract: start batch index too small"
             );
-            uint64 batchDelta =
-                config2.startBatchIndex - config1.startBatchIndex;
+            uint64 batchDelta = config2.startBatchIndex -
+                config1.startBatchIndex;
             require(
                 config1.startBlockNumber + config1.batchSpan * batchDelta ==
                     config2.startBlockNumber,
@@ -539,8 +539,10 @@ contract ConfigContract is Ownable {
         assert(batchIndex >= startBatchIndex);
 
         uint64 relativeBatchIndex = batchIndex - startBatchIndex;
-        uint64 end =
-            startBlockNumber + relativeBatchIndex * batchSpan + batchSpan;
+        uint64 end = startBlockNumber +
+            relativeBatchIndex *
+            batchSpan +
+            batchSpan;
         uint64 start = end - batchSpan;
         if (relativeBatchIndex >= 1) {
             start -= batchSpan;

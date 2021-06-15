@@ -3,11 +3,7 @@
 pragma solidity =0.8.4;
 
 import {ConfigContract} from "./ConfigContract.sol";
-import {
-    BatcherContract,
-    BatchConfig,
-    TransactionType
-} from "./BatcherContract.sol";
+import {BatcherContract, BatchConfig, TransactionType} from "./BatcherContract.sol";
 import {DepositContract} from "./DepositContract.sol";
 
 struct CipherExecutionReceipt {
@@ -76,21 +72,23 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
         address targetAddress = configContract.configTargetAddress(configIndex);
-        bytes4 targetFunctionSelector =
-            configContract.configTargetFunctionSelector(configIndex);
-        uint64 transactionGasLimit =
-            configContract.configTransactionGasLimit(configIndex);
+        bytes4 targetFunctionSelector = configContract
+        .configTargetFunctionSelector(configIndex);
+        uint64 transactionGasLimit = configContract.configTransactionGasLimit(
+            configIndex
+        );
 
         // Check that batching is active
         require(
             configContract.batchingActive(configIndex),
             "ExecutorContract: config is inactive"
         );
-        (, uint64 end, uint64 executionTimeout) =
-            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        (, uint64 end, uint64 executionTimeout) = configContract
+        .batchBoundaryBlocks(configIndex, batchIndex);
 
         // skip cipher execution if we reached the execution timeout.
         if (block.number >= executionTimeout) {
@@ -110,8 +108,10 @@ contract ExecutorContract {
             keyperIndex < numKeypers,
             "ExecutorContract: keyper index out of bounds"
         );
-        address keyperAtIndex =
-            configContract.configKeypers(configIndex, keyperIndex);
+        address keyperAtIndex = configContract.configKeypers(
+            configIndex,
+            keyperIndex
+        );
         require(
             msg.sender == keyperAtIndex,
             "ExecutorContract: sender is not specified keyper"
@@ -138,13 +138,12 @@ contract ExecutorContract {
         );
 
         // Execute the batch
-        bytes32 batchHash =
-            executeTransactions(
-                targetAddress,
-                targetFunctionSelector,
-                transactionGasLimit,
-                transactions
-            );
+        bytes32 batchHash = executeTransactions(
+            targetAddress,
+            targetFunctionSelector,
+            transactionGasLimit,
+            transactions
+        );
 
         cipherExecutionReceipts[
             numExecutionHalfSteps
@@ -173,14 +172,17 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
         require(
             configContract.batchingActive(configIndex),
             "ExecutorContract: config is inactive"
         );
-        (, , uint64 executionTimeout) =
-            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        (, , uint64 executionTimeout) = configContract.batchBoundaryBlocks(
+            configIndex,
+            batchIndex
+        );
         require(
             block.number >= executionTimeout,
             "ExecutorContract: execution timeout not reached yet"
@@ -208,29 +210,32 @@ contract ExecutorContract {
             "ExecutorContract: unexpected half step"
         );
 
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
         address targetAddress = configContract.configTargetAddress(configIndex);
-        bytes4 targetFunctionSelector =
-            configContract.configTargetFunctionSelector(configIndex);
-        uint64 transactionGasLimit =
-            configContract.configTransactionGasLimit(configIndex);
+        bytes4 targetFunctionSelector = configContract
+        .configTargetFunctionSelector(configIndex);
+        uint64 transactionGasLimit = configContract.configTransactionGasLimit(
+            configIndex
+        );
 
         // Since the cipher part of the batch has already been executed or skipped and the
         // config cannot be changed anymore (since the batching period is over), the following
         // checks remain true.
         assert(configContract.batchingActive(configIndex));
-        (, uint64 end, ) =
-            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        (, uint64 end, ) = configContract.batchBoundaryBlocks(
+            configIndex,
+            batchIndex
+        );
         assert(block.number >= end);
 
-        bytes32 batchHash =
-            executeTransactions(
-                targetAddress,
-                targetFunctionSelector,
-                transactionGasLimit,
-                transactions
-            );
+        bytes32 batchHash = executeTransactions(
+            targetAddress,
+            targetFunctionSelector,
+            transactionGasLimit,
+            transactions
+        );
 
         require(
             batchHash ==
@@ -251,12 +256,15 @@ contract ExecutorContract {
     ) private returns (bytes32) {
         bytes32 batchHash;
         for (uint64 i = 0; i < transactions.length; i++) {
-            bytes memory callData =
-                abi.encodeWithSelector(targetFunctionSelector, transactions[i]);
+            bytes memory callData = abi.encodeWithSelector(
+                targetFunctionSelector,
+                transactions[i]
+            );
 
             // call target function, ignoring any errors
-            (bool success, bytes memory returnData) =
-                targetAddress.call{gas: gasLimit}(callData);
+            (bool success, bytes memory returnData) = targetAddress.call{
+                gas: gasLimit
+            }(callData);
             if (!success) {
                 emit TransactionFailed({
                     txIndex: i,

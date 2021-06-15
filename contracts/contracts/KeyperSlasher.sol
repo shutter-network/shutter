@@ -65,8 +65,9 @@ contract KeyperSlasher {
         );
 
         uint64 batchIndex = halfStep / 2;
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
         require(
             keyperIndex < configContract.configNumKeypers(configIndex),
             "KeyperSlasher: keyper index out of range"
@@ -77,8 +78,9 @@ contract KeyperSlasher {
             "KeyperSlasher: sender does not match keyper"
         );
 
-        CipherExecutionReceipt memory receipt =
-            executorContract.getReceipt(halfStep);
+        CipherExecutionReceipt memory receipt = executorContract.getReceipt(
+            halfStep
+        );
         require(receipt.executed, "KeyperSlasher: half step not yet executed");
         require(
             receipt.cipherBatchHash != bytes32(0),
@@ -104,8 +106,9 @@ contract KeyperSlasher {
         Accusation memory accusation = accusations[authorization.halfStep];
         require(accusation.accused, "KeyperSlasher: no accusation");
         require(!accusation.appealed, "KeyperSlasher: already appealed");
-        CipherExecutionReceipt memory receipt =
-            executorContract.getReceipt(authorization.halfStep);
+        CipherExecutionReceipt memory receipt = executorContract.getReceipt(
+            authorization.halfStep
+        );
 
         _verifyAuthorization(authorization, receipt);
 
@@ -142,8 +145,9 @@ contract KeyperSlasher {
         CipherExecutionReceipt memory receipt
     ) internal view {
         uint64 batchIndex = receipt.halfStep / 2;
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
 
         require(
             authorization.signatures.length >=
@@ -155,13 +159,12 @@ contract KeyperSlasher {
                 authorization.signerIndices.length,
             "KeyperSlasher: number of signatures and indices does not match"
         );
-        bytes32 decryptionSignatureHash =
-            keccak256(
-                _decryptionSignaturePreimage(
-                    address(executorContract.batcherContract()),
-                    receipt
-                )
-            );
+        bytes32 decryptionSignatureHash = keccak256(
+            _decryptionSignaturePreimage(
+                address(executorContract.batcherContract()),
+                receipt
+            )
+        );
         for (uint64 i = 0; i < authorization.signatures.length; i++) {
             bytes memory signature = authorization.signatures[i];
             uint64 signerIndex = authorization.signerIndices[i];

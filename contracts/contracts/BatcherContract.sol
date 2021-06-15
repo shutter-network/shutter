@@ -6,7 +6,10 @@ import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 import {ConfigContract, BatchConfig} from "./ConfigContract.sol";
 import {FeeBankContract} from "./FeeBankContract.sol";
 
-enum TransactionType {Cipher, Plain}
+enum TransactionType {
+    Cipher,
+    Plain
+}
 
 /// @title A contract that batches transactions.
 contract BatcherContract is Ownable {
@@ -54,12 +57,15 @@ contract BatcherContract is Ownable {
         TransactionType transactionType,
         bytes calldata transaction
     ) public payable {
-        uint64 configIndex =
-            configContract.configIndexForBatchIndex(batchIndex);
-        uint64 transactionSizeLimit =
-            configContract.configTransactionSizeLimit(configIndex);
-        uint64 batchSizeLimit =
-            configContract.configBatchSizeLimit(configIndex);
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
+        uint64 transactionSizeLimit = configContract.configTransactionSizeLimit(
+            configIndex
+        );
+        uint64 batchSizeLimit = configContract.configBatchSizeLimit(
+            configIndex
+        );
         address feeReceiver = configContract.configFeeReceiver(configIndex);
 
         // check batching is active and open
@@ -67,8 +73,10 @@ contract BatcherContract is Ownable {
             configContract.batchingActive(configIndex),
             "BatcherContract: batch not active"
         );
-        (uint64 start, uint64 end, ) =
-            configContract.batchBoundaryBlocks(configIndex, batchIndex);
+        (uint64 start, uint64 end, ) = configContract.batchBoundaryBlocks(
+            configIndex,
+            batchIndex
+        );
         require(block.number >= start, "BatcherContract: batch not open yet");
         require(block.number < end, "BatcherContract: batch already closed");
 
@@ -90,11 +98,10 @@ contract BatcherContract is Ownable {
         require(msg.value >= minFee, "BatcherContract: fee too small");
 
         // add tx to batch
-        bytes memory batchHashPreimage =
-            abi.encodePacked(
-                transaction,
-                batchHashes[batchIndex][transactionType]
-            );
+        bytes memory batchHashPreimage = abi.encodePacked(
+            transaction,
+            batchHashes[batchIndex][transactionType]
+        );
         bytes32 newBatchHash = keccak256(batchHashPreimage);
         batchHashes[batchIndex][transactionType] = newBatchHash;
         batchSizes[batchIndex] += uint64(transaction.length);
