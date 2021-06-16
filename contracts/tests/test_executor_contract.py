@@ -293,6 +293,72 @@ def test_check_keyper(
     executor_contract.executeCipherBatch(batch_index, ZERO_HASH32, [], 1, {"from": keypers[1]})
 
 
+def test_cipher_execution_no_tx_non_zero_hash(
+    executor_contract: Any,
+    config_contract: Any,
+    mock_batcher_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+    keypers: List[Account],
+) -> None:
+    """test that cipher execution works for a batch, which only contains non-decryptable
+    transactions.  If a user sends transactions that cannot be decrypted, we may call into
+    executeCipherBatch with a non-zero cipher_hash, but zero transactions.
+    """
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        keypers=keypers,
+        threshold=0,
+    )
+    schedule_config(config_contract, config, owner=owner)
+    cipher_hash = Hash32(b"\xde" * 32)
+    mock_batcher_contract.setBatchHash(
+        0, 0, cipher_hash
+    )  # non-empty, can be skipped after timeout
+
+    mine_until(config.start_block_number + config.batch_span, chain)
+
+    executor_contract.executeCipherBatch(0, cipher_hash, [], 0, {"from": keypers[0]})
+    receipt = executor_contract.cipherExecutionReceipts(0)
+    assert receipt[0] is True  # executed
+    assert receipt[1] == keypers[0]  # executor
+    assert receipt[2] == 0  # half step
+    assert bytes(receipt[3]) == cipher_hash  # batch hash
+
+
+def test_cipher_execution_zero_hash_requires_empty_txs(
+    executor_contract: Any,
+    config_contract: Any,
+    mock_batcher_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    owner: Account,
+    keypers: List[Account],
+) -> None:
+    """test that cipher execution works for a batch, which only contains non-decryptable
+    transactions.  If a user sends transactions that cannot be decrypted, we may call into
+    executeCipherBatch with a non-zero cipher_hash, but zero transactions.
+    """
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        keypers=keypers,
+        threshold=0,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(config.start_block_number + config.batch_span, chain)
+
+    with brownie.reverts(
+        "ExecutorContract: transactions should be empty if cipherBatchHash is zero"
+    ):
+        executor_contract.executeCipherBatch(0, ZERO_HASH32, [b"foo"], 0, {"from": keypers[0]})
+
+
 def test_cipher_execution_stores_receipt(
     executor_contract: Any,
     config_contract: Any,

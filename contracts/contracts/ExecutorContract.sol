@@ -130,11 +130,14 @@ contract ExecutorContract {
             "ExecutorContract: incorrect cipher batch hash"
         );
 
-        // Check the number of transactions is zero iff we provide the ZERO_HASH
+        // If the cipher hash is zero, make sure the list of
+        // transactions is empty.  Please note that we may have a
+        // non-zero cipher hash and still have an empty list of
+        // transactions, e.g. when a nondecryptable transaction has
+        // been added by a user
         require(
-            (cipherBatchHash == bytes32(0) && transactions.length == 0) ||
-                (cipherBatchHash != bytes32(0) && transactions.length > 0),
-            "ExecutorContract: cipherBatchHash should be zero iff transactions is empty"
+            (cipherBatchHash != bytes32(0) || transactions.length == 0),
+            "ExecutorContract: transactions should be empty if cipherBatchHash is zero"
         );
 
         // Execute the batch

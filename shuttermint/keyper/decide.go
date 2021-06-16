@@ -41,6 +41,7 @@ type Batch struct {
 	DecryptedBatchHash       []byte
 	DecryptionSignatureIndex int
 	VerifiedSignatures       map[common.Address][]byte
+	IsEmpty                  bool
 }
 
 // VerifySignature checks if the sender signed the batches' DecryptionSignatureHash.
@@ -738,6 +739,7 @@ func (dcdr *Decider) decryptTransactions(key *shcrypto.EpochSecretKey, epoch uin
 		DecryptedTransactions:   txs,
 		DecryptedBatchHash:      decryptedBatchHash,
 		VerifiedSignatures:      nil,
+		IsEmpty:                 batch.EncryptedBatchHash == common.Hash{},
 	}
 	dcdr.State.Batches[batchIndex] = stBatch
 }
@@ -758,7 +760,7 @@ func (dcdr *Decider) sendDecryptionSignature(epoch uint64) {
 		log.Panicf("no main chain config for batch %d", batchIndex)
 	}
 
-	if uint64(len(stBatch.VerifiedSignatures)) < config.Threshold && len(stBatch.DecryptedTransactions) > 0 {
+	if uint64(len(stBatch.VerifiedSignatures)) < config.Threshold && !stBatch.IsEmpty {
 		signature, err := crypto.Sign(stBatch.DecryptionSignatureHash, dcdr.Config.SigningKey)
 		if err != nil {
 			log.Panicf("Cannot sign the decryption signature: %s", err)
@@ -840,7 +842,7 @@ func (dcdr *Decider) syncBatch(batch *Batch) {
 		panic("Error in syncBatch: config is not active")
 	}
 
-	if len(batch.DecryptedTransactions) == 0 {
+	if batch.IsEmpty {
 		return
 	}
 
@@ -942,7 +944,7 @@ func (dcdr *Decider) executeCipherBatch(batchIndex uint64, config contract.Batch
 		return nil
 	}
 
-	if len(stBatch.DecryptedTransactions) > 0 && uint64(len(stBatch.VerifiedSignatures)) < config.Threshold {
+	if !stBatch.IsEmpty && uint64(len(stBatch.VerifiedSignatures)) < config.Threshold {
 		log.Printf("Not enough votes for batch %d", batchIndex)
 		return nil
 	}
