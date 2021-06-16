@@ -651,3 +651,134 @@ def test_slashed_keypers_cannot_execute_cipher_batch(
 
     with brownie.reverts("ExecutorContract: keyper is slashed"):
         executor_contract.executeCipherBatch(0, ZERO_HASH32, [], 0, {"from": slashed_keyper})
+
+
+def test_recovery_can_only_be_called_by_owner(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+    non_owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        execution_timeout=20,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(
+        config.start_block_number + config.batch_span + config.execution_timeout - 1,
+        chain,
+    )
+
+    with brownie.reverts("Ownable: caller is not the owner"):
+        executor_contract.setHalfSteps(1, {"from": non_owner})
+    executor_contract.setHalfSteps(1, {"from": owner})
+
+
+def test_recovery_can_only_be_called_after_timeout(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        execution_timeout=20,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(
+        config.start_block_number + config.batch_span + config.execution_timeout - 2,
+        chain,
+    )
+
+    with brownie.reverts("ExecutorContract: execution timeout not passed yet"):
+        executor_contract.setHalfSteps(1, {"from": owner})
+    # previous tx mined the next block, so now it works
+    executor_contract.setHalfSteps(1, {"from": owner})
+
+
+def test_recovery_half_steps_must_increase(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        execution_timeout=20,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(
+        config.start_block_number + config.batch_span + config.execution_timeout - 1,
+        chain,
+    )
+
+    with brownie.reverts("ExecutorContract: new half steps not greater than current value"):
+        executor_contract.setHalfSteps(0, {"from": owner})
+    executor_contract.setHalfSteps(1, {"from": owner})
+
+
+def test_recovery_half_steps_must_not_be_in_the_future(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        execution_timeout=20,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(
+        config.start_block_number + config.batch_span + config.execution_timeout - 1,
+        chain,
+    )
+
+    with brownie.reverts("ExecutorContract: new half steps value is in the future"):
+        executor_contract.setHalfSteps(4, {"from": owner})
+    executor_contract.setHalfSteps(3, {"from": owner})
+
+
+def test_recovery_sets_half_steps(
+    executor_contract: Any,
+    config_contract: Any,
+    chain: Chain,
+    config_change_heads_up_blocks: int,
+    keypers: List[Account],
+    owner: Account,
+) -> None:
+    config = make_batch_config(
+        start_batch_index=0,
+        start_block_number=chain.height + config_change_heads_up_blocks + 20,
+        batch_span=10,
+        execution_timeout=20,
+    )
+    schedule_config(config_contract, config, owner=owner)
+
+    mine_until(
+        config.start_block_number + config.batch_span + config.execution_timeout - 1,
+        chain,
+    )
+    executor_contract.setHalfSteps(3, {"from": owner})
+
+    assert executor_contract.numExecutionHalfSteps() == 3

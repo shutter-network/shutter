@@ -2,6 +2,7 @@
 
 pragma solidity =0.8.4;
 
+import {Ownable} from "openzeppelin/contracts/access/Ownable.sol";
 import {ConfigContract} from "./ConfigContract.sol";
 import {BatcherContract, BatchConfig, TransactionType} from "./BatcherContract.sol";
 import {DepositContract} from "./DepositContract.sol";
@@ -18,7 +19,7 @@ struct CipherExecutionReceipt {
 /// @dev Batch execution is carried out in two separate steps: Execution of the encrypted portion,
 ///     followed by execution of the plaintext portion. Thus, progress is counted in half steps (0
 ///     and 1 for batch 0, 2 and 3 for batch 1, and so on).
-contract ExecutorContract {
+contract ExecutorContract is Ownable {
     /// @notice The event emitted after a batch execution half step has been carried out.
     /// @param numExecutionHalfSteps The total number of finished execution half steps, including
     ///     the one responsible for emitting the event.
@@ -43,10 +44,53 @@ contract ExecutorContract {
         ConfigContract configContractAddress,
         BatcherContract batcherContractAddress,
         DepositContract depositContractAddress
-    ) {
+    ) Ownable() {
         configContract = configContractAddress;
         batcherContract = batcherContractAddress;
         depositContract = depositContractAddress;
+    }
+
+    /// @notice Set the half step for accelerated recovery in case execution was neglected for some time.
+    /// @notice This function can only be called by the owner and only if the execution timeout has passed.
+    /// @notice The new half step must be greater than the current one, but cannot be in the future.
+    /// @param newHalfSteps The new value for numExecutionHalfSteps.
+    function setHalfSteps(uint64 newHalfSteps) public onlyOwner {
+        uint64 batchIndex = numExecutionHalfSteps / 2;
+        uint64 configIndex = configContract.configIndexForBatchIndex(
+            batchIndex
+        );
+        (, , uint64 executionTimeout) = configContract.batchBoundaryBlocks(
+            configIndex,
+            batchIndex
+        );
+
+        // check that execution timeout has passed
+        require(
+            block.number >= executionTimeout,
+            "ExecutorContract: execution timeout not passed yet"
+        );
+
+        // check that new half step is after current one
+        require(
+            newHalfSteps > numExecutionHalfSteps,
+            "ExecutorContract: new half steps not greater than current value"
+        );
+
+        // check that new half step is not in the future
+        uint64 newBatchIndex = newHalfSteps / 2;
+        uint64 newConfigIndex = configContract.configIndexForBatchIndex(
+            newBatchIndex
+        );
+        (, uint64 batchEndBlock, ) = configContract.batchBoundaryBlocks(
+            newConfigIndex,
+            newBatchIndex
+        );
+        require(
+            batchEndBlock < block.number,
+            "ExecutorContract: new half steps value is in the future"
+        );
+
+        numExecutionHalfSteps = newHalfSteps;
     }
 
     /// @notice Execute the cipher portion of a batch.
