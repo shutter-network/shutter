@@ -12,9 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/gaspricer"
+	"github.com/shutter-network/shutter/shuttermint/cmd/shversion"
+	"github.com/shutter-network/shutter/shuttermint/keyper"
+	"github.com/shutter-network/shutter/shuttermint/keyper/gaspricer"
 )
 
 // keyperCmd represents the keyper command.

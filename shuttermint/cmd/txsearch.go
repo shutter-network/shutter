@@ -9,8 +9,8 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents"
 )
 
 var txsearchFlags struct {

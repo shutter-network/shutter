@@ -20,8 +20,8 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	rpctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents"
+	"github.com/shutter-network/shutter/shuttermint/medley"
 )
 
 const (
@@ -383,7 +383,7 @@ func (shutter *Shutter) fetchAndApplyEvents(ctx context.Context, shmcl client.Cl
 
 		// tendermint silently caps the perPage value at 100, make sure to stay below, otherwise
 		// our exit condition is wrong and the log.Fatalf will trigger a panic below; see
-		// https://github.com/brainbot-com/shutter/issues/50
+		// https://github.com/shutter-network/shutter/issues/50
 		perPage := 100
 		page := 1
 		total := 0

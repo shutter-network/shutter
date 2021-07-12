@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/pkg/errors"
 
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/medley"
 )
 
 const (

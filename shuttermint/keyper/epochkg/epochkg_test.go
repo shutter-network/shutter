@@ -6,8 +6,8 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/keyper/puredkg"
 )
 
 func Results(t *testing.T) []*puredkg.Result {

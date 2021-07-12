@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 func randomG1() *bn256cf.G1 {

@@ -5,8 +5,8 @@ package epochkg
 import (
 	"github.com/pkg/errors"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/keyper/puredkg"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 type (

@@ -17,8 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
+	"github.com/shutter-network/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/sandbox"
 )
 
 const (

@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/keyper"
+	"github.com/shutter-network/shutter/shuttermint/medley"
 )
 
 type EthSnatcher struct {

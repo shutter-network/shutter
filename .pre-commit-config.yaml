@@ -33,7 +33,7 @@ repos:
     rev: "9283498f6ee8b0be960df5bf6bca058422eb971b"
     hooks:
       - id: gci
-        args: ["-local", "github.com/brainbot-com/shutter"]
+        args: ["-local", "github.com/shutter-network/shutter"]
         exclude: ^shuttermint/contract/binding\.go|shuttermint/shmsg/.*\.pb\.go|shuttermint/shcryptowasm/.*_wasm\.go$
 
   - repo: https://github.com/schmir-at-bb/gofumpt

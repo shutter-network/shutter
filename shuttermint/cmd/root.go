@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/cmd/config"
-	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
-	"github.com/brainbot-com/shutter/shuttermint/cmd/prepare"
-	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/cmd/config"
+	"github.com/shutter-network/shutter/shuttermint/cmd/deploy"
+	"github.com/shutter-network/shutter/shuttermint/cmd/prepare"
+	"github.com/shutter-network/shutter/shuttermint/cmd/shversion"
+	"github.com/shutter-network/shutter/shuttermint/medley"
 )
 
 var (

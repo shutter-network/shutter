@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 
-	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
+	"github.com/shutter-network/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/medley/txbatch"
 )
 
 // KeyperIndex returns the index of the keyper identified by the given address.

@@ -17,14 +17,14 @@ import (
 	pkgErrors "github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/epochkg"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/puredkg"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/keyper/epochkg"
+	"github.com/shutter-network/shutter/shuttermint/keyper/fx"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/keyper/puredkg"
+	"github.com/shutter-network/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 // maxParallelHalfSteps is the maximum number of txs to send at the same time to execute half

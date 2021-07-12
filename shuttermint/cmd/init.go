@@ -24,8 +24,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
-	"github.com/brainbot-com/shutter/shuttermint/sandbox"
+	"github.com/shutter-network/shutter/shuttermint/app"
+	"github.com/shutter-network/shutter/shuttermint/sandbox"
 )
 
 var (

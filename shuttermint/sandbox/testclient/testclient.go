@@ -15,9 +15,9 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/tendermint/tendermint/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/cmd/shversion"
+	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 func makeMessage() *shmsg.MessageWithNonce {

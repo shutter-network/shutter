@@ -8,8 +8,8 @@ import (
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 func TestNewShutterApp(t *testing.T) {

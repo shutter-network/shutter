@@ -18,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/contract/erc1820"
-	"github.com/brainbot-com/shutter/shuttermint/medley/txbatch"
+	"github.com/shutter-network/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/contract/erc1820"
+	"github.com/shutter-network/shutter/shuttermint/medley/txbatch"
 )
 
 const (

@@ -12,7 +12,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 // IRetriable is an error that knows if it makes sense to retry an action.

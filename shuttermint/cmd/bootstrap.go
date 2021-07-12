@@ -12,10 +12,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/brainbot-com/shutter/shuttermint/cmd/deploy"
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/cmd/deploy"
+	"github.com/shutter-network/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/keyper/fx"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 var bootstrapFlags struct {

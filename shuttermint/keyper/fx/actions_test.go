@@ -10,10 +10,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
-	"github.com/brainbot-com/shutter/shuttermint/medley"
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 // exampleStruct is a struct which contains an IAction valued field, in order to test serializing

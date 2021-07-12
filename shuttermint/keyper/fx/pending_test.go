@@ -7,7 +7,7 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
 )
 
 var myactions []IAction

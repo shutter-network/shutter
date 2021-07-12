@@ -8,8 +8,8 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 func TestMessageParsing(t *testing.T) {

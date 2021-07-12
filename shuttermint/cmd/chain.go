@@ -19,8 +19,8 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 
-	"github.com/brainbot-com/shutter/shuttermint/app"
-	"github.com/brainbot-com/shutter/shuttermint/cmd/shversion"
+	"github.com/shutter-network/shutter/shuttermint/app"
+	"github.com/shutter-network/shutter/shuttermint/cmd/shversion"
 )
 
 var chainCmd = &cobra.Command{

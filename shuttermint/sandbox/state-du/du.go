@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/keyper"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
 )
 
 type storedState struct {

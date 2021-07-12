@@ -10,8 +10,8 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/shutterevents"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents"
 )
 
 // encryptionPublicKey generates an EncryptionPublicKey.
@@ -27,7 +27,7 @@ var encryptionPublicKeyComparer = gocmp.Comparer(func(x, y *EncryptionPublicKey)
 })
 
 // TestGobSerializationIssue45 tests that we can serialize the encryption public key, see
-// https://github.com/brainbot-com/shutter/issues/45
+// https://github.com/shutter-network/shutter/issues/45
 func TestGobSerializationIssue45(t *testing.T) {
 	sh := NewShutter()
 	epk := encryptionPublicKey(t)

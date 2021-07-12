@@ -13,5 +13,5 @@ for osarch in ${TARGETS}; do
     IFS='-' read os arch <<< "${osarch}"
     target=bin/shuttermint-${os}-${arch}-${VERSION}
     echo "Building ${target}"
-    env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/brainbot-com/shutter/shuttermint/cmd/shversion.version=${VERSION}" .
+    env GOARCH=${arch} GOOS=${os} ${GO} build -o ${target} -ldflags "-X github.com/shutter-network/shutter/shuttermint/cmd/shversion.version=${VERSION}" .
 done

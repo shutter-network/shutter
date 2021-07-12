@@ -9,7 +9,7 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
 )
 
 func TestEonSecretKeyShare(t *testing.T) {

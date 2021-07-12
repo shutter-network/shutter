@@ -8,7 +8,7 @@ import (
 	"github.com/tendermint/tendermint/rpc/client"
 	"github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
 )
 
 var showFlags struct {

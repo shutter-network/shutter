@@ -8,8 +8,8 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
-	"github.com/brainbot-com/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 func TestPureDKGFull(t *testing.T) {
@@ -70,7 +70,7 @@ func TestPureDKGFull(t *testing.T) {
 }
 
 // TestPureDKGOfflineSendAccusation tests that we send accusations when we don't receive any
-// message from a keyper. See https://github.com/brainbot-com/shutter/issues/62
+// message from a keyper. See https://github.com/shutter-network/shutter/issues/62
 func TestPureDKGOfflineSendAccusation(t *testing.T) {
 	eon := uint64(5)
 	numKeypers := uint64(3)

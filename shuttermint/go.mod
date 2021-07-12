@@ -1,4 +1,4 @@
-module github.com/brainbot-com/shutter/shuttermint
+module github.com/shutter-network/shutter/shuttermint
 
 go 1.14
 

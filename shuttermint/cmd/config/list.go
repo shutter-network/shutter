@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/contract"
 )
 
 var listCmd = &cobra.Command{

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/brainbot-com/shutter/shuttermint/cmd"
+import "github.com/shutter-network/shutter/shuttermint/cmd"
 
 func main() {
 	cmd.Execute()

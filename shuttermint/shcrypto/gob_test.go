@@ -6,7 +6,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 
-	"github.com/brainbot-com/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
 )
 
 func TestEonSecretKeyShareGobable(t *testing.T) {

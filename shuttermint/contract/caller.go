@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/brainbot-com/shutter/shuttermint/keyper/gaspricer"
+	"github.com/shutter-network/shutter/shuttermint/keyper/gaspricer"
 )
 
 // Caller interacts with the contracts on Ethereum.

@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 
-	shcrypto "github.com/brainbot-com/shutter/shuttermint/shcrypto"
+	shcrypto "github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 // NewBatchConfig creates a new BatchConfig message.

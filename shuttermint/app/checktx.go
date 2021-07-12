@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/brainbot-com/shutter/shuttermint/shmsg"
+	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 
 // MaxTxsPerBlock is the maximum number of txs by a single sender per block.

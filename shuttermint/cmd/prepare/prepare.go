@@ -4,7 +4,7 @@ package prepare
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/brainbot-com/shutter/shuttermint/medley"
+	"github.com/shutter-network/shutter/shuttermint/medley"
 )
 
 var PrepareCmd = &cobra.Command{

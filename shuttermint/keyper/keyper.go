@@ -21,9 +21,9 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/brainbot-com/shutter/shuttermint/contract"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/fx"
-	"github.com/brainbot-com/shutter/shuttermint/keyper/observe"
+	"github.com/shutter-network/shutter/shuttermint/contract"
+	"github.com/shutter-network/shutter/shuttermint/keyper/fx"
+	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
 )
 
 // IsWebsocketURL returns true iff the given URL is a websocket URL, i.e. if it starts with ws://
