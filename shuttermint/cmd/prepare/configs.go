@@ -180,7 +180,7 @@ func saveConfig(c *keyper.Config, dir string) error {
 	}
 	path := filepath.Join(dir, "config.toml")
 
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
 		return errors.Wrap(err, "failed to create keyper config file")
 	}

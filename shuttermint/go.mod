@@ -1,6 +1,6 @@
 module github.com/shutter-network/shutter/shuttermint
 
-go 1.14
+go 1.15
 
 require (
 	github.com/DataDog/zstd v1.4.8 // indirect

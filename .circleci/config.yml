@@ -22,7 +22,7 @@ commands:
       - run:
           name: Install go
           command: |
-            curl -sSL "https://golang.org/dl/go1.16.2.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            curl -sSL "https://golang.org/dl/go1.17.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
   install-ganache:
@@ -49,13 +49,19 @@ executors:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
   go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
   go115:
     docker:
       - image: cimg/go:1.15
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go116:
+    docker:
+      - image: cimg/go:1.16
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -111,14 +117,14 @@ jobs:
             sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
 
       - restore_cache:
-          key: pre-commit-cache-v7-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
       - run:
           name: Install pre-commit
           command: |
             pip install --user -c requirements.txt pre-commit
             pre-commit install-hooks -c pre-commit-config
       - save_cache:
-          key: pre-commit-cache-v7-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
           paths:
             - ~/.cache/pre-commit
             - ~/.local
@@ -267,7 +273,7 @@ workflows:
       - mint-build:
           matrix:
             parameters:
-              go-version: [go, go115]
+              go-version: [go, go115, go116]
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/
