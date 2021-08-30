@@ -5,9 +5,8 @@ black
 flake8
 mypy
 zimports!=0.2.1
-eth-brownie>=1.14.3
+eth-brownie>=1.16.2
 pytest
 attr
 eth_typing
 eth_utils
-web3
