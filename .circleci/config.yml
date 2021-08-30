@@ -16,5 +16,6 @@ workflows:
           mapping: |
             contracts/.* contracts-changed true
             shuttermint/.* shuttermint-changed true
+            shlib/.* shuttermint-changed true
           base-revision: main
           config-path: .circleci/continue_config.yml

@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/pkg/errors"
 
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 )
 
 func encodeUint64(val uint64) []byte {

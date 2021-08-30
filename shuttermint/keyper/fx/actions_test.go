@@ -10,9 +10,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gotest.tools/v3/assert"
 
-	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shtest"
 	"github.com/shutter-network/shutter/shuttermint/medley"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 

@@ -14,9 +14,9 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 	"gotest.tools/v3/assert"
 
-	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shtest"
 	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 var (

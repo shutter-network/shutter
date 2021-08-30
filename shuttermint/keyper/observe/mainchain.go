@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/contract"
 	"github.com/shutter-network/shutter/shuttermint/medley"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 const (

@@ -17,13 +17,13 @@ import (
 	pkgErrors "github.com/pkg/errors"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/shutter-network/shutter/shlib/puredkg"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/contract"
 	"github.com/shutter-network/shutter/shuttermint/keyper/epochkg"
 	"github.com/shutter-network/shutter/shuttermint/keyper/fx"
 	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
-	"github.com/shutter-network/shutter/shuttermint/keyper/puredkg"
 	"github.com/shutter-network/shutter/shuttermint/medley"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 

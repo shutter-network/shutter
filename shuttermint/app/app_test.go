@@ -8,7 +8,7 @@ import (
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 
-	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
+	"github.com/shutter-network/shutter/shlib/shtest"
 	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 )
 
 func main() {

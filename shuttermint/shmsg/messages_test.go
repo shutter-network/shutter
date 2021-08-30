@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"gotest.tools/v3/assert"
 
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 )
 
 func TestNewPolyCommitmentMsg(t *testing.T) {

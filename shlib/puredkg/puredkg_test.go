@@ -8,8 +8,8 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/shutter-network/shutter/shuttermint/internal/shtest"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shcrypto"
+	"github.com/shutter-network/shutter/shlib/shtest"
 )
 
 func TestPureDKGFull(t *testing.T) {

@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/contract"
 	"github.com/shutter-network/shutter/shuttermint/keyper/observe"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/shmsg"
 )
 

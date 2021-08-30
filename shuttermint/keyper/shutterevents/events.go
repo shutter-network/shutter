@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/shutter-network/shutter/shlib/shcrypto"
 	"github.com/shutter-network/shutter/shuttermint/keyper/shutterevents/evtype"
-	"github.com/shutter-network/shutter/shuttermint/shcrypto"
 )
 
 /* All of the event types defined here have a "Height" field, that is *not* being serialized when

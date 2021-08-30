@@ -17,7 +17,7 @@ linters-settings:
     lines: 100
     statements: 50
   gci:
-    local-prefixes: github.com/shutter-network/shutter/shuttermint
+    local-prefixes: github.com/shutter-network/shutter
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -40,7 +40,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/shutter-network/shutter/shuttermint
+    local-prefixes: github.com/shutter-network/shutter
   gomnd:
     settings:
       mnd:
