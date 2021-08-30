@@ -1,0 +1,316 @@
+version: 2.1
+
+parameters:
+  contracts-changed:
+    type: boolean
+    default: false
+  shuttermint-changed:
+    type: boolean
+    default: false
+
+commands:
+  install-nox:
+    steps:
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - restore_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+      - run:
+          name: Install nox
+          command: |
+            pip install --user nox
+      - save_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+          paths:
+            - ~/.local
+  install-go:
+    steps:
+      - run:
+          name: Install go
+          command: |
+            curl -sSL "https://golang.org/dl/go1.17.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            mkdir -p ~/go/bin
+            echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
+  install-ganache:
+    steps:
+      - run:
+          name: Install ganache-cli
+          command: |
+            sudo npm install -g ganache-cli@6.12.2
+  install-solidity:
+    steps:
+      - run:
+          name: Install solidity
+          command: |
+            mkdir -p ~/bin
+            curl -sSL -o ~/bin/solc https://github.com/ethereum/solidity/releases/download/v0.8.4/solc-static-linux
+            chmod +x ~/bin/solc
+            echo >${BASH_ENV} 'export PATH=~/bin:${PATH}'
+executors:
+  py37:
+    docker:
+      - image: cimg/python:3.7
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go:
+    docker:
+      - image: cimg/go:1.17
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go115:
+    docker:
+      - image: cimg/go:1.15
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go116:
+    docker:
+      - image: cimg/go:1.16
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  lint:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run black, flake8 with nox"
+          command: |
+            nox -s black flake8
+      - save_cache:
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+  mypy:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: mypy-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run mypy with nox"
+          command: |
+            nox -s mypy
+      - save_cache:
+          key: mypy-v1-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+  pre-commit:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-go
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - run:
+          name: Prepare config
+          command: |
+            sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
+
+      - restore_cache:
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+      - run:
+          name: Install pre-commit
+          command: |
+            pip install --user -c requirements.txt pre-commit
+            pre-commit install-hooks -c pre-commit-config
+      - save_cache:
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          paths:
+            - ~/.cache/pre-commit
+            - ~/.local
+      - run: pre-commit run  -c pre-commit-config --show-diff-on-failure -a
+
+  prettier:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run prettier with nox"
+          command: |
+            nox -s prettier
+      - save_cache:
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+  test-contracts:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          keys:
+            - test-contracts-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
+      - run:
+          name: "Run tests"
+          command: |
+            nox -s test_contracts
+      - save_cache:
+          key: test-contracts-v4-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}-{{ checksum "contracts/brownie-config.yaml" }}
+          paths:
+            - ~/shutter/.nox
+            - ~/shutter/.mypy_cache
+            - ~/shutter/.brownie
+            - ~/.solcx
+
+  mint-build:
+    parameters:
+      go-version:
+        type: string
+    executor: << parameters.go-version >>
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
+      - run: make build wasm
+      - run:
+          name: "Run tests with gotestsum"
+          command: |
+            mkdir report
+            gotestsum -f standard-verbose --junitfile report/unit-tests.xml
+      - store_test_results:
+          path: report
+      - save_cache:
+          key: shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+
+  mint-abigen:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - install-solidity
+      - restore_cache:
+          keys:
+            - abigen-v1-{{ checksum "go.sum" }}
+      - run: make install-abigen
+      - save_cache:
+          key: abigen-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+      - run:
+          name: Run abigen
+          command: |
+            make abigen
+            mkdir -p ~/share
+            cp -p contract/combined.json ~/share
+      - run: git diff --exit-code
+      - persist_to_workspace:
+          root: ~/share
+          paths:
+            - combined.json
+
+  publish-release:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - shuttermint-go-v8-{{ checksum "go.sum" }}
+      - run: env VERSION=${CIRCLE_TAG} ./build-release
+      - run: go install github.com/tcnksm/ghr@v0.13.0
+      - attach_workspace:
+          at: ~/share
+      - run:
+          name: Upload binaries and combined.json
+          command: |
+            cp ~/share/combined.json bin/
+            ghr ${CIRCLE_TAG} bin/
+
+  mint-lint:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - lint-shuttermint-go-v7-{{ checksum "go.sum" }}
+      - run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.40.1
+      - run: make lint-changes
+      - save_cache:
+          key: lint-shuttermint-go-v7-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+            - "~/.cache/golangci-lint"
+workflows:
+  version: 2
+  contracts:
+    when: << pipeline.parameters.contracts-changed >>
+    jobs:
+      - test-contracts
+
+  main:
+    jobs:
+      - lint
+      - pre-commit
+      - prettier
+      - mypy
+
+  shuttermint:
+    when: << pipeline.parameters.shuttermint-changed >>
+    jobs:
+      - mint-build:
+          matrix:
+            parameters:
+              go-version: [go, go115, go116]
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - mint-abigen:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - publish-release:
+          requires:
+            - mint-build
+            - mint-abigen
+          context:
+            - upload-release
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+
+      - mint-lint:
+          filters:
+            branches:
+              ignore: /main/
+# Local Variables:
+# compile-command: "circleci config validate"
+# projectile-project-compilation-cmd: "circleci config validate"
+# End:
