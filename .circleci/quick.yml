@@ -1,0 +1,70 @@
+jobs:
+  pylint:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run black, flake8 with nox"
+          command: |
+            nox -s black flake8
+      - save_cache:
+          key: lint-v2-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+  pre-commit:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-go
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - run:
+          name: Prepare config
+          command: |
+            sed -e '/CircleCI stop here/q' .pre-commit-config.yaml >pre-commit-config
+
+      - restore_cache:
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+      - run:
+          name: Install pre-commit
+          command: |
+            pip install --user -c requirements.txt pre-commit
+            pre-commit install-hooks -c pre-commit-config
+      - save_cache:
+          key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}
+          paths:
+            - ~/.cache/pre-commit
+            - ~/.local
+      - run: pre-commit run  -c pre-commit-config --show-diff-on-failure -a
+
+  prettier:
+    executor: py37
+    working_directory: ~/shutter
+    steps:
+      - checkout
+      - install-nox
+      - restore_cache:
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: "Run prettier with nox"
+          command: |
+            nox -s prettier
+      - save_cache:
+          key: prettier-v5-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/shutter/.nox
+
+workflows:
+  quick:
+    jobs:
+      - pylint
+      - pre-commit
+      - prettier

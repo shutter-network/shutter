@@ -1,0 +1,30 @@
+workflows:
+  shuttermint:
+    jobs:
+      - mint-build:
+          matrix:
+            parameters:
+              go-version: [go, go115, go116]
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - mint-abigen:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - publish-release:
+          requires:
+            - mint-build
+            - mint-abigen
+          context:
+            - upload-release
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+
+      - mint-lint:
+          filters:
+            branches:
+              ignore: /main/

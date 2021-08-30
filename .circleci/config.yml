@@ -6,16 +6,33 @@ version: 2.1
 setup: true
 
 orbs:
-  path-filtering: circleci/path-filtering@0.0.3
+  continuation: circleci/continuation@0.2.0
+
+executors:
+  clojure:
+    docker:
+      - image: clojure:openjdk-11-tools-deps-slim-buster
+
+jobs:
+  gen:
+    executor: clojure
+    steps:
+      - run:
+          name: Install curl, jq and git
+          command: |
+            apt-get update
+            apt-get install -y curl jq git
+      - checkout
+      - run:
+          name: Generate continuation config
+          command: |
+            cd .circleci
+            clojure -X gen/gen :validate false :base '"origin/main"'
+            cd ..
+      - continuation/continue:
+          configuration_path: .circleci/continue-generated.yml
 
 workflows:
-  always-run:
+  always:
     jobs:
-      - path-filtering/filter:
-          name: check-updated-files
-          mapping: |
-            contracts/.* contracts-changed true
-            shuttermint/.* shuttermint-changed true
-            shlib/.* shuttermint-changed true
-          base-revision: main
-          config-path: .circleci/continue_config.yml
+      - gen

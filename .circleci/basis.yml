@@ -1,0 +1,94 @@
+version: 2.1
+
+commands:
+  install-nox:
+    steps:
+      - run:
+          name: Fingerprint the python installation
+          command: |
+            python3 tools/fingerprint_python.py | tee ~/fingerprint_python.txt
+      - restore_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+      - run:
+          name: Install nox
+          command: |
+            pip install --user nox
+      - save_cache:
+          key: nox-v1-{{ checksum "~/fingerprint_python.txt" }}
+          paths:
+            - ~/.local
+  install-go:
+    steps:
+      - run:
+          name: Install go
+          command: |
+            curl -sSL "https://golang.org/dl/go1.17.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            mkdir -p ~/go/bin
+            echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
+
+  install-solidity:
+    steps:
+      - run:
+          name: Install solidity
+          command: |
+            mkdir -p ~/bin
+            curl -sSL -o ~/bin/solc https://github.com/ethereum/solidity/releases/download/v0.8.4/solc-static-linux
+            chmod +x ~/bin/solc
+            echo >${BASH_ENV} 'export PATH=~/bin:${PATH}'
+
+executors:
+  py37:
+    docker:
+      - image: cimg/python:3.7
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go:
+    docker:
+      - image: cimg/go:1.17
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go115:
+    docker:
+      - image: cimg/go:1.15
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  go116:
+    docker:
+      - image: cimg/go:1.16
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  mint-abigen:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - install-solidity
+      - restore_cache:
+          keys:
+            - abigen-v1-{{ checksum "go.sum" }}
+      - run: make install-abigen
+      - save_cache:
+          key: abigen-v1-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+      - run:
+          name: Run abigen
+          command: |
+            make abigen
+            mkdir -p ~/share
+            cp -p contract/combined.json ~/share
+      - run: git diff --exit-code
+      - persist_to_workspace:
+          root: ~/share
+          paths:
+            - combined.json
+workflows:
+  version: 2

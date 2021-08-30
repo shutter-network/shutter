@@ -139,3 +139,6 @@ cython_debug/
 
 # Editors
 .vscode
+/.circleci/.cpcache/
+/.circleci/.nrepl-port
+/.circleci/continue-generated.yml

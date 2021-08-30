@@ -1,0 +1,65 @@
+jobs:
+  mint-build:
+    parameters:
+      go-version:
+        type: string
+    executor: << parameters.go-version >>
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
+      - run: make build wasm
+      - run:
+          name: "Run tests with gotestsum"
+          command: |
+            mkdir report
+            gotestsum -f standard-verbose --junitfile report/unit-tests.xml ./... github.com/shutter-network/shutter/shlib/...
+      - store_test_results:
+          path: report
+      - save_cache:
+          key: shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+
+  publish-release:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - shuttermint-go-v8-{{ checksum "go.sum" }}
+      - run: env VERSION=${CIRCLE_TAG} ./build-release
+      - run: go install github.com/tcnksm/ghr@v0.13.0
+      - attach_workspace:
+          at: ~/share
+      - run:
+          name: Upload binaries and combined.json
+          command: |
+            cp ~/share/combined.json bin/
+            ghr ${CIRCLE_TAG} bin/
+
+  mint-lint:
+    executor: go
+    working_directory: ~/shutter/shuttermint
+    steps:
+      - checkout:
+          path: ~/shutter
+      - restore_cache:
+          keys:
+            - lint-shuttermint-go-v7-{{ checksum "go.sum" }}
+      - run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.40.1
+      - run: |
+          make lint-changes
+          make -C ../shlib lint-changes
+      - save_cache:
+          key: lint-shuttermint-go-v7-{{ checksum "go.sum" }}
+          paths:
+            - "~/go/pkg/mod"
+            - "~/.cache/go-build"
+            - "~/.cache/golangci-lint"
