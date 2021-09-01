@@ -67,10 +67,12 @@
 
 (defn match-changed-files
   [changed]
-  (->> rx-table
-       (map (fn [[rx kw]]
-              [kw (not (empty? (filter-matches changed rx)))]))
-       (into {})))
+  (reduce (fn [m [rx kw]]
+            (if (get m kw)
+              m
+              (assoc m kw (not (empty? (filter-matches changed rx))))))
+          {}
+          rx-table))
 
 (defn deep-merge
   [& maps]
