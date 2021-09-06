@@ -8,29 +8,48 @@ setup: true
 orbs:
   continuation: circleci/continuation@0.2.0
 
+commands:
+  install-clojure:
+    steps:
+      - run:
+          name: Install clojure CLI tools
+          command: |
+            if [[ -e ~/clj/bin/clojure ]]; then
+              echo "Clojure already installed"
+            else
+              curl -O https://download.clojure.org/install/linux-install-1.10.3.967.sh
+              bash ./linux-install-1.10.3.967.sh --prefix ~/clj
+              rm ./linux-install-1.10.3.967.sh
+            fi
+            echo >${BASH_ENV} 'export PATH=~/clj/bin:${PATH}'
+
 executors:
-  clojure:
+  openjdk:
     docker:
-      - image: clojure:openjdk-11-tools-deps-slim-buster
+      - image: cimg/openjdk:8.0.292
 
 jobs:
   gen:
-    executor: clojure
+    executor: openjdk
+    working_directory: ~/src/.circleci
     steps:
-      - run:
-          name: Install curl, jq and git
-          command: |
-            apt-get update
-            apt-get install -y curl jq git
-      - checkout
+      - checkout:
+          path: ~/src
+      - restore_cache:
+          key: gen-clj-v1-{{ checksum "deps.edn"}}
+      - install-clojure
       - run:
           name: Generate continuation config
           command: |
-            cd .circleci
             clojure -X gen/gen :validate false :base '"origin/main"'
-            cd ..
+      - save_cache:
+          key: gen-clj-v1-{{ checksum "deps.edn"}}
+          paths:
+            - ~/.m2
+            - ~/clj
+            - .cpcache
       - continuation/continue:
-          configuration_path: .circleci/continue-generated.yml
+          configuration_path: continue-generated.yml
 
 workflows:
   always:
