@@ -7,11 +7,18 @@ repos:
       # This one replaces github.com/dnephin/pre-commit-golang's
       # go-mod-tidy hook because it only works with top-level
       # go.mod/go.sum file
-      - id: go-mod-tidy
-        name: go-mod-tidy
+      - id: go-mod-tidy-shuttermint
+        name: Run go mod tidy in shuttermint
         entry: tools/go-mod-tidy
-        files: '\.go$'
+        files: '\.go$|go.mod$|go.sum$'
         language: script
+        args: ["shuttermint"]
+      - id: go-mod-tidy-shlib
+        name: Run go mod tidy in shlib
+        entry: tools/go-mod-tidy
+        files: '\.go$|go.mod$|go.sum$'
+        language: script
+        args: ["shlib"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
