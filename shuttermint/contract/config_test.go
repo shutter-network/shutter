@@ -87,10 +87,11 @@ func TestNextBatchIndex(t *testing.T) {
 	auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
 	assert.NilError(t, err)
 	alloc := make(core.GenesisAlloc)
-	alloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(1000000000)}
+	alloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(100000000000000000)}
 	blockchain := backends.NewSimulatedBackend(alloc, 8000000)
 	defer blockchain.Close()
 
+	auth.GasLimit = 5000000
 	_, tx, cc, err := DeployConfigContract(
 		auth,
 		blockchain,
