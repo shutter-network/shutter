@@ -27,9 +27,9 @@ func TestSigning(t *testing.T) {
 func TestAggregation(t *testing.T) {
 	msg := []byte("hello")
 
-	allsecretKeys := []BLSSecretKey{}
-	allPublicKeys := []BLSPublicKey{}
-	allSigs := []BLSSignature{}
+	allsecretKeys := []*BLSSecretKey{}
+	allPublicKeys := []*BLSPublicKey{}
+	allSigs := []*BLSSignature{}
 	for i := 0; i < 3; i++ {
 		secretKey, publicKey, err := RandomBLSKeyPair(rand.Reader)
 		assert.NilError(t, err)
@@ -48,9 +48,9 @@ func TestAggregation(t *testing.T) {
 	}
 
 	for _, signers := range combinations {
-		secretKeys := []BLSSecretKey{}
-		publicKeys := []BLSPublicKey{}
-		sigs := []BLSSignature{}
+		secretKeys := []*BLSSecretKey{}
+		publicKeys := []*BLSPublicKey{}
+		sigs := []*BLSSignature{}
 		for _, signer := range signers {
 			secretKeys = append(secretKeys, allsecretKeys[signer])
 			publicKeys = append(publicKeys, allPublicKeys[signer])
