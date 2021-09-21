@@ -1,6 +1,7 @@
 package shcrypto
 
 import (
+	"bytes"
 	"io"
 	"math/big"
 
@@ -78,4 +79,23 @@ func hashToG2(data []byte) *bn256.G2 {
 	// see https://github.com/shutter-network/rolling-shutter/issues/38
 	h := crypto.Keccak256Hash(data)
 	return new(bn256.G2).ScalarBaseMult(h.Big())
+}
+
+// Equal checks if two secret keys are equal to each other.
+func (blsSecretKey *BLSSecretKey) Equal(otherSecretKey *BLSSecretKey) bool {
+	return (*big.Int)(blsSecretKey).Cmp((*big.Int)(otherSecretKey)) == 0
+}
+
+// Equal checks if two public keys are equal to each other.
+func (blsPublicKey *BLSPublicKey) Equal(otherPublicKey *BLSPublicKey) bool {
+	publicKeyMarshaled := (*bn256.G1)(blsPublicKey).Marshal()
+	otherPublicKeyMarshaled := (*bn256.G1)(otherPublicKey).Marshal()
+	return bytes.Equal(publicKeyMarshaled, otherPublicKeyMarshaled)
+}
+
+// Equal checks if two signatures are equal to each other.
+func (blsSignature *BLSSignature) Equal(otherSig *BLSSignature) bool {
+	sigMarshaled := (*bn256.G2)(blsSignature).Marshal()
+	otherSigMarshaled := (*bn256.G2)(otherSig).Marshal()
+	return bytes.Equal(sigMarshaled, otherSigMarshaled)
 }
