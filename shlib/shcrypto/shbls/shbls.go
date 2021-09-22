@@ -1,4 +1,4 @@
-package shcrypto
+package shbls
 
 import (
 	"bytes"
@@ -10,38 +10,38 @@ import (
 )
 
 type (
-	BLSSecretKey big.Int
-	BLSPublicKey bn256.G1
-	BLSSignature bn256.G2
+	SecretKey big.Int
+	PublicKey bn256.G1
+	Signature bn256.G2
 )
 
-// RandomBLSKeyPair generates a random BLS secret and corresponding public key.
-func RandomBLSKeyPair(r io.Reader) (*BLSSecretKey, *BLSPublicKey, error) {
+// RandomKeyPair generates a random BLS secret and corresponding public key.
+func RandomKeyPair(r io.Reader) (*SecretKey, *PublicKey, error) {
 	i, g1, err := bn256.RandomG1(r)
 	if err != nil {
 		return nil, nil, err
 	}
-	return (*BLSSecretKey)(i), (*BLSPublicKey)(g1), nil
+	return (*SecretKey)(i), (*PublicKey)(g1), nil
 }
 
-// BLSSecretToPublicKey returns the BLS public key corresponding to the given secret key.
-func BLSSecretToPublicKey(secretKey *BLSSecretKey) *BLSPublicKey {
+// SecretToPublicKey returns the BLS public key corresponding to the given secret key.
+func SecretToPublicKey(secretKey *SecretKey) *PublicKey {
 	secretKeyInt := (*big.Int)(secretKey)
 	publicKeyG1 := new(bn256.G1).ScalarBaseMult(secretKeyInt)
-	return (*BLSPublicKey)(publicKeyG1)
+	return (*PublicKey)(publicKeyG1)
 }
 
-// BLSSign creates a signature over a message using a secret key.
-func BLSSign(msg []byte, secretKey *BLSSecretKey) *BLSSignature {
+// Sign creates a signature over a message using a secret key.
+func Sign(msg []byte, secretKey *SecretKey) *Signature {
 	h := hashToG2(msg)
 	secretKeyInt := (*big.Int)(secretKey)
 	sigG2 := new(bn256.G2).ScalarMult(h, secretKeyInt)
-	return (*BLSSignature)(sigG2)
+	return (*Signature)(sigG2)
 }
 
-// BLSVerify checks that a signature over a certain message was created with the secret key
+// Verify checks that a signature over a certain message was created with the secret key
 // corresponding to the given public key.
-func BLSVerify(sig *BLSSignature, publicKey *BLSPublicKey, msg []byte) bool {
+func Verify(sig *Signature, publicKey *PublicKey, msg []byte) bool {
 	h := hashToG2(msg)
 	g1 := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
 	return bn256.PairingCheck(
@@ -56,22 +56,22 @@ func BLSVerify(sig *BLSSignature, publicKey *BLSPublicKey, msg []byte) bool {
 	)
 }
 
-// BLSAggregateSignatures aggregates a set of BLS signatures into one.
-func BLSAggregateSignatures(sigs []*BLSSignature) *BLSSignature {
+// AggregateSignatures aggregates a set of BLS signatures into one.
+func AggregateSignatures(sigs []*Signature) *Signature {
 	aggSig := new(bn256.G2).ScalarBaseMult(big.NewInt(0))
 	for _, sig := range sigs {
 		aggSig.Add(aggSig, (*bn256.G2)(sig))
 	}
-	return (*BLSSignature)(aggSig)
+	return (*Signature)(aggSig)
 }
 
-// BLSAggregatePublicKeys aggregates a set of BLS public keys into one.
-func BLSAggregatePublicKeys(publicKeys []*BLSPublicKey) *BLSPublicKey {
+// AggregatePublicKeys aggregates a set of BLS public keys into one.
+func AggregatePublicKeys(publicKeys []*PublicKey) *PublicKey {
 	aggPublicKey := new(bn256.G1).ScalarBaseMult(big.NewInt(0))
 	for _, publicKey := range publicKeys {
 		aggPublicKey.Add(aggPublicKey, (*bn256.G1)(publicKey))
 	}
-	return (*BLSPublicKey)(aggPublicKey)
+	return (*PublicKey)(aggPublicKey)
 }
 
 func hashToG2(data []byte) *bn256.G2 {
@@ -82,20 +82,20 @@ func hashToG2(data []byte) *bn256.G2 {
 }
 
 // Equal checks if two secret keys are equal to each other.
-func (blsSecretKey *BLSSecretKey) Equal(otherSecretKey *BLSSecretKey) bool {
-	return (*big.Int)(blsSecretKey).Cmp((*big.Int)(otherSecretKey)) == 0
+func (secretKey *SecretKey) Equal(otherSecretKey *SecretKey) bool {
+	return (*big.Int)(secretKey).Cmp((*big.Int)(otherSecretKey)) == 0
 }
 
 // Equal checks if two public keys are equal to each other.
-func (blsPublicKey *BLSPublicKey) Equal(otherPublicKey *BLSPublicKey) bool {
-	publicKeyMarshaled := (*bn256.G1)(blsPublicKey).Marshal()
+func (publicKey *PublicKey) Equal(otherPublicKey *PublicKey) bool {
+	publicKeyMarshaled := (*bn256.G1)(publicKey).Marshal()
 	otherPublicKeyMarshaled := (*bn256.G1)(otherPublicKey).Marshal()
 	return bytes.Equal(publicKeyMarshaled, otherPublicKeyMarshaled)
 }
 
 // Equal checks if two signatures are equal to each other.
-func (blsSignature *BLSSignature) Equal(otherSig *BLSSignature) bool {
-	sigMarshaled := (*bn256.G2)(blsSignature).Marshal()
+func (sig *Signature) Equal(otherSig *Signature) bool {
+	sigMarshaled := (*bn256.G2)(sig).Marshal()
 	otherSigMarshaled := (*bn256.G2)(otherSig).Marshal()
 	return bytes.Equal(sigMarshaled, otherSigMarshaled)
 }
