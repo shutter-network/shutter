@@ -306,6 +306,33 @@ func TestVerifyEpochSecretKeyShare(t *testing.T) {
 	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk1, ComputeEpochID(uint64(11))))
 }
 
+func TestVerifyEpochSecretKey(t *testing.T) {
+	p, err := RandomPolynomial(rand.Reader, 0)
+	assert.NilError(t, err)
+	eonPublicKey := ComputeEonPublicKey([]*Gammas{p.Gammas()})
+
+	epochIndex := uint64(64)
+	epochID := ComputeEpochID(epochIndex)
+
+	v := p.EvalForKeyper(0)
+	eonSecretKeyShare := ComputeEonSecretKeyShare([]*big.Int{v})
+	epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
+	epochSecretKey, err := ComputeEpochSecretKey(
+		[]int{0},
+		[]*EpochSecretKeyShare{epochSecretKeyShare},
+		1,
+	)
+	assert.NilError(t, err)
+
+	ok, err := VerifyEpochSecretKey(epochSecretKey, eonPublicKey, epochIndex)
+	assert.NilError(t, err)
+	assert.Check(t, ok)
+
+	ok, err = VerifyEpochSecretKey(epochSecretKey, eonPublicKey, epochIndex+1)
+	assert.NilError(t, err)
+	assert.Check(t, !ok)
+}
+
 func TestComputeEpochSecretKey(t *testing.T) {
 	n := 3
 	threshold := uint64(2)
