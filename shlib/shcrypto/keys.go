@@ -1,6 +1,8 @@
 package shcrypto
 
 import (
+	"bytes"
+	"crypto/rand"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -183,6 +185,27 @@ func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPubl
 		(*bn256.G2)(eonPublicKeyShare),
 	}
 	return bn256.PairingCheck(g1s, g2s)
+}
+
+// VerifyEpochSecretKey checks that an epoch secret key is the correct key for an epoch given the
+// eon public key.
+func VerifyEpochSecretKey(epochSecretKey *EpochSecretKey, eonPublicKey *EonPublicKey, epochIndex uint64) (bool, error) {
+	sigma, err := RandomSigma(rand.Reader)
+	if err != nil {
+		return false, err
+	}
+	message := make([]byte, 32)
+	_, err = rand.Read(message)
+	if err != nil {
+		return false, err
+	}
+	epochID := ComputeEpochID(epochIndex)
+	encryptedMessage := Encrypt(message, eonPublicKey, epochID, sigma)
+	decryptedMessage, err := encryptedMessage.Decrypt(epochSecretKey)
+	if err != nil {
+		return false, nil
+	}
+	return bytes.Equal(decryptedMessage, message), nil
 }
 
 func lagrangeCoefficientFactor(k int, keyperIndex int) *big.Int {
