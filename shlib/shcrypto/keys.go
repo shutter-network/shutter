@@ -27,80 +27,76 @@ type EpochSecretKeyShare bn256.G1
 // EpochSecretKey represents an epoch secret key.
 type EpochSecretKey bn256.G1
 
-func (eonpubkey *EonPublicKey) GobEncode() ([]byte, error) {
-	return eonpubkey.Marshal(), nil
+func (eonPublicKey *EonPublicKey) GobEncode() ([]byte, error) {
+	return eonPublicKey.Marshal(), nil
 }
 
-func (eonpubkey *EonPublicKey) GobDecode(data []byte) error {
-	return eonpubkey.Unmarshal(data)
+func (eonPublicKey *EonPublicKey) GobDecode(data []byte) error {
+	return eonPublicKey.Unmarshal(data)
 }
 
-func (eonpubkey *EonPublicKey) Equal(pk2 *EonPublicKey) bool {
-	return EqualG2((*bn256.G2)(eonpubkey), (*bn256.G2)(pk2))
+func (eonPublicKey *EonPublicKey) Equal(pk2 *EonPublicKey) bool {
+	return EqualG2((*bn256.G2)(eonPublicKey), (*bn256.G2)(pk2))
 }
 
-func (g2 *EonPublicKeyShare) GobEncode() ([]byte, error) {
-	return (*bn256.G2)(g2).Marshal(), nil
+func (eonPublicKeyShare *EonPublicKeyShare) GobEncode() ([]byte, error) {
+	return eonPublicKeyShare.Marshal(), nil
 }
 
-func (g2 *EonPublicKeyShare) GobDecode(data []byte) error {
-	_, err := (*bn256.G2)(g2).Unmarshal(data)
-	return err
+func (eonPublicKeyShare *EonPublicKeyShare) GobDecode(data []byte) error {
+	return eonPublicKeyShare.Unmarshal(data)
 }
 
-func (g2 *EonPublicKeyShare) Equal(pk2 *EonPublicKeyShare) bool {
-	return EqualG2((*bn256.G2)(g2), (*bn256.G2)(pk2))
+func (eonPublicKeyShare *EonPublicKeyShare) Equal(pk2 *EonPublicKeyShare) bool {
+	return EqualG2((*bn256.G2)(eonPublicKeyShare), (*bn256.G2)(pk2))
 }
 
-func (g *EpochID) GobEncode() ([]byte, error) {
-	return (*bn256.G1)(g).Marshal(), nil
+func (epochID *EpochID) GobEncode() ([]byte, error) {
+	return epochID.Marshal(), nil
 }
 
-func (g *EpochID) GobDecode(data []byte) error {
-	_, err := (*bn256.G1)(g).Unmarshal(data)
-	return err
+func (epochID *EpochID) GobDecode(data []byte) error {
+	return epochID.Unmarshal(data)
 }
 
-func (g *EpochID) Equal(g2 *EpochID) bool {
-	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
+func (epochID *EpochID) Equal(g2 *EpochID) bool {
+	return EqualG1((*bn256.G1)(epochID), (*bn256.G1)(g2))
 }
 
-func (g *EpochSecretKeyShare) GobEncode() ([]byte, error) {
-	return (*bn256.G1)(g).Marshal(), nil
+func (epochSecretKeyShare *EpochSecretKeyShare) GobEncode() ([]byte, error) {
+	return epochSecretKeyShare.Marshal(), nil
 }
 
-func (g *EpochSecretKeyShare) GobDecode(data []byte) error {
-	_, err := (*bn256.G1)(g).Unmarshal(data)
-	return err
+func (epochSecretKeyShare *EpochSecretKeyShare) GobDecode(data []byte) error {
+	return epochSecretKeyShare.Unmarshal(data)
 }
 
-func (g *EpochSecretKeyShare) Equal(g2 *EpochSecretKeyShare) bool {
-	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
+func (epochSecretKeyShare *EpochSecretKeyShare) Equal(g2 *EpochSecretKeyShare) bool {
+	return EqualG1((*bn256.G1)(epochSecretKeyShare), (*bn256.G1)(g2))
 }
 
-func (g *EpochSecretKey) GobEncode() ([]byte, error) {
-	return (*bn256.G1)(g).Marshal(), nil
+func (epochSecretKey *EpochSecretKey) GobEncode() ([]byte, error) {
+	return epochSecretKey.Marshal(), nil
 }
 
-func (g *EpochSecretKey) GobDecode(data []byte) error {
-	_, err := (*bn256.G1)(g).Unmarshal(data)
-	return err
+func (epochSecretKey *EpochSecretKey) GobDecode(data []byte) error {
+	return epochSecretKey.Unmarshal(data)
 }
 
-func (g *EpochSecretKey) Equal(g2 *EpochSecretKey) bool {
-	return EqualG1((*bn256.G1)(g), (*bn256.G1)(g2))
+func (epochSecretKey *EpochSecretKey) Equal(g2 *EpochSecretKey) bool {
+	return EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(g2))
 }
 
-func (esks *EonSecretKeyShare) GobEncode() ([]byte, error) {
-	return (*big.Int)(esks).GobEncode()
+func (eonSecretKeyShare *EonSecretKeyShare) GobEncode() ([]byte, error) {
+	return (*big.Int)(eonSecretKeyShare).GobEncode()
 }
 
-func (esks *EonSecretKeyShare) GobDecode(data []byte) error {
-	return (*big.Int)(esks).GobDecode(data)
+func (eonSecretKeyShare *EonSecretKeyShare) GobDecode(data []byte) error {
+	return (*big.Int)(eonSecretKeyShare).GobDecode(data)
 }
 
-func (esks *EonSecretKeyShare) Equal(e2 *EonSecretKeyShare) bool {
-	return (*big.Int)(esks).Cmp((*big.Int)(e2)) == 0
+func (eonSecretKeyShare *EonSecretKeyShare) Equal(e2 *EonSecretKeyShare) bool {
+	return (*big.Int)(eonSecretKeyShare).Cmp((*big.Int)(e2)) == 0
 }
 
 // ComputeEonSecretKeyShare computes the keyper's secret key share from the set of poly evals
