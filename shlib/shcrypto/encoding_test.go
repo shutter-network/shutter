@@ -49,3 +49,35 @@ func TestUnmarshalBroken(t *testing.T) {
 	err = m.Unmarshal(d[:len(d)-1])
 	assert.Assert(t, err != nil)
 }
+
+func TestMarshal(t *testing.T) {
+	ask := (*EonSecretKeyShare)(big.NewInt(123))
+	ashM := ask.Marshal()
+	askD := new(EonSecretKeyShare)
+	assert.NilError(t, askD.Unmarshal(ashM))
+	assert.Check(t, ask.Equal(askD))
+
+	apks := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	apksM := apks.Marshal()
+	apksD := new(EonPublicKeyShare)
+	assert.NilError(t, apksD.Unmarshal(apksM))
+	assert.Check(t, apksD.Equal(apks))
+
+	apk := (*EonPublicKey)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	apkM := apk.Marshal()
+	apkD := new(EonPublicKey)
+	assert.NilError(t, apkD.Unmarshal(apkM))
+	assert.Check(t, apkD.Equal(apk))
+
+	esks := (*EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
+	esksM := esks.Marshal()
+	esksD := new(EpochSecretKeyShare)
+	assert.NilError(t, esksD.Unmarshal(esksM))
+	assert.Check(t, esksD.Equal(esks))
+
+	esk := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
+	eskM := esks.Marshal()
+	eskD := new(EpochSecretKey)
+	assert.NilError(t, eskD.Unmarshal(eskM))
+	assert.Check(t, eskD.Equal(esk))
+}
