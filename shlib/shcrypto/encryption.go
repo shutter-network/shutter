@@ -3,12 +3,13 @@ package shcrypto
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"io"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/pkg/errors"
 )
 
 // EncryptedMessage represents the full output of the encryption procedure.
@@ -60,7 +61,7 @@ func RandomSigma(r io.Reader) (Block, error) {
 	data := make([]byte, BlockSize)
 	_, err := r.Read(data)
 	if err != nil {
-		return Block{}, errors.WithStack(err)
+		return Block{}, err
 	}
 	var b Block
 	copy(b[:], data)
@@ -169,10 +170,10 @@ func UnpadMessage(blocks []Block) ([]byte, error) {
 	lastBlock := blocks[len(blocks)-1]
 	paddingLength := int(lastBlock[BlockSize-1])
 	if paddingLength == 0 {
-		return nil, errors.Errorf("invalid padding length 0")
+		return nil, errors.New("invalid padding length 0")
 	}
 	if paddingLength > BlockSize {
-		return nil, errors.Errorf("invalid padding length %d (greater than block size %d)", paddingLength, BlockSize)
+		return nil, fmt.Errorf("invalid padding length %d (greater than block size %d)", paddingLength, BlockSize)
 	}
 
 	m := make([]byte, len(blocks)*BlockSize-paddingLength)

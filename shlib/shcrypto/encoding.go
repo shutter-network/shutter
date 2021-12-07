@@ -2,10 +2,11 @@ package shcrypto
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -39,10 +40,10 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 		return err
 	}
 	if len(d)%BlockSize != 0 {
-		return errors.Errorf("length not a multiple of %d", BlockSize)
+		return fmt.Errorf("length not a multiple of %d", BlockSize)
 	}
 	if len(d) < BlockSize {
-		return errors.Errorf("short block")
+		return fmt.Errorf("short block")
 	}
 	copy(m.C2[:], d)
 	d = d[BlockSize:]

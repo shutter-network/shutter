@@ -3,12 +3,12 @@ package shcrypto
 import (
 	"bytes"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	gocmp "github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -31,14 +31,14 @@ func init() {
 // range of them.
 func NewPolynomial(coefficients []*big.Int) (*Polynomial, error) {
 	if len(coefficients) == 0 {
-		return nil, errors.Errorf("no coefficients given")
+		return nil, fmt.Errorf("no coefficients given")
 	}
 	for i, v := range coefficients {
 		if v.Sign() < 0 {
-			return nil, errors.Errorf("coefficient %d is negative (%d)", i, v)
+			return nil, fmt.Errorf("coefficient %d is negative (%d)", i, v)
 		}
 		if v.Cmp(bn256.Order) >= 0 {
-			return nil, errors.Errorf("coefficient %d is too big (%d)", i, v)
+			return nil, fmt.Errorf("coefficient %d is too big (%d)", i, v)
 		}
 	}
 	p := Polynomial(coefficients)
@@ -211,7 +211,7 @@ func RandomPolynomial(r io.Reader, degree uint64) (*Polynomial, error) {
 	for i := uint64(0); i < degree+1; i++ {
 		c, err := rand.Int(r, bn256.Order)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		coefficients = append(coefficients, c)
 	}
