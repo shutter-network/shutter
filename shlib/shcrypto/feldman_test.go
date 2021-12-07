@@ -131,7 +131,7 @@ func TestZeroGammas(t *testing.T) {
 	g := ZeroGammas(uint64(3))
 	assert.Equal(t, 4, len(*g))
 	for _, p := range *g {
-		assert.DeepEqual(t, p, zeroG2, G2Comparer)
+		assert.DeepEqual(t, p, zeroG2, g2Comparer)
 	}
 }
 
@@ -171,8 +171,8 @@ func TestPi(t *testing.T) {
 	pi2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
 	pi2Exp = new(bn256.G2).Add(pi2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
 
-	assert.DeepEqual(t, pi1, pi1Exp, G2Comparer)
-	assert.DeepEqual(t, pi2, pi2Exp, G2Comparer)
+	assert.DeepEqual(t, pi1, pi1Exp, g2Comparer)
+	assert.DeepEqual(t, pi2, pi2Exp, g2Comparer)
 }
 
 func TestGammasGobable(t *testing.T) {

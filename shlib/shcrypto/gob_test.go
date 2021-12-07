@@ -36,5 +36,5 @@ func TestEpochSecretKeyShareGobable(t *testing.T) {
 
 func TestEpochSecretKeyGobable(t *testing.T) {
 	key := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
-	shtest.EnsureGobable(t, key, new(EpochSecretKey), G1Comparer)
+	shtest.EnsureGobable(t, key, new(EpochSecretKey), g1Comparer)
 }
