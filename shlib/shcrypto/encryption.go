@@ -8,7 +8,6 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
@@ -24,28 +23,6 @@ type Block [BlockSize]byte
 
 // BlockSize is the size in bytes of the blocks into which a message is split up before encryption.
 const BlockSize = 32
-
-// HashBytesToBlock hashes the given byte slice and returns the result as a block.
-func HashBytesToBlock(d ...[]byte) Block {
-	h := crypto.Keccak256(d...)
-	var b Block
-	copy(b[:], h)
-	return b
-}
-
-// HashBlockToInt hashes a block and returns the result as an integer in Z_q.
-func HashBlockToInt(d Block) *big.Int {
-	h := crypto.Keccak256(d[:])
-	i := new(big.Int).SetBytes(h)
-	i.Mod(i, bn256.Order) // TODO: check if this is fine
-	return i
-}
-
-// HashGTToBlock hashes an element of GT and returns the result as a block.
-func HashGTToBlock(gt *bn256.GT) Block {
-	b := gt.Marshal()
-	return HashBytesToBlock(b)
-}
 
 // XORBlocks xors the two blocks and returns the result.
 func XORBlocks(b1 Block, b2 Block) Block {
