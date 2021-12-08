@@ -2,6 +2,7 @@
 
 PREFIX ?= /usr/local
 GO ?= go
+TINYGO ?= tinygo
 GOFLAGS ?=
 SHROOT ?= $(CURDIR)
 TESTROOT=$(SHROOT)/testchain
@@ -17,6 +18,10 @@ build:
 
 wasm:
 	GOARCH=wasm GOOS=js ${GO} build ${GOFLAGS} -o ${BINDIR}/shcrypto.wasm ./shcryptowasm/main_wasm.go
+
+tinygo:
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/encrypt.wasm ./shcryptowasm/tinyencrypt_wasm.go
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/decrypt.wasm ./shcryptowasm/tinydecrypt_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
