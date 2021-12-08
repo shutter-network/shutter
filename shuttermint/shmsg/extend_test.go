@@ -45,7 +45,7 @@ func TestG1Marshal(t *testing.T) {
 	assert.NilError(t, err)
 	ug, err := umsg.Get()
 	assert.NilError(t, err)
-	assert.DeepEqual(t, g, ug, shcrypto.G1Comparer)
+	assert.Check(t, shcrypto.EqualG1(g, ug))
 }
 
 func TestG2Marshal(t *testing.T) {
@@ -60,7 +60,7 @@ func TestG2Marshal(t *testing.T) {
 	assert.NilError(t, err)
 	ug, err := umsg.Get()
 	assert.NilError(t, err)
-	assert.DeepEqual(t, g, ug, shcrypto.G2Comparer)
+	assert.Check(t, shcrypto.EqualG2(g, ug))
 }
 
 func TestGTMarshal(t *testing.T) {
@@ -75,5 +75,5 @@ func TestGTMarshal(t *testing.T) {
 	assert.NilError(t, err)
 	ug, err := umsg.Get()
 	assert.NilError(t, err)
-	assert.DeepEqual(t, g, ug, shcrypto.GTComparer)
+	assert.Check(t, shcrypto.EqualGT(g, ug))
 }

@@ -73,9 +73,9 @@ func TestEonPublicKeyShare(t *testing.T) {
 	pks2 := new(bn256.G2).Add(mu20, mu21)
 	pks2.Add(pks2, mu22)
 
-	assert.DeepEqual(t, pks0, (*bn256.G2)(ComputeEonPublicKeyShare(0, gammas)), G2Comparer)
-	assert.DeepEqual(t, pks1, (*bn256.G2)(ComputeEonPublicKeyShare(1, gammas)), G2Comparer)
-	assert.DeepEqual(t, pks2, (*bn256.G2)(ComputeEonPublicKeyShare(2, gammas)), G2Comparer)
+	assert.DeepEqual(t, pks0, (*bn256.G2)(ComputeEonPublicKeyShare(0, gammas)), g2Comparer)
+	assert.DeepEqual(t, pks1, (*bn256.G2)(ComputeEonPublicKeyShare(1, gammas)), g2Comparer)
+	assert.DeepEqual(t, pks2, (*bn256.G2)(ComputeEonPublicKeyShare(2, gammas)), g2Comparer)
 }
 
 func TestEonSharesMatch(t *testing.T) {
@@ -122,7 +122,7 @@ func TestEonSharesMatch(t *testing.T) {
 
 func TestEonPublicKey(t *testing.T) {
 	zeroEPK := ComputeEonPublicKey([]*Gammas{})
-	assert.DeepEqual(t, (*bn256.G2)(zeroEPK), zeroG2, G2Comparer)
+	assert.DeepEqual(t, (*bn256.G2)(zeroEPK), zeroG2, g2Comparer)
 
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
@@ -133,11 +133,11 @@ func TestEonPublicKey(t *testing.T) {
 	assert.NilError(t, err)
 
 	k1 := ComputeEonPublicKey([]*Gammas{p1.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0], G2Comparer)
+	assert.DeepEqual(t, (*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0], g2Comparer)
 	k2 := ComputeEonPublicKey([]*Gammas{p2.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0], G2Comparer)
+	assert.DeepEqual(t, (*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0], g2Comparer)
 	k3 := ComputeEonPublicKey([]*Gammas{p3.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0], G2Comparer)
+	assert.DeepEqual(t, (*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0], g2Comparer)
 }
 
 func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
@@ -157,7 +157,7 @@ func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
 
 	gammas := []*Gammas{p1.Gammas(), p2.Gammas(), p3.Gammas()}
 	epk := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(t, (*bn256.G2)(epk), epkExp, G2Comparer)
+	assert.DeepEqual(t, (*bn256.G2)(epk), epkExp, g2Comparer)
 }
 
 var modbn256Comparer = gocmp.Comparer(func(x, y *big.Int) bool {
@@ -268,7 +268,7 @@ func TestComputeEpochSecretKeyShare(t *testing.T) {
 	epochID := ComputeEpochID(uint64(456))
 	epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
 	expectedEpochSecretKeyShare := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
-	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bn256.G1)(epochSecretKeyShare), G1Comparer)
+	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bn256.G1)(epochSecretKeyShare), g1Comparer)
 }
 
 func TestVerifyEpochSecretKeyShare(t *testing.T) {

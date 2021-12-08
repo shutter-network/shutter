@@ -3,12 +3,11 @@ package shcrypto
 import (
 	"bytes"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	gocmp "github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -31,14 +30,14 @@ func init() {
 // range of them.
 func NewPolynomial(coefficients []*big.Int) (*Polynomial, error) {
 	if len(coefficients) == 0 {
-		return nil, errors.Errorf("no coefficients given")
+		return nil, fmt.Errorf("no coefficients given")
 	}
 	for i, v := range coefficients {
 		if v.Sign() < 0 {
-			return nil, errors.Errorf("coefficient %d is negative (%d)", i, v)
+			return nil, fmt.Errorf("coefficient %d is negative (%d)", i, v)
 		}
 		if v.Cmp(bn256.Order) >= 0 {
-			return nil, errors.Errorf("coefficient %d is too big (%d)", i, v)
+			return nil, fmt.Errorf("coefficient %d is too big (%d)", i, v)
 		}
 	}
 	p := Polynomial(coefficients)
@@ -175,8 +174,6 @@ func EqualG1(p1, p2 *bn256.G1) bool {
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
 
-var G1Comparer = gocmp.Comparer(EqualG1)
-
 // EqualG2 checks if two points on G2 are equal.
 func EqualG2(p1, p2 *bn256.G2) bool {
 	p1Bytes := new(bn256.G2).Set(p1).Marshal()
@@ -184,16 +181,12 @@ func EqualG2(p1, p2 *bn256.G2) bool {
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
 
-var G2Comparer = gocmp.Comparer(EqualG2)
-
 // EqualGT checks if two points on GT are equal.
 func EqualGT(p1, p2 *bn256.GT) bool {
 	p1Bytes := new(bn256.GT).Set(p1).Marshal()
 	p2Bytes := new(bn256.GT).Set(p2).Marshal()
 	return bytes.Equal(p1Bytes, p2Bytes)
 }
-
-var GTComparer = gocmp.Comparer(EqualGT)
 
 // VerifyPolyEval checks that the evaluation of a polynomial is consistent with the public gammas.
 func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshold uint64) bool {
@@ -211,7 +204,7 @@ func RandomPolynomial(r io.Reader, degree uint64) (*Polynomial, error) {
 	for i := uint64(0); i < degree+1; i++ {
 		c, err := rand.Int(r, bn256.Order)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 		coefficients = append(coefficients, c)
 	}

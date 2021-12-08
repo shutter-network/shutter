@@ -30,7 +30,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	m2 := &EncryptedMessage{}
 	err := m2.Unmarshal(m1.Marshal())
 	assert.NilError(t, err)
-	assert.DeepEqual(t, m1, m2, G2Comparer)
+	assert.DeepEqual(t, m1, m2, g2Comparer)
 }
 
 func TestUnmarshalBroken(t *testing.T) {

@@ -231,7 +231,7 @@ func TestRoundTrip(t *testing.T) {
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(t, new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey), G2Comparer)
+	assert.DeepEqual(t, new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey), g2Comparer)
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
