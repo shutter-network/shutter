@@ -7,6 +7,8 @@ import (
 	"github.com/shutter-network/shutter/shlib/shcrypto"
 )
 
+func main() {}
+
 //export encrypt
 func encrypt(message []byte, eonPublicKey []byte, epochID []byte, sigma []byte) ([]byte, error) {
 	eonPublicKeyPoint := new(shcrypto.EonPublicKey)

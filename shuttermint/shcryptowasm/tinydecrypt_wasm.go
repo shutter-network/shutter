@@ -7,6 +7,8 @@ import (
 	"github.com/shutter-network/shutter/shlib/shcrypto"
 )
 
+func main() {}
+
 //export decrypt
 func decrypt(encryptedMessage []byte, decryptionKey []byte) ([]byte, error) {
 	encrypted := new(shcrypto.EncryptedMessage)
