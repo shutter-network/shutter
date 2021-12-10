@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	"github.com/shutter-network/shutter/shlib/shcrypto"
@@ -29,7 +30,7 @@ func decrypt(encryptedMessage []byte, decryptionKey []byte) ([]byte, error) {
 }
 
 //export verifyDecryptionKey
-func verifyDecryptionKey(decryptionKey []byte, eonPublicKey []byte, epochID uint64) (bool, error) {
+func verifyDecryptionKey(decryptionKey []byte, eonPublicKey []byte, epochID []byte) (bool, error) {
 	epochSecretKey := new(shcrypto.EpochSecretKey)
 	err := epochSecretKey.Unmarshal(decryptionKey)
 	if err != nil {
@@ -42,5 +43,10 @@ func verifyDecryptionKey(decryptionKey []byte, eonPublicKey []byte, epochID uint
 		return false, fmt.Errorf("invalid eon public key: %s", err)
 	}
 
-	return shcrypto.VerifyEpochSecretKey(epochSecretKey, eonPublicKeyPoint, epochID)
+	if len(epochID) != 8 {
+		return false, fmt.Errorf("epoch id must be 8 bytes, got %d", len(epochID))
+	}
+	epochIDInt := binary.BigEndian.Uint64(epochID)
+
+	return shcrypto.VerifyEpochSecretKey(epochSecretKey, eonPublicKeyPoint, epochIDInt)
 }
