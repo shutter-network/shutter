@@ -22,6 +22,7 @@ wasm:
 tinygo:
 	${TINYGO} build -target wasm -size full -o ${BINDIR}/encrypt.wasm ./shcryptowasm/tinyencrypt_wasm.go
 	${TINYGO} build -target wasm -size full -o ${BINDIR}/decrypt.wasm ./shcryptowasm/tinydecrypt_wasm.go
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/both.wasm ./shcryptowasm/tinyboth_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
