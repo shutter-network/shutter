@@ -19,10 +19,10 @@ build:
 wasm:
 	GOARCH=wasm GOOS=js ${GO} build ${GOFLAGS} -o ${BINDIR}/shcrypto.wasm ./shcryptowasm/main_wasm.go
 
-tinygo:
-	${TINYGO} build -target wasm -size full -o ${BINDIR}/encrypt.wasm ./shcryptowasm/tinyencrypt_wasm.go
-	${TINYGO} build -target wasm -size full -o ${BINDIR}/decrypt.wasm ./shcryptowasm/tinydecrypt_wasm.go
-	${TINYGO} build -target wasm -size full -o ${BINDIR}/both.wasm ./shcryptowasm/tinyboth_wasm.go
+shcryptowasm:
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/encrypt.wasm ./shcryptowasm/encrypt_wasm.go
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/decrypt.wasm ./shcryptowasm/decrypt_wasm.go
+	${TINYGO} build -target wasm -size full -o ${BINDIR}/both.wasm ./shcryptowasm/both_wasm.go
 
 protoc:
 	protoc shmsg/shmsg.proto --go_out=shmsg/
