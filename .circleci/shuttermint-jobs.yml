@@ -11,7 +11,7 @@ jobs:
       - restore_cache:
           keys:
             - shuttermint-<< parameters.go-version >>-v8-{{ checksum "go.sum" }}
-      - run: make build wasm
+      - run: make build shcryptowasm
       - run:
           name: "Run tests with gotestsum"
           command: |

@@ -89,4 +89,4 @@ abigen:
 deploy-ganache:
 	${GO} run ./sandbox/deploy/deploy.go deploy
 
-.PHONY: build install run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-tools lint lint-changes abigen coverage
+.PHONY: build install run init clean test generate install-abigen install-geth install-protoc-gen-go install-golangci-lint install-cobra install-gofumpt install-tools lint lint-changes abigen coverage shcryptowasm
