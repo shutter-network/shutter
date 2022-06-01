@@ -265,7 +265,7 @@ func TestLagrangeReconstruct(t *testing.T) {
 
 func TestComputeEpochSecretKeyShare(t *testing.T) {
 	eonSecretKeyShare := (*EonSecretKeyShare)(big.NewInt(123))
-	epochID := ComputeEpochID(uint64(456))
+	epochID := ComputeEpochID([]byte("epoch1"))
 	epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
 	expectedEpochSecretKeyShare := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
 	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bn256.G1)(epochSecretKeyShare), g1Comparer)
@@ -273,7 +273,7 @@ func TestComputeEpochSecretKeyShare(t *testing.T) {
 
 func TestVerifyEpochSecretKeyShare(t *testing.T) {
 	threshold := uint64(2)
-	epochID := ComputeEpochID(uint64(10))
+	epochID := ComputeEpochID([]byte("epoch1"))
 	p1, err := RandomPolynomial(rand.Reader, threshold-1)
 	assert.NilError(t, err)
 	p2, err := RandomPolynomial(rand.Reader, threshold-1)
@@ -303,7 +303,7 @@ func TestVerifyEpochSecretKeyShare(t *testing.T) {
 
 	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk2, epochID))
 	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk2, epk1, epochID))
-	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk1, ComputeEpochID(uint64(11))))
+	assert.Assert(t, !VerifyEpochSecretKeyShare(epsk1, epk1, ComputeEpochID([]byte("epoch2"))))
 }
 
 func TestVerifyEpochSecretKey(t *testing.T) {
@@ -311,8 +311,8 @@ func TestVerifyEpochSecretKey(t *testing.T) {
 	assert.NilError(t, err)
 	eonPublicKey := ComputeEonPublicKey([]*Gammas{p.Gammas()})
 
-	epochIndex := uint64(64)
-	epochID := ComputeEpochID(epochIndex)
+	epochIDBytes := []byte("epoch1")
+	epochID := ComputeEpochID(epochIDBytes)
 
 	v := p.EvalForKeyper(0)
 	eonSecretKeyShare := ComputeEonSecretKeyShare([]*big.Int{v})
@@ -324,11 +324,11 @@ func TestVerifyEpochSecretKey(t *testing.T) {
 	)
 	assert.NilError(t, err)
 
-	ok, err := VerifyEpochSecretKey(epochSecretKey, eonPublicKey, epochIndex)
+	ok, err := VerifyEpochSecretKey(epochSecretKey, eonPublicKey, epochIDBytes)
 	assert.NilError(t, err)
 	assert.Check(t, ok)
 
-	ok, err = VerifyEpochSecretKey(epochSecretKey, eonPublicKey, epochIndex+1)
+	ok, err = VerifyEpochSecretKey(epochSecretKey, eonPublicKey, append(epochIDBytes, 0xab))
 	assert.NilError(t, err)
 	assert.Check(t, !ok)
 }
@@ -336,7 +336,7 @@ func TestVerifyEpochSecretKey(t *testing.T) {
 func TestComputeEpochSecretKey(t *testing.T) {
 	n := 3
 	threshold := uint64(2)
-	epochID := ComputeEpochID(uint64(10))
+	epochID := ComputeEpochID([]byte("epoch1"))
 
 	ps := []*Polynomial{}
 	for i := 0; i < n; i++ {
@@ -391,7 +391,7 @@ func TestComputeEpochSecretKey(t *testing.T) {
 func TestFull(t *testing.T) {
 	n := 3
 	threshold := uint64(2)
-	epochID := ComputeEpochID(uint64(10))
+	epochID := ComputeEpochID([]byte("epoch1"))
 
 	ps := []*Polynomial{}
 	gammas := []*Gammas{}

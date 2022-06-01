@@ -142,10 +142,11 @@ func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *E
 }
 
 // ComputeEpochID computes the id of the given epoch.
-func ComputeEpochID(epochIndex uint64) *EpochID {
-	epochIndexBig := new(big.Int).SetUint64(epochIndex + 1)
-	id := EpochID(*new(bn256.G1).ScalarBaseMult(epochIndexBig))
-	return &id
+func ComputeEpochID(epochIDBytes []byte) *EpochID {
+	epochIDBytesHash := keccak256(epochIDBytes)
+	epochIDBig := new(big.Int).SetBytes(epochIDBytesHash)
+	epochIDPoint := EpochID(*new(bn256.G1).ScalarBaseMult(epochIDBig))
+	return &epochIDPoint
 }
 
 // ComputeEpochSecretKey computes the epoch secret key from a set of shares.
@@ -185,7 +186,7 @@ func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPubl
 
 // VerifyEpochSecretKey checks that an epoch secret key is the correct key for an epoch given the
 // eon public key.
-func VerifyEpochSecretKey(epochSecretKey *EpochSecretKey, eonPublicKey *EonPublicKey, epochIndex uint64) (bool, error) {
+func VerifyEpochSecretKey(epochSecretKey *EpochSecretKey, eonPublicKey *EonPublicKey, epochIDBytes []byte) (bool, error) {
 	sigma, err := RandomSigma(rand.Reader)
 	if err != nil {
 		return false, err
@@ -195,7 +196,7 @@ func VerifyEpochSecretKey(epochSecretKey *EpochSecretKey, eonPublicKey *EonPubli
 	if err != nil {
 		return false, err
 	}
-	epochID := ComputeEpochID(epochIndex)
+	epochID := ComputeEpochID(epochIDBytes)
 	encryptedMessage := Encrypt(message, eonPublicKey, epochID, sigma)
 	decryptedMessage, err := encryptedMessage.Decrypt(epochSecretKey)
 	if err != nil {

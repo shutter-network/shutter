@@ -203,8 +203,7 @@ func TestRoundTrip(t *testing.T) {
 	// first generate keys
 	n := 3
 	threshold := uint64(2)
-	_ = ComputeEpochID(uint64(10))
-	epochID := (*EpochID)(new(bn256.G1).ScalarBaseMult(big.NewInt(1)))
+	epochID := ComputeEpochID([]byte("epoch1"))
 
 	ps := []*Polynomial{}
 	gammas := []*Gammas{}
