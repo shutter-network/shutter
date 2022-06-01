@@ -3,6 +3,8 @@
 package epochkg
 
 import (
+	"encoding/binary"
+
 	"github.com/pkg/errors"
 
 	"github.com/shutter-network/shutter/shlib/puredkg"
@@ -49,7 +51,9 @@ func NewEpochKG(puredkgResult *puredkg.Result) *EpochKG {
 }
 
 func (epochkg *EpochKG) ComputeEpochSecretKeyShare(epoch uint64) *shcrypto.EpochSecretKeyShare {
-	epochID := shcrypto.ComputeEpochID(epoch)
+	epochIDBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(epochIDBytes, epoch)
+	epochID := shcrypto.ComputeEpochID(epochIDBytes)
 	return shcrypto.ComputeEpochSecretKeyShare(epochkg.SecretKeyShare, epochID)
 }
 
@@ -90,7 +94,9 @@ func (epochkg *EpochKG) HandleEpochSecretKeyShare(share *EpochSecretKeyShare) er
 		// We already have the key for this epoch
 		return nil
 	}
-	epochID := shcrypto.ComputeEpochID(share.Epoch)
+	epochIDBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(epochIDBytes, share.Epoch)
+	epochID := shcrypto.ComputeEpochID(epochIDBytes)
 	if !shcrypto.VerifyEpochSecretKeyShare(
 		share.Share,
 		epochkg.PublicKeyShares[share.Sender],
