@@ -25,7 +25,7 @@ func TestEonPublicKeyGobable(t *testing.T) {
 }
 
 func TestEpochIDGobable(t *testing.T) {
-	epochid := ComputeEpochID(1111)
+	epochid := ComputeEpochID([]byte("epoch1"))
 	shtest.EnsureGobable(t, epochid, new(EpochID))
 }
 
