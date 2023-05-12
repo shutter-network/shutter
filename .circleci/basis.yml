@@ -51,7 +51,7 @@ executors:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
   go:
     docker:
-      - image: cimg/go:1.17
+      - image: cimg/go:1.20
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
