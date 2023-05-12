@@ -149,6 +149,39 @@ func ComputeEpochID(epochIDBytes []byte) *EpochID {
 	return &epochIDPoint
 }
 
+// LagrangeCoeffs stores the lagrange coefficients that are needed to compute an epoch secret key
+// for a certain array of keypers. We use this to speedup epoch secret key generation.
+type LagrangeCoeffs struct {
+	lambdas []*big.Int
+}
+
+// NewLagrangeCoeffs computes the lagrange coefficients for the given array of keypers.
+func NewLagrangeCoeffs(keyperIndices []int) *LagrangeCoeffs {
+	lambdas := make([]*big.Int, len(keyperIndices))
+	for i, keyperIndex := range keyperIndices {
+		lambdas[i] = lagrangeCoefficient(keyperIndex, keyperIndices)
+	}
+	return &LagrangeCoeffs{
+		lambdas: lambdas,
+	}
+}
+
+// ComputeEpochSecretKey computes the epoch secret key given the secret key shares of the keypers.
+// The caller has to ensure that the secret shares match the keyperIndices used during
+// initialisation.
+func (lc *LagrangeCoeffs) ComputeEpochSecretKey(epochSecretKeyShares []*EpochSecretKeyShare) (*EpochSecretKey, error) {
+	if len(epochSecretKeyShares) != len(lc.lambdas) {
+		return nil, fmt.Errorf("got %d shares, expected %d", len(epochSecretKeyShares), len(lc.lambdas))
+	}
+	skG1 := new(bn256.G1).Set(zeroG1)
+	for i, share := range epochSecretKeyShares {
+		lambda := lc.lambdas[i]
+		qTimesLambda := new(bn256.G1).ScalarMult((*bn256.G1)(share), lambda)
+		skG1.Add(skG1, qTimesLambda)
+	}
+	return (*EpochSecretKey)(skG1), nil
+}
+
 // ComputeEpochSecretKey computes the epoch secret key from a set of shares.
 func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSecretKeyShare, threshold uint64) (*EpochSecretKey, error) {
 	if len(keyperIndices) != len(epochSecretKeyShares) {
@@ -158,17 +191,7 @@ func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSec
 		return nil, fmt.Errorf("got %d shares, but threshold is %d", len(keyperIndices), threshold)
 	}
 
-	skG1 := new(bn256.G1).Set(zeroG1)
-	for i := 0; i < len(keyperIndices); i++ {
-		keyperIndex := keyperIndices[i]
-		share := epochSecretKeyShares[i]
-
-		lambda := lagrangeCoefficient(keyperIndex, keyperIndices)
-		qTimesLambda := new(bn256.G1).ScalarMult((*bn256.G1)(share), lambda)
-		skG1 = new(bn256.G1).Add(skG1, qTimesLambda)
-	}
-	sk := EpochSecretKey(*skG1)
-	return &sk, nil
+	return NewLagrangeCoeffs(keyperIndices).ComputeEpochSecretKey(epochSecretKeyShares)
 }
 
 // VerifyEpochSecretKeyShare checks that an epoch sk share published by a keyper is correct.
