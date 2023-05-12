@@ -22,7 +22,7 @@ commands:
       - run:
           name: Install go
           command: |
-            curl -sSL "https://golang.org/dl/go1.17.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
+            curl -sSL "https://go.dev/dl/go1.20.4.linux-amd64.tar.gz" | sudo tar -xz -C /usr/local/
             mkdir -p ~/go/bin
             echo >${BASH_ENV} 'export PATH=/usr/local/go/bin:~/go/bin:${PATH}'
 
@@ -40,6 +40,12 @@ executors:
   py37:
     docker:
       - image: cimg/python:3.7
+        environment:
+          GO111MODULE: "on"
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  py310:
+    docker:
+      - image: cimg/python:3.10
         environment:
           GO111MODULE: "on"
           PIP_DISABLE_PIP_VERSION_CHECK: "1"

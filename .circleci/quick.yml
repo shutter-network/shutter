@@ -1,6 +1,6 @@
 jobs:
   pylint:
-    executor: py37
+    executor: py310
     working_directory: ~/shutter
     steps:
       - checkout
@@ -17,7 +17,7 @@ jobs:
             - ~/shutter/.nox
 
   pre-commit:
-    executor: py37
+    executor: py310
     working_directory: ~/shutter
     steps:
       - checkout
@@ -36,7 +36,7 @@ jobs:
       - run:
           name: Install pre-commit
           command: |
-            pip install --user -c requirements.txt pre-commit
+            pip install --user pre-commit
             pre-commit install-hooks -c pre-commit-config
       - save_cache:
           key: pre-commit-cache-v8-{{ checksum "~/fingerprint_python.txt" }}-{{ checksum "pre-commit-config" }}-{{checksum "requirements.txt"}}

@@ -143,7 +143,8 @@ func determineFundings(
 	ctx context.Context,
 	client *ethclient.Client,
 	addresses []common.Address,
-	lowAmount, highAmount *big.Int) ([]funding, error) {
+	lowAmount, highAmount *big.Int,
+) ([]funding, error) {
 	res := []funding{}
 	for _, addr := range addresses {
 		balance, err := client.BalanceAt(ctx, addr, nil)
