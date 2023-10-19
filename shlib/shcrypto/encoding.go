@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 )
 
@@ -99,6 +100,20 @@ func (eonPublicKey *EonPublicKey) Unmarshal(m []byte) error {
 	return err
 }
 
+// MarshalText serializes the eon public key to hex
+func (e EonPublicKey) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(e.Marshal()).MarshalText()
+}
+
+// UnmarshalText deserializes the eon public key from hex
+func (e *EonPublicKey) UnmarshalText(input []byte) error {
+	var b hexutil.Bytes
+	if err := b.UnmarshalText(input); err != nil {
+		return err
+	}
+	return e.Unmarshal(b)
+}
+
 // Marshal serializes the epoch id.
 func (epochID *EpochID) Marshal() []byte {
 	return (*bn256.G1)(epochID).Marshal()
@@ -138,5 +153,46 @@ func (epochSecretKey *EpochSecretKey) Unmarshal(m []byte) error {
 	if len(mLeft) > 0 {
 		return ErrInputTooLong
 	}
+	return err
+}
+
+// MarshalText serializes the epoch secret key to hex
+func (epochSecretKey EpochSecretKey) MarshalText() ([]byte, error) {
+	return []byte(hexutil.Encode(epochSecretKey.Marshal())), nil
+}
+
+// UnmarshalText deserializes the epoch secret key from hex
+func (epochSecretKey *EpochSecretKey) UnmarshalText(input []byte) error {
+	var b hexutil.Bytes
+	if err := b.UnmarshalText(input); err != nil {
+		return err
+	}
+	return epochSecretKey.Unmarshal(b)
+}
+
+// MarshalText serializes the block to hex
+func (block Block) MarshalText() ([]byte, error) {
+	return []byte(hexutil.Encode(block[:])), nil
+}
+
+// UnmarshalText deserializes the block from hex
+func (block *Block) UnmarshalText(b []byte) error {
+	decoded, err := hexutil.Decode(string(b))
+	copy(block[:], decoded)
+	return err
+}
+
+// MarshalText serializes the encrypted message to hex
+func (encryptedMessage EncryptedMessage) MarshalText() ([]byte, error) {
+	return []byte(hexutil.Encode(encryptedMessage.Marshal())), nil
+}
+
+// UnmarshalText deserializes the encrypted message from hex
+func (encryptedMessage *EncryptedMessage) UnmarshalText(b []byte) error {
+	decoded, err := hexutil.Decode(string(b))
+	if err != nil {
+		return err
+	}
+	err = encryptedMessage.Unmarshal(decoded)
 	return err
 }
