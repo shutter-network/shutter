@@ -49,7 +49,7 @@ func RandomSigma(r io.Reader) (Block, error) {
 // provided in sigma.
 func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma Block) *EncryptedMessage {
 	messageBlocks := PadMessage(message)
-	r := computeR(sigma)
+	r := computeR(sigma, message)
 	result := EncryptedMessage{
 		C1: computeC1(r),
 		C2: computeC2(sigma, r, epochID, eonPublicKey),
@@ -58,8 +58,9 @@ func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma
 	return &result
 }
 
-func computeR(sigma Block) *big.Int {
-	return HashBlockToInt(sigma)
+func computeR(sigma Block, message []byte) *big.Int {
+	messageHash := HashBytesToBlock(message)
+	return HashBlocksToInt(sigma, messageHash)
 }
 
 func computeC1(r *big.Int) *bn256.G2 {
@@ -99,7 +100,18 @@ func computeBlockKeys(sigma Block, n int) []Block {
 func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, error) {
 	sigma := m.Sigma(epochSecretKey)
 	decryptedBlocks := DecryptBlocks(m.C3, sigma)
-	return UnpadMessage(decryptedBlocks)
+	message, err := UnpadMessage(decryptedBlocks)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	r := computeR(sigma, message)
+	expectedC1 := computeC1(r)
+	if !EqualG2(m.C1, expectedC1) {
+		return []byte{}, errors.New("invalid C1 in encrypted message")
+	}
+
+	return message, nil
 }
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
