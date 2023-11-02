@@ -98,7 +98,7 @@ func computeBlockKeys(sigma Block, n int) []Block {
 // Decrypt decrypts the given message using the given epoch secret key.
 func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, error) {
 	sigma := m.Sigma(epochSecretKey)
-	decryptedBlocks := decryptBlocks(m.C3, sigma)
+	decryptedBlocks := DecryptBlocks(m.C3, sigma)
 	return UnpadMessage(decryptedBlocks)
 }
 
@@ -110,7 +110,7 @@ func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 	return sigma
 }
 
-func decryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
+func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 	numBlocks := len(encryptedBlocks)
 	keys := computeBlockKeys(sigma, numBlocks)
 	decryptedBlocks := []Block{}
