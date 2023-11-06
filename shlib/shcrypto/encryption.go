@@ -77,23 +77,18 @@ func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPubli
 func computeC3(blocks []Block, sigma Block) []Block {
 	encryptedBlocks := []Block{}
 	numBlocks := len(blocks)
-	keys := computeBlockKeys(sigma, numBlocks)
 	for i := 0; i < numBlocks; i++ {
-		encryptedBlock := XORBlocks(keys[i], blocks[i])
+		key := computeBlockKey(sigma, int64(i))
+		encryptedBlock := XORBlocks(key, blocks[i])
 		encryptedBlocks = append(encryptedBlocks, encryptedBlock)
 	}
 	return encryptedBlocks
 }
 
-func computeBlockKeys(sigma Block, n int) []Block {
-	keys := []Block{}
+func computeBlockKey(sigma Block, blockNum int64) Block {
 	buf := make([]byte, binary.MaxVarintLen64)
-	for i := int64(0); i < int64(n); i++ {
-		binary.PutVarint(buf, i)
-		key := HashBytesToBlock(sigma[:], buf)
-		keys = append(keys, key)
-	}
-	return keys
+	written := binary.PutVarint(buf, blockNum)
+	return HashBytesToBlock(sigma[:], buf[:written])
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
@@ -124,10 +119,10 @@ func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 
 func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 	numBlocks := len(encryptedBlocks)
-	keys := computeBlockKeys(sigma, numBlocks)
 	decryptedBlocks := []Block{}
 	for i := 0; i < numBlocks; i++ {
-		decryptedBlock := XORBlocks(encryptedBlocks[i], keys[i])
+		key := computeBlockKey(sigma, int64(i))
+		decryptedBlock := XORBlocks(encryptedBlocks[i], key)
 		decryptedBlocks = append(decryptedBlocks, decryptedBlock)
 	}
 	return decryptedBlocks
