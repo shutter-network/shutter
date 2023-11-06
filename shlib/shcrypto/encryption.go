@@ -35,13 +35,14 @@ func XORBlocks(b1 Block, b2 Block) Block {
 
 // RandomSigma returns a random value to be used during encryption.
 func RandomSigma(r io.Reader) (Block, error) {
-	data := make([]byte, BlockSize)
-	_, err := r.Read(data)
+	var b Block
+	l, err := r.Read(b[:])
+	if l != BlockSize {
+		return Block{}, errors.New("didn't read all random bytes")
+	}
 	if err != nil {
 		return Block{}, err
 	}
-	var b Block
-	copy(b[:], data)
 	return b, nil
 }
 
