@@ -79,17 +79,33 @@ func computeC3(blocks []Block, sigma Block) []Block {
 	encryptedBlocks := []Block{}
 	numBlocks := len(blocks)
 	for i := 0; i < numBlocks; i++ {
-		key := computeBlockKey(sigma, int64(i))
+		key := computeBlockKey(sigma, uint64(i))
 		encryptedBlock := XORBlocks(key, blocks[i])
 		encryptedBlocks = append(encryptedBlocks, encryptedBlock)
 	}
 	return encryptedBlocks
 }
 
-func computeBlockKey(sigma Block, blockNum int64) Block {
-	buf := make([]byte, binary.MaxVarintLen64)
-	written := binary.PutVarint(buf, blockNum)
-	return HashBytesToBlock(sigma[:], buf[:written])
+func Uint64toBytes(i uint64) ([]byte, int) {
+	if i == 0 {
+		return []byte{0x00}, 1
+	}
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, i)
+	for i, bt := range b {
+		if bt != 0x00 {
+			return b[i:], 8 - i
+		}
+	}
+	return b, 8
+}
+
+func computeBlockKey(sigma Block, blockNum uint64) Block {
+	buf, _ := Uint64toBytes(blockNum)
+	h := keccak256(sigma[:], buf)
+	var b Block
+	copy(b[:], h)
+	return b
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
@@ -122,7 +138,7 @@ func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 	numBlocks := len(encryptedBlocks)
 	decryptedBlocks := []Block{}
 	for i := 0; i < numBlocks; i++ {
-		key := computeBlockKey(sigma, int64(i))
+		key := computeBlockKey(sigma, uint64(i))
 		decryptedBlock := XORBlocks(encryptedBlocks[i], key)
 		decryptedBlocks = append(decryptedBlocks, decryptedBlock)
 	}
