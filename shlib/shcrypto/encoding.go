@@ -100,18 +100,18 @@ func (eonPublicKey *EonPublicKey) Unmarshal(m []byte) error {
 	return err
 }
 
-// MarshalText serializes the eon public key to hex
-func (e EonPublicKey) MarshalText() ([]byte, error) {
-	return hexutil.Bytes(e.Marshal()).MarshalText()
+// MarshalText serializes the eon public key to hex.
+func (eonPublicKey EonPublicKey) MarshalText() ([]byte, error) {
+	return hexutil.Bytes(eonPublicKey.Marshal()).MarshalText()
 }
 
-// UnmarshalText deserializes the eon public key from hex
-func (e *EonPublicKey) UnmarshalText(input []byte) error {
+// UnmarshalText deserializes the eon public key from hex.
+func (eonPublicKey *EonPublicKey) UnmarshalText(input []byte) error {
 	var b hexutil.Bytes
 	if err := b.UnmarshalText(input); err != nil {
 		return err
 	}
-	return e.Unmarshal(b)
+	return eonPublicKey.Unmarshal(b)
 }
 
 // Marshal serializes the epoch id.
@@ -156,12 +156,12 @@ func (epochSecretKey *EpochSecretKey) Unmarshal(m []byte) error {
 	return err
 }
 
-// MarshalText serializes the epoch secret key to hex
-func (epochSecretKey EpochSecretKey) MarshalText() ([]byte, error) {
+// MarshalText serializes the epoch secret key to hex.
+func (epochSecretKey EpochSecretKey) MarshalText() ([]byte, error) { //nolint: unparam
 	return []byte(hexutil.Encode(epochSecretKey.Marshal())), nil
 }
 
-// UnmarshalText deserializes the epoch secret key from hex
+// UnmarshalText deserializes the epoch secret key from hex.
 func (epochSecretKey *EpochSecretKey) UnmarshalText(input []byte) error {
 	var b hexutil.Bytes
 	if err := b.UnmarshalText(input); err != nil {
@@ -170,29 +170,29 @@ func (epochSecretKey *EpochSecretKey) UnmarshalText(input []byte) error {
 	return epochSecretKey.Unmarshal(b)
 }
 
-// MarshalText serializes the block to hex
-func (block Block) MarshalText() ([]byte, error) {
+// MarshalText serializes the block to hex.
+func (block Block) MarshalText() ([]byte, error) { //nolint:unparam
 	return []byte(hexutil.Encode(block[:])), nil
 }
 
-// UnmarshalText deserializes the block from hex
+// UnmarshalText deserializes the block from hex.
 func (block *Block) UnmarshalText(b []byte) error {
 	decoded, err := hexutil.Decode(string(b))
 	copy(block[:], decoded)
 	return err
 }
 
-// MarshalText serializes the encrypted message to hex
-func (encryptedMessage EncryptedMessage) MarshalText() ([]byte, error) {
-	return []byte(hexutil.Encode(encryptedMessage.Marshal())), nil
+// MarshalText serializes the encrypted message to hex.
+func (m EncryptedMessage) MarshalText() ([]byte, error) { //nolint:unparam
+	return []byte(hexutil.Encode(m.Marshal())), nil
 }
 
-// UnmarshalText deserializes the encrypted message from hex
-func (encryptedMessage *EncryptedMessage) UnmarshalText(b []byte) error {
+// UnmarshalText deserializes the encrypted message from hex.
+func (m *EncryptedMessage) UnmarshalText(b []byte) error {
 	decoded, err := hexutil.Decode(string(b))
 	if err != nil {
 		return err
 	}
-	err = encryptedMessage.Unmarshal(decoded)
+	err = m.Unmarshal(decoded)
 	return err
 }
