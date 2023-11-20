@@ -126,13 +126,13 @@ func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 func PadMessage(m []byte) []Block {
 	paddingLength := BlockSize - len(m)%BlockSize
 	padding := bytes.Repeat([]byte{byte(paddingLength)}, paddingLength)
-	padded := append(m, padding...)
+	m = append(m, padding...)
 
 	blocks := []Block{}
-	numBlocks := len(padded) / BlockSize
+	numBlocks := len(m) / BlockSize
 	for i := 0; i < numBlocks; i++ {
 		var block Block
-		copy(block[:], padded[i*BlockSize:(i+1)*BlockSize])
+		copy(block[:], m[i*BlockSize:(i+1)*BlockSize])
 		blocks = append(blocks, block)
 	}
 	return blocks
