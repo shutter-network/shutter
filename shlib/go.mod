@@ -1,18 +1,20 @@
 module github.com/shutter-network/shutter/shlib
 
-go 1.17
+go 1.21
 
 require (
-	github.com/ethereum/go-ethereum v1.10.8
-	github.com/google/go-cmp v0.5.6
+	github.com/ethereum/go-ethereum v1.13.4
+	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
+	golang.org/x/crypto v0.14.0
 	gotest.tools v2.2.0+incompatible
-	gotest.tools/v3 v3.0.3
+	gotest.tools/v3 v3.5.1
 )
 
 require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
-	golang.org/x/sys v0.0.0-20210816183151-1e6c022a8912 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/holiman/uint256 v1.2.3 // indirect
+	golang.org/x/sys v0.14.0 // indirect
 )

@@ -24,11 +24,16 @@ func HashBytesToBlock(ds ...[]byte) Block {
 	return b
 }
 
-// HashBlockToInt hashes a block and returns the result as an integer in Z_q.
-func HashBlockToInt(d Block) *big.Int {
-	h := keccak256(d[:])
+// HashBlocksToInt concatenates and hashes a sequence of blocks and returns the result as an
+// integer in Z_q.
+func HashBlocksToInt(bs ...Block) *big.Int {
+	d := []byte{}
+	for _, b := range bs {
+		d = append(d, b[:]...)
+	}
+	h := keccak256(d)
 	i := new(big.Int).SetBytes(h)
-	i.Mod(i, bn256.Order) // TODO: check if this is fine
+	i.Mod(i, bn256.Order)
 	return i
 }
 

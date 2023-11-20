@@ -46,8 +46,6 @@ require (
 )
 
 require (
-	github.com/shutter-network/shutter/shlib v0.0.0
+	github.com/shutter-network/shutter/shlib v0.1.12
 	golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34 // indirect
 )
-
-replace github.com/shutter-network/shutter/shlib => ../shlib

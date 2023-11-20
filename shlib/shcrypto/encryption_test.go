@@ -199,8 +199,8 @@ func TestPaddingRoundtrip(t *testing.T) {
 	}
 }
 
-func TestRoundTrip(t *testing.T) {
-	// first generate keys
+func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
+	t.Helper()
 	n := 3
 	threshold := uint64(2)
 	epochID := ComputeEpochID([]byte("epoch1"))
@@ -236,6 +236,13 @@ func TestRoundTrip(t *testing.T) {
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
 		threshold)
 	assert.NilError(t, err)
+	return eonPublicKey, epochSecretKey, epochID
+}
+
+func TestRoundTrip(t *testing.T) {
+	// first generate keys
+
+	eonPublicKey, epochSecretKey, epochID := makeKeys(t)
 
 	// now encrypt and decrypt message
 	m := []byte("hello")
@@ -246,4 +253,64 @@ func TestRoundTrip(t *testing.T) {
 	decM, err := encM.Decrypt(epochSecretKey)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, m, decM)
+}
+
+func TestC1Malleability(t *testing.T) {
+	message := []byte("secret message")
+	eonPublicKey, decryptionKey, epochIDPoint := makeKeys(t)
+	originalSigma, err := RandomSigma(rand.Reader)
+	assert.Assert(t, err == nil, "Could not get random sigma")
+	encryptedMessage := Encrypt(
+		message,
+		eonPublicKey,
+		epochIDPoint,
+		originalSigma,
+	)
+	var c1 *bn256.G2
+	// we move C1 around, until we find a legal padding
+	for i := 1; i <= 10000; i++ {
+		c1 = encryptedMessage.C1
+		c1.Add(c1, c1)
+		encryptedMessage.C1 = c1
+		sigma := encryptedMessage.Sigma(decryptionKey)
+		decryptedBlocks := DecryptBlocks(encryptedMessage.C3, sigma)
+		_, err = UnpadMessage(decryptedBlocks)
+		if err == nil {
+			break
+		}
+	}
+	msg, err := encryptedMessage.Decrypt(decryptionKey)
+	assert.Assert(t, !bytes.Equal(message, msg), "decryption successful, in spite of tampered C1")
+	assert.Assert(t, err != nil, "decryption successful, in spite of tampered C1")
+}
+
+func TestMessageMalleability(t *testing.T) {
+	messageBlock, err := RandomSigma(rand.Reader)
+	assert.Assert(t, err == nil, "could not get random message")
+	originalMessage := messageBlock[:]
+
+	eonPublicKey, decryptionKey, epochIDPoint := makeKeys(t)
+	sigma, err := RandomSigma(rand.Reader)
+	assert.Assert(t, err == nil, "could not get random sigma")
+	encryptedMessage := Encrypt(
+		originalMessage,
+		eonPublicKey,
+		epochIDPoint,
+		sigma,
+	)
+
+	// malleate message
+	flipMask := 0b00000001
+	encryptedB0 := int(encryptedMessage.C3[0][0])
+	encryptedB0 ^= flipMask
+	encryptedMessage.C3[0][0] = byte(encryptedB0)
+	malleatedMessage := make([]byte, len(originalMessage))
+	copy(malleatedMessage, originalMessage)
+	plaintextB0 := int(malleatedMessage[0])
+	plaintextB0 ^= flipMask
+	malleatedMessage[0] = byte(plaintextB0)
+
+	decryptedMessage, err := encryptedMessage.Decrypt(decryptionKey)
+	assert.Assert(t, !bytes.Equal(decryptedMessage, malleatedMessage), "message was successfully malleated")
+	assert.Assert(t, err != nil, "decryption successful, in spite of tampered message")
 }

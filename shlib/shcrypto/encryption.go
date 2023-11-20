@@ -35,13 +35,14 @@ func XORBlocks(b1 Block, b2 Block) Block {
 
 // RandomSigma returns a random value to be used during encryption.
 func RandomSigma(r io.Reader) (Block, error) {
-	data := make([]byte, BlockSize)
-	_, err := r.Read(data)
+	var b Block
+	l, err := r.Read(b[:])
+	if l != BlockSize {
+		return Block{}, errors.New("didn't read all random bytes")
+	}
 	if err != nil {
 		return Block{}, err
 	}
-	var b Block
-	copy(b[:], data)
 	return b, nil
 }
 
@@ -49,7 +50,7 @@ func RandomSigma(r io.Reader) (Block, error) {
 // provided in sigma.
 func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma Block) *EncryptedMessage {
 	messageBlocks := PadMessage(message)
-	r := computeR(sigma)
+	r := computeR(sigma, message)
 	result := EncryptedMessage{
 		C1: computeC1(r),
 		C2: computeC2(sigma, r, epochID, eonPublicKey),
@@ -58,8 +59,9 @@ func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma
 	return &result
 }
 
-func computeR(sigma Block) *big.Int {
-	return HashBlockToInt(sigma)
+func computeR(sigma Block, message []byte) *big.Int {
+	messageHash := HashBytesToBlock(message)
+	return HashBlocksToInt(sigma, messageHash)
 }
 
 func computeC1(r *big.Int) *bn256.G2 {
@@ -76,30 +78,52 @@ func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPubli
 func computeC3(blocks []Block, sigma Block) []Block {
 	encryptedBlocks := []Block{}
 	numBlocks := len(blocks)
-	keys := computeBlockKeys(sigma, numBlocks)
 	for i := 0; i < numBlocks; i++ {
-		encryptedBlock := XORBlocks(keys[i], blocks[i])
+		key := computeBlockKey(sigma, uint64(i))
+		encryptedBlock := XORBlocks(key, blocks[i])
 		encryptedBlocks = append(encryptedBlocks, encryptedBlock)
 	}
 	return encryptedBlocks
 }
 
-func computeBlockKeys(sigma Block, n int) []Block {
-	keys := []Block{}
-	buf := make([]byte, binary.MaxVarintLen64)
-	for i := int64(0); i < int64(n); i++ {
-		binary.PutVarint(buf, i)
-		key := HashBytesToBlock(sigma[:], buf)
-		keys = append(keys, key)
+func Uint64toBytes(i uint64) ([]byte, int) {
+	if i == 0 {
+		return []byte{0x00}, 1
 	}
-	return keys
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, i)
+	for i, bt := range b {
+		if bt != 0x00 {
+			return b[i:], 8 - i
+		}
+	}
+	return b, 8
+}
+
+func computeBlockKey(sigma Block, blockNum uint64) Block {
+	buf, _ := Uint64toBytes(blockNum)
+	h := keccak256(sigma[:], buf)
+	var b Block
+	copy(b[:], h)
+	return b
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
 func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, error) {
 	sigma := m.Sigma(epochSecretKey)
 	decryptedBlocks := DecryptBlocks(m.C3, sigma)
-	return UnpadMessage(decryptedBlocks)
+	message, err := UnpadMessage(decryptedBlocks)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	r := computeR(sigma, message)
+	expectedC1 := computeC1(r)
+	if !EqualG2(m.C1, expectedC1) {
+		return []byte{}, errors.New("invalid C1 in encrypted message")
+	}
+
+	return message, nil
 }
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
@@ -112,10 +136,10 @@ func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 
 func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 	numBlocks := len(encryptedBlocks)
-	keys := computeBlockKeys(sigma, numBlocks)
 	decryptedBlocks := []Block{}
 	for i := 0; i < numBlocks; i++ {
-		decryptedBlock := XORBlocks(encryptedBlocks[i], keys[i])
+		key := computeBlockKey(sigma, uint64(i))
+		decryptedBlock := XORBlocks(encryptedBlocks[i], key)
 		decryptedBlocks = append(decryptedBlocks, decryptedBlock)
 	}
 	return decryptedBlocks
