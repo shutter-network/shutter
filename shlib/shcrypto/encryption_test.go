@@ -283,3 +283,34 @@ func TestC1Malleability(t *testing.T) {
 	assert.Assert(t, !bytes.Equal(message, msg), "decryption successful, in spite of tampered C1")
 	assert.Assert(t, err != nil, "decryption successful, in spite of tampered C1")
 }
+
+func TestMessageMalleability(t *testing.T) {
+	messageBlock, err := RandomSigma(rand.Reader)
+	assert.Assert(t, err == nil, "could not get random message")
+	originalMessage := messageBlock[:]
+
+	eonPublicKey, decryptionKey, epochIDPoint := makeKeys(t)
+	sigma, err := RandomSigma(rand.Reader)
+	assert.Assert(t, err == nil, "could not get random sigma")
+	encryptedMessage := Encrypt(
+		originalMessage,
+		eonPublicKey,
+		epochIDPoint,
+		sigma,
+	)
+
+	// malleate message
+	flipMask := 0b00000001
+	encryptedB0 := int(encryptedMessage.C3[0][0])
+	encryptedB0 ^= flipMask
+	encryptedMessage.C3[0][0] = byte(encryptedB0)
+	malleatedMessage := make([]byte, len(originalMessage))
+	copy(malleatedMessage, originalMessage)
+	plaintextB0 := int(malleatedMessage[0])
+	plaintextB0 ^= flipMask
+	malleatedMessage[0] = byte(plaintextB0)
+
+	decryptedMessage, err := encryptedMessage.Decrypt(decryptionKey)
+	assert.Assert(t, !bytes.Equal(decryptedMessage, malleatedMessage), "message was successfully malleated")
+	assert.Assert(t, err != nil, "decryption successful, in spite of tampered message")
+}
