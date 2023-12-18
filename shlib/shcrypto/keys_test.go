@@ -331,6 +331,16 @@ func TestVerifyEpochSecretKey(t *testing.T) {
 	ok, err = VerifyEpochSecretKey(epochSecretKey, eonPublicKey, append(epochIDBytes, 0xab))
 	assert.NilError(t, err)
 	assert.Check(t, !ok)
+
+	var sigma Block
+	message := []byte("msg")
+	ok, err = VerifyEpochSecretKeyDeterministic(epochSecretKey, eonPublicKey, epochIDBytes, sigma, message)
+	assert.NilError(t, err)
+	assert.Check(t, ok)
+
+	ok, err = VerifyEpochSecretKeyDeterministic(epochSecretKey, eonPublicKey, append(epochIDBytes, 0xab), sigma, message)
+	assert.NilError(t, err)
+	assert.Check(t, !ok)
 }
 
 func TestComputeEpochSecretKey(t *testing.T) {

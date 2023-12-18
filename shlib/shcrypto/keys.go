@@ -219,6 +219,12 @@ func VerifyEpochSecretKey(epochSecretKey *EpochSecretKey, eonPublicKey *EonPubli
 	if err != nil {
 		return false, err
 	}
+	return VerifyEpochSecretKeyDeterministic(epochSecretKey, eonPublicKey, epochIDBytes, sigma, message)
+}
+
+// VerifyEpochSecretKeyDeterministic checks that an epoch secret key is the correct key for an
+// epoch given the eon public key and random inputs for sigma and message.
+func VerifyEpochSecretKeyDeterministic(epochSecretKey *EpochSecretKey, eonPublicKey *EonPublicKey, epochIDBytes []byte, sigma Block, message []byte) (bool, error) {
 	epochID := ComputeEpochID(epochIDBytes)
 	encryptedMessage := Encrypt(message, eonPublicKey, epochID, sigma)
 	decryptedMessage, err := encryptedMessage.Decrypt(epochSecretKey)
