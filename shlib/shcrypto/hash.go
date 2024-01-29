@@ -16,29 +16,35 @@ func keccak256(ds ...[]byte) []byte {
 	return state.Sum(h)
 }
 
-// HashBytesToBlock hashes the given byte slice and returns the result as a block.
-func HashBytesToBlock(ds ...[]byte) Block {
-	h := keccak256(ds...)
-	var b Block
-	copy(b[:], h)
-	return b
+func hashWithPrefix(p byte, b []byte) []byte {
+	return keccak256(append([]byte{p}, b...))
 }
 
-// HashBlocksToInt concatenates and hashes a sequence of blocks and returns the result as an
-// integer in Z_q.
-func HashBlocksToInt(bs ...Block) *big.Int {
-	d := []byte{}
-	for _, b := range bs {
-		d = append(d, b[:]...)
-	}
-	h := keccak256(d)
+func Hash1(b []byte) *bn256.G1 {
+	h := hashWithPrefix(1, b)
+	n := new(big.Int).SetBytes(h)
+	p := new(bn256.G1).ScalarBaseMult(n)
+	return p
+}
+
+func Hash2(gt *bn256.GT) Block {
+	b := gt.Marshal()
+	h := hashWithPrefix(2, b)
+	var block Block
+	copy(block[:], h)
+	return block
+}
+
+func Hash3(b []byte) *big.Int {
+	h := hashWithPrefix(3, b)
 	i := new(big.Int).SetBytes(h)
-	i.Mod(i, bn256.Order)
+	i = i.Mod(i, bn256.Order)
 	return i
 }
 
-// HashGTToBlock hashes an element of GT and returns the result as a block.
-func HashGTToBlock(gt *bn256.GT) Block {
-	b := gt.Marshal()
-	return HashBytesToBlock(b)
+func Hash4(b []byte) Block {
+	h := hashWithPrefix(4, b)
+	var block Block
+	copy(block[:], h)
+	return block
 }
