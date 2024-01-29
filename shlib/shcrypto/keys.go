@@ -143,10 +143,7 @@ func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *E
 
 // ComputeEpochID computes the id of the given epoch.
 func ComputeEpochID(epochIDBytes []byte) *EpochID {
-	epochIDBytesHash := keccak256(epochIDBytes)
-	epochIDBig := new(big.Int).SetBytes(epochIDBytesHash)
-	epochIDPoint := EpochID(*new(bn256.G1).ScalarBaseMult(epochIDBig))
-	return &epochIDPoint
+	return (*EpochID)(Hash1(epochIDBytes))
 }
 
 // LagrangeCoeffs stores the lagrange coefficients that are needed to compute an epoch secret key

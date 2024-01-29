@@ -60,8 +60,7 @@ func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma
 }
 
 func computeR(sigma Block, message []byte) *big.Int {
-	messageHash := HashBytesToBlock(message)
-	return HashBlocksToInt(sigma, messageHash)
+	return Hash3(append(sigma[:], message...))
 }
 
 func computeC1(r *big.Int) *bn256.G2 {
@@ -71,7 +70,7 @@ func computeC1(r *big.Int) *bn256.G2 {
 func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPublicKey) Block {
 	pairing := bn256.Pair((*bn256.G1)(epochID), (*bn256.G2)(eonPublicKey))
 	preimage := new(bn256.GT).ScalarMult(pairing, r)
-	key := HashGTToBlock(preimage)
+	key := Hash2(preimage)
 	return XORBlocks(sigma, key)
 }
 
@@ -102,10 +101,7 @@ func Uint64toBytes(i uint64) ([]byte, int) {
 
 func computeBlockKey(sigma Block, blockNum uint64) Block {
 	buf, _ := Uint64toBytes(blockNum)
-	h := keccak256(sigma[:], buf)
-	var b Block
-	copy(b[:], h)
-	return b
+	return Hash4(append(sigma[:], buf...))
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
@@ -129,7 +125,7 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
 func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 	pairing := bn256.Pair((*bn256.G1)(epochSecretKey), m.C1)
-	key := HashGTToBlock(pairing)
+	key := Hash2(pairing)
 	sigma := XORBlocks(m.C2, key)
 	return sigma
 }
