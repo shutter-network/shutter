@@ -20,6 +20,7 @@ func hashWithPrefix(p byte, b []byte) []byte {
 	return keccak256(append([]byte{p}, b...))
 }
 
+// p. 7, H_1
 func Hash1(b []byte) *bn256.G1 {
 	h := hashWithPrefix(1, b)
 	n := new(big.Int).SetBytes(h)
@@ -27,6 +28,7 @@ func Hash1(b []byte) *bn256.G1 {
 	return p
 }
 
+// p. 7, H_2
 func Hash2(gt *bn256.GT) Block {
 	b := gt.Marshal()
 	h := hashWithPrefix(2, b)
@@ -35,6 +37,7 @@ func Hash2(gt *bn256.GT) Block {
 	return block
 }
 
+// p. 7, H_3
 func Hash3(b []byte) *big.Int {
 	h := hashWithPrefix(3, b)
 	i := new(big.Int).SetBytes(h)
@@ -42,6 +45,7 @@ func Hash3(b []byte) *big.Int {
 	return i
 }
 
+// p. 7, H_4
 func Hash4(b []byte) Block {
 	h := hashWithPrefix(4, b)
 	var block Block

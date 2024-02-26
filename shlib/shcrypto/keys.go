@@ -101,6 +101,7 @@ func (eonSecretKeyShare *EonSecretKeyShare) Equal(e2 *EonSecretKeyShare) bool {
 
 // ComputeEonSecretKeyShare computes the keyper's secret key share from the set of poly evals
 // received from the other keypers.
+// p. 19, Fig. 12, 2: msk_j := s_j^1 + ... + s_j^n mod q
 func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 	res := big.NewInt(0)
 	for _, si := range polyEvals {
@@ -112,6 +113,7 @@ func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 }
 
 // ComputeEonPublicKeyShare computes the eon public key share of the given keyper.
+// p. 19, Fig. 12, 2: mpk_j := pi_j^1 + ... + pi_j^n
 func ComputeEonPublicKeyShare(keyperIndex int, gammas []*Gammas) *EonPublicKeyShare {
 	g2 := new(bn256.G2).Set(zeroG2)
 	keyperX := KeyperX(keyperIndex)
@@ -124,6 +126,7 @@ func ComputeEonPublicKeyShare(keyperIndex int, gammas []*Gammas) *EonPublicKeySh
 }
 
 // ComputeEonPublicKey computes the combined eon public key from the set of eon public key shares.
+// p. 19, Fig. 12, 2: mpk := pi_0^1 + ... + pi_0^n
 func ComputeEonPublicKey(gammas []*Gammas) *EonPublicKey {
 	g2 := new(bn256.G2).Set(zeroG2)
 	for _, gs := range gammas {
@@ -135,6 +138,7 @@ func ComputeEonPublicKey(gammas []*Gammas) *EonPublicKey {
 }
 
 // ComputeEpochSecretKeyShare computes a keyper's epoch sk share.
+// p. 10, Fig. 6, 3a: Q_j^i := msk_j * H_1(i)
 func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *EpochID) *EpochSecretKeyShare {
 	g1 := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
 	epochSecretKeyShare := EpochSecretKeyShare(*g1)
@@ -142,6 +146,7 @@ func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *E
 }
 
 // ComputeEpochID computes the id of the given epoch.
+// p. 10, Fig. 6, 3a: H_1(i)
 func ComputeEpochID(epochIDBytes []byte) *EpochID {
 	return (*EpochID)(Hash1(epochIDBytes))
 }
@@ -166,6 +171,7 @@ func NewLagrangeCoeffs(keyperIndices []int) *LagrangeCoeffs {
 // ComputeEpochSecretKey computes the epoch secret key given the secret key shares of the keypers.
 // The caller has to ensure that the secret shares match the keyperIndices used during
 // initialisation.
+// p. 10, Fig. 6, 3b, eq. 5: sk_j^i := lambda_(l_1) Q_(l_1)^i + ... + lambda_(l_(t+1)) Q_(l_(t+1))
 func (lc *LagrangeCoeffs) ComputeEpochSecretKey(epochSecretKeyShares []*EpochSecretKeyShare) (*EpochSecretKey, error) {
 	if len(epochSecretKeyShares) != len(lc.lambdas) {
 		return nil, fmt.Errorf("got %d shares, expected %d", len(epochSecretKeyShares), len(lc.lambdas))
@@ -192,6 +198,7 @@ func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSec
 }
 
 // VerifyEpochSecretKeyShare checks that an epoch sk share published by a keyper is correct.
+// p. 10, Fig. 6. 3b: e(Q_k^i, P2) = e(H_1(i), mpk_k)
 func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPublicKeyShare *EonPublicKeyShare, epochID *EpochID) bool {
 	g1s := []*bn256.G1{
 		(*bn256.G1)(epochSecretKeyShare),

@@ -85,6 +85,7 @@ func DegreeFromThreshold(threshold uint64) uint64 {
 }
 
 // Eval evaluates the polynomial at the given coordinate.
+// p. 18, Fig. 11, 1: phi(x) = Sigma_(j=0)^t c_i * x^j
 func (p *Polynomial) Eval(x *big.Int) *big.Int {
 	// uses Horner's method
 	res := new(big.Int).Set((*p)[p.Degree()])
@@ -97,6 +98,7 @@ func (p *Polynomial) Eval(x *big.Int) *big.Int {
 }
 
 // EvalForKeyper evaluates the polynomial at the position designated for the given keyper.
+// phi(i)
 func (p *Polynomial) EvalForKeyper(keyperIndex int) *big.Int {
 	x := KeyperX(keyperIndex)
 	return p.Eval(x)
@@ -114,6 +116,7 @@ func ValidEval(v *big.Int) bool {
 }
 
 // Gammas computes the gamma values for a given polynomial.
+// p. 18, Fig. 11, 3: (gamma_0, ..., gamma_t) := (c_0 * P_2, ..., c_t * P_2)
 func (p *Polynomial) Gammas() *Gammas {
 	gammas := Gammas{}
 	for _, c := range *p {
@@ -124,6 +127,7 @@ func (p *Polynomial) Gammas() *Gammas {
 }
 
 // Pi computes the pi value at the given x coordinate.
+// p. 18, Fig. 11, 3: pi_i := Sigma_(j=0)^t (x_i^j mod q) * gamma_j
 func (g *Gammas) Pi(xi *big.Int) *bn256.G2 {
 	xiToJ := big.NewInt(1)
 	res := new(bn256.G2).Set(zeroG2)
@@ -162,6 +166,7 @@ func (g *Gammas) GobDecode(data []byte) error {
 }
 
 // KeyperX computes the x value assigned to the keyper identified by its index.
+// x_i(i)
 func KeyperX(keyperIndex int) *big.Int {
 	keyperIndexBig := big.NewInt(int64(keyperIndex))
 	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
@@ -189,6 +194,7 @@ func EqualGT(p1, p2 *bn256.GT) bool {
 }
 
 // VerifyPolyEval checks that the evaluation of a polynomial is consistent with the public gammas.
+// p. 18, Fig. 11, 5a: pi_i = s_i * P_2
 func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshold uint64) bool {
 	if gammas.Degree() != threshold-1 {
 		return false

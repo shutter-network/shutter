@@ -48,6 +48,7 @@ func RandomSigma(r io.Reader) (Block, error) {
 
 // Encrypt encrypts a message for the epoch given by its id. It uses the eon public key and randomness
 // provided in sigma.
+// p. 7: para. Encrypt
 func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma Block) *EncryptedMessage {
 	messageBlocks := PadMessage(message)
 	r := computeR(sigma, message)
@@ -59,14 +60,17 @@ func Encrypt(message []byte, eonPublicKey *EonPublicKey, epochID *EpochID, sigma
 	return &result
 }
 
+// p. 7, eq. 2: r := H_3(sigma, T)
 func computeR(sigma Block, message []byte) *big.Int {
 	return Hash3(append(sigma[:], message...))
 }
 
+// p. 7: C_1 := r * P
 func computeC1(r *big.Int) *bn256.G2 {
 	return new(bn256.G2).ScalarBaseMult(r)
 }
 
+// p. 7: C_2 := sigma XOR H_2((E(Q, mpk))^r)
 func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPublicKey) Block {
 	pairing := bn256.Pair((*bn256.G1)(epochID), (*bn256.G2)(eonPublicKey))
 	preimage := new(bn256.GT).ScalarMult(pairing, r)
@@ -74,6 +78,7 @@ func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPubli
 	return XORBlocks(sigma, key)
 }
 
+// p. 7: C_3 := (H_4(sigma || 1) XOR T_1, ..., H_4(sigma || m) XOR T_m)
 func computeC3(blocks []Block, sigma Block) []Block {
 	encryptedBlocks := []Block{}
 	numBlocks := len(blocks)
@@ -105,6 +110,7 @@ func computeBlockKey(sigma Block, blockNum uint64) Block {
 }
 
 // Decrypt decrypts the given message using the given epoch secret key.
+// p. 8: para. "Decrypt"
 func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, error) {
 	sigma := m.Sigma(epochSecretKey)
 	decryptedBlocks := DecryptBlocks(m.C3, sigma)
@@ -123,6 +129,7 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 }
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
+// p. 8, eq. 3: sigma := C_2 XOR H_2(e(sk_Q, C_1))
 func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 	pairing := bn256.Pair((*bn256.G1)(epochSecretKey), m.C1)
 	key := Hash2(pairing)
@@ -130,6 +137,7 @@ func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 	return sigma
 }
 
+// p. 8, eq. 4: T := (C^1_3 XOR H_4(sigma || 1) || ... || C^m_3 XOR H_4(sigma || m))
 func DecryptBlocks(encryptedBlocks []Block, sigma Block) []Block {
 	numBlocks := len(encryptedBlocks)
 	decryptedBlocks := []Block{}
