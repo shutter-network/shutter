@@ -57,6 +57,39 @@ func roundtrip(msg []byte, eonPub *EonPublicKey, epochID *EpochID, epochSecret *
 	return err
 }
 
+func marshalRoundtrip(content *EncryptedMessage, result *EncryptedMessage) (*EncryptedMessage, error) {
+	m := content.Marshal()
+	err := result.Unmarshal(m)
+	return result, err
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	b.StopTimer()
+	eonPub, epochID, _ := setup(b)
+	sigmas := []Block{}
+	msg := []byte("hello")
+	// now marshal and unmarshal message
+	for i := 0; i < b.N; i++ {
+		sigma, err := RandomSigma(rand.Reader)
+		sigmas = append(sigmas, sigma)
+		assert.NilError(b, err)
+	}
+	content := Encrypt(msg, eonPub, epochID, sigmas[0])
+	content_hex, err := content.MarshalText()
+	assert.NilError(b, err)
+	b.ResetTimer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		template := &EncryptedMessage{}
+		result, err := marshalRoundtrip(content, template)
+		assert.NilError(b, err)
+
+		result_hex, err := result.MarshalText()
+		assert.NilError(b, err)
+		assert.Equal(b, string(content_hex), string(result_hex))
+	}
+}
+
 func BenchmarkRoundTrip(b *testing.B) {
 	b.StopTimer()
 	eonPub, epochID, epochSecretKey := setup(b)
