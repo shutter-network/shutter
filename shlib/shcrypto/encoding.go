@@ -41,7 +41,7 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 		m.C1 = new(bn256.G2)
 	}
 	if d[0] != VersionIdentifier {
-		return ErrVersionMismatch(d[0])
+		return ErrVersionMismatch(m.IdentifyVersion(d))
 	}
 	d = d[1:]
 	d, err := m.C1.Unmarshal(d)
