@@ -48,6 +48,11 @@ func TestUnmarshalBroken(t *testing.T) {
 
 	err = m.Unmarshal(d[:len(d)-1])
 	assert.Assert(t, err != nil)
+
+	v := d[:]
+	v[0]++
+	err = m.Unmarshal(v)
+	assert.Assert(t, err != nil)
 }
 
 func TestMarshal(t *testing.T) {
@@ -80,4 +85,14 @@ func TestMarshal(t *testing.T) {
 	eskD := new(EpochSecretKey)
 	assert.NilError(t, eskD.Unmarshal(eskM))
 	assert.Check(t, eskD.Equal(esk))
+}
+
+func TestIdentifyVersion(t *testing.T) {
+	d := encryptedMessage().Marshal()
+	m := EncryptedMessage{}
+	assert.Assert(t, m.IdentifyVersion(d) == VersionIdentifier)
+
+	// legacy version
+	assert.Assert(t, m.IdentifyVersion(d[1:]) != VersionIdentifier)
+	assert.Assert(t, m.IdentifyVersion(d[1:]) == 0x00)
 }
