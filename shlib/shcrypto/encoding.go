@@ -13,6 +13,9 @@ import (
 var (
 	ErrInputTooLong             = errors.New("input too long")
 	ErrInvalidEonSecretKeyShare = errors.New("invalid eon secret key share")
+	ErrVersionMismatch          = func(version_got byte) error {
+		return fmt.Errorf("version mismatch. want %d got %d", VersionIdentifier, version_got)
+	}
 )
 
 // Marshal serializes the EncryptedMessage object. It panics, if C1 is nil.
@@ -22,6 +25,7 @@ func (m *EncryptedMessage) Marshal() []byte {
 	}
 
 	buff := bytes.Buffer{}
+	buff.WriteByte(VersionIdentifier)
 	buff.Write(m.C1.Marshal())
 	buff.Write(m.C2[:])
 	for i := range m.C3 {
@@ -36,6 +40,10 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 	if m.C1 == nil {
 		m.C1 = new(bn256.G2)
 	}
+	if d[0] != VersionIdentifier {
+		return ErrVersionMismatch(d[0])
+	}
+	d = d[1:]
 	d, err := m.C1.Unmarshal(d)
 	if err != nil {
 		return err
@@ -56,6 +64,14 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 		m.C3 = append(m.C3, b)
 	}
 	return nil
+}
+
+// IdentifyVersion reads the version identifier byte from the given (marshalled) EncryptedMessage.
+func (m *EncryptedMessage) IdentifyVersion(d []byte) byte {
+	if len(d)%BlockSize == 0 {
+		return 0x00
+	}
+	return d[0]
 }
 
 // Marshal serializes the eon secret key share.
