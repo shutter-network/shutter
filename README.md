@@ -36,6 +36,7 @@ ganache-cli -d -b 3
 ### 2) Build Shutter and deploy the Shutter Contracts:
 
 If you use the source release or git repository, you need to build the shuttermint application:
+
 ```
 cd shuttermint
 make build
