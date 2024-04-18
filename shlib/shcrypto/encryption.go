@@ -8,12 +8,12 @@ import (
 	"io"
 	"math/big"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 )
 
 // EncryptedMessage represents the full output of the encryption procedure.
 type EncryptedMessage struct {
-	C1 *bn256.G2
+	C1 *bls12381.PointG2
 	C2 Block
 	C3 []Block
 }
@@ -63,13 +63,17 @@ func computeR(sigma Block, message []byte) *big.Int {
 	return Hash3(append(sigma[:], message...))
 }
 
-func computeC1(r *big.Int) *bn256.G2 {
-	return new(bn256.G2).ScalarBaseMult(r)
+func computeC1(r *big.Int) *bls12381.PointG2 {
+	g2 := bls12381.NewG2()
+	p := g2.One()
+	return g2.MulScalar(p, p, r)
 }
 
 func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPublicKey) Block {
-	pairing := bn256.Pair((*bn256.G1)(epochID), (*bn256.G2)(eonPublicKey))
-	preimage := new(bn256.GT).ScalarMult(pairing, r)
+	pairingEngine := bls12381.NewPairingEngine()
+	pairingEngine.AddPair((*bls12381.PointG1)(epochID), (*bls12381.PointG2)(eonPublicKey))
+	preimage := pairingEngine.Result()
+	bls12381.NewGT().Exp(preimage, preimage, r)
 	key := Hash2(preimage)
 	return XORBlocks(sigma, key)
 }
@@ -115,7 +119,8 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 
 	r := computeR(sigma, message)
 	expectedC1 := computeC1(r)
-	if !EqualG2(m.C1, expectedC1) {
+	g2 := bls12381.NewG2()
+	if !g2.Equal(m.C1, expectedC1) {
 		return []byte{}, errors.New("invalid C1 in encrypted message")
 	}
 
@@ -124,8 +129,9 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
 func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
-	pairing := bn256.Pair((*bn256.G1)(epochSecretKey), m.C1)
-	key := Hash2(pairing)
+	pairingEngine := bls12381.NewPairingEngine()
+	pairingEngine.AddPair((*bls12381.PointG1)(epochSecretKey), m.C1)
+	key := Hash2(pairingEngine.Result())
 	sigma := XORBlocks(m.C2, key)
 	return sigma
 }

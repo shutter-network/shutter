@@ -27,7 +27,6 @@ func NewTestKeyGen() (*TestKeyGen, error) {
 		}
 		polynomials = append(polynomials, p)
 		gammas = append(gammas, p.Gammas())
-
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
 

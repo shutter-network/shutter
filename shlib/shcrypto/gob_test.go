@@ -4,8 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-
 	"github.com/shutter-network/shutter/shlib/shtest"
 )
 
@@ -15,12 +13,12 @@ func TestEonSecretKeyShareGobable(t *testing.T) {
 }
 
 func TestEonPublicKeyShareGobable(t *testing.T) {
-	share := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	share := (*EonPublicKeyShare)(makeTestG2(5))
 	shtest.EnsureGobable(t, share, new(EonPublicKeyShare))
 }
 
 func TestEonPublicKeyGobable(t *testing.T) {
-	pubkey := (*EonPublicKey)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	pubkey := (*EonPublicKey)(makeTestG2(5))
 	shtest.EnsureGobable(t, pubkey, new(EonPublicKey))
 }
 
@@ -30,11 +28,11 @@ func TestEpochIDGobable(t *testing.T) {
 }
 
 func TestEpochSecretKeyShareGobable(t *testing.T) {
-	share := (*EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
+	share := (*EpochSecretKeyShare)(makeTestG1(1111))
 	shtest.EnsureGobable(t, share, new(EpochSecretKeyShare))
 }
 
 func TestEpochSecretKeyGobable(t *testing.T) {
-	key := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(1111)))
+	key := (*EpochSecretKey)(makeTestG1(1111))
 	shtest.EnsureGobable(t, key, new(EpochSecretKey), g1Comparer)
 }

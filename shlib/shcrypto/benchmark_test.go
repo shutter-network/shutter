@@ -5,12 +5,13 @@ import (
 	"math/big"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 	"gotest.tools/v3/assert"
 )
 
 func setup(b *testing.B) (*EonPublicKey, *EpochID, *EpochSecretKey) {
 	b.Helper()
+	g2 := bls12381.NewG2()
 	// first generate keys
 	n := 3
 	threshold := uint64(2)
@@ -41,7 +42,7 @@ func setup(b *testing.B) (*EonPublicKey, *EpochID, *EpochSecretKey) {
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(b, new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey), g2Comparer)
+	assert.DeepEqual(b, g2.MulScalar(new(bls12381.PointG2), g2.One(), eonSecretKey), (*bls12381.PointG2)(eonPublicKey), g2Comparer)
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},

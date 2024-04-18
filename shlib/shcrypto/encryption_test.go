@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 	"gotest.tools/v3/assert"
 )
 
@@ -201,6 +201,7 @@ func TestPaddingRoundtrip(t *testing.T) {
 
 func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 	t.Helper()
+	g2 := bls12381.NewG2()
 	n := 3
 	threshold := uint64(2)
 	epochID := ComputeEpochID([]byte("epoch1"))
@@ -230,7 +231,7 @@ func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(t, new(bn256.G2).ScalarBaseMult(eonSecretKey), (*bn256.G2)(eonPublicKey), g2Comparer)
+	assert.DeepEqual(t, g2.MulScalar(new(bls12381.PointG2), g2.One(), eonSecretKey), (*bls12381.PointG2)(eonPublicKey), g2Comparer)
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
@@ -240,11 +241,8 @@ func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 }
 
 func TestRoundTrip(t *testing.T) {
-	// first generate keys
-
 	eonPublicKey, epochSecretKey, epochID := makeKeys(t)
 
-	// now encrypt and decrypt message
 	m := []byte("hello")
 	sigma, err := RandomSigma(rand.Reader)
 	assert.NilError(t, err)
@@ -256,6 +254,7 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestC1Malleability(t *testing.T) {
+	g2 := bls12381.NewG2()
 	message := []byte("secret message")
 	eonPublicKey, decryptionKey, epochIDPoint := makeKeys(t)
 	originalSigma, err := RandomSigma(rand.Reader)
@@ -266,11 +265,11 @@ func TestC1Malleability(t *testing.T) {
 		epochIDPoint,
 		originalSigma,
 	)
-	var c1 *bn256.G2
+	var c1 *bls12381.PointG2
 	// we move C1 around, until we find a legal padding
 	for i := 1; i <= 10000; i++ {
 		c1 = encryptedMessage.C1
-		c1.Add(c1, c1)
+		g2.Add(c1, c1, c1)
 		encryptedMessage.C1 = c1
 		sigma := encryptedMessage.Sigma(decryptionKey)
 		decryptedBlocks := DecryptBlocks(encryptedMessage.C3, sigma)

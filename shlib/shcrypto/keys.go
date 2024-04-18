@@ -6,26 +6,26 @@ import (
 	"fmt"
 	"math/big"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 )
 
 // EonSecretKeyShare represents a share of the eon secret key.
 type EonSecretKeyShare big.Int
 
 // EonPublicKeyShare represents a share of the eon public key.
-type EonPublicKeyShare bn256.G2
+type EonPublicKeyShare bls12381.PointG2
 
 // EonPublicKey represents the combined eon public key.
-type EonPublicKey bn256.G2
+type EonPublicKey bls12381.PointG2
 
 // EpochID is the identifier of an epoch.
-type EpochID bn256.G1
+type EpochID bls12381.PointG1
 
 // EpochSecretKeyShare represents a keyper's share of the epoch sk key.
-type EpochSecretKeyShare bn256.G1
+type EpochSecretKeyShare bls12381.PointG1
 
 // EpochSecretKey represents an epoch secret key.
-type EpochSecretKey bn256.G1
+type EpochSecretKey bls12381.PointG1
 
 func (eonPublicKey *EonPublicKey) GobEncode() ([]byte, error) {
 	return eonPublicKey.Marshal(), nil
@@ -36,7 +36,8 @@ func (eonPublicKey *EonPublicKey) GobDecode(data []byte) error {
 }
 
 func (eonPublicKey *EonPublicKey) Equal(pk2 *EonPublicKey) bool {
-	return EqualG2((*bn256.G2)(eonPublicKey), (*bn256.G2)(pk2))
+	g2 := bls12381.NewG2()
+	return g2.Equal((*bls12381.PointG2)(eonPublicKey), (*bls12381.PointG2)(pk2))
 }
 
 func (eonPublicKeyShare *EonPublicKeyShare) GobEncode() ([]byte, error) {
@@ -48,7 +49,8 @@ func (eonPublicKeyShare *EonPublicKeyShare) GobDecode(data []byte) error {
 }
 
 func (eonPublicKeyShare *EonPublicKeyShare) Equal(pk2 *EonPublicKeyShare) bool {
-	return EqualG2((*bn256.G2)(eonPublicKeyShare), (*bn256.G2)(pk2))
+	g2 := bls12381.NewG2()
+	return g2.Equal((*bls12381.PointG2)(eonPublicKeyShare), (*bls12381.PointG2)(pk2))
 }
 
 func (epochID *EpochID) GobEncode() ([]byte, error) {
@@ -60,7 +62,8 @@ func (epochID *EpochID) GobDecode(data []byte) error {
 }
 
 func (epochID *EpochID) Equal(g2 *EpochID) bool {
-	return EqualG1((*bn256.G1)(epochID), (*bn256.G1)(g2))
+	g1 := bls12381.NewG1()
+	return g1.Equal((*bls12381.PointG1)(epochID), (*bls12381.PointG1)(g2))
 }
 
 func (epochSecretKeyShare *EpochSecretKeyShare) GobEncode() ([]byte, error) {
@@ -72,7 +75,8 @@ func (epochSecretKeyShare *EpochSecretKeyShare) GobDecode(data []byte) error {
 }
 
 func (epochSecretKeyShare *EpochSecretKeyShare) Equal(g2 *EpochSecretKeyShare) bool {
-	return EqualG1((*bn256.G1)(epochSecretKeyShare), (*bn256.G1)(g2))
+	g1 := bls12381.NewG1()
+	return g1.Equal((*bls12381.PointG1)(epochSecretKeyShare), (*bls12381.PointG1)(g2))
 }
 
 func (epochSecretKey *EpochSecretKey) GobEncode() ([]byte, error) {
@@ -84,7 +88,8 @@ func (epochSecretKey *EpochSecretKey) GobDecode(data []byte) error {
 }
 
 func (epochSecretKey *EpochSecretKey) Equal(g2 *EpochSecretKey) bool {
-	return EqualG1((*bn256.G1)(epochSecretKey), (*bn256.G1)(g2))
+	g1 := bls12381.NewG1()
+	return g1.Equal((*bls12381.PointG1)(epochSecretKey), (*bls12381.PointG1)(g2))
 }
 
 func (eonSecretKeyShare *EonSecretKeyShare) GobEncode() ([]byte, error) {
@@ -105,7 +110,7 @@ func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 	res := big.NewInt(0)
 	for _, si := range polyEvals {
 		res.Add(res, si)
-		res.Mod(res, bn256.Order)
+		res.Mod(res, order)
 	}
 	share := EonSecretKeyShare(*res)
 	return &share
@@ -113,31 +118,34 @@ func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 
 // ComputeEonPublicKeyShare computes the eon public key share of the given keyper.
 func ComputeEonPublicKeyShare(keyperIndex int, gammas []*Gammas) *EonPublicKeyShare {
-	g2 := new(bn256.G2).Set(zeroG2)
+	g2 := bls12381.NewG2()
+	p := g2.Zero()
 	keyperX := KeyperX(keyperIndex)
 	for _, gs := range gammas {
 		pi := gs.Pi(keyperX)
-		g2 = new(bn256.G2).Add(g2, pi)
+		g2.Add(p, p, pi)
 	}
-	epk := EonPublicKeyShare(*g2)
+	epk := EonPublicKeyShare(*p)
 	return &epk
 }
 
 // ComputeEonPublicKey computes the combined eon public key from the set of eon public key shares.
 func ComputeEonPublicKey(gammas []*Gammas) *EonPublicKey {
-	g2 := new(bn256.G2).Set(zeroG2)
+	g2 := bls12381.NewG2()
+	p := g2.Zero()
 	for _, gs := range gammas {
 		pi := gs.Pi(big.NewInt(0))
-		g2 = new(bn256.G2).Add(g2, pi)
+		g2.Add(p, p, pi)
 	}
-	epk := EonPublicKey(*g2)
+	epk := EonPublicKey(*p)
 	return &epk
 }
 
 // ComputeEpochSecretKeyShare computes a keyper's epoch sk share.
 func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *EpochID) *EpochSecretKeyShare {
-	g1 := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
-	epochSecretKeyShare := EpochSecretKeyShare(*g1)
+	g1 := bls12381.NewG1()
+	p := g1.MulScalar(new(bls12381.PointG1), (*bls12381.PointG1)(epochID), (*big.Int)(eonSecretKeyShare))
+	epochSecretKeyShare := EpochSecretKeyShare(*p)
 	return &epochSecretKeyShare
 }
 
@@ -170,11 +178,13 @@ func (lc *LagrangeCoeffs) ComputeEpochSecretKey(epochSecretKeyShares []*EpochSec
 	if len(epochSecretKeyShares) != len(lc.lambdas) {
 		return nil, fmt.Errorf("got %d shares, expected %d", len(epochSecretKeyShares), len(lc.lambdas))
 	}
-	skG1 := new(bn256.G1).Set(zeroG1)
+	g1 := bls12381.NewG1()
+	skG1 := g1.Zero()
+	qTimesLambda := new(bls12381.PointG1)
 	for i, share := range epochSecretKeyShares {
 		lambda := lc.lambdas[i]
-		qTimesLambda := new(bn256.G1).ScalarMult((*bn256.G1)(share), lambda)
-		skG1.Add(skG1, qTimesLambda)
+		g1.MulScalar(qTimesLambda, (*bls12381.PointG1)(share), lambda)
+		g1.Add(skG1, skG1, qTimesLambda)
 	}
 	return (*EpochSecretKey)(skG1), nil
 }
@@ -193,15 +203,14 @@ func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSec
 
 // VerifyEpochSecretKeyShare checks that an epoch sk share published by a keyper is correct.
 func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPublicKeyShare *EonPublicKeyShare, epochID *EpochID) bool {
-	g1s := []*bn256.G1{
-		(*bn256.G1)(epochSecretKeyShare),
-		new(bn256.G1).Neg((*bn256.G1)(epochID)),
-	}
-	g2s := []*bn256.G2{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(1)),
-		(*bn256.G2)(eonPublicKeyShare),
-	}
-	return bn256.PairingCheck(g1s, g2s)
+	g2 := bls12381.NewG2()
+	pairingEngine := bls12381.NewPairingEngine()
+
+	pairingEngine.AddPair((*bls12381.PointG1)(epochSecretKeyShare), g2.One())
+	// pairingEngine.AddPairInv modifies the first argument, so we have to create a copy of epochID
+	epochIDPoint := new(bls12381.PointG1).Set((*bls12381.PointG1)(epochID))
+	pairingEngine.AddPairInv(epochIDPoint, (*bls12381.PointG2)(eonPublicKeyShare))
+	return pairingEngine.Check()
 }
 
 // VerifyEpochSecretKey checks that an epoch secret key is the correct key for an epoch given the
@@ -235,10 +244,10 @@ func lagrangeCoefficientFactor(k int, keyperIndex int) *big.Int {
 	xj := KeyperX(keyperIndex)
 	xk := KeyperX(k)
 	dx := new(big.Int).Sub(xk, xj)
-	dx.Mod(dx, bn256.Order)
+	dx.Mod(dx, order)
 	dxInv := invert(dx)
 	lambdaK := new(big.Int).Mul(xk, dxInv)
-	lambdaK.Mod(lambdaK, bn256.Order)
+	lambdaK.Mod(lambdaK, order)
 	return lambdaK
 }
 
@@ -250,12 +259,12 @@ func lagrangeCoefficient(keyperIndex int, keyperIndices []int) *big.Int {
 		}
 		lambdaK := lagrangeCoefficientFactor(k, keyperIndex)
 		lambda.Mul(lambda, lambdaK)
-		lambda.Mod(lambda, bn256.Order)
+		lambda.Mod(lambda, order)
 	}
 	return lambda
 }
 
 func invert(x *big.Int) *big.Int {
-	orderMinus2 := new(big.Int).Sub(bn256.Order, big.NewInt(2))
-	return new(big.Int).Exp(x, orderMinus2, bn256.Order)
+	orderMinus2 := new(big.Int).Sub(order, big.NewInt(2))
+	return new(big.Int).Exp(x, orderMinus2, order)
 }
