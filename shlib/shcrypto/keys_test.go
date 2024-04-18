@@ -5,12 +5,22 @@ import (
 	"math/big"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 	gocmp "github.com/google/go-cmp/cmp"
 	"gotest.tools/v3/assert"
 
 	"github.com/shutter-network/shutter/shlib/shtest"
 )
+
+func makeTestG1(n int64) *bls12381.PointG1 {
+	g1 := bls12381.NewG1()
+	return g1.MulScalar(new(bls12381.PointG1), g1.One(), big.NewInt(n))
+}
+
+func makeTestG2(n int64) *bls12381.PointG2 {
+	g2 := bls12381.NewG2()
+	return g2.MulScalar(new(bls12381.PointG2), g2.One(), big.NewInt(n))
+}
 
 func TestEonSecretKeyShare(t *testing.T) {
 	zeroKey := ComputeEonSecretKeyShare([]*big.Int{})
@@ -24,27 +34,28 @@ func TestEonSecretKeyShare(t *testing.T) {
 	assert.DeepEqual(t, big.NewInt(60), (*big.Int)(key1), shtest.BigIntComparer)
 
 	key2 := ComputeEonSecretKeyShare([]*big.Int{
-		bn256.Order,
+		order,
 		big.NewInt(10),
-		bn256.Order,
+		order,
 		big.NewInt(20),
-		bn256.Order,
+		order,
 	})
 	assert.DeepEqual(t, big.NewInt(30), (*big.Int)(key2), shtest.BigIntComparer)
 }
 
 func TestEonPublicKeyShare(t *testing.T) {
+	g2 := bls12381.NewG2()
 	gammas0 := Gammas{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(1)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(2)),
+		makeTestG2(1),
+		makeTestG2(2),
 	}
 	gammas1 := Gammas{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(3)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(4)),
+		makeTestG2(3),
+		makeTestG2(4),
 	}
 	gammas2 := Gammas{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(6)),
+		makeTestG2(5),
+		makeTestG2(6),
 	}
 	gammas := []*Gammas{
 		&gammas0,
@@ -56,29 +67,30 @@ func TestEonPublicKeyShare(t *testing.T) {
 	x1 := KeyperX(1)
 	x2 := KeyperX(2)
 
-	mu00 := new(bn256.G2).Add(gammas0[0], new(bn256.G2).ScalarMult(gammas0[1], x0))
-	mu01 := new(bn256.G2).Add(gammas1[0], new(bn256.G2).ScalarMult(gammas1[1], x0))
-	mu02 := new(bn256.G2).Add(gammas2[0], new(bn256.G2).ScalarMult(gammas2[1], x0))
-	mu10 := new(bn256.G2).Add(gammas0[0], new(bn256.G2).ScalarMult(gammas0[1], x1))
-	mu11 := new(bn256.G2).Add(gammas1[0], new(bn256.G2).ScalarMult(gammas1[1], x1))
-	mu12 := new(bn256.G2).Add(gammas2[0], new(bn256.G2).ScalarMult(gammas2[1], x1))
-	mu20 := new(bn256.G2).Add(gammas0[0], new(bn256.G2).ScalarMult(gammas0[1], x2))
-	mu21 := new(bn256.G2).Add(gammas1[0], new(bn256.G2).ScalarMult(gammas1[1], x2))
-	mu22 := new(bn256.G2).Add(gammas2[0], new(bn256.G2).ScalarMult(gammas2[1], x2))
+	mu00 := g2.Add(new(bls12381.PointG2), gammas0[0], g2.MulScalar(new(bls12381.PointG2), gammas0[1], x0))
+	mu01 := g2.Add(new(bls12381.PointG2), gammas1[0], g2.MulScalar(new(bls12381.PointG2), gammas1[1], x0))
+	mu02 := g2.Add(new(bls12381.PointG2), gammas2[0], g2.MulScalar(new(bls12381.PointG2), gammas2[1], x0))
+	mu10 := g2.Add(new(bls12381.PointG2), gammas0[0], g2.MulScalar(new(bls12381.PointG2), gammas0[1], x1))
+	mu11 := g2.Add(new(bls12381.PointG2), gammas1[0], g2.MulScalar(new(bls12381.PointG2), gammas1[1], x1))
+	mu12 := g2.Add(new(bls12381.PointG2), gammas2[0], g2.MulScalar(new(bls12381.PointG2), gammas2[1], x1))
+	mu20 := g2.Add(new(bls12381.PointG2), gammas0[0], g2.MulScalar(new(bls12381.PointG2), gammas0[1], x2))
+	mu21 := g2.Add(new(bls12381.PointG2), gammas1[0], g2.MulScalar(new(bls12381.PointG2), gammas1[1], x2))
+	mu22 := g2.Add(new(bls12381.PointG2), gammas2[0], g2.MulScalar(new(bls12381.PointG2), gammas2[1], x2))
 
-	pks0 := new(bn256.G2).Add(mu00, mu01)
-	pks0.Add(pks0, mu02)
-	pks1 := new(bn256.G2).Add(mu10, mu11)
-	pks1.Add(pks1, mu12)
-	pks2 := new(bn256.G2).Add(mu20, mu21)
-	pks2.Add(pks2, mu22)
+	pks0 := g2.Add(new(bls12381.PointG2), mu00, mu01)
+	g2.Add(pks0, pks0, mu02)
+	pks1 := g2.Add(new(bls12381.PointG2), mu10, mu11)
+	g2.Add(pks1, pks1, mu12)
+	pks2 := g2.Add(new(bls12381.PointG2), mu20, mu21)
+	g2.Add(pks2, pks2, mu22)
 
-	assert.DeepEqual(t, pks0, (*bn256.G2)(ComputeEonPublicKeyShare(0, gammas)), g2Comparer)
-	assert.DeepEqual(t, pks1, (*bn256.G2)(ComputeEonPublicKeyShare(1, gammas)), g2Comparer)
-	assert.DeepEqual(t, pks2, (*bn256.G2)(ComputeEonPublicKeyShare(2, gammas)), g2Comparer)
+	assert.DeepEqual(t, pks0, (*bls12381.PointG2)(ComputeEonPublicKeyShare(0, gammas)), g2Comparer)
+	assert.DeepEqual(t, pks1, (*bls12381.PointG2)(ComputeEonPublicKeyShare(1, gammas)), g2Comparer)
+	assert.DeepEqual(t, pks2, (*bls12381.PointG2)(ComputeEonPublicKeyShare(2, gammas)), g2Comparer)
 }
 
 func TestEonSharesMatch(t *testing.T) {
+	g2 := bls12381.NewG2()
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
 	assert.NilError(t, err)
@@ -111,9 +123,9 @@ func TestEonSharesMatch(t *testing.T) {
 	epk2 := ComputeEonPublicKeyShare(1, gammas)
 	epk3 := ComputeEonPublicKeyShare(2, gammas)
 
-	epk1Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk1)))
-	epk2Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk2)))
-	epk3Exp := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult((*big.Int)(esk3)))
+	epk1Exp := (*EonPublicKeyShare)(g2.MulScalar(new(bls12381.PointG2), g2.One(), (*big.Int)(esk1)))
+	epk2Exp := (*EonPublicKeyShare)(g2.MulScalar(new(bls12381.PointG2), g2.One(), (*big.Int)(esk2)))
+	epk3Exp := (*EonPublicKeyShare)(g2.MulScalar(new(bls12381.PointG2), g2.One(), (*big.Int)(esk3)))
 
 	assert.DeepEqual(t, epk1, epk1Exp)
 	assert.DeepEqual(t, epk2, epk2Exp)
@@ -121,8 +133,9 @@ func TestEonSharesMatch(t *testing.T) {
 }
 
 func TestEonPublicKey(t *testing.T) {
+	g2 := bls12381.NewG2()
 	zeroEPK := ComputeEonPublicKey([]*Gammas{})
-	assert.DeepEqual(t, (*bn256.G2)(zeroEPK), zeroG2, g2Comparer)
+	assert.DeepEqual(t, (*bls12381.PointG2)(zeroEPK), g2.Zero(), g2Comparer)
 
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
@@ -133,14 +146,15 @@ func TestEonPublicKey(t *testing.T) {
 	assert.NilError(t, err)
 
 	k1 := ComputeEonPublicKey([]*Gammas{p1.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k1), []*bn256.G2(*p1.Gammas())[0], g2Comparer)
+	assert.DeepEqual(t, (*bls12381.PointG2)(k1), []*bls12381.PointG2(*p1.Gammas())[0], g2Comparer)
 	k2 := ComputeEonPublicKey([]*Gammas{p2.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k2), []*bn256.G2(*p2.Gammas())[0], g2Comparer)
+	assert.DeepEqual(t, (*bls12381.PointG2)(k2), []*bls12381.PointG2(*p2.Gammas())[0], g2Comparer)
 	k3 := ComputeEonPublicKey([]*Gammas{p3.Gammas()})
-	assert.DeepEqual(t, (*bn256.G2)(k3), []*bn256.G2(*p3.Gammas())[0], g2Comparer)
+	assert.DeepEqual(t, (*bls12381.PointG2)(k3), []*bls12381.PointG2(*p3.Gammas())[0], g2Comparer)
 }
 
 func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
+	g2 := bls12381.NewG2()
 	threshold := uint64(2)
 	p1, err := RandomPolynomial(rand.Reader, threshold)
 	assert.NilError(t, err)
@@ -153,16 +167,16 @@ func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
 	for _, p := range []*Polynomial{p1, p2, p3} {
 		esk = esk.Add(esk, p.Eval(big.NewInt(0)))
 	}
-	epkExp := new(bn256.G2).ScalarBaseMult(esk)
+	epkExp := g2.MulScalar(new(bls12381.PointG2), g2.One(), esk)
 
 	gammas := []*Gammas{p1.Gammas(), p2.Gammas(), p3.Gammas()}
 	epk := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(t, (*bn256.G2)(epk), epkExp, g2Comparer)
+	assert.DeepEqual(t, (*bls12381.PointG2)(epk), epkExp, g2Comparer)
 }
 
-var modbn256Comparer = gocmp.Comparer(func(x, y *big.Int) bool {
+var modOrderComparer = gocmp.Comparer(func(x, y *big.Int) bool {
 	d := new(big.Int).Sub(x, y)
-	return d.Mod(d, bn256.Order).Sign() == 0
+	return d.Mod(d, order).Sign() == 0
 })
 
 func TestInverse(t *testing.T) {
@@ -170,11 +184,11 @@ func TestInverse(t *testing.T) {
 		big.NewInt(1),
 		big.NewInt(2),
 		big.NewInt(3),
-		new(big.Int).Sub(bn256.Order, big.NewInt(2)),
-		new(big.Int).Sub(bn256.Order, big.NewInt(1)),
+		new(big.Int).Sub(order, big.NewInt(2)),
+		new(big.Int).Sub(order, big.NewInt(1)),
 	}
 	for i := 0; i < 100; i++ {
-		x, err := rand.Int(rand.Reader, bn256.Order)
+		x, err := rand.Int(rand.Reader, order)
 		assert.NilError(t, err)
 		if x.Sign() == 0 {
 			continue
@@ -185,7 +199,7 @@ func TestInverse(t *testing.T) {
 	for _, test := range testCases {
 		inv := invert(test)
 		one := new(big.Int).Mul(test, inv)
-		assert.DeepEqual(t, big.NewInt(1), one, modbn256Comparer)
+		assert.DeepEqual(t, big.NewInt(1), one, modOrderComparer)
 	}
 }
 
@@ -197,21 +211,21 @@ func TestLagrangeCoefficientFactors(t *testing.T) {
 	l20 := lagrangeCoefficientFactor(2, 0)
 	l21 := lagrangeCoefficientFactor(2, 1)
 
-	qMinus1 := new(big.Int).Sub(bn256.Order, big.NewInt(1))
-	qMinus2 := new(big.Int).Sub(bn256.Order, big.NewInt(2))
+	qMinus1 := new(big.Int).Sub(order, big.NewInt(1))
+	qMinus2 := new(big.Int).Sub(order, big.NewInt(2))
 
 	l01.Mul(l01, qMinus1)
-	assert.DeepEqual(t, big.NewInt(1), l01, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(1), l01, modOrderComparer)
 	l02.Mul(l02, qMinus2)
-	assert.DeepEqual(t, big.NewInt(1), l02, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(1), l02, modOrderComparer)
 
-	assert.DeepEqual(t, big.NewInt(2), l10, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(2), l10, modOrderComparer)
 	l12.Mul(l12, qMinus1)
-	assert.DeepEqual(t, big.NewInt(2), l12, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(2), l12, modOrderComparer)
 
 	l20.Mul(l20, big.NewInt(2))
-	assert.DeepEqual(t, big.NewInt(3), l20, modbn256Comparer)
-	assert.DeepEqual(t, big.NewInt(3), l21, modbn256Comparer)
+	assert.DeepEqual(t, big.NewInt(3), l20, modOrderComparer)
+	assert.DeepEqual(t, big.NewInt(3), l21, modOrderComparer)
 }
 
 func TestLagrangeCoefficients(t *testing.T) {
@@ -225,17 +239,17 @@ func TestLagrangeCoefficients(t *testing.T) {
 	l0 := lagrangeCoefficient(0, []int{0, 1, 2})
 	l0Exp := lagrangeCoefficientFactor(1, 0)
 	l0Exp.Mul(l0Exp, lagrangeCoefficientFactor(2, 0))
-	assert.DeepEqual(t, l0Exp, l0, modbn256Comparer)
+	assert.DeepEqual(t, l0Exp, l0, modOrderComparer)
 
 	l1 := lagrangeCoefficient(1, []int{0, 1, 2})
 	l1Exp := lagrangeCoefficientFactor(0, 1)
 	l1Exp.Mul(l1Exp, lagrangeCoefficientFactor(2, 1))
-	assert.DeepEqual(t, l1Exp, l1, modbn256Comparer)
+	assert.DeepEqual(t, l1Exp, l1, modOrderComparer)
 
 	l2 := lagrangeCoefficient(2, []int{0, 1, 2})
 	l2Exp := lagrangeCoefficientFactor(0, 2)
 	l2Exp.Mul(l2Exp, lagrangeCoefficientFactor(1, 2))
-	assert.DeepEqual(t, l2Exp, l2, modbn256Comparer)
+	assert.DeepEqual(t, l2Exp, l2, modOrderComparer)
 }
 
 func TestLagrangeReconstruct(t *testing.T) {
@@ -252,23 +266,24 @@ func TestLagrangeReconstruct(t *testing.T) {
 	y1 := new(big.Int).Mul(l1, v1)
 	y2 := new(big.Int).Mul(l2, v2)
 	y3 := new(big.Int).Mul(l3, v3)
-	y1.Mod(y1, bn256.Order)
-	y2.Mod(y2, bn256.Order)
-	y3.Mod(y3, bn256.Order)
+	y1.Mod(y1, order)
+	y2.Mod(y2, order)
+	y3.Mod(y3, order)
 
 	y := new(big.Int).Add(y1, y2)
 	y.Add(y, y3)
-	y.Mod(y, bn256.Order)
+	y.Mod(y, order)
 
 	assert.DeepEqual(t, p.Eval(big.NewInt(0)), y, shtest.BigIntComparer)
 }
 
 func TestComputeEpochSecretKeyShare(t *testing.T) {
+	g1 := bls12381.NewG1()
 	eonSecretKeyShare := (*EonSecretKeyShare)(big.NewInt(123))
 	epochID := ComputeEpochID([]byte("epoch1"))
 	epochSecretKeyShare := ComputeEpochSecretKeyShare(eonSecretKeyShare, epochID)
-	expectedEpochSecretKeyShare := new(bn256.G1).ScalarMult((*bn256.G1)(epochID), (*big.Int)(eonSecretKeyShare))
-	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bn256.G1)(epochSecretKeyShare), g1Comparer)
+	expectedEpochSecretKeyShare := g1.MulScalar(new(bls12381.PointG1), (*bls12381.PointG1)(epochID), (*big.Int)(eonSecretKeyShare))
+	assert.DeepEqual(t, expectedEpochSecretKeyShare, (*bls12381.PointG1)(epochSecretKeyShare), g1Comparer)
 }
 
 func TestVerifyEpochSecretKeyShare(t *testing.T) {

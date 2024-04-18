@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"gotest.tools/v3/assert"
 )
 
@@ -19,7 +18,7 @@ func encryptedMessage() *EncryptedMessage {
 	}
 
 	return &EncryptedMessage{
-		C1: new(bn256.G2).ScalarBaseMult(big.NewInt(5)),
+		C1: makeTestG2(5),
 		C2: blocks[0],
 		C3: blocks[1:],
 	}
@@ -62,25 +61,25 @@ func TestMarshal(t *testing.T) {
 	assert.NilError(t, askD.Unmarshal(ashM))
 	assert.Check(t, ask.Equal(askD))
 
-	apks := (*EonPublicKeyShare)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	apks := (*EonPublicKeyShare)(makeTestG2(5))
 	apksM := apks.Marshal()
 	apksD := new(EonPublicKeyShare)
 	assert.NilError(t, apksD.Unmarshal(apksM))
 	assert.Check(t, apksD.Equal(apks))
 
-	apk := (*EonPublicKey)(new(bn256.G2).ScalarBaseMult(big.NewInt(5)))
+	apk := (*EonPublicKey)(makeTestG2(5))
 	apkM := apk.Marshal()
 	apkD := new(EonPublicKey)
 	assert.NilError(t, apkD.Unmarshal(apkM))
 	assert.Check(t, apkD.Equal(apk))
 
-	esks := (*EpochSecretKeyShare)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
+	esks := (*EpochSecretKeyShare)(makeTestG1(5))
 	esksM := esks.Marshal()
 	esksD := new(EpochSecretKeyShare)
 	assert.NilError(t, esksD.Unmarshal(esksM))
 	assert.Check(t, esksD.Equal(esks))
 
-	esk := (*EpochSecretKey)(new(bn256.G1).ScalarBaseMult(big.NewInt(5)))
+	esk := (*EpochSecretKey)(makeTestG1(5))
 	eskM := esks.Marshal()
 	eskD := new(EpochSecretKey)
 	assert.NilError(t, eskD.Unmarshal(eskM))

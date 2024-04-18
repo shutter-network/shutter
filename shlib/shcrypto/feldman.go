@@ -3,28 +3,21 @@ package shcrypto
 import (
 	"bytes"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-)
-
-var (
-	zeroG1 *bn256.G1
-	zeroG2 *bn256.G2
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 )
 
 // Polynomial represents a polynomial over Z_q.
 type Polynomial []*big.Int
 
 // Gammas is a sequence of G2 points based on a polynomial.
-type Gammas []*bn256.G2
+type Gammas []*bls12381.PointG2
 
-func init() {
-	zeroG1 = new(bn256.G1).ScalarBaseMult(big.NewInt(0))
-	zeroG2 = new(bn256.G2).ScalarBaseMult(big.NewInt(0))
-}
+var order = bls12381.NewG2().Q()
 
 // NewPolynomial creates a new polynomial from the given coefficients. It verifies the number and
 // range of them.
@@ -36,7 +29,7 @@ func NewPolynomial(coefficients []*big.Int) (*Polynomial, error) {
 		if v.Sign() < 0 {
 			return nil, fmt.Errorf("coefficient %d is negative (%d)", i, v)
 		}
-		if v.Cmp(bn256.Order) >= 0 {
+		if v.Cmp(order) >= 0 {
 			return nil, fmt.Errorf("coefficient %d is too big (%d)", i, v)
 		}
 	}
@@ -54,15 +47,16 @@ func (g *Gammas) Degree() uint64 {
 	return uint64(len(*g)) - 1
 }
 
-func (g Gammas) Equal(g2 Gammas) bool {
-	gs := []*bn256.G2(g)
-	gs2 := []*bn256.G2(g2)
+func (g Gammas) Equal(otherG Gammas) bool {
+	g2 := bls12381.NewG2()
+	gs := []*bls12381.PointG2(g)
+	otherGs := []*bls12381.PointG2(otherG)
 
-	if len(gs) != len(gs2) {
+	if len(gs) != len(otherGs) {
 		return false
 	}
 	for i := range gs {
-		if !EqualG2(gs[i], gs2[i]) {
+		if !g2.Equal(gs[i], otherGs[i]) {
 			return false
 		}
 	}
@@ -71,9 +65,10 @@ func (g Gammas) Equal(g2 Gammas) bool {
 
 // ZeroGammas returns the zero value for gammas.
 func ZeroGammas(degree uint64) *Gammas {
-	points := []*bn256.G2{}
+	g2 := bls12381.NewG2()
+	points := []*bls12381.PointG2{}
 	for i := uint64(0); i < degree+1; i++ {
-		points = append(points, new(bn256.G2).Set(zeroG2))
+		points = append(points, g2.Zero())
 	}
 	gammas := Gammas(points)
 	return &gammas
@@ -91,7 +86,7 @@ func (p *Polynomial) Eval(x *big.Int) *big.Int {
 	for i := int(p.Degree()) - 1; i >= 0; i-- {
 		res.Mul(res, x)
 		res.Add(res, (*p)[i])
-		res.Mod(res, bn256.Order)
+		res.Mod(res, order)
 	}
 	return res
 }
@@ -107,7 +102,7 @@ func ValidEval(v *big.Int) bool {
 	if v.Sign() < 0 {
 		return false
 	}
-	if v.Cmp(bn256.Order) >= 0 {
+	if v.Cmp(order) >= 0 {
 		return false
 	}
 	return true
@@ -115,33 +110,38 @@ func ValidEval(v *big.Int) bool {
 
 // Gammas computes the gamma values for a given polynomial.
 func (p *Polynomial) Gammas() *Gammas {
+	g2 := bls12381.NewG2()
 	gammas := Gammas{}
 	for _, c := range *p {
-		gamma := new(bn256.G2).ScalarBaseMult(c)
+		gamma := g2.One()
+		g2.MulScalar(gamma, gamma, c)
 		gammas = append(gammas, gamma)
 	}
 	return &gammas
 }
 
 // Pi computes the pi value at the given x coordinate.
-func (g *Gammas) Pi(xi *big.Int) *bn256.G2 {
+func (g *Gammas) Pi(xi *big.Int) *bls12381.PointG2 {
+	g2 := bls12381.NewG2()
 	xiToJ := big.NewInt(1)
-	res := new(bn256.G2).Set(zeroG2)
+	res := g2.Zero()
+	p := new(bls12381.PointG2)
 	for _, gamma := range *g {
-		p := new(bn256.G2).ScalarMult(gamma, xiToJ)
-		res = new(bn256.G2).Add(res, p)
+		g2.MulScalar(p, gamma, xiToJ)
+		g2.Add(res, res, p)
 		xiToJ.Mul(xiToJ, xi)
-		xiToJ.Mod(xiToJ, bn256.Order)
+		xiToJ.Mod(xiToJ, order)
 	}
 	return res
 }
 
 // GobEncode encodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobEncoder
 func (g *Gammas) GobEncode() ([]byte, error) {
+	g2 := bls12381.NewG2()
 	buff := bytes.Buffer{}
 	if g != nil {
-		for _, g2 := range *g {
-			buff.Write(g2.Marshal())
+		for _, p := range *g {
+			buff.Write(g2.ToBytes(p))
 		}
 	}
 	return buff.Bytes(), nil
@@ -149,14 +149,16 @@ func (g *Gammas) GobEncode() ([]byte, error) {
 
 // GobDecode decodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobDecoder
 func (g *Gammas) GobDecode(data []byte) error {
-	var err error
-	for len(data) > 0 {
-		g2 := new(bn256.G2)
-		data, err = g2.Unmarshal(data)
+	g2 := bls12381.NewG2()
+	for i := 0; i < len(data); i += g2EncodingLength {
+		p, err := g2.FromBytes(data[i : i+g2EncodingLength])
 		if err != nil {
 			return err
 		}
-		*g = append(*g, g2)
+		if !g2.IsOnCurve(p) {
+			return errors.New("not on curve")
+		}
+		*g = append(*g, p)
 	}
 	return nil
 }
@@ -167,42 +169,23 @@ func KeyperX(keyperIndex int) *big.Int {
 	return new(big.Int).Add(big.NewInt(1), keyperIndexBig)
 }
 
-// EqualG1 checks if two points on G1 are equal.
-func EqualG1(p1, p2 *bn256.G1) bool {
-	p1Bytes := new(bn256.G1).Set(p1).Marshal()
-	p2Bytes := new(bn256.G1).Set(p2).Marshal()
-	return bytes.Equal(p1Bytes, p2Bytes)
-}
-
-// EqualG2 checks if two points on G2 are equal.
-func EqualG2(p1, p2 *bn256.G2) bool {
-	p1Bytes := new(bn256.G2).Set(p1).Marshal()
-	p2Bytes := new(bn256.G2).Set(p2).Marshal()
-	return bytes.Equal(p1Bytes, p2Bytes)
-}
-
-// EqualGT checks if two points on GT are equal.
-func EqualGT(p1, p2 *bn256.GT) bool {
-	p1Bytes := new(bn256.GT).Set(p1).Marshal()
-	p2Bytes := new(bn256.GT).Set(p2).Marshal()
-	return bytes.Equal(p1Bytes, p2Bytes)
-}
-
 // VerifyPolyEval checks that the evaluation of a polynomial is consistent with the public gammas.
 func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshold uint64) bool {
 	if gammas.Degree() != threshold-1 {
 		return false
 	}
-	rhs := new(bn256.G2).ScalarBaseMult(polyEval)
+	g2 := bls12381.NewG2()
+	rhs := g2.One()
+	g2.MulScalar(rhs, rhs, polyEval)
 	lhs := gammas.Pi(KeyperX(keyperIndex))
-	return EqualG2(lhs, rhs)
+	return g2.Equal(lhs, rhs)
 }
 
 // RandomPolynomial generates a random polynomial of given degree.
 func RandomPolynomial(r io.Reader, degree uint64) (*Polynomial, error) {
 	coefficients := []*big.Int{}
 	for i := uint64(0); i < degree+1; i++ {
-		c, err := rand.Int(r, bn256.Order)
+		c, err := rand.Int(r, order)
 		if err != nil {
 			return nil, err
 		}

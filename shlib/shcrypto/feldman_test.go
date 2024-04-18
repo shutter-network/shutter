@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/ethereum/go-ethereum/crypto/bls12381"
 	"gotest.tools/v3/assert"
 
 	"github.com/shutter-network/shutter/shlib/shtest"
@@ -22,7 +22,7 @@ func TestNewPolynomial(t *testing.T) {
 			big.NewInt(20),
 		},
 		{
-			new(big.Int).Sub(bn256.Order, big.NewInt(1)),
+			new(big.Int).Sub(order, big.NewInt(1)),
 		},
 	}
 
@@ -41,7 +41,7 @@ func TestNewPolynomial(t *testing.T) {
 			big.NewInt(-1),
 		},
 		{
-			bn256.Order,
+			order,
 		},
 	}
 
@@ -57,17 +57,17 @@ func TestEval(t *testing.T) {
 	assert.DeepEqual(t, big.NewInt(10), p1.Eval(big.NewInt(0)), shtest.BigIntComparer)
 	assert.DeepEqual(t, big.NewInt(10+20*10+30*100), p1.Eval(big.NewInt(10)), shtest.BigIntComparer)
 
-	p2, err := NewPolynomial([]*big.Int{big.NewInt(0), new(big.Int).Sub(bn256.Order, big.NewInt(1))})
+	p2, err := NewPolynomial([]*big.Int{big.NewInt(0), new(big.Int).Sub(order, big.NewInt(1))})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, big.NewInt(0), p2.Eval(big.NewInt(0)), shtest.BigIntComparer)
-	assert.DeepEqual(t, new(big.Int).Sub(bn256.Order, big.NewInt(1)), p2.Eval(big.NewInt(1)), shtest.BigIntComparer)
-	assert.DeepEqual(t, new(big.Int).Sub(bn256.Order, big.NewInt(2)), p2.Eval(big.NewInt(2)), shtest.BigIntComparer)
+	assert.DeepEqual(t, new(big.Int).Sub(order, big.NewInt(1)), p2.Eval(big.NewInt(1)), shtest.BigIntComparer)
+	assert.DeepEqual(t, new(big.Int).Sub(order, big.NewInt(2)), p2.Eval(big.NewInt(2)), shtest.BigIntComparer)
 
 	p3, err := NewPolynomial([]*big.Int{big.NewInt(0), big.NewInt(1)})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, big.NewInt(0), p3.Eval(big.NewInt(0)), shtest.BigIntComparer)
-	assert.DeepEqual(t, big.NewInt(0), p3.Eval(bn256.Order), shtest.BigIntComparer)
-	assert.DeepEqual(t, big.NewInt(0), p3.Eval(new(big.Int).Mul(bn256.Order, big.NewInt(5))), shtest.BigIntComparer)
+	assert.DeepEqual(t, big.NewInt(0), p3.Eval(order), shtest.BigIntComparer)
+	assert.DeepEqual(t, big.NewInt(0), p3.Eval(new(big.Int).Mul(order, big.NewInt(5))), shtest.BigIntComparer)
 }
 
 func TestEvalForKeyper(t *testing.T) {
@@ -84,15 +84,15 @@ func TestValidEval(t *testing.T) {
 	valid := []*big.Int{
 		big.NewInt(0),
 		big.NewInt(1),
-		new(big.Int).Sub(bn256.Order, big.NewInt(2)),
-		new(big.Int).Sub(bn256.Order, big.NewInt(1)),
+		new(big.Int).Sub(order, big.NewInt(2)),
+		new(big.Int).Sub(order, big.NewInt(1)),
 	}
 
 	invalid := []*big.Int{
 		big.NewInt(-2),
 		big.NewInt(-1),
-		bn256.Order,
-		new(big.Int).Add(bn256.Order, big.NewInt(1)),
+		order,
+		new(big.Int).Add(order, big.NewInt(1)),
 	}
 	for _, v := range valid {
 		assert.Assert(t, ValidEval(v))
@@ -119,19 +119,20 @@ func TestGammas(t *testing.T) {
 	assert.Equal(t, p.Degree(), uint64(len(*gammas))-1)
 	assert.Equal(t, p.Degree(), gammas.Degree())
 
-	expected := Gammas([]*bn256.G2{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(0)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
+	expected := Gammas([]*bls12381.PointG2{
+		makeTestG2(0),
+		makeTestG2(10),
+		makeTestG2(20),
 	})
 	assert.DeepEqual(t, &expected, gammas)
 }
 
 func TestZeroGammas(t *testing.T) {
+	g2 := bls12381.NewG2()
 	g := ZeroGammas(uint64(3))
 	assert.Equal(t, 4, len(*g))
 	for _, p := range *g {
-		assert.DeepEqual(t, p, zeroG2, g2Comparer)
+		assert.DeepEqual(t, p, g2.Zero(), g2Comparer)
 	}
 }
 
@@ -158,18 +159,20 @@ func TestVerifyPolyEval(t *testing.T) {
 }
 
 func TestPi(t *testing.T) {
-	g1 := new(bn256.G2).ScalarBaseMult(big.NewInt(2))
-	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(3))
-	g3 := new(bn256.G2).ScalarBaseMult(big.NewInt(5))
-	gammas := Gammas([]*bn256.G2{g1, g2, g3})
+	g2 := bls12381.NewG2()
+
+	gamma1 := makeTestG2(2)
+	gamma2 := makeTestG2(3)
+	gamma3 := makeTestG2(5)
+	gammas := Gammas([]*bls12381.PointG2{gamma1, gamma2, gamma3})
 
 	pi1 := gammas.Pi(big.NewInt(1))
 	pi2 := gammas.Pi(big.NewInt(2))
 
-	pi1Exp := new(bn256.G2).Add(g1, g2)
-	pi1Exp = new(bn256.G2).Add(pi1Exp, g3)
-	pi2Exp := new(bn256.G2).Add(g1, new(bn256.G2).ScalarMult(g2, big.NewInt(2)))
-	pi2Exp = new(bn256.G2).Add(pi2Exp, new(bn256.G2).ScalarMult(g3, big.NewInt(4)))
+	pi1Exp := g2.Add(new(bls12381.PointG2), gamma1, gamma2)
+	pi1Exp = g2.Add(pi1Exp, pi1Exp, gamma3)
+	pi2Exp := g2.Add(new(bls12381.PointG2), gamma1, g2.MulScalar(new(bls12381.PointG2), gamma2, big.NewInt(2)))
+	pi2Exp = g2.Add(pi2Exp, pi2Exp, g2.MulScalar(new(bls12381.PointG2), gamma3, big.NewInt(4)))
 
 	assert.DeepEqual(t, pi1, pi1Exp, g2Comparer)
 	assert.DeepEqual(t, pi2, pi2Exp, g2Comparer)
