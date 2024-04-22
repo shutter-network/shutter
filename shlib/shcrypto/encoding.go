@@ -44,7 +44,7 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 		m.C1 = new(bn256.G2)
 	}
 	if d[0] != VersionIdentifier {
-		return ErrVersionMismatch(m.IdentifyVersion(d))
+		return ErrVersionMismatch(IdentifyVersion(d))
 	}
 	d = d[1:]
 	d, err := m.C1.Unmarshal(d)
@@ -67,14 +67,6 @@ func (m *EncryptedMessage) Unmarshal(d []byte) error {
 		m.C3 = append(m.C3, b)
 	}
 	return nil
-}
-
-// IdentifyVersion reads the version identifier byte from the given (marshalled) EncryptedMessage.
-func (m *EncryptedMessage) IdentifyVersion(d []byte) byte {
-	if len(d)%BlockSize == 0 {
-		return 0x00
-	}
-	return d[0]
 }
 
 // Marshal serializes the eon secret key share.
