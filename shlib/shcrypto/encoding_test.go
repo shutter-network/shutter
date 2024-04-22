@@ -89,10 +89,9 @@ func TestMarshal(t *testing.T) {
 
 func TestIdentifyVersion(t *testing.T) {
 	d := encryptedMessage().Marshal()
-	m := EncryptedMessage{}
-	assert.Assert(t, m.IdentifyVersion(d) == VersionIdentifier)
+	assert.Assert(t, IdentifyVersion(d) == VersionIdentifier)
 
 	// legacy version
-	assert.Assert(t, m.IdentifyVersion(d[1:]) != VersionIdentifier)
-	assert.Assert(t, m.IdentifyVersion(d[1:]) == 0x00)
+	assert.Assert(t, IdentifyVersion(d[1:]) != VersionIdentifier)
+	assert.Assert(t, IdentifyVersion(d[1:]) == 0x00)
 }
