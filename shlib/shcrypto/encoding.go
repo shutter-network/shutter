@@ -37,6 +37,9 @@ func (m *EncryptedMessage) Marshal() []byte {
 
 // Unmarshal deserializes an EncryptedMessage from the given byte slice.
 func (m *EncryptedMessage) Unmarshal(d []byte) error {
+	if len(d) == 0 {
+		return errors.New("not enough data")
+	}
 	if m.C1 == nil {
 		m.C1 = new(bn256.G2)
 	}
