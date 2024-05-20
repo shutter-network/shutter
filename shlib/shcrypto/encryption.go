@@ -74,7 +74,14 @@ func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPubli
 	pairingEngine.AddPair((*bls12381.PointG1)(epochID), (*bls12381.PointG2)(eonPublicKey))
 	preimage := pairingEngine.Result()
 	bls12381.NewGT().Exp(preimage, preimage, r)
-	key := Hash2(preimage)
+
+	// TODO: `key := Hash2(preimage)` is correct. However, there is an incompatibility between BLST
+	// used by Nethermind and the go-ethereum BLS library with regards to the serialization of GT
+	// elements. To fix this, we should switch to BLST. As a temporary workaround, we use a dummy
+	// value here instead. This is only meant for testnets and must not go into production.
+	// key := Hash2(preimage)
+	key := Block{}
+
 	return XORBlocks(sigma, key)
 }
 
@@ -131,7 +138,15 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
 	pairingEngine := bls12381.NewPairingEngine()
 	pairingEngine.AddPair((*bls12381.PointG1)(epochSecretKey), m.C1)
-	key := Hash2(pairingEngine.Result())
+
+	// TODO: `key := Hash2(pairingEngine.Result())` is correct. However, there is an
+	// incompatibility between BLST used by Nethermind and the go-ethereum BLS library with regards
+	// to the serialization of GT elements. To fix this, we should switch to BLST. As a temporary
+	// workaround, we use a dummy value here instead. This is only meant for testnets and must not
+	// go into production.
+	// key := Hash2(pairingEngine.Result())
+	key := Block{}
+
 	sigma := XORBlocks(m.C2, key)
 	return sigma
 }
