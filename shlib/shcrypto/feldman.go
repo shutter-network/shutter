@@ -8,16 +8,42 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 )
 
 // Polynomial represents a polynomial over Z_q.
 type Polynomial []*big.Int
 
 // Gammas is a sequence of G2 points based on a polynomial.
-type Gammas []*bls12381.PointG2
+type Gammas []*blst.P2Affine
 
-var order = bls12381.NewG2().Q()
+var order *big.Int
+
+func init() {
+	var ok bool
+	order, ok = new(big.Int).SetString("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001", 16)
+	if !ok {
+		panic("invalid order")
+	}
+}
+
+func generateP1(i *big.Int) *blst.P1Affine {
+	s := bigToScalar(i)
+	return blst.P1Generator().Mult(s).ToAffine()
+}
+
+func generateP2(i *big.Int) *blst.P2Affine {
+	s := bigToScalar(i)
+	return blst.P2Generator().Mult(s).ToAffine()
+}
+
+func bigToScalar(i *big.Int) *blst.Scalar {
+	b := make([]byte, 32)
+	i.FillBytes(b)
+	s := new(blst.Scalar)
+	s.FromBEndian(b)
+	return s
+}
 
 // NewPolynomial creates a new polynomial from the given coefficients. It verifies the number and
 // range of them.
@@ -48,15 +74,14 @@ func (g *Gammas) Degree() uint64 {
 }
 
 func (g Gammas) Equal(otherG Gammas) bool {
-	g2 := bls12381.NewG2()
-	gs := []*bls12381.PointG2(g)
-	otherGs := []*bls12381.PointG2(otherG)
+	gs := []*blst.P2Affine(g)
+	otherGs := []*blst.P2Affine(otherG)
 
 	if len(gs) != len(otherGs) {
 		return false
 	}
 	for i := range gs {
-		if !g2.Equal(gs[i], otherGs[i]) {
+		if !gs[i].Equals(otherGs[i]) {
 			return false
 		}
 	}
@@ -65,10 +90,9 @@ func (g Gammas) Equal(otherG Gammas) bool {
 
 // ZeroGammas returns the zero value for gammas.
 func ZeroGammas(degree uint64) *Gammas {
-	g2 := bls12381.NewG2()
-	points := []*bls12381.PointG2{}
+	points := []*blst.P2Affine{}
 	for i := uint64(0); i < degree+1; i++ {
-		points = append(points, g2.Zero())
+		points = append(points, new(blst.P2Affine))
 	}
 	gammas := Gammas(points)
 	return &gammas
@@ -110,38 +134,36 @@ func ValidEval(v *big.Int) bool {
 
 // Gammas computes the gamma values for a given polynomial.
 func (p *Polynomial) Gammas() *Gammas {
-	g2 := bls12381.NewG2()
 	gammas := Gammas{}
 	for _, c := range *p {
-		gamma := g2.One()
-		g2.MulScalar(gamma, gamma, c)
+		gamma := generateP2(c)
 		gammas = append(gammas, gamma)
 	}
 	return &gammas
 }
 
 // Pi computes the pi value at the given x coordinate.
-func (g *Gammas) Pi(xi *big.Int) *bls12381.PointG2 {
-	g2 := bls12381.NewG2()
+func (g *Gammas) Pi(xi *big.Int) *blst.P2Affine {
 	xiToJ := big.NewInt(1)
-	res := g2.Zero()
-	p := new(bls12381.PointG2)
+	res := new(blst.P2)
 	for _, gamma := range *g {
-		g2.MulScalar(p, gamma, xiToJ)
-		g2.Add(res, res, p)
+		p := new(blst.P2)
+		p.FromAffine(gamma)
+		p.MultAssign(bigToScalar(xiToJ))
+		res.AddAssign(p)
+
 		xiToJ.Mul(xiToJ, xi)
 		xiToJ.Mod(xiToJ, order)
 	}
-	return res
+	return res.ToAffine()
 }
 
 // GobEncode encodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobEncoder
 func (g *Gammas) GobEncode() ([]byte, error) {
-	g2 := bls12381.NewG2()
 	buff := bytes.Buffer{}
 	if g != nil {
 		for _, p := range *g {
-			buff.Write(g2.ToBytes(p))
+			buff.Write(p.Compress())
 		}
 	}
 	return buff.Bytes(), nil
@@ -149,14 +171,14 @@ func (g *Gammas) GobEncode() ([]byte, error) {
 
 // GobDecode decodes a Gammas value. See https://golang.org/pkg/encoding/gob/#GobDecoder
 func (g *Gammas) GobDecode(data []byte) error {
-	g2 := bls12381.NewG2()
-	for i := 0; i < len(data); i += g2EncodingLength {
-		p, err := g2.FromBytes(data[i : i+g2EncodingLength])
-		if err != nil {
-			return err
+	for i := 0; i < len(data); i += blst.BLST_P2_COMPRESS_BYTES {
+		p := new(blst.P2Affine)
+		p.Uncompress(data[i : i+blst.BLST_P2_COMPRESS_BYTES])
+		if p == nil {
+			return errors.New("failed to deserialize gammas")
 		}
-		if !g2.IsOnCurve(p) {
-			return errors.New("not on curve")
+		if !p.InG2() {
+			return errors.New("gamma is not on curve")
 		}
 		*g = append(*g, p)
 	}
@@ -174,11 +196,9 @@ func VerifyPolyEval(keyperIndex int, polyEval *big.Int, gammas *Gammas, threshol
 	if gammas.Degree() != threshold-1 {
 		return false
 	}
-	g2 := bls12381.NewG2()
-	rhs := g2.One()
-	g2.MulScalar(rhs, rhs, polyEval)
+	rhs := generateP2(polyEval)
 	lhs := gammas.Pi(KeyperX(keyperIndex))
-	return g2.Equal(lhs, rhs)
+	return rhs.Equals(lhs)
 }
 
 // RandomPolynomial generates a random polynomial of given degree.

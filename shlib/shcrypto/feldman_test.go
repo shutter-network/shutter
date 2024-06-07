@@ -3,9 +3,10 @@ package shcrypto
 import (
 	"crypto/rand"
 	"math/big"
+	mathRand "math/rand"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 	"gotest.tools/v3/assert"
 
 	"github.com/shutter-network/shutter/shlib/shtest"
@@ -119,30 +120,34 @@ func TestGammas(t *testing.T) {
 	assert.Equal(t, p.Degree(), uint64(len(*gammas))-1)
 	assert.Equal(t, p.Degree(), gammas.Degree())
 
-	expected := Gammas([]*bls12381.PointG2{
+	expected := Gammas([]*blst.P2Affine{
 		makeTestG2(0),
 		makeTestG2(10),
 		makeTestG2(20),
 	})
-	assert.DeepEqual(t, &expected, gammas)
+	assert.Equal(t, len(*gammas), len(expected))
+	for i := range *gammas {
+		assert.Assert(t, ([]*blst.P2Affine)(*gammas)[i].Equals(expected[i]))
+	}
 }
 
 func TestZeroGammas(t *testing.T) {
-	g2 := bls12381.NewG2()
 	g := ZeroGammas(uint64(3))
 	assert.Equal(t, 4, len(*g))
 	for _, p := range *g {
-		assert.DeepEqual(t, p, g2.Zero(), g2Comparer)
+		assert.Assert(t, p.Equals(new(blst.P2Affine)))
 	}
 }
 
 func TestVerifyPolyEval(t *testing.T) {
+	randReader := mathRand.New(mathRand.NewSource(0))
+
 	threshold := uint64(2)
 
-	p1, err := RandomPolynomial(rand.Reader, threshold-1)
+	p1, err := RandomPolynomial(randReader, threshold-1)
 	assert.NilError(t, err)
 
-	p2, err := RandomPolynomial(rand.Reader, threshold-1)
+	p2, err := RandomPolynomial(randReader, threshold-1)
 	assert.NilError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -159,23 +164,29 @@ func TestVerifyPolyEval(t *testing.T) {
 }
 
 func TestPi(t *testing.T) {
-	g2 := bls12381.NewG2()
-
-	gamma1 := makeTestG2(2)
-	gamma2 := makeTestG2(3)
-	gamma3 := makeTestG2(5)
-	gammas := Gammas([]*bls12381.PointG2{gamma1, gamma2, gamma3})
+	gammasNonAff := []*blst.P2{}
+	gammasAff := []*blst.P2Affine{}
+	for i := 0; i < 3; i++ {
+		gammaAff := makeTestG2(int64(i + 2))
+		gamma := new(blst.P2)
+		gamma.FromAffine(gammaAff)
+		gammasAff = append(gammasAff, gammaAff)
+		gammasNonAff = append(gammasNonAff, gamma)
+	}
+	gammas := Gammas(gammasAff)
 
 	pi1 := gammas.Pi(big.NewInt(1))
 	pi2 := gammas.Pi(big.NewInt(2))
 
-	pi1Exp := g2.Add(new(bls12381.PointG2), gamma1, gamma2)
-	pi1Exp = g2.Add(pi1Exp, pi1Exp, gamma3)
-	pi2Exp := g2.Add(new(bls12381.PointG2), gamma1, g2.MulScalar(new(bls12381.PointG2), gamma2, big.NewInt(2)))
-	pi2Exp = g2.Add(pi2Exp, pi2Exp, g2.MulScalar(new(bls12381.PointG2), gamma3, big.NewInt(4)))
+	pi1Exp := gammasNonAff[0].Add(gammasNonAff[1]).Add(gammasNonAff[2]).ToAffine()
+	bytes2 := make([]byte, 32)
+	big.NewInt(2).FillBytes(bytes2)
+	pi2Exp := gammasNonAff[0].
+		Add(gammasNonAff[1].Mult(bigToScalar(big.NewInt(2)))).
+		Add(gammasNonAff[2].Mult(bigToScalar(big.NewInt(4)))).ToAffine()
 
-	assert.DeepEqual(t, pi1, pi1Exp, g2Comparer)
-	assert.DeepEqual(t, pi2, pi2Exp, g2Comparer)
+	assert.Assert(t, pi1.Equals(pi1Exp))
+	assert.Assert(t, pi2.Equals(pi2Exp))
 }
 
 func TestGammasGobable(t *testing.T) {

@@ -5,13 +5,12 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 	"gotest.tools/v3/assert"
 )
 
 func setup(b *testing.B) (*EonPublicKey, *EpochID, *EpochSecretKey) {
 	b.Helper()
-	g2 := bls12381.NewG2()
 	// first generate keys
 	n := 3
 	threshold := uint64(2)
@@ -42,7 +41,8 @@ func setup(b *testing.B) (*EonPublicKey, *EpochID, *EpochSecretKey) {
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(b, g2.MulScalar(new(bls12381.PointG2), g2.One(), eonSecretKey), (*bls12381.PointG2)(eonPublicKey), g2Comparer)
+
+	assert.Check(b, generateP2(eonSecretKey).Equals((*blst.P2Affine)(eonPublicKey)))
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},

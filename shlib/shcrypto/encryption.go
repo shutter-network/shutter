@@ -8,12 +8,12 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 )
 
 // EncryptedMessage represents the full output of the encryption procedure.
 type EncryptedMessage struct {
-	C1 *bls12381.PointG2
+	C1 *blst.P2Affine
 	C2 Block
 	C3 []Block
 }
@@ -63,19 +63,39 @@ func computeR(sigma Block, message []byte) *big.Int {
 	return Hash3(append(sigma[:], message...))
 }
 
-func computeC1(r *big.Int) *bls12381.PointG2 {
-	g2 := bls12381.NewG2()
-	p := g2.One()
-	return g2.MulScalar(p, p, r)
+func computeC1(r *big.Int) *blst.P2Affine {
+	return generateP2(r)
 }
 
 func computeC2(sigma Block, r *big.Int, epochID *EpochID, eonPublicKey *EonPublicKey) Block {
-	pairingEngine := bls12381.NewPairingEngine()
-	pairingEngine.AddPair((*bls12381.PointG1)(epochID), (*bls12381.PointG2)(eonPublicKey))
-	preimage := pairingEngine.Result()
-	bls12381.NewGT().Exp(preimage, preimage, r)
-	key := Hash2(preimage)
+	p := blst.Fp12MillerLoop((*blst.P2Affine)(eonPublicKey), (*blst.P1Affine)(epochID))
+	p.FinalExp()
+	p = fp12Exp(p, r)
+	key := Hash2(p)
 	return XORBlocks(sigma, key)
+}
+
+func fp12Exp(base *blst.Fp12, exp *big.Int) *blst.Fp12 {
+	resultValue := blst.Fp12One()
+	result := &resultValue
+
+	zero := big.NewInt(0)
+	two := big.NewInt(2)
+
+	baseCopyValue := blst.Fp12One()
+	baseCopy := &baseCopyValue
+	baseCopy.MulAssign(base)
+	expCopy := new(big.Int).Set(exp)
+
+	for expCopy.Cmp(zero) > 0 {
+		if expCopy.Bit(0) == 1 {
+			result.MulAssign(baseCopy)
+		}
+		baseCopy.MulAssign(baseCopy)
+		expCopy.Div(expCopy, two)
+	}
+
+	return result
 }
 
 func computeC3(blocks []Block, sigma Block) []Block {
@@ -119,8 +139,7 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 
 	r := computeR(sigma, message)
 	expectedC1 := computeC1(r)
-	g2 := bls12381.NewG2()
-	if !g2.Equal(m.C1, expectedC1) {
+	if !m.C1.Equals(expectedC1) {
 		return []byte{}, errors.New("invalid C1 in encrypted message")
 	}
 
@@ -129,9 +148,9 @@ func (m *EncryptedMessage) Decrypt(epochSecretKey *EpochSecretKey) ([]byte, erro
 
 // Sigma computes the sigma value of the encrypted message given the epoch secret key.
 func (m *EncryptedMessage) Sigma(epochSecretKey *EpochSecretKey) Block {
-	pairingEngine := bls12381.NewPairingEngine()
-	pairingEngine.AddPair((*bls12381.PointG1)(epochSecretKey), m.C1)
-	key := Hash2(pairingEngine.Result())
+	p := blst.Fp12MillerLoop(m.C1, (*blst.P1Affine)(epochSecretKey))
+	p.FinalExp()
+	key := Hash2(p)
 	sigma := XORBlocks(m.C2, key)
 	return sigma
 }

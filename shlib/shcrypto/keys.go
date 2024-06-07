@@ -6,26 +6,26 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 )
 
 // EonSecretKeyShare represents a share of the eon secret key.
 type EonSecretKeyShare big.Int
 
 // EonPublicKeyShare represents a share of the eon public key.
-type EonPublicKeyShare bls12381.PointG2
+type EonPublicKeyShare blst.P2Affine
 
 // EonPublicKey represents the combined eon public key.
-type EonPublicKey bls12381.PointG2
+type EonPublicKey blst.P2Affine
 
 // EpochID is the identifier of an epoch.
-type EpochID bls12381.PointG1
+type EpochID blst.P1Affine
 
 // EpochSecretKeyShare represents a keyper's share of the epoch sk key.
-type EpochSecretKeyShare bls12381.PointG1
+type EpochSecretKeyShare blst.P1Affine
 
 // EpochSecretKey represents an epoch secret key.
-type EpochSecretKey bls12381.PointG1
+type EpochSecretKey blst.P1Affine
 
 func (eonPublicKey *EonPublicKey) GobEncode() ([]byte, error) {
 	return eonPublicKey.Marshal(), nil
@@ -36,8 +36,7 @@ func (eonPublicKey *EonPublicKey) GobDecode(data []byte) error {
 }
 
 func (eonPublicKey *EonPublicKey) Equal(pk2 *EonPublicKey) bool {
-	g2 := bls12381.NewG2()
-	return g2.Equal((*bls12381.PointG2)(eonPublicKey), (*bls12381.PointG2)(pk2))
+	return (*blst.P2Affine)(eonPublicKey).Equals((*blst.P2Affine)(pk2))
 }
 
 func (eonPublicKeyShare *EonPublicKeyShare) GobEncode() ([]byte, error) {
@@ -49,8 +48,7 @@ func (eonPublicKeyShare *EonPublicKeyShare) GobDecode(data []byte) error {
 }
 
 func (eonPublicKeyShare *EonPublicKeyShare) Equal(pk2 *EonPublicKeyShare) bool {
-	g2 := bls12381.NewG2()
-	return g2.Equal((*bls12381.PointG2)(eonPublicKeyShare), (*bls12381.PointG2)(pk2))
+	return (*blst.P2Affine)(eonPublicKeyShare).Equals((*blst.P2Affine)(pk2))
 }
 
 func (epochID *EpochID) GobEncode() ([]byte, error) {
@@ -62,8 +60,7 @@ func (epochID *EpochID) GobDecode(data []byte) error {
 }
 
 func (epochID *EpochID) Equal(g2 *EpochID) bool {
-	g1 := bls12381.NewG1()
-	return g1.Equal((*bls12381.PointG1)(epochID), (*bls12381.PointG1)(g2))
+	return (*blst.P1Affine)(epochID).Equals((*blst.P1Affine)(g2))
 }
 
 func (epochSecretKeyShare *EpochSecretKeyShare) GobEncode() ([]byte, error) {
@@ -75,8 +72,7 @@ func (epochSecretKeyShare *EpochSecretKeyShare) GobDecode(data []byte) error {
 }
 
 func (epochSecretKeyShare *EpochSecretKeyShare) Equal(g2 *EpochSecretKeyShare) bool {
-	g1 := bls12381.NewG1()
-	return g1.Equal((*bls12381.PointG1)(epochSecretKeyShare), (*bls12381.PointG1)(g2))
+	return (*blst.P1Affine)(epochSecretKeyShare).Equals((*blst.P1Affine)(g2))
 }
 
 func (epochSecretKey *EpochSecretKey) GobEncode() ([]byte, error) {
@@ -88,8 +84,7 @@ func (epochSecretKey *EpochSecretKey) GobDecode(data []byte) error {
 }
 
 func (epochSecretKey *EpochSecretKey) Equal(g2 *EpochSecretKey) bool {
-	g1 := bls12381.NewG1()
-	return g1.Equal((*bls12381.PointG1)(epochSecretKey), (*bls12381.PointG1)(g2))
+	return (*blst.P1Affine)(epochSecretKey).Equals((*blst.P1Affine)(g2))
 }
 
 func (eonSecretKeyShare *EonSecretKeyShare) GobEncode() ([]byte, error) {
@@ -118,34 +113,37 @@ func ComputeEonSecretKeyShare(polyEvals []*big.Int) *EonSecretKeyShare {
 
 // ComputeEonPublicKeyShare computes the eon public key share of the given keyper.
 func ComputeEonPublicKeyShare(keyperIndex int, gammas []*Gammas) *EonPublicKeyShare {
-	g2 := bls12381.NewG2()
-	p := g2.Zero()
+	p := new(blst.P2)
 	keyperX := KeyperX(keyperIndex)
 	for _, gs := range gammas {
 		pi := gs.Pi(keyperX)
-		g2.Add(p, p, pi)
+		p.AddAssign(pi)
 	}
-	epk := EonPublicKeyShare(*p)
+	pAffine := p.ToAffine()
+	epk := EonPublicKeyShare(*pAffine)
 	return &epk
 }
 
 // ComputeEonPublicKey computes the combined eon public key from the set of eon public key shares.
 func ComputeEonPublicKey(gammas []*Gammas) *EonPublicKey {
-	g2 := bls12381.NewG2()
-	p := g2.Zero()
+	p := new(blst.P2)
 	for _, gs := range gammas {
 		pi := gs.Pi(big.NewInt(0))
-		g2.Add(p, p, pi)
+		p.AddAssign(pi)
 	}
-	epk := EonPublicKey(*p)
+	pAffine := p.ToAffine()
+	epk := EonPublicKey(*pAffine)
 	return &epk
 }
 
 // ComputeEpochSecretKeyShare computes a keyper's epoch sk share.
 func ComputeEpochSecretKeyShare(eonSecretKeyShare *EonSecretKeyShare, epochID *EpochID) *EpochSecretKeyShare {
-	g1 := bls12381.NewG1()
-	p := g1.MulScalar(new(bls12381.PointG1), (*bls12381.PointG1)(epochID), (*big.Int)(eonSecretKeyShare))
-	epochSecretKeyShare := EpochSecretKeyShare(*p)
+	p := new(blst.P1)
+	p.FromAffine((*blst.P1Affine)(epochID))
+	p.MultAssign(bigToScalar((*big.Int)(eonSecretKeyShare)))
+
+	pAffine := p.ToAffine()
+	epochSecretKeyShare := EpochSecretKeyShare(*pAffine)
 	return &epochSecretKeyShare
 }
 
@@ -178,15 +176,14 @@ func (lc *LagrangeCoeffs) ComputeEpochSecretKey(epochSecretKeyShares []*EpochSec
 	if len(epochSecretKeyShares) != len(lc.lambdas) {
 		return nil, fmt.Errorf("got %d shares, expected %d", len(epochSecretKeyShares), len(lc.lambdas))
 	}
-	g1 := bls12381.NewG1()
-	skG1 := g1.Zero()
-	qTimesLambda := new(bls12381.PointG1)
+	skG1 := new(blst.P1)
 	for i, share := range epochSecretKeyShares {
-		lambda := lc.lambdas[i]
-		g1.MulScalar(qTimesLambda, (*bls12381.PointG1)(share), lambda)
-		g1.Add(skG1, skG1, qTimesLambda)
+		qTimesLambda := new(blst.P1)
+		qTimesLambda.FromAffine((*blst.P1Affine)(share))
+		qTimesLambda.MultAssign(bigToScalar(lc.lambdas[i]))
+		skG1.AddAssign(qTimesLambda)
 	}
-	return (*EpochSecretKey)(skG1), nil
+	return (*EpochSecretKey)(skG1.ToAffine()), nil
 }
 
 // ComputeEpochSecretKey computes the epoch secret key from a set of shares.
@@ -203,14 +200,14 @@ func ComputeEpochSecretKey(keyperIndices []int, epochSecretKeyShares []*EpochSec
 
 // VerifyEpochSecretKeyShare checks that an epoch sk share published by a keyper is correct.
 func VerifyEpochSecretKeyShare(epochSecretKeyShare *EpochSecretKeyShare, eonPublicKeyShare *EonPublicKeyShare, epochID *EpochID) bool {
-	g2 := bls12381.NewG2()
-	pairingEngine := bls12381.NewPairingEngine()
-
-	pairingEngine.AddPair((*bls12381.PointG1)(epochSecretKeyShare), g2.One())
-	// pairingEngine.AddPairInv modifies the first argument, so we have to create a copy of epochID
-	epochIDPoint := new(bls12381.PointG1).Set((*bls12381.PointG1)(epochID))
-	pairingEngine.AddPairInv(epochIDPoint, (*bls12381.PointG2)(eonPublicKeyShare))
-	return pairingEngine.Check()
+	// TODO: This could be optimized by inverting one of the arguments in one of the pairings,
+	// multiplying the results and comparing the result to 1. This would improve performance as it
+	// avoids one of the final exponentiations.
+	p1 := blst.Fp12MillerLoop(blst.P2Generator().ToAffine(), (*blst.P1Affine)(epochSecretKeyShare))
+	p1.FinalExp()
+	p2 := blst.Fp12MillerLoop((*blst.P2Affine)(eonPublicKeyShare), (*blst.P1Affine)(epochID))
+	p2.FinalExp()
+	return p1.Equals(p2)
 }
 
 // VerifyEpochSecretKey checks that an epoch secret key is the correct key for an epoch given the

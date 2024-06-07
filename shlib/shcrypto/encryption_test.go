@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 	"gotest.tools/v3/assert"
 )
 
@@ -201,7 +201,6 @@ func TestPaddingRoundtrip(t *testing.T) {
 
 func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 	t.Helper()
-	g2 := bls12381.NewG2()
 	n := 3
 	threshold := uint64(2)
 	epochID := ComputeEpochID([]byte("epoch1"))
@@ -231,7 +230,8 @@ func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 		epochSecretKeyShares = append(epochSecretKeyShares, ComputeEpochSecretKeyShare(eonSecretKeyShares[i], epochID))
 	}
 	eonPublicKey := ComputeEonPublicKey(gammas)
-	assert.DeepEqual(t, g2.MulScalar(new(bls12381.PointG2), g2.One(), eonSecretKey), (*bls12381.PointG2)(eonPublicKey), g2Comparer)
+	eonPublicKeyExp := (*EonPublicKey)(generateP2(eonSecretKey))
+	assert.Assert(t, eonPublicKey.Equal(eonPublicKeyExp))
 	epochSecretKey, err := ComputeEpochSecretKey(
 		[]int{0, 1},
 		[]*EpochSecretKeyShare{epochSecretKeyShares[0], epochSecretKeyShares[1]},
@@ -254,7 +254,6 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestC1Malleability(t *testing.T) {
-	g2 := bls12381.NewG2()
 	message := []byte("secret message")
 	eonPublicKey, decryptionKey, epochIDPoint := makeKeys(t)
 	originalSigma, err := RandomSigma(rand.Reader)
@@ -265,12 +264,12 @@ func TestC1Malleability(t *testing.T) {
 		epochIDPoint,
 		originalSigma,
 	)
-	var c1 *bls12381.PointG2
 	// we move C1 around, until we find a legal padding
 	for i := 1; i <= 10000; i++ {
-		c1 = encryptedMessage.C1
-		g2.Add(c1, c1, c1)
-		encryptedMessage.C1 = c1
+		newC1 := new(blst.P2)
+		newC1.FromAffine(encryptedMessage.C1)
+		newC1.AddAssign(encryptedMessage.C1)
+		encryptedMessage.C1 = newC1.ToAffine()
 		sigma := encryptedMessage.Sigma(decryptionKey)
 		decryptedBlocks := DecryptBlocks(encryptedMessage.C3, sigma)
 		_, err = UnpadMessage(decryptedBlocks)
