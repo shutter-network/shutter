@@ -3,7 +3,7 @@ package shcrypto
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/crypto/bls12381"
+	blst "github.com/supranational/blst/bindings/go"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -20,17 +20,15 @@ func hashWithPrefix(p byte, b []byte) []byte {
 	return keccak256(append([]byte{p}, b...))
 }
 
-func Hash1(b []byte) *bls12381.PointG1 {
+func Hash1(b []byte) *blst.P1Affine {
 	h := hashWithPrefix(1, b)
-	n := new(big.Int).SetBytes(h)
-	g1 := bls12381.NewG1()
-	p := g1.One()
-	bls12381.NewG1().MulScalar(p, p, n)
-	return p
+	s := new(blst.Scalar).FromBEndian(h)
+	p := blst.P1Generator().Mult(s)
+	return p.ToAffine()
 }
 
-func Hash2(gt *bls12381.E) Block {
-	b := bls12381.NewGT().ToBytes(gt)
+func Hash2(gt *blst.Fp12) Block {
+	b := gt.ToBendian()
 	h := hashWithPrefix(2, b)
 	var block Block
 	copy(block[:], h)
