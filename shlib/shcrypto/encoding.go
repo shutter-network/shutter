@@ -230,3 +230,53 @@ func (m *EncryptedMessage) UnmarshalText(b []byte) error {
 	err = m.Unmarshal(decoded)
 	return err
 }
+
+// Marshal serializes the gammas value.
+//
+// Serialization format: [n:4][gamma1:96]...[gamman:96]
+func (g *Gammas) Marshal() []byte {
+	if g == nil {
+		return []byte{}
+	}
+	buff := bytes.Buffer{}
+	for _, p := range *g {
+		buff.Write(p.Compress())
+	}
+	return buff.Bytes()
+}
+
+// Unmarshal deserializes a gammas value.
+func (g *Gammas) Unmarshal(m []byte) error {
+	if len(m)%blst.BLST_P2_COMPRESS_BYTES != 0 {
+		return errors.New("invalid length of gammas")
+	}
+	n := len(m) / blst.BLST_P2_COMPRESS_BYTES
+	*g = make(Gammas, n)
+	for i := 0; i < int(n); i++ {
+		p := new(blst.P2Affine)
+		p = p.Uncompress(m[i*blst.BLST_P2_COMPRESS_BYTES : (i+1)*blst.BLST_P2_COMPRESS_BYTES])
+		if p == nil {
+			return errors.New("failed to deserialize gamma")
+		}
+		if !p.InG2() {
+			return errors.New("gamma is not on curve")
+		}
+		(*g)[i] = p
+	}
+	return nil
+}
+
+// MarshalText serializes the gammas as hex.
+func (g *Gammas) MarshalText() ([]byte, error) {
+	return []byte(hexutil.Encode(g.Marshal())), nil
+}
+
+// UnmarshalText deserializes the gammas from hex.
+func (g *Gammas) UnmarshalText(b []byte) error {
+	decoded, err := hexutil.Decode(string(b))
+	if err != nil {
+		return err
+	}
+	err = g.Unmarshal(decoded)
+	return err
+}
