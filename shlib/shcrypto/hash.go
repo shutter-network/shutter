@@ -7,6 +7,8 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+const HashToG1DST = "SHUTTER_V01_BLS12381G1_XMD:SHA-256_SSWU_RO_"
+
 func keccak256(ds ...[]byte) []byte {
 	state := sha3.NewLegacyKeccak256()
 	for _, d := range ds {
@@ -21,9 +23,8 @@ func hashWithPrefix(p byte, b []byte) []byte {
 }
 
 func Hash1(b []byte) *blst.P1Affine {
-	h := hashWithPrefix(1, b)
-	s := new(blst.Scalar).FromBEndian(h)
-	p := blst.P1Generator().Mult(s)
+	bWithPrefix := append([]byte{1}, b...)
+	p := blst.HashToG1(bWithPrefix, []byte(HashToG1DST))
 	return p.ToAffine()
 }
 
