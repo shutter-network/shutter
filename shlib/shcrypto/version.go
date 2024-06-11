@@ -1,6 +1,6 @@
 package shcrypto
 
-const VersionIdentifier byte = 0x02
+const VersionIdentifier byte = 0x03
 
 // IdentifyVersion reads the version identifier byte from the given (marshaled) EncryptedMessage.
 func IdentifyVersion(d []byte) byte {
