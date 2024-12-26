@@ -165,7 +165,7 @@ func TestEonPublicKeyMatchesSecretKey(t *testing.T) {
 	esk := big.NewInt(0)
 	for _, p := range []*Polynomial{p1, p2, p3} {
 		esk = esk.Add(esk, p.Eval(big.NewInt(0)))
-		esk = esk.Mod(esk, order) // Ensure esk stays within the field modulus
+		esk = esk.Mod(esk, order)
 	}
 
 	epkExp := generateP2(esk)
