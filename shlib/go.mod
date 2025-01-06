@@ -6,7 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.13.4
 	github.com/google/go-cmp v0.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/supranational/blst v0.3.11
+	github.com/supranational/blst v0.3.12
 	golang.org/x/crypto v0.14.0
 	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.5.1

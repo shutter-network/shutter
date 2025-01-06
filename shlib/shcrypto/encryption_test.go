@@ -219,6 +219,7 @@ func makeKeys(t *testing.T) (*EonPublicKey, *EpochSecretKey, *EpochID) {
 	eonSecretKey := big.NewInt(0)
 	for i := 0; i < n; i++ {
 		eonSecretKey.Add(eonSecretKey, ps[i].Eval(big.NewInt(0)))
+		eonSecretKey.Mod(eonSecretKey, order)
 
 		ss := []*big.Int{}
 		for j := 0; j < n; j++ {
