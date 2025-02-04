@@ -1,5 +1,9 @@
 # Shutter
 
+> ⚠️ **Legacy Implementation**
+> This repository is no longer maintained.
+> For the current version of Shutter, see [Rolling Shutter](https://github.com/shutter-network/rolling-shutter).
+
 This repository contains Shutter, a threshold encryption based frontrunning protection system for
 Ethereum smart contracts.
 
