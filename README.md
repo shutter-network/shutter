@@ -1,7 +1,7 @@
 # Shutter
 
-> ⚠️ **Legacy Implementation**
-> This repository is no longer maintained.
+> [!IMPORTANT]
+> This is a **legacy implementation**.
 > For the current version of Shutter, see [Rolling Shutter](https://github.com/shutter-network/rolling-shutter).
 
 This repository contains Shutter, a threshold encryption based frontrunning protection system for
