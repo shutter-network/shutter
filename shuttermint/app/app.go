@@ -793,7 +793,7 @@ func (app *ShutterApp) EndBlock(req abcitypes.RequestEndBlock) abcitypes.Respons
 	return abcitypes.ResponseEndBlock{ValidatorUpdates: validatorUpdates}
 }
 
-// persistToDisk stores the ShutterApp on disk. This method first writes to a temporary file and
+// PersistToDisk stores the ShutterApp on disk. This method first writes to a temporary file and
 // renames the file later. Most probably this will not work on windows!
 func (app *ShutterApp) PersistToDisk() error {
 	log.Printf("Persisting state to disk, height=%d", app.LastBlockHeight)

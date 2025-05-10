@@ -76,7 +76,7 @@ func (eonSecretKeyShare *EonSecretKeyShare) Marshal() []byte {
 	return (*big.Int)(eonSecretKeyShare).Bytes()
 }
 
-// Unarshal deserializes an eon secret key share.
+// Unmarshal deserializes an eon secret key share.
 func (eonSecretKeyShare *EonSecretKeyShare) Unmarshal(m []byte) error {
 	(*big.Int)(eonSecretKeyShare).SetBytes(m)
 	if (*big.Int)(eonSecretKeyShare).Cmp(order) >= 0 {
