@@ -214,7 +214,7 @@ changes. Once scheduled, batch configs cannot be removed and their order cannot 
 Scheduling a config is a two step process: First, the config object is drafted using the various
 `setNext...` functions and, second, it is finalized using `schedule`.
 
-Only the contract owner is allowed to schedule configs. This role is inteded to be played by a DAO.
+Only the contract owner is allowed to schedule configs. This role is intended to be played by a DAO.
 
 The batch config objects divide time into a sequence of batches and each config is applicable to a
 range of them. The following fields specify this:
@@ -246,7 +246,7 @@ For transaction execution after decryption, the following fields are relevant:
 
 - `transactionGasLimit`: the maximum amount of gas a transaction is allowed to consume during
   execution once it is decrypted
-- `targetAddress`: the address of the contract to which the derypted transactions will be passed
+- `targetAddress`: the address of the contract to which the decrypted transactions will be passed
   to
 - `targetFunctionSelector`: the 4 byte function selector that specifies the function in the target
   contract that will be called with each decrypted transaction
