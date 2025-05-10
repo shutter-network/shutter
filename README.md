@@ -42,6 +42,7 @@ ganache-cli -d -b 3
 If you use the source release or git repository, you need to build the shuttermint application:
 
 ```
+cd shutter
 cd shuttermint
 make build
 ```
